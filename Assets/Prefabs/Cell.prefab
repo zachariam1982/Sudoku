@@ -93,11 +93,11 @@ MonoBehaviour:
     serializedVersion: 2
     rgba: 4294967295
   m_fontSize: 24.7
-  m_fontSizeBase: 28
+  m_fontSizeBase: 0
   m_fontWeight: 400
   m_enableAutoSizing: 1
-  m_fontSizeMin: 18
-  m_fontSizeMax: 72
+  m_fontSizeMin: 10
+  m_fontSizeMax: 999
   m_fontStyle: 1
   m_HorizontalAlignment: 2
   m_VerticalAlignment: 512
@@ -245,13 +245,12 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::SudokuCell
   background: {fileID: 0}
   label: {fileID: 0}
-  normalColor: {r: 0.75, g: 0.83, b: 0.22, a: 1}
-  highlightColor: {r: 0.82, g: 0.91, b: 1, a: 1}
-  dimmedColor: {r: 0.55, g: 0.6, b: 0.16, a: 1}
-  pickerHighlight: {r: 1, g: 0.92, b: 0.4, a: 1}
-  givenTextColor: {r: 0.1, g: 0.1, b: 0.12, a: 1}
-  playerTextColor: {r: 0.1, g: 0.1, b: 0.12, a: 1}
-  dimmedTextColor: {r: 0.3, g: 0.3, b: 0.3, a: 0.5}
+  normalColor: {r: 0.05882353, g: 0.20392157, b: 0.3764706, a: 1}
+  givenColor: {r: 0.3254902, g: 0.20392157, b: 0.5137255, a: 1}
+  dimmedColor: {r: 0.039215688, g: 0.12156863, b: 0.22745098, a: 1}
+  pickerHighlight: {r: 0.9137255, g: 0.27058825, b: 0.3764706, a: 1}
+  highlightColor: {r: 0.9137255, g: 0.27058825, b: 0.3764706, a: 0.78431374}
+  errorColor: {r: 1, g: 0.19607843, b: 0.19607843, a: 1}
 --- !u!114 &2810559687891449903
 MonoBehaviour:
   m_ObjectHideFlags: 0

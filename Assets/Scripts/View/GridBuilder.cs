@@ -1,9 +1,9 @@
 using UnityEngine;
 
 /// <summary>
-/// Spawns and rebuilds the 9x9 Sudoku grid.
-/// Called by OrientationManager on startup and on every rotation.
-/// Puzzle state is preserved automatically via SudokuGrid.SaveCurrentState().
+/// Layout only — spawns and rebuilds the 9x9 grid on startup and rotation.
+/// Gets the shared ViewModel from GameContext and passes it to each cell via SudokuGrid.
+/// Contains zero game logic.
 /// </summary>
 public class GridBuilder : MonoBehaviour
 {
@@ -14,6 +14,7 @@ public class GridBuilder : MonoBehaviour
     [Header("Scene References")]
     [SerializeField] private RectTransform gridPanel;
     [SerializeField] private SudokuGrid    sudokuGrid;
+    [SerializeField] private GameContext   gameContext;
 
     [Header("Bar & Padding (canvas units — match OrientationManager)")]
     [SerializeField] private float topBarHeight    = 160f;
@@ -24,20 +25,13 @@ public class GridBuilder : MonoBehaviour
     [SerializeField] private float boxGap     = 10f;
     [SerializeField] private float boxPadding = 8f;
 
-    /// <summary>
-    /// Destroys the existing grid and spawns a fresh one sized to gridSize.
-    /// Puzzle state is saved first and restored automatically by SudokuGrid.SetCells().
-    /// </summary>
     public void Rebuild(float gridSize)
     {
-        // ── Save puzzle state before destroying cells ─────────────────────
-        sudokuGrid.SaveCurrentState();
-
-        // ── Close number picker if open ───────────────────────────────────
+        // ── Close picker if open ──────────────────────────────────────────
         if (NumberPicker.Instance != null)
             NumberPicker.Instance.Hide();
 
-        // ── Destroy all existing box children ────────────────────────────
+        // ── Destroy old cells ─────────────────────────────────────────────
         foreach (Transform child in gridPanel)
             Destroy(child.gameObject);
 
@@ -45,7 +39,7 @@ public class GridBuilder : MonoBehaviour
         gridPanel.sizeDelta = new Vector2(gridSize, gridSize);
         gridPanel.anchoredPosition = new Vector2(0f, (bottomBarHeight - topBarHeight) / 2f);
 
-        // ── Derive box and cell sizes ─────────────────────────────────────
+        // ── Derive sizes ──────────────────────────────────────────────────
         float boxSize  = (gridSize - 2f * boxGap)  / 3f;
         float cellSize = (boxSize  - 2f * boxPadding - 2f * cellGap) / 3f;
 
@@ -89,10 +83,10 @@ public class GridBuilder : MonoBehaviour
             }
         }
 
-        // SetCells() will auto-restore the saved puzzle state
+        // ── Hand cells to SudokuGrid (binds each cell to ViewModel) ──────
         sudokuGrid.SetCells(allCells);
 
-        // ── Update NumberPicker bounds ────────────────────────────────────
+        // ── Update NumberPicker layout ────────────────────────────────────
         if (NumberPicker.Instance != null)
             NumberPicker.Instance.UpdateGridBounds(gridSize, gridSize, boxGap, boxPadding, cellGap);
     }

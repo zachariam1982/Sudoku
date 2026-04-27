@@ -2,6 +2,7 @@ using UnityEngine;
 using UnityEngine.UI;
 using TMPro;
 using System;
+using Unity.VisualScripting;
 
 /// <summary>
 /// View — a single Sudoku cell with animations and persistent conflict state.
@@ -10,7 +11,8 @@ public class SudokuCell : MonoBehaviour
 {
     [Header("References (auto-found if left empty)")]
     [SerializeField] private Image           background;
-    [SerializeField] private TextMeshProUGUI label;
+    [SerializeField] private Image        numberImage;
+    [SerializeField] private Sprite[]     numberSprites; // drag Number_1 to Number_9 in Inspector
 
     [Header("Colors — set in Cell Prefab Inspector")]
     public Color normalColor;
@@ -21,6 +23,7 @@ public class SudokuCell : MonoBehaviour
     public Color errorColor;
 
     // ── Internal state ────────────────────────────────────────────────────────
+    private Image _originalBackground;
     private int             row;
     private int             col;
     private SudokuViewModel viewModel;
@@ -34,7 +37,8 @@ public class SudokuCell : MonoBehaviour
     void Awake()
     {
         if (background == null) background = GetComponent<Image>();
-        if (label == null)      label      = GetComponentInChildren<TextMeshProUGUI>();
+        if (numberImage == null) numberImage = GetComponentInChildren<Image>();
+        _originalBackground = background;
     }
 
     // ── Binding ───────────────────────────────────────────────────────────────
@@ -53,11 +57,22 @@ public class SudokuCell : MonoBehaviour
         Value   = value;
         IsGiven = isGiven;
 
-        if (label != null)
-            label.text = value == 0 ? "" : value.ToString();
+        // if (label != null)
+        //     label.text = value == 0 ? "" : value.ToString();
+        if (numberImage != null)
+        {
+            numberImage.gameObject.SetActive(value != 0);
+            if (value > 0 && value <= numberSprites.Length && numberSprites[value - 1] != null){
+                numberImage.sprite = numberSprites[value - 1];
+                background = numberImage;
+            }
+        }
 
         // Clearing a cell always removes its conflict state
-        if (value == 0) isConflict = false;
+        if (value == 0) {
+            background = _originalBackground;
+            isConflict = false;
+        }
 
         baseColor = isGiven ? givenColor : normalColor;
 
@@ -111,6 +126,8 @@ public class SudokuCell : MonoBehaviour
 
     public void PlayTapAnimation()
     {
+        Debug.Log($"GameObject active: {gameObject.activeInHierarchy}, " +
+              $"Component enabled: {enabled}");
         StartCoroutine(UIAnimator.ScalePunch(transform));
     }
 
@@ -122,7 +139,7 @@ public class SudokuCell : MonoBehaviour
     public void PlayErrorAnimation()
     {
         // Flash to error color and back — SetConflict keeps it red after the flash
-        StartCoroutine(UIAnimator.Flash(background, errorColor, errorColor));
+        StartCoroutine(UIAnimator.Flash(background, Color.white, errorColor));
         StartCoroutine(UIAnimator.Shake(transform));
     }
 

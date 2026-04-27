@@ -7,6 +7,7 @@ public class SudokuModel
     public int[,]  Board     { get; private set; } = new int[9, 9];
     public bool[,] GivenMask { get; private set; } = new bool[9, 9];
 
+
     private readonly int[,] startingBoard = new int[9, 9]
     {
         { 5, 3, 0,  0, 7, 0,  0, 0, 0 },

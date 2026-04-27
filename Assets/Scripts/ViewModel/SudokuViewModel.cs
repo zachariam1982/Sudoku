@@ -134,7 +134,8 @@ public class SudokuViewModel
 
         for (int row = 0; row < 9; row++)
             for (int col = 0; col < 9; col++)
-                if (!_model.IsGiven(row, col) && _model.HasConflict(row, col))
+                //if (!_model.IsGiven(row, col) && _model.HasConflict(row, col))
+                if (_model.HasConflict(row, col))
                     conflicts.Add((row, col));
 
         ConflictingCells.Value = conflicts;

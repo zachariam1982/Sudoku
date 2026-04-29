@@ -103,9 +103,9 @@ public static class UIAnimator
     /// Horizontal shake. Use on wrong number entry.
     /// </summary>
     public static IEnumerator Shake(Transform target,
-                                     float magnitude = 8f,
-                                     float duration  = 0.35f,
-                                     int   vibrato   = 6)
+                                     float magnitude = 18f,
+                                     float duration  = 0.45f,
+                                     int   vibrato   = 5)
     {
         Vector3 original = target.localPosition;
         float   elapsed  = 0f;
@@ -152,6 +152,39 @@ public static class UIAnimator
 
         image.color = returnColor;
     }
+
+    /// <summary>
+    /// Pulses between two colors multiple times — much more visible than a single flash.
+    /// Use for error feedback on wrong number entry.
+    /// </summary>
+    public static IEnumerator Pulse(Image image,
+                                    Color pulseColor,
+                                    Color baseColor,
+                                    int   pulseCount = 3,
+                                    float pulseDuration = 0.15f)
+    {
+        if (image == null) yield break;
+
+        for (int i = 0; i < pulseCount; i++)
+        {
+            // Flash to pulse color
+            image.color = pulseColor;
+            yield return new WaitForSeconds(pulseDuration * 0.4f);
+
+            // Fade back to base
+            float elapsed = 0f;
+            float fadeDur = pulseDuration * 0.6f;
+            while (elapsed < fadeDur)
+            {
+                elapsed    += Time.deltaTime;
+                float t     = Mathf.Clamp01(elapsed / fadeDur);
+                image.color = Color.Lerp(pulseColor, baseColor, EaseOut(t));
+                yield return null;
+            }
+
+            image.color = baseColor;
+        }
+    }    
 
     // ── Slide ─────────────────────────────────────────────────────────────────
 

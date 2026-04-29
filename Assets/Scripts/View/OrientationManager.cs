@@ -12,7 +12,7 @@ public class OrientationManager : MonoBehaviour
     [Header("Bar heights in Canvas reference units")]
     [SerializeField] private float topBarHeight    = 160f;
     [SerializeField] private float bottomBarHeight = 160f;
-    [SerializeField] private float screenPadding   = 20f;
+    [SerializeField] private float screenPadding   = 8f;
 
     [Header("References")]
     [SerializeField] private GridBuilder gridBuilder;

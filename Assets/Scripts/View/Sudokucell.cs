@@ -1,8 +1,6 @@
 using UnityEngine;
 using UnityEngine.UI;
-using TMPro;
 using System;
-using Unity.VisualScripting;
 
 /// <summary>
 /// View — a single Sudoku cell with animations and persistent conflict state.
@@ -23,7 +21,6 @@ public class SudokuCell : MonoBehaviour
     public Color errorColor;
 
     // ── Internal state ────────────────────────────────────────────────────────
-    private Image _originalBackground;
     private int             row;
     private int             col;
     private SudokuViewModel viewModel;
@@ -37,9 +34,19 @@ public class SudokuCell : MonoBehaviour
     void Awake()
     {
         if (background == null) background = GetComponent<Image>();
-        if (numberImage == null) numberImage = GetComponentInChildren<Image>();
-        _originalBackground = background;
+        if (numberImage == null)
+        {
+            foreach (Image img in GetComponentsInChildren<Image>())
+            {
+                if (img.gameObject != gameObject)
+                {
+                    numberImage = img;
+                    break;
+                }
+            }
+        }
     }
+
 
     // ── Binding ───────────────────────────────────────────────────────────────
 
@@ -57,25 +64,18 @@ public class SudokuCell : MonoBehaviour
         Value   = value;
         IsGiven = isGiven;
 
-        // if (label != null)
-        //     label.text = value == 0 ? "" : value.ToString();
         if (numberImage != null)
         {
             numberImage.gameObject.SetActive(value != 0);
-            if (value > 0 && value <= numberSprites.Length && numberSprites[value - 1] != null){
+            if (value > 0 && value <= numberSprites.Length && numberSprites[value - 1] != null)
                 numberImage.sprite = numberSprites[value - 1];
-                background = numberImage;
-            }
         }
 
-        // Clearing a cell always removes its conflict state
-        if (value == 0) {
-            background = _originalBackground;
-            isConflict = false;
-        }
+        if (value == 0) isConflict = false;
 
         baseColor = isGiven ? givenColor : normalColor;
 
+        // background is always the cell root Image — never reassigned
         if (background != null && !isDimmed)
             background.color = isConflict ? errorColor : baseColor;
     }
@@ -93,7 +93,11 @@ public class SudokuCell : MonoBehaviour
         isDimmed  = dimmed;
         baseColor = dimmed ? dimmedColor : (IsGiven ? givenColor : normalColor);
         if (background != null)
-            background.color = isConflict ? errorColor : baseColor;
+            background.color = baseColor;
+
+        // Keep error tint on numberImage visible even while dimmed
+        if (numberImage != null && !isConflict)
+            numberImage.color = dimmed ? new Color(0.6f, 0.6f, 0.6f, 1f) : Color.white;
     }
 
     public void SetPickerHighlight(bool active)
@@ -114,12 +118,23 @@ public class SudokuCell : MonoBehaviour
     public void SetConflict(bool conflict)
     {
         isConflict = conflict;
-        if (background == null) return;
 
         if (conflict)
-            background.color = errorColor;
+        {
+            // Tint numberImage red so error is visible over the full-size sprite
+            if (numberImage != null && numberImage.gameObject.activeSelf)
+                numberImage.color = errorColor;
+            else
+                background.color = errorColor; // fallback for empty cells
+        }
         else
-            background.color = isDimmed ? dimmedColor : (IsGiven ? givenColor : normalColor);
+        {
+            // Restore numberImage to white so sprite shows true colors
+            if (numberImage != null)
+                numberImage.color = Color.white;
+            if (background != null)
+                background.color = isDimmed ? dimmedColor : (IsGiven ? givenColor : normalColor);
+        }
     }
 
     // ── Animations ────────────────────────────────────────────────────────────
@@ -138,9 +153,24 @@ public class SudokuCell : MonoBehaviour
 
     public void PlayErrorAnimation()
     {
-        // Flash to error color and back — SetConflict keeps it red after the flash
-        StartCoroutine(UIAnimator.Flash(background, Color.white, errorColor));
+        StartCoroutine(PlayErrorSequence());
         StartCoroutine(UIAnimator.Shake(transform));
+    }
+
+    private System.Collections.IEnumerator PlayErrorSequence()
+    {
+        // Pulse numberImage between white and errorColor — this is what the player sees
+        Image pulseTarget = (numberImage != null && numberImage.gameObject.activeSelf)
+                            ? numberImage
+                            : background;
+
+        yield return UIAnimator.Pulse(pulseTarget, Color.white, errorColor, 3, 0.15f);
+
+        // After pulse finishes, enforce final conflict state
+        if (isConflict)
+            pulseTarget.color = errorColor;
+        else
+            pulseTarget.color = Color.white;
     }
 
     public void PlayLockedAnimation()
@@ -152,7 +182,7 @@ public class SudokuCell : MonoBehaviour
 
     public void OnClick()
     {
-        if (viewModel == null) return;
+        if (viewModel == null || viewModel.IsEraseMode.Value) return;
 
         if (IsGiven)
         {
@@ -167,5 +197,17 @@ public class SudokuCell : MonoBehaviour
 
         viewModel.SelectCellCommand.Execute(
             new ValueTuple<int, int, object>(row, col, GetComponent<RectTransform>()));
+    }
+
+    public void OnClickFromErase()
+    {
+        if(viewModel == null) return;
+
+        if(IsGiven) return;
+
+        viewModel.SelectCellCommand.Execute(
+            new ValueTuple<int, int, object>(row, col, GetComponent<RectTransform>()));
+        viewModel.EnterValueCommand.Execute( 0);
+        viewModel.SetEraseModeCommand.Execute();
     }
 }

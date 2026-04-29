@@ -30,13 +30,15 @@ public class SudokuGrid : MonoBehaviour
         viewModel = vm;
 
         vm.BoardValues.OnChanged     += OnBoardChanged;
-        vm.GivenMask.OnChanged       += OnBoardChanged;
-        vm.SelectedRow.OnChanged     += _ => RefreshHighlights();
-        vm.SelectedCol.OnChanged     += _ => RefreshHighlights();
-        vm.IsPickerOpen.OnChanged    += OnPickerOpenChanged;
-        vm.LastEnteredCell.OnChanged += OnCellValueEntered;
+        vm.GivenMask.OnChanged        += OnBoardChanged;
+        vm.SelectedRow.OnChanged      += _ => RefreshHighlights();
+        vm.SelectedCol.OnChanged      += _ => RefreshHighlights();
+        vm.IsPickerOpen.OnChanged     += OnPickerOpenChanged;
+        vm.LastEnteredCell.OnChanged  += OnCellValueEntered;
         vm.ConflictingCells.OnChanged += OnConflictsChanged;
+        vm.IsEraseMode.OnChanged      += OnEraseModeChanged;
     }
+
 
     private void OnDestroy()
     {
@@ -49,9 +51,25 @@ public class SudokuGrid : MonoBehaviour
         viewModel.IsPickerOpen.OnChanged     -= OnPickerOpenChanged;
         viewModel.LastEnteredCell.OnChanged  -= OnCellValueEntered;
         viewModel.ConflictingCells.OnChanged -= OnConflictsChanged;
+        viewModel.IsEraseMode.OnChanged      -= OnEraseModeChanged;
     }
 
     // ── Binding Handlers ──────────────────────────────────────────────────────
+
+    private void OnEraseModeChanged(bool arg)
+    {
+
+        for(int row = 0; row < 9; row++)
+            for( int col = 0; col < 9; col++)
+                if(cells[row, col].IsGiven == false)
+                {
+                    GameObject obj = cells[row,col].transform.Find("Erase").gameObject;
+                    if(arg == false)
+                        obj.SetActive(arg); 
+                    else if(arg == true && cells[row,col].Value != 0)
+                        obj.SetActive(arg);          
+                }
+    }
 
     private void OnBoardChanged<T>(T _)
     {
@@ -125,6 +143,7 @@ public class SudokuGrid : MonoBehaviour
     /// </summary>
     private void OnConflictsChanged(HashSet<(int row, int col)> conflicts)
     {
+        Debug.Log($"OnConflictsChanged — conflict count: {conflicts.Count}");
         if (!cellsReady) return;
 
         for (int row = 0; row < 9; row++)

@@ -18,6 +18,7 @@ public class GameContext : MonoBehaviour
         ViewModel = new SudokuViewModel();
 
         GetComponent<SudokuGrid>()?.Bind(ViewModel);
+        GetComponentInChildren<SinglePlayerBottomBar>()?.Bind(ViewModel);
         GetComponentInChildren<NumberPicker>()?.Bind(ViewModel);
     }
 }

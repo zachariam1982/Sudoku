@@ -19,6 +19,8 @@ public class SudokuViewModel
     public BindableProperty<bool>    IsBoardValid { get; } = new BindableProperty<bool>(true);
     public BindableProperty<bool>    IsComplete   { get; } = new BindableProperty<bool>(false);
 
+    public BindableProperty<bool>    IsEraseMode   { get; } = new BindableProperty<bool>(false);
+
     /// <summary>
     /// Fires after every number entry.
     /// Carries (row, col, hasConflict) so SudokuGrid knows which animation to play.
@@ -45,6 +47,8 @@ public class SudokuViewModel
     public ICommand EnterValueCommand   { get; }
     public ICommand CancelPickerCommand { get; }
 
+    public ICommand SetEraseModeCommand { get; }
+
     // ── Constructor ───────────────────────────────────────────────────────────
 
     public SudokuViewModel()
@@ -66,6 +70,10 @@ public class SudokuViewModel
             execute: _ => ClosePicker()
         );
 
+        SetEraseModeCommand = new RelayCommand(
+            execute: _ => IsEraseMode.Value = !IsEraseMode.Value
+        );
+
         _model.LoadStartingPuzzle();
         PublishBoard();
     }
@@ -79,7 +87,8 @@ public class SudokuViewModel
         SelectedRow.Value           = cell.row;
         SelectedCol.Value           = cell.col;
         SelectedCellTransform.Value = cell.cellTransform;
-        IsPickerOpen.Value          = true;
+        if(!IsEraseMode.Value)
+            IsPickerOpen.Value          = true;
     }
 
     private void OnEnterValue(int value)

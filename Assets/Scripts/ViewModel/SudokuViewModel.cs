@@ -58,8 +58,8 @@ public class SudokuViewModel
             {
                 var t = (ValueTuple<int, int, object>)param;
                 OnSelectCell((t.Item1, t.Item2, t.Item3));
-            },
-            canExecute: _ => !IsPickerOpen.Value
+            }//,
+            //canExecute: _ => !IsPickerOpen.Value
         );
 
         EnterValueCommand = new RelayCommand(
@@ -87,8 +87,10 @@ public class SudokuViewModel
         SelectedRow.Value           = cell.row;
         SelectedCol.Value           = cell.col;
         SelectedCellTransform.Value = cell.cellTransform;
-        if(!IsEraseMode.Value)
+        if(!IsEraseMode.Value){
+            IsPickerOpen.Value          = false;
             IsPickerOpen.Value          = true;
+        }
     }
 
     private void OnEnterValue(int value)

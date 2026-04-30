@@ -21,6 +21,13 @@ public class SinglePlayerBottomBar : MonoBehaviour
         viewModel.SetEraseModeCommand.Execute();
     }
 
+    public void PencilButtonPressed()
+    {
+        if(viewModel == null) return;
+
+        viewModel.SetPencilModeCommand.Execute();
+    }
+
     private void OnDestroy()
     {
         if(viewModel == null) return;

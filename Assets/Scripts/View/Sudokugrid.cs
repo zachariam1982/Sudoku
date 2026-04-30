@@ -1,4 +1,5 @@
 using System.Collections.Generic;
+using UnityEditor.Rendering.Universal;
 using UnityEngine;
 using UnityEngine.UI;
 
@@ -21,6 +22,7 @@ public class SudokuGrid : MonoBehaviour
     {
         if (gridBackground != null)
             gridBackground.color = new Color(0.1f, 0.1f, 0.18f, 1f);
+
     }
 
     // ── Binding ───────────────────────────────────────────────────────────────
@@ -29,7 +31,7 @@ public class SudokuGrid : MonoBehaviour
     {
         viewModel = vm;
 
-        vm.BoardValues.OnChanged     += OnBoardChanged;
+        vm.BoardValues.OnChanged      += OnBoardChanged;
         vm.GivenMask.OnChanged        += OnBoardChanged;
         vm.SelectedRow.OnChanged      += _ => RefreshHighlights();
         vm.SelectedCol.OnChanged      += _ => RefreshHighlights();
@@ -37,6 +39,7 @@ public class SudokuGrid : MonoBehaviour
         vm.LastEnteredCell.OnChanged  += OnCellValueEntered;
         vm.ConflictingCells.OnChanged += OnConflictsChanged;
         vm.IsEraseMode.OnChanged      += OnEraseModeChanged;
+        vm.IsPencilMode.OnChanged     += OnPencilModeChanged;
     }
 
 
@@ -52,13 +55,21 @@ public class SudokuGrid : MonoBehaviour
         viewModel.LastEnteredCell.OnChanged  -= OnCellValueEntered;
         viewModel.ConflictingCells.OnChanged -= OnConflictsChanged;
         viewModel.IsEraseMode.OnChanged      -= OnEraseModeChanged;
+        viewModel.IsPencilMode.OnChanged     -= OnPencilModeChanged;
     }
 
     // ── Binding Handlers ──────────────────────────────────────────────────────
-
+    private void OnPencilModeChanged(bool arg)
+    {
+        for(int row = 0; row < 9; row++)
+            for( int col = 0; col < 9; col++)
+                if( cells[row, col].Value == 0)
+                {
+                    cells[row, col].pencilCell.SetActive(arg);
+                }        
+    }
     private void OnEraseModeChanged(bool arg)
     {
-
         for(int row = 0; row < 9; row++)
             for( int col = 0; col < 9; col++)
                 if(cells[row, col].IsGiven == false)

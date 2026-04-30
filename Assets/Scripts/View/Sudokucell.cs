@@ -1,6 +1,7 @@
 using UnityEngine;
 using UnityEngine.UI;
 using System;
+using TMPro;
 
 /// <summary>
 /// View — a single Sudoku cell with animations and persistent conflict state.
@@ -11,6 +12,8 @@ public class SudokuCell : MonoBehaviour
     [SerializeField] private Image           background;
     [SerializeField] private Image        numberImage;
     [SerializeField] private Sprite[]     numberSprites; // drag Number_1 to Number_9 in Inspector
+    [SerializeField] private GridLayoutGroup pencilGrid; 
+    [SerializeField] public GameObject pencilCell;
 
     [Header("Colors — set in Cell Prefab Inspector")]
     public Color normalColor;
@@ -45,9 +48,36 @@ public class SudokuCell : MonoBehaviour
                 }
             }
         }
+        
+        Button[] btns = GetComponentsInChildren<Button>(true);
+        foreach(Button btn in btns)
+        {
+            //Debug.Log(btn.transform.parent.name);
+            if(btn.transform.parent.name == "PencilCell")
+            {
+                Button b = btn;
+                btn.onClick.AddListener(() => OnPencilModeButtonClick(b));
+            }
+        }
     }
 
+    private void OnPencilModeButtonClick(Button arg)
+    {
+        TMP_Text text = arg.GetComponentInChildren<TMP_Text>();
+        if (text == null) return;
 
+        Color32 targetGrey = new Color32(80,80,80,255);
+        Color32 currentColor = text.color;
+
+        if(currentColor.r == 80 && currentColor.g == 80 && currentColor.b == 80)
+        {
+            text.color = Color.white;
+        }
+        else
+        {
+            text.color = targetGrey;
+        }
+    }
     // ── Binding ───────────────────────────────────────────────────────────────
 
     public void Bind(int cellRow, int cellCol, SudokuViewModel vm)
@@ -210,4 +240,14 @@ public class SudokuCell : MonoBehaviour
         viewModel.EnterValueCommand.Execute( 0);
         viewModel.SetEraseModeCommand.Execute();
     }
+
+    public void ResizePencilGrid(float newCellSize)
+    {
+        float padding = pencilGrid.padding.left + pencilGrid.padding.right;
+        float spacing = pencilGrid.spacing.x * 2;
+        float bSize = (newCellSize - padding - spacing) / 3f;
+
+        pencilGrid.cellSize = new Vector2(bSize, bSize);
+    }
+
 }

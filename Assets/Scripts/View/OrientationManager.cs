@@ -59,8 +59,9 @@ public class OrientationManager : MonoBehaviour
 
         Debug.Log($"[OrientationManager] Orientation: {Screen.orientation} " +
                   $"Screen: {Screen.width}x{Screen.height}  GridSize: {gridSize:F1}");
-
-        gridBuilder.Rebuild(gridSize);
+        using (new Benchmark("Grid rebuild")){
+            gridBuilder.Rebuild(gridSize);
+        }
     }
 
     /// <summary>

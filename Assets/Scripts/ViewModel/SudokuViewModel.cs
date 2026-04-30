@@ -18,8 +18,8 @@ public class SudokuViewModel
     public BindableProperty<bool>    IsPickerOpen { get; } = new BindableProperty<bool>(false);
     public BindableProperty<bool>    IsBoardValid { get; } = new BindableProperty<bool>(true);
     public BindableProperty<bool>    IsComplete   { get; } = new BindableProperty<bool>(false);
-
-    public BindableProperty<bool>    IsEraseMode   { get; } = new BindableProperty<bool>(false);
+    public BindableProperty<bool>    IsEraseMode  { get; } = new BindableProperty<bool>(false);
+    public BindableProperty<bool>    IsPencilMode { get; } = new BindableProperty<bool>(false);
 
     /// <summary>
     /// Fires after every number entry.
@@ -43,11 +43,11 @@ public class SudokuViewModel
 
     // ── Commands ──────────────────────────────────────────────────────────────
 
-    public ICommand SelectCellCommand   { get; }
-    public ICommand EnterValueCommand   { get; }
-    public ICommand CancelPickerCommand { get; }
-
-    public ICommand SetEraseModeCommand { get; }
+    public ICommand SelectCellCommand    { get; }
+    public ICommand EnterValueCommand    { get; }
+    public ICommand CancelPickerCommand  { get; }
+    public ICommand SetEraseModeCommand  { get; }
+    public ICommand SetPencilModeCommand { get; }
 
     // ── Constructor ───────────────────────────────────────────────────────────
 
@@ -61,17 +61,19 @@ public class SudokuViewModel
             }//,
             //canExecute: _ => !IsPickerOpen.Value
         );
-
         EnterValueCommand = new RelayCommand(
             execute: param => OnEnterValue((int)param)
         );
-
         CancelPickerCommand = new RelayCommand(
             execute: _ => ClosePicker()
         );
-
         SetEraseModeCommand = new RelayCommand(
-            execute: _ => IsEraseMode.Value = !IsEraseMode.Value
+            execute: _ => IsEraseMode.Value = !IsEraseMode.Value,
+            canExecute: _ => IsPencilMode.Value == false
+        );
+        SetPencilModeCommand = new RelayCommand(
+            execute: _ => IsPencilMode.Value = !IsPencilMode.Value,
+            canExecute: _ => IsEraseMode.Value == false
         );
 
         _model.LoadStartingPuzzle();

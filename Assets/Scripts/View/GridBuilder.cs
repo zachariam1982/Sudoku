@@ -1,4 +1,6 @@
+using System.Collections.Generic;
 using UnityEngine;
+using UnityEngine.UI;
 
 /// <summary>
 /// Layout only — spawns and rebuilds the 9x9 grid on startup and rotation.
@@ -25,69 +27,87 @@ public class GridBuilder : MonoBehaviour
     [SerializeField] private float boxGap     = 10f;
     [SerializeField] private float boxPadding = 8f;
 
+    
+    // Pre-cache these to avoid repeated searching
+    private List<RectTransform> _cachedBoxes = new List<RectTransform>();
+    private SudokuCell[] _allCells = new SudokuCell[81];
+
     public void Rebuild(float gridSize)
     {
-        // ── Close picker if open ──────────────────────────────────────────
-        if (NumberPicker.Instance != null)
-            NumberPicker.Instance.Hide();
+        if (NumberPicker.Instance != null) NumberPicker.Instance.Hide();
 
-        // ── Destroy old cells ─────────────────────────────────────────────
-        foreach (Transform child in gridPanel)
-            Destroy(child.gameObject);
+        // 1. Initial Setup: Create objects ONLY if they don't exist
+        if (_cachedBoxes.Count == 0)
+        {
+            InitializeGrid();
+        }
 
-        // ── Resize and reposition GridPanel ──────────────────────────────
+        // 2. Reposition GridPanel
         gridPanel.sizeDelta = new Vector2(gridSize, gridSize);
         gridPanel.anchoredPosition = new Vector2(0f, (bottomBarHeight - topBarHeight) / 2f);
 
-        // ── Derive sizes ──────────────────────────────────────────────────
-        float boxSize  = (gridSize - 2f * boxGap)  / 3f;
-        float cellSize = (boxSize  - 2f * boxPadding - 2f * cellGap) / 3f;
+        float boxSize  = (gridSize - 2f * boxGap) / 3f;
+        float cellSize = (boxSize - 2f * boxPadding - 2f * cellGap) / 3f;
 
-        Debug.Log($"[GridBuilder] gridSize={gridSize:F1} boxSize={boxSize:F1} cellSize={cellSize:F1}");
-
-        // ── Spawn boxes and cells ─────────────────────────────────────────
-        SudokuCell[] allCells = new SudokuCell[81];
-
-        for (int boxRow = 0; boxRow < 3; boxRow++)
+        // 3. Update existing objects (No Instantiate, No Destroy)
+        for (int b = 0; b < 9; b++)
         {
-            for (int boxCol = 0; boxCol < 3; boxCol++)
+            int boxRow = b / 3;
+            int boxCol = b % 3;
+
+            RectTransform boxRT = _cachedBoxes[b];
+            boxRT.sizeDelta = new Vector2(boxSize, boxSize);
+            boxRT.anchoredPosition = new Vector2(
+                (boxCol - 1) * (boxSize + boxGap),
+                (1 - boxRow) * (boxSize + boxGap)
+            );
+
+            // Update the 9 cells inside this box
+            for (int c = 0; c < 9; c++)
             {
-                GameObject    boxGO = Instantiate(boxPrefab, gridPanel);
-                boxGO.name = $"Box_{boxRow}_{boxCol}";
-
-                RectTransform boxRT = boxGO.GetComponent<RectTransform>();
-                boxRT.sizeDelta = new Vector2(boxSize, boxSize);
-                boxRT.anchoredPosition = new Vector2(
-                    (boxCol - 1) * (boxSize + boxGap),
-                    (1 - boxRow) * (boxSize + boxGap)
+                int cellRow = c / 3;
+                int cellCol = c % 3;
+                
+                int globalIndex = (boxRow * 3 + cellRow) * 9 + (boxCol * 3 + cellCol);
+                SudokuCell cell = _allCells[globalIndex];
+                
+                RectTransform cellRT = (RectTransform)cell.transform;
+                cellRT.sizeDelta = new Vector2(cellSize, cellSize);
+                cellRT.anchoredPosition = new Vector2(
+                    (cellCol - 1) * (cellSize + cellGap),
+                    (1 - cellRow) * (cellSize + cellGap)
                 );
+                cell.ResizePencilGrid(cellSize);
 
-                for (int cellRow = 0; cellRow < 3; cellRow++)
-                {
-                    for (int cellCol = 0; cellCol < 3; cellCol++)
-                    {
-                        GameObject    cellGO = Instantiate(cellPrefab, boxGO.transform);
-                        cellGO.name = $"Cell_{cellRow}_{cellCol}";
-
-                        RectTransform cellRT = cellGO.GetComponent<RectTransform>();
-                        cellRT.sizeDelta = new Vector2(cellSize, cellSize);
-                        cellRT.anchoredPosition = new Vector2(
-                            (cellCol - 1) * (cellSize + cellGap),
-                            (1 - cellRow) * (cellSize + cellGap)
-                        );
-
-                        int index = (boxRow * 3 + cellRow) * 9 + (boxCol * 3 + cellCol);
-                        allCells[index] = cellGO.GetComponent<SudokuCell>();
-                    }
-                }
             }
         }
 
-        // ── Hand cells to SudokuGrid (binds each cell to ViewModel) ──────
-        sudokuGrid.SetCells(allCells);
+        sudokuGrid.SetCells(_allCells);
 
-        // ── Update NumberPicker layout ────────────────────────────────────
         if (NumberPicker.Instance != null)
             NumberPicker.Instance.UpdateGridBounds(gridSize, gridSize, boxGap, boxPadding, cellGap);
     }
+
+    private void InitializeGrid()
+    {
+        // Create the 9 boxes and 81 cells once and cache them
+        for (int b = 0; b < 9; b++)
+        {
+            GameObject boxGO = Instantiate(boxPrefab, gridPanel);
+            _cachedBoxes.Add(boxGO.GetComponent<RectTransform>());
+
+            for (int c = 0; c < 9; c++)
+            {
+                GameObject cellGO = Instantiate(cellPrefab, boxGO.transform);
+                int boxRow = b / 3;
+                int boxCol = b % 3;
+                int cellRow = c / 3;
+                int cellCol = c % 3;
+                
+                int index = (boxRow * 3 + cellRow) * 9 + (boxCol * 3 + cellCol);
+                _allCells[index] = cellGO.GetComponent<SudokuCell>();
+            }
+        }
+    }
+
 }

@@ -8,6 +8,8 @@ using System.Collections.Generic;
 public class SudokuViewModel
 {
     private readonly SudokuModel _model = new SudokuModel();
+    private Stack<ValueTuple<int,int,int>> replacedValueStack = new Stack<ValueTuple<int, int, int>>();
+    
 
     // ── Bindable Properties ───────────────────────────────────────────────────
 
@@ -48,6 +50,7 @@ public class SudokuViewModel
     public ICommand CancelPickerCommand  { get; }
     public ICommand SetEraseModeCommand  { get; }
     public ICommand SetPencilModeCommand { get; }
+    public ICommand UndoCommand          { get; }
 
     // ── Constructor ───────────────────────────────────────────────────────────
 
@@ -69,11 +72,18 @@ public class SudokuViewModel
         );
         SetEraseModeCommand = new RelayCommand(
             execute: _ => IsEraseMode.Value = !IsEraseMode.Value,
-            canExecute: _ => IsPencilMode.Value == false
+            canExecute: _ => IsPencilMode.Value == false && replacedValueStack.Count != 0 
         );
         SetPencilModeCommand = new RelayCommand(
             execute: _ => IsPencilMode.Value = !IsPencilMode.Value,
             canExecute: _ => IsEraseMode.Value == false
+        );
+        UndoCommand = new RelayCommand(
+            execute: param =>
+            {
+                var t = (ValueTuple<int, int, int>)param;
+                OnEnterValueForUndoOperation(t.Item1, t.Item2, t.Item3);
+            }
         );
 
         _model.LoadStartingPuzzle();
@@ -102,6 +112,7 @@ public class SudokuViewModel
 
         if (row < 0 || col < 0) return;
 
+        replacedValueStack.Push(new ValueTuple<int, int, int>(row, col, _model.GetValue(row, col)));
         _model.SetValue(row, col, value);
         PublishBoard();
 
@@ -119,6 +130,26 @@ public class SudokuViewModel
         IsComplete.Value   = _model.IsComplete() && IsBoardValid.Value;
 
         ClosePicker();
+    }
+
+    private void OnEnterValueForUndoOperation(int row, int col, int value)
+    {
+        if (row < 0 || col < 0) return;
+
+        _model.SetValue(row, col, value);
+        PublishBoard();
+
+        // Check conflict on entered cell
+        bool hasConflict = _model.HasConflict(row, col);
+
+        // Notify SudokuGrid to play entry or error animation on entered cell
+        LastEnteredCell.Value = (row, col, hasConflict);
+
+        // Recalculate ALL conflicting cells across the whole board
+        // and publish — SudokuGrid will set persistent error color on each
+        UpdateConflictingCells();
+
+        IsBoardValid.Value = _model.Validate();
     }
 
     private void ClosePicker()
@@ -162,5 +193,13 @@ public class SudokuViewModel
         IsBoardValid.Value     = true;
         IsComplete.Value       = false;
         ConflictingCells.Value = new HashSet<(int, int)>();
+    }
+    public ValueTuple<int,int,int> getPreviousValues()
+    {
+        if(this.replacedValueStack.Count == 0)
+        {
+            return new ValueTuple<int, int, int>(-1,-1,-1);
+        }
+        return this.replacedValueStack.Pop();
     }
 }

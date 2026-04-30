@@ -27,6 +27,16 @@ public class SinglePlayerBottomBar : MonoBehaviour
 
         viewModel.SetPencilModeCommand.Execute();
     }
+    public void UndoButtonPressed()
+    {
+        if(viewModel == null) return;
+
+
+        var t = viewModel.getPreviousValues();
+        if(t.Item1 == -1 || t.Item2 == -1 || t.Item3 == -1) return;
+
+        viewModel.UndoCommand.Execute(t);
+    }
 
     private void OnDestroy()
     {

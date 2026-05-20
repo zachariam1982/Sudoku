@@ -1,11 +1,11 @@
 using UnityEngine;
 
-public class SinglePlayerBottomBar : MonoBehaviour
+public class HUD : MonoBehaviour
 {
     private SudokuViewModel viewModel;
     public void Awake()
     {
-        Debug.Log("Inside SinglePlayerBottomBar");
+        Debug.Log("Inside HUD");
     }
     public void Bind(SudokuViewModel arg)
     {

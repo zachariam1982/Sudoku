@@ -1,0 +1,51 @@
+/// <summary>
+/// Validating state — all cells are filled.
+/// Does a final validation check then transitions to Win or back to Playing.
+/// This is a brief intermediary state that gives the game a moment to
+/// check the solution and play a validation animation before showing the win screen.
+/// </summary>
+public class ValidatingState : IGameState
+{
+    private readonly SudokuViewModel  _vm;
+    private readonly GameStateMachine _machine;
+
+    private float _elapsed;
+    private const float ValidationDuration = 0.8f; // seconds to show validation animation
+
+    public ValidatingState(SudokuViewModel vm, GameStateMachine machine)
+    {
+        _vm      = vm;
+        _machine = machine;
+    }
+
+    public void Enter()
+    {
+        _elapsed = 0f;
+        _vm.IsValidating.Value = true;
+    }
+
+    public void Update(float deltaTime)
+    {
+        _elapsed += deltaTime;
+
+        // Wait for validation animation to finish before transitioning
+        if (_elapsed >= ValidationDuration)
+        {
+            bool isValid = _vm.IsBoardValid.Value;
+
+            if (isValid)
+                _machine.TransitionTo(_machine.Win);
+            else
+            {
+                // Board is complete but has errors — send back to Playing
+                _vm.IsValidating.Value = false;
+                _machine.TransitionTo(_machine.Playing);
+            }
+        }
+    }
+
+    public void Exit()
+    {
+        _vm.IsValidating.Value = false;
+    }
+}

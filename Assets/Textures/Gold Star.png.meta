@@ -1,10 +1,10 @@
 fileFormatVersion: 2
-guid: 3e7ec6ee34a0d2a4696dd205aac7444f
+guid: 104680c495f9f9848984f691e63bf7cb
 TextureImporter:
   internalIDToNameTable:
   - first:
-      213: 1161201145128540330
-    second: Icons_0
+      213: -7458485683505987082
+    second: Gold Star_0
   externalObjects: {}
   serializedVersion: 13
   mipmaps:
@@ -152,89 +152,23 @@ TextureImporter:
     serializedVersion: 2
     sprites:
     - serializedVersion: 2
-      name: Icons_0
+      name: Gold Star_0
       rect:
         serializedVersion: 2
-        x: 3
-        y: 42
-        width: 208
-        height: 188
+        x: 0
+        y: 0
+        width: 1024
+        height: 1024
       alignment: 0
-      pivot: {x: 0.5, y: 0.5}
+      pivot: {x: 0, y: 0}
       border: {x: 0, y: 0, z: 0, w: 0}
       customData: 
       outline: []
       physicsShape: []
       tessellationDetail: -1
       bones: []
-      spriteID: aa8d9280a4a6d1010800000000000000
-      internalID: 1161201145128540330
-      vertices: []
-      indices: 
-      edges: []
-      weights: []
-    - serializedVersion: 2
-      name: Icons_1
-      rect:
-        serializedVersion: 2
-        x: 201
-        y: 206
-        width: 17
-        height: 15
-      alignment: 0
-      pivot: {x: 0.5, y: 0.5}
-      border: {x: 0, y: 0, z: 0, w: 0}
-      customData: 
-      outline: []
-      physicsShape: []
-      tessellationDetail: 0
-      bones: []
-      spriteID: 1330b8171bc317d4598b47958a7e4b76
-      internalID: -1327575139
-      vertices: []
-      indices: 
-      edges: []
-      weights: []
-    - serializedVersion: 2
-      name: Icons_2
-      rect:
-        serializedVersion: 2
-        x: 309
-        y: 19
-        width: 216
-        height: 229
-      alignment: 0
-      pivot: {x: 0.5, y: 0.5}
-      border: {x: 0, y: 0, z: 0, w: 0}
-      customData: 
-      outline: []
-      physicsShape: []
-      tessellationDetail: 0
-      bones: []
-      spriteID: bdde87bace91e6e4ea34b304095cef68
-      internalID: -5179467
-      vertices: []
-      indices: 
-      edges: []
-      weights: []
-    - serializedVersion: 2
-      name: Icons_3
-      rect:
-        serializedVersion: 2
-        x: 633
-        y: 1
-        width: 176
-        height: 275
-      alignment: 0
-      pivot: {x: 0.5, y: 0.5}
-      border: {x: 0, y: 0, z: 0, w: 0}
-      customData: 
-      outline: []
-      physicsShape: []
-      tessellationDetail: 0
-      bones: []
-      spriteID: 6827b486000d2ce4fa03a4c47fedc665
-      internalID: -405529998
+      spriteID: 6f10a40a9c22e7890800000000000000
+      internalID: -7458485683505987082
       vertices: []
       indices: 
       edges: []
@@ -243,7 +177,7 @@ TextureImporter:
     customData: 
     physicsShape: []
     bones: []
-    spriteID: 2a2bef8c0513b534b9412d451179f100
+    spriteID: 
     internalID: 0
     vertices: []
     indices: 
@@ -251,14 +185,9 @@ TextureImporter:
     weights: []
     secondaryTextures: []
     spriteCustomMetadata:
-      entries:
-      - key: SpriteEditor.SliceSettings
-        value: '{"sliceOnImport":false,"gridCellCount":{"x":1.0,"y":1.0},"gridSpriteSize":{"x":64.0,"y":64.0},"gridSpriteOffset":{"x":0.0,"y":0.0},"gridSpritePadding":{"x":0.0,"y":0.0},"pivot":{"x":0.5,"y":0.5},"pivotPixels":{"x":0.0,"y":0.0},"autoSlicingMethod":0,"spriteAlignment":0,"pivotUnitMode":0,"slicingType":0,"keepEmptyRects":false,"isAlternate":false}'
+      entries: []
     nameFileIdTable:
-      Icons_0: 1161201145128540330
-      Icons_1: -1327575139
-      Icons_2: -5179467
-      Icons_3: -405529998
+      Gold Star_0: -7458485683505987082
   mipmapLimitGroupName: 
   pSDRemoveMatte: 0
   userData: 

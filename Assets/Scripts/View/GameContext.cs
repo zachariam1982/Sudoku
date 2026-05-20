@@ -16,9 +16,11 @@ public class GameContext : MonoBehaviour
     {
         // Create the ViewModel (loads starting puzzle automatically)
         ViewModel = new SudokuViewModel();
-
+        
         GetComponent<SudokuGrid>()?.Bind(ViewModel);
-        GetComponentInChildren<SinglePlayerBottomBar>()?.Bind(ViewModel);
         GetComponentInChildren<NumberPicker>()?.Bind(ViewModel);
+        GetComponentInChildren<GameStateView>()?.Bind(ViewModel);
+
+        GameStateMachine.Instance.Initialise(ViewModel);
     }
 }

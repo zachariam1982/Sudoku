@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using UnityEditor;
 
 /// <summary>
 /// ViewModel for the Sudoku game.
@@ -22,12 +23,54 @@ public class SudokuViewModel
     public BindableProperty<bool>    IsComplete   { get; } = new BindableProperty<bool>(false);
     public BindableProperty<bool>    IsEraseMode  { get; } = new BindableProperty<bool>(false);
     public BindableProperty<bool>    IsPencilMode { get; } = new BindableProperty<bool>(false);
+// ── State Machine Properties ──────────────────────────────────────────────
+ 
+    /// <summary>Name of the current state — Views use this to show/hide panels.</summary>
+    public BindableProperty<string> CurrentStateName { get; } = new BindableProperty<string>("");
+ 
+    /// <summary>Timer value in seconds. PlayingState increments this every frame.</summary>
+    public BindableProperty<float>  ElapsedSeconds   { get; } = new BindableProperty<float>(0f);
 
+    public BindableProperty<int>    LivesRemaining   { get; } = new BindableProperty<int>(3);
+ 
+    /// <summary>True while the timer is running.</summary>
+    public BindableProperty<bool>   IsTimerRunning   { get; } = new BindableProperty<bool>(false);
+ 
+    /// <summary>True while game is paused.</summary>
+    public BindableProperty<bool>   IsPaused         { get; } = new BindableProperty<bool>(false);
+ 
+    /// <summary>True during the brief validation animation before win screen.</summary>
+    public BindableProperty<bool>   IsValidating     { get; } = new BindableProperty<bool>(false);
+ 
+    /// <summary>True when puzzle is won — drives win screen visibility.</summary>
+    public BindableProperty<bool>   IsWon            { get; } = new BindableProperty<bool>(false);
+ 
+    /// <summary>True when lives run out — drives lose screen visibility.</summary>
+    public BindableProperty<bool>   IsLost           { get; } = new BindableProperty<bool>(false);
+ 
+    // ── State Transition Signals ──────────────────────────────────────────────
+    // These are one-shot signals set by Views, read by States.
+    // States reset them in Exit() so they are ready for next use.
+ 
+    /// <summary>Set to true by SudokuCell on first tap — triggers Idle → Playing.</summary>
+    public BindableProperty<bool> FirstCellTapped    { get; } = new BindableProperty<bool>(false);
+ 
+    /// <summary>Set to true by pause button — triggers Playing → Paused.</summary>
+    public BindableProperty<bool> PauseRequested     { get; } = new BindableProperty<bool>(false);
+ 
+    /// <summary>Set to true by resume button — triggers Paused → Playing.</summary>
+    public BindableProperty<bool> ResumeRequested    { get; } = new BindableProperty<bool>(false);
+ 
+    /// <summary>Set to true by New Game button — triggers any state → Idle.</summary>
+    public BindableProperty<bool> NewGameRequested   { get; } = new BindableProperty<bool>(false);
+ 
+    /// <summary>Set to true by Retry button on lose screen — triggers Lose → Idle.</summary>
+    public BindableProperty<bool> RetryGameRequested { get; } = new BindableProperty<bool>(false);
     /// <summary>
     /// Fires after every number entry.
     /// Carries (row, col, hasConflict) so SudokuGrid knows which animation to play.
     /// </summary>
-    public BindableProperty<(int row, int col, bool hasConflict)> LastEnteredCell { get; }
+    public BindableProperty<(int row, int col, bool hasConflict)> LastEnteredCell { get; } 
         = new BindableProperty<(int, int, bool)>();
 
     /// <summary>
@@ -51,6 +94,13 @@ public class SudokuViewModel
     public ICommand SetEraseModeCommand  { get; }
     public ICommand SetPencilModeCommand { get; }
     public ICommand UndoCommand          { get; }
+    public ICommand PauseCommand         { get; }
+    public ICommand ResumeCommand        { get; }
+    public ICommand NewGameCommand       { get; }
+    public ICommand RetryCommand         { get; }
+    public ICommand AddLevel             { get; }
+    public ICommand IncreaseDifficulty   { get; }
+    public ICommand DecreaseDifficulty   { get; }
 
     // ── Constructor ───────────────────────────────────────────────────────────
 
@@ -85,9 +135,37 @@ public class SudokuViewModel
                 OnEnterValueForUndoOperation(t.Item1, t.Item2, t.Item3);
             }
         );
+        PauseCommand = new RelayCommand(
+            execute: _ => PauseRequested.Value = true,
+            canExecute: _ => GameStateMachine.Instance?.CurrentState
+                             is PlayingState
+        );
+ 
+        ResumeCommand = new RelayCommand(
+            execute: _ => ResumeRequested.Value = true
+        );
+ 
+        NewGameCommand = new RelayCommand(
+            execute: _ => {
+                NewGameRequested.Value = true;
+            }
+        );
+ 
+        RetryCommand = new RelayCommand(
+            execute: _ => RetryGameRequested.Value = true
+        );
 
-        _model.LoadStartingPuzzle();
-        PublishBoard();
+        AddLevel = new RelayCommand(
+            execute: _ => _model?.AddLevel((int)1)
+        );
+
+        IncreaseDifficulty = new RelayCommand(
+            execute: _ => _model?.increaseDifficulty()
+        );
+
+        DecreaseDifficulty = new RelayCommand(
+            execute: _ => _model?.decreaseDifficulty()
+        );
     }
 
     // ── Command Handlers ──────────────────────────────────────────────────────
@@ -95,6 +173,10 @@ public class SudokuViewModel
     private void OnSelectCell((int row, int col, object cellTransform) cell)
     {
         if (_model.IsGiven(cell.row, cell.col)) return;
+
+        // Signal first tap so IdleState can transition to Playing
+        if (!FirstCellTapped.Value)
+            FirstCellTapped.Value = true;
 
         SelectedRow.Value           = cell.row;
         SelectedCol.Value           = cell.col;
@@ -118,6 +200,11 @@ public class SudokuViewModel
 
         // Check conflict on entered cell
         bool hasConflict = _model.HasConflict(row, col);
+
+        if (hasConflict)
+        {
+            this.LivesRemaining.Value--;
+        }
 
         // Notify SudokuGrid to play entry or error animation on entered cell
         LastEnteredCell.Value = (row, col, hasConflict);
@@ -187,12 +274,17 @@ public class SudokuViewModel
 
     public void ResetPuzzle()
     {
-        _model.LoadStartingPuzzle();
+        this.SelectedRow.Value = -1;
+        this.SelectedCol.Value = -1;
+        replacedValueStack.Clear();
+        ConflictingCells.Value.Clear();
+        _model.LoadCurrentLevelPuzzle();
         PublishBoard();
         ClosePicker();
         IsBoardValid.Value     = true;
         IsComplete.Value       = false;
         ConflictingCells.Value = new HashSet<(int, int)>();
+        this.FirstCellTapped.Value = false;
     }
     public ValueTuple<int,int,int> getPreviousValues()
     {

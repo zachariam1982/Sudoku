@@ -31,16 +31,15 @@ public class GridBuilder : MonoBehaviour
     // Pre-cache these to avoid repeated searching
     private List<RectTransform> _cachedBoxes = new List<RectTransform>();
     private SudokuCell[] _allCells = new SudokuCell[81];
+    public void Awake()
+    {
+        InitializeGrid();
+    }
 
     public void Rebuild(float gridSize)
     {
         if (NumberPicker.Instance != null) NumberPicker.Instance.Hide();
 
-        // 1. Initial Setup: Create objects ONLY if they don't exist
-        if (_cachedBoxes.Count == 0)
-        {
-            InitializeGrid();
-        }
 
         // 2. Reposition GridPanel
         gridPanel.sizeDelta = new Vector2(gridSize, gridSize);
@@ -85,7 +84,7 @@ public class GridBuilder : MonoBehaviour
         sudokuGrid.SetCells(_allCells);
 
         if (NumberPicker.Instance != null)
-            NumberPicker.Instance.UpdateGridBounds(gridSize, gridSize, boxGap, boxPadding, cellGap);
+           NumberPicker.Instance.UpdateGridBounds(gridSize, gridSize, boxGap, boxPadding, cellGap);
     }
 
     private void InitializeGrid()

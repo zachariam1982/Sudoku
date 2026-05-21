@@ -1,6 +1,6 @@
 using System;
 using System.Collections.Generic;
-using UnityEditor;
+
 
 /// <summary>
 /// ViewModel for the Sudoku game.
@@ -285,6 +285,7 @@ public class SudokuViewModel
         IsComplete.Value       = false;
         ConflictingCells.Value = new HashSet<(int, int)>();
         this.FirstCellTapped.Value = false;
+        this.ElapsedSeconds.Value = 0f;
     }
     public ValueTuple<int,int,int> getPreviousValues()
     {

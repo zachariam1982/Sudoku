@@ -30,6 +30,9 @@ using System;
 /// </summary>
 public class GameStateView : MonoBehaviour
 {
+    [Header("TopBar Items")]
+    [SerializeField] private GameObject Lives;
+    [SerializeField] private GameObject Timer;
     [Header("HUD — always visible during play")]
     [SerializeField] private TextMeshProUGUI timerLabel;
     [SerializeField] private Image[]         lifeIcons;       // 3 heart images
@@ -91,23 +94,25 @@ public class GameStateView : MonoBehaviour
         switch (stateName)
         {
             case "IdleState":
-                if (hudPanel != null){
-                    hudPanel.SetActive(true);
-                    hudPanel.GetComponent<HUD>()?.Bind(_vm);
-                }
+                hudPanel?.SetActive(true);
+                hudPanel?.GetComponent<HUD>()?.Bind(_vm);
+                Lives?.SetActive(true);
+                Timer?.SetActive(true);
                 break;
 
             case "PlayingState":
-                if (hudPanel != null) hudPanel.SetActive(true);
+                hudPanel?.SetActive(true);
                 break;
 
             case "PausedState":
-                if (hudPanel   != null) hudPanel.SetActive(true);
-                if (pausePanel != null) pausePanel.SetActive(true);
+                hudPanel?.SetActive(true);
+                pausePanel?.SetActive(true);
                 break;
 
             case "ValidatingState":
-                if (hudPanel != null) hudPanel.SetActive(true);
+                hudPanel?.SetActive(false);
+                Lives?.SetActive(false);
+                Timer?.SetActive(false);
                 break;
 
             case "WinState":
@@ -119,10 +124,9 @@ public class GameStateView : MonoBehaviour
                 break;
 
             case "LoseState":
-                if (losePanel != null)
-                {
-                    losePanel.SetActive(true);
-                }
+                Lives?.SetActive(false);
+                Timer?.SetActive(false);
+                losePanel?.SetActive(true);
                 break;
         }
     }
@@ -142,7 +146,7 @@ public class GameStateView : MonoBehaviour
 
     private void OnLivesChanged(int lives)
     {
-        Transform container = this.transform.Find("HUD/LivesContainer");
+        Transform container = this.Lives.transform;
         if (container == null) return;
 
         for (int i = 0; i < container.childCount; i++)

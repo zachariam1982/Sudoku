@@ -182,11 +182,10 @@ public class SOSAdDialog : MonoBehaviour
         // Always stop/reset the AdManager, not just when mid-play
         AdManager.Instance?.StopAd();
         _adInProgress = false;
-
-        if (_adCompleted && _vm != null)
-            _vm.ApplySOSHint();
-
         Hide();
+
+        if (_adCompleted)
+            _vm?.ApplySOSHint();
     }
 
     private void Hide()

@@ -154,7 +154,6 @@ public class SudokuGrid : MonoBehaviour
     /// </summary>
     private void OnConflictsChanged(HashSet<(int row, int col)> conflicts)
     {
-        Debug.Log($"OnConflictsChanged — conflict count: {conflicts.Count}");
         if (!cellsReady) return;
 
         for (int row = 0; row < 9; row++)

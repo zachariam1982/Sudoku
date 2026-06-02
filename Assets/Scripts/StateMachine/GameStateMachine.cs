@@ -62,12 +62,10 @@ public class GameStateMachine : MonoBehaviour
     {
         if (_currentState != null)
         {
-            Debug.Log($"[StateMachine] Exiting: {_currentState.GetType().Name}");
             _currentState.Exit();
         }
 
         _currentState = newState;
-        Debug.Log($"[StateMachine] Entering: {_currentState.GetType().Name}");
         _currentState.Enter();
 
         // Publish current state name to ViewModel so Views can react

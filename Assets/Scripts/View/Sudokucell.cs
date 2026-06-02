@@ -194,8 +194,6 @@ public class SudokuCell : MonoBehaviour
 
     public void PlayTapAnimation()
     {
-        Debug.Log($"GameObject active: {gameObject.activeInHierarchy}, " +
-              $"Component enabled: {enabled}");
         StartCoroutine(UIAnimator.ScalePunch(transform));
     }
 

@@ -42,7 +42,6 @@ public static class UIAnimator
             elapsed += Time.deltaTime;
             float t  = Mathf.Clamp01(elapsed / phase1);
             target.localScale = Vector3.LerpUnclamped(original, original * shrink, EaseOut(t));
-            Debug.Log($"[ScalePunch] Phase 1: t={t:F2} scale={target.localScale} and {elapsed:F2}s elapsed and {phase1:F2}s phase1");
             yield return null;
         }
 

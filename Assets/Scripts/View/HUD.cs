@@ -3,10 +3,6 @@ using UnityEngine;
 public class HUD : MonoBehaviour
 {
     private SudokuViewModel viewModel;
-    public void Awake()
-    {
-        Debug.Log("Inside HUD");
-    }
     public void Bind(SudokuViewModel arg)
     {
         viewModel = arg;

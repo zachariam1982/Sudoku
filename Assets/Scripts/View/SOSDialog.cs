@@ -195,6 +195,7 @@ public class SOSAdDialog : MonoBehaviour
         StopAllCoroutines();
         StartCoroutine(FadeTo(0f, fadeOutDuration, onDone: () =>
             dialogPanel.SetActive(false)));
+        _vm.IsSOSMode.Value = false;
     }
 
     // ── Helpers ───────────────────────────────────────────────────────────────

@@ -1,5 +1,7 @@
 using System;
 using System.Collections.Generic;
+using NUnit.Framework;
+using Unity.VisualScripting;
 
 
 /// <summary>
@@ -35,6 +37,7 @@ public class SudokuViewModel
  
     /// <summary>True while the timer is running.</summary>
     public BindableProperty<bool>   IsTimerRunning   { get; } = new BindableProperty<bool>(false);
+    public BindableProperty<bool>   IsSOSMode        { get; } = new BindableProperty<bool>(false);
  
     /// <summary>True while game is paused.</summary>
     public BindableProperty<bool>   IsPaused         { get; } = new BindableProperty<bool>(false);
@@ -86,6 +89,8 @@ public class SudokuViewModel
     public BindableProperty<object> SelectedCellTransform { get; }
         = new BindableProperty<object>();
 
+    public BindableProperty<List<(int row, int col, bool isFill)>> SOSChangedCells { get; }
+        = new BindableProperty<List<(int, int, bool)>>(new List<(int, int, bool)>());
     // ── Commands ──────────────────────────────────────────────────────────────
 
     public ICommand SelectCellCommand    { get; }
@@ -93,6 +98,7 @@ public class SudokuViewModel
     public ICommand CancelPickerCommand  { get; }
     public ICommand SetEraseModeCommand  { get; }
     public ICommand SetPencilModeCommand { get; }
+    public ICommand SOSCommand           { get; }
     public ICommand UndoCommand          { get; }
     public ICommand PauseCommand         { get; }
     public ICommand ResumeCommand        { get; }
@@ -129,16 +135,22 @@ public class SudokuViewModel
             canExecute: _ => IsEraseMode.Value == false
         );
         UndoCommand = new RelayCommand(
-            execute: param =>
+            execute: _ =>
             {
-                var t = (ValueTuple<int, int, int>)param;
+                var t = getPreviousValues();
+                if(t.Item1 == -1 || t.Item2 == -1 || t.Item3 == -1) return;
                 OnEnterValueForUndoOperation(t.Item1, t.Item2, t.Item3);
-            }
+            },
+            canExecute: _ => IsPencilMode.Value == false && IsEraseMode.Value == false
+        );
+        SOSCommand = new RelayCommand(
+            execute: _ => IsSOSMode.Value = !IsSOSMode.Value,
+            canExecute: _ => IsPencilMode.Value == false && IsEraseMode.Value == false
         );
         PauseCommand = new RelayCommand(
             execute: _ => PauseRequested.Value = true,
             canExecute: _ => GameStateMachine.Instance?.CurrentState
-                             is PlayingState
+                             is PlayingState && IsEraseMode.Value == false && IsPencilMode.Value == false
         );
  
         ResumeCommand = new RelayCommand(
@@ -248,7 +260,72 @@ public class SudokuViewModel
     }
 
     // ── Helpers ───────────────────────────────────────────────────────────────
-
+    public void ApplySOSHint()
+    {
+        // Collect every cell that changes so SudokuGrid can animate them
+        var changedCells = new List<(int row, int col, bool isFill)>();
+ 
+        // ── Step 1: fix all wrong entries ─────────────────────────────────────
+        for (int row = 0; row < 9; row++)
+        {
+            for (int col = 0; col < 9; col++)
+            {
+                if (_model.IsGiven(row, col)) continue;
+ 
+                int current = _model.GetValue(row, col);
+                int correct = _model.GetSolutionValue(row, col);
+ 
+                if (current != 0 && current != correct)
+                {
+                    replacedValueStack.Push(new ValueTuple<int, int, int>(row, col, current));
+                    _model.SetValue(row, col, correct);
+ 
+                    // isFill = false → this was a correction, not a fresh fill
+                    changedCells.Add((row, col, false));
+                }
+            }
+        }
+ 
+        // ── Step 2: fill exactly one empty cell ───────────────────────────────
+        bool filledOne = false;
+        for (int row = 0; row < 9 && !filledOne; row++)
+        {
+            for (int col = 0; col < 9 && !filledOne; col++)
+            {
+                if (_model.IsGiven(row, col)) continue;
+ 
+                if (_model.IsCellEmpty(row, col))
+                {
+                    int correct = _model.GetSolutionValue(row, col);
+                    replacedValueStack.Push(new ValueTuple<int, int, int>(row, col, 0));
+                    _model.SetValue(row, col, correct);
+ 
+                    // isFill = true → this was an empty cell being filled
+                    changedCells.Add((row, col, true));
+                    filledOne = true;
+                }
+            }
+        }
+ 
+        if (changedCells.Count == 0) return;
+ 
+        // ── Step 3: publish board state then fire animation list ──────────────
+        PublishBoard();
+        UpdateConflictingCells();
+ 
+        // Fire SOSChangedCells — SudokuGrid subscribes and staggers animations
+        SOSChangedCells.Value = changedCells;
+ 
+        // ── Step 4: check for completion ──────────────────────────────────────
+        bool isValid    = _model.Validate();
+        bool isComplete = _model.IsComplete() && isValid;
+ 
+        IsBoardValid.Value = isValid;
+        IsComplete.Value   = isComplete;
+ 
+        if (isComplete)
+            GameStateMachine.Instance?.TransitionTo(GameStateMachine.Instance.Validating);
+    }
     private void PublishBoard()
     {
         BoardValues.Value = _model.Board;

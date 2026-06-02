@@ -94,7 +94,7 @@ public class GameStateView : MonoBehaviour
         switch (stateName)
         {
             case "IdleState":
-                hudPanel?.SetActive(true);
+                hudPanel?.SetActive(false);
                 hudPanel?.GetComponent<HUD>()?.Bind(_vm);
                 Lives?.SetActive(true);
                 Timer?.SetActive(true);

@@ -156,6 +156,14 @@ public class SudokuModel
     }
     public bool IsGiven(int row, int col) => GivenMask[row, col];
     public int  GetValue(int row, int col) => Board[row, col];
+    public int  GetSolutionValue(int row, int col) => ret.Solution[row, col];
+    public bool IsCellCorrect(int row, int col)
+    {
+        int current = Board[row, col];
+        if (current == 0) return true;
+        return current == ret.Solution[row, col];
+    }
+    public bool IsCellEmpty(int row, int col) => Board[row, col] == 0;
     public bool HasConflict(int row, int col)
     {
         int value = Board[row, col];

@@ -2,6 +2,8 @@ using UnityEngine;
 using UnityEngine.UI;
 using System;
 using TMPro;
+using Unity.VisualScripting;
+using System.Collections.Generic;
 
 /// <summary>
 /// View — a single Sudoku cell with animations and persistent conflict state.
@@ -30,6 +32,7 @@ public class SudokuCell : MonoBehaviour
     private bool            isDimmed   = false;
     private bool            isConflict = false;
     private Color           baseColor;
+    private HashSet<TMP_Text> btnTextInPencilMode = new HashSet<TMP_Text>();
 
     public int  Value   { get; private set; }
     public bool IsGiven { get; private set; }
@@ -72,10 +75,25 @@ public class SudokuCell : MonoBehaviour
         if(currentColor.r == 80 && currentColor.g == 80 && currentColor.b == 80)
         {
             text.color = Color.white;
+            btnTextInPencilMode.Add(text);
         }
         else
         {
             text.color = targetGrey;
+            btnTextInPencilMode.Remove(text);
+        }
+    }
+
+    private void OnStateChanged(string stateName)
+    {
+        if(stateName == "IdleState")
+        {
+            Color32 targetGrey = new Color32(80,80,80,255);
+
+            foreach(var text in btnTextInPencilMode)
+            {
+                text.color = targetGrey;
+            }
         }
     }
     // ── Binding ───────────────────────────────────────────────────────────────
@@ -85,8 +103,13 @@ public class SudokuCell : MonoBehaviour
         row       = cellRow;
         col       = cellCol;
         viewModel = vm;
+        viewModel.CurrentStateName.OnChanged += OnStateChanged;
     }
 
+    private void OnDestroy()
+    {
+        viewModel.CurrentStateName.OnChanged -= OnStateChanged;
+    }
     // ── Render ────────────────────────────────────────────────────────────────
 
     public void SetValue(int value, bool isGiven)

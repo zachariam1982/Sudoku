@@ -12,6 +12,8 @@ public class HUD : MonoBehaviour
         viewModel = arg;
 
         viewModel.IsEraseMode.OnChanged += OnEraseModeChange;
+
+        if(SOSAdDialog.Instance != null) SOSAdDialog.Instance.Bind(viewModel);
     }
 
     public void EraseButtonPressed()
@@ -27,15 +29,17 @@ public class HUD : MonoBehaviour
 
         viewModel.SetPencilModeCommand.Execute();
     }
+    public void OnSOSPressed()
+    {
+        if (viewModel == null) return;
+
+        viewModel.SOSCommand.Execute();
+    }
     public void UndoButtonPressed()
     {
         if(viewModel == null) return;
 
-
-        var t = viewModel.getPreviousValues();
-        if(t.Item1 == -1 || t.Item2 == -1 || t.Item3 == -1) return;
-
-        viewModel.UndoCommand.Execute(t);
+        viewModel.UndoCommand.Execute();
     }
 
     private void OnDestroy()

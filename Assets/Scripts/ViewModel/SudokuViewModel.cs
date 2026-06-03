@@ -18,84 +18,50 @@ public class SudokuViewModel
     public void SetDemoMode() => demoMode = true;
     public void ResetDemoMode() => demoMode = false;    
 
-    // ── Bindable Properties ───────────────────────────────────────────────────
-    public BindableProperty<bool>    HideHUD      { get; } = new BindableProperty<bool>(false);
-    public BindableProperty<int[,]>  BoardValues  { get; } = new BindableProperty<int[,]>();
-    public BindableProperty<bool[,]> GivenMask    { get; } = new BindableProperty<bool[,]>();
-    public BindableProperty<int>     SelectedRow  { get; } = new BindableProperty<int>(-1);
-    public BindableProperty<int>     SelectedCol  { get; } = new BindableProperty<int>(-1);
-    public BindableProperty<bool>    IsPickerOpen { get; } = new BindableProperty<bool>(false);
-    public BindableProperty<bool>    IsBoardValid { get; } = new BindableProperty<bool>(true);
-    public BindableProperty<bool>    IsComplete   { get; } = new BindableProperty<bool>(false);
-    public BindableProperty<bool>    IsEraseMode  { get; } = new BindableProperty<bool>(false);
-    public BindableProperty<bool>    IsPencilMode { get; } = new BindableProperty<bool>(false);
-// ── State Machine Properties ──────────────────────────────────────────────
- 
+
+    public BindableProperty<bool>    HideHUD      { get; }    = new BindableProperty<bool>(false);
+    public BindableProperty<int[,]>  BoardValues  { get; }    = new BindableProperty<int[,]>();
+    public BindableProperty<bool[,]> GivenMask    { get; }    = new BindableProperty<bool[,]>();
+    public BindableProperty<int>     SelectedRow  { get; }    = new BindableProperty<int>(-1);
+    public BindableProperty<int>     SelectedCol  { get; }    = new BindableProperty<int>(-1);
+    public BindableProperty<bool>    IsPickerOpen { get; }    = new BindableProperty<bool>(false);
+    public BindableProperty<bool>    IsBoardValid { get; }    = new BindableProperty<bool>(true);
+    public BindableProperty<bool>    IsComplete   { get; }    = new BindableProperty<bool>(false);
+    public BindableProperty<bool>    IsEraseMode  { get; }    = new BindableProperty<bool>(false);
+    public BindableProperty<bool>    IsPencilMode { get; }    = new BindableProperty<bool>(false);
     /// <summary>Name of the current state — Views use this to show/hide panels.</summary>
     public BindableProperty<string> CurrentStateName { get; } = new BindableProperty<string>("");
- 
     /// <summary>Timer value in seconds. PlayingState increments this every frame.</summary>
     public BindableProperty<float>  ElapsedSeconds   { get; } = new BindableProperty<float>(0f);
-
     public BindableProperty<int>    LivesRemaining   { get; } = new BindableProperty<int>(3);
- 
     /// <summary>True while the timer is running.</summary>
     public BindableProperty<bool>   IsTimerRunning   { get; } = new BindableProperty<bool>(false);
     public BindableProperty<bool>   IsSOSMode        { get; } = new BindableProperty<bool>(false);
- 
     /// <summary>True while game is paused.</summary>
     public BindableProperty<bool>   IsPaused         { get; } = new BindableProperty<bool>(false);
- 
     /// <summary>True during the brief validation animation before win screen.</summary>
     public BindableProperty<bool>   IsValidating     { get; } = new BindableProperty<bool>(false);
- 
     /// <summary>True when puzzle is won — drives win screen visibility.</summary>
     public BindableProperty<bool>   IsWon            { get; } = new BindableProperty<bool>(false);
- 
     /// <summary>True when lives run out — drives lose screen visibility.</summary>
     public BindableProperty<bool>   IsLost           { get; } = new BindableProperty<bool>(false);
- 
-    // ── State Transition Signals ──────────────────────────────────────────────
-    // These are one-shot signals set by Views, read by States.
-    // States reset them in Exit() so they are ready for next use.
- 
-    /// <summary>Set to true by SudokuCell on first tap — triggers Idle → Playing.</summary>
     public BindableProperty<bool> FirstCellTapped    { get; } = new BindableProperty<bool>(false);
- 
     /// <summary>Set to true by pause button — triggers Playing → Paused.</summary>
     public BindableProperty<bool> PauseRequested     { get; } = new BindableProperty<bool>(false);
- 
     /// <summary>Set to true by resume button — triggers Paused → Playing.</summary>
     public BindableProperty<bool> ResumeRequested    { get; } = new BindableProperty<bool>(false);
- 
     /// <summary>Set to true by New Game button — triggers any state → Idle.</summary>
     public BindableProperty<bool> NewGameRequested   { get; } = new BindableProperty<bool>(false);
- 
     /// <summary>Set to true by Retry button on lose screen — triggers Lose → Idle.</summary>
     public BindableProperty<bool> RetryGameRequested { get; } = new BindableProperty<bool>(false);
-    /// <summary>
-    /// Fires after every number entry.
-    /// Carries (row, col, hasConflict) so SudokuGrid knows which animation to play.
-    /// </summary>
     public BindableProperty<(int row, int col, bool hasConflict)> LastEnteredCell { get; } 
         = new BindableProperty<(int, int, bool)>();
-
-    /// <summary>
-    /// All cells currently in conflict — persists until the conflict is resolved.
-    /// SudokuGrid subscribes to keep error color visible.
-    /// </summary>
     public BindableProperty<HashSet<(int row, int col)>> ConflictingCells { get; }
         = new BindableProperty<HashSet<(int row, int col)>>(new HashSet<(int, int)>());
-
-    /// <summary>
-    /// RectTransform of selected cell carried opaquely for NumberPicker positioning.
-    /// </summary>
     public BindableProperty<object> SelectedCellTransform { get; }
         = new BindableProperty<object>();
-
     public BindableProperty<List<(int row, int col, int number)>> SOSChangedCells { get; }
         = new BindableProperty<List<(int, int, int)>>(new List<(int, int, int)>());
-    // ── Commands ──────────────────────────────────────────────────────────────
 
     public ICommand SelectCellCommand    { get; }
     public ICommand EnterValueCommand    { get; }
@@ -103,6 +69,7 @@ public class SudokuViewModel
     public ICommand SetEraseModeCommand  { get; }
     public ICommand SetPencilModeCommand { get; }
     public ICommand SOSCommand           { get; }
+    public ICommand ApplySOSCommand      { get; }
     public ICommand UndoCommand          { get; }
     public ICommand PauseCommand         { get; }
     public ICommand ResumeCommand        { get; }
@@ -111,8 +78,6 @@ public class SudokuViewModel
     public ICommand AddLevel             { get; }
     public ICommand IncreaseDifficulty   { get; }
     public ICommand DecreaseDifficulty   { get; }
-
-    // ── Constructor ───────────────────────────────────────────────────────────
 
     public SudokuViewModel()
     {
@@ -148,7 +113,14 @@ public class SudokuViewModel
             canExecute: _ => IsPencilMode.Value == false && IsEraseMode.Value == false
         );
         SOSCommand = new RelayCommand(
-            execute: _ => IsSOSMode.Value = !IsSOSMode.Value,
+            execute: _ => 
+            {
+                IsSOSMode.Value = !IsSOSMode.Value;
+            },
+            canExecute: _ => IsPencilMode.Value == false && IsEraseMode.Value == false
+        );
+        ApplySOSCommand = new RelayCommand(
+            execute: _ => ApplySOSHint(),
             canExecute: _ => IsPencilMode.Value == false && IsEraseMode.Value == false
         );
         PauseCommand = new RelayCommand(
@@ -183,9 +155,6 @@ public class SudokuViewModel
             execute: _ => _model?.decreaseDifficulty()
         );
     }
-
-    // ── Command Handlers ──────────────────────────────────────────────────────
-
     private void OnSelectCell((int row, int col, object cellTransform) cell)
     {
         if (_model.IsGiven(cell.row, cell.col)) return;
@@ -202,7 +171,6 @@ public class SudokuViewModel
             IsPickerOpen.Value          = true;
         }
     }
-
     private void OnEnterValue(int value)
     {
         int row = SelectedRow.Value;
@@ -234,7 +202,6 @@ public class SudokuViewModel
 
         ClosePicker();
     }
-
     private void OnEnterValueForUndoOperation(int row, int col, int value)
     {
         if (row < 0 || col < 0) return;
@@ -254,7 +221,6 @@ public class SudokuViewModel
 
         IsBoardValid.Value = _model.Validate();
     }
-
     private void ClosePicker()
     {
         IsPickerOpen.Value          = false;
@@ -262,9 +228,7 @@ public class SudokuViewModel
         SelectedCol.Value           = -1;
         SelectedCellTransform.Value = null;
     }
-
-    // ── Helpers ───────────────────────────────────────────────────────────────
-    public void ApplySOSHint()
+    private void ApplySOSHint()
     {
         var changedCells = new List<(int row, int col, int number)>();
  
@@ -310,11 +274,6 @@ public class SudokuViewModel
         BoardValues.Value = _model.Board;
         GivenMask.Value   = _model.GivenMask;
     }
-
-    /// <summary>
-    /// Scans every non-given cell and builds a fresh set of conflicting positions.
-    /// Publishing this fires OnConflictsChanged in SudokuGrid.
-    /// </summary>
     private void UpdateConflictingCells()
     {
         var conflicts = new HashSet<(int, int)>();
@@ -327,7 +286,6 @@ public class SudokuViewModel
 
         ConflictingCells.Value = conflicts;
     }
-
     public void ResetPuzzle()
     {
         this.SelectedRow.Value = -1;

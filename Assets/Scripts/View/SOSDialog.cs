@@ -25,7 +25,7 @@ public class SOSAdDialog : MonoBehaviour
 
     [Header("Status")]
     [SerializeField] private TextMeshProUGUI statusLabel;
-    [SerializeField] private GameObject      loadingSpinner;
+
 
     [Header("Animation")]
     [SerializeField] private float fadeInDuration  = 0.2f;
@@ -112,7 +112,6 @@ public class SOSAdDialog : MonoBehaviour
 
 
         SetStatus("Loading…");
-        SetSpinner(true);
         closeButton.gameObject.SetActive(false);
 
         if (videoArea != null && placeholderTex != null)
@@ -129,7 +128,6 @@ public class SOSAdDialog : MonoBehaviour
         if (AdManager.Instance == null)
         {
             SetStatus("Ad unavailable.");
-            SetSpinner(false);
             ShowCloseButton();
             return;
         }
@@ -145,7 +143,6 @@ public class SOSAdDialog : MonoBehaviour
         );
 
         SetStatus("");
-        SetSpinner(false);
 
         if (_progressCoroutine != null) StopCoroutine(_progressCoroutine);
         _progressCoroutine = StartCoroutine(UpdateProgress());
@@ -177,16 +174,12 @@ public class SOSAdDialog : MonoBehaviour
         s.x = ratio;
         progressBarFill.localScale = s;
     }
-
     private void SetTimerText(float current, float duration)
     {
         if (timerLabel == null) return;
         float remaining = Mathf.Max(0f, duration - current);
         timerLabel.text = $"0:{Mathf.CeilToInt(remaining):00} remaining";
     }
-
-    // ── Ad Callbacks ──────────────────────────────────────────────────────────
-
     private void OnAdCompleted()
     {
         _adInProgress = false;
@@ -198,7 +191,6 @@ public class SOSAdDialog : MonoBehaviour
         SetStatus("Done! Close to enable pencil mode.");
         ShowCloseButton();
     }
-
     private void OnAdFailed()
     {
         _adInProgress = false;
@@ -207,9 +199,6 @@ public class SOSAdDialog : MonoBehaviour
         SetStatus("Ad unavailable. Try again later.");
         ShowCloseButton();
     }
-
-    // ── Close ─────────────────────────────────────────────────────────────────
-
     private void OnClosePressed()
     {
         if (_progressCoroutine != null) StopCoroutine(_progressCoroutine);
@@ -220,11 +209,10 @@ public class SOSAdDialog : MonoBehaviour
         Hide();
 
         if (_adCompleted && _vm != null){
-            _vm.ApplySOSHint();
+            _vm.ApplySOSCommand.Execute();
             MakeChangesProvidedBySOS(_vm);
         }
     }
-
     private void Hide()
     {
         //_adDialog = false;
@@ -233,13 +221,8 @@ public class SOSAdDialog : MonoBehaviour
             dialogPanel.SetActive(false)));
         _vm.IsSOSMode.Value = false;
     }
-
-    // ── Helpers ───────────────────────────────────────────────────────────────
-
     private void ShowCloseButton()       => closeButton.gameObject.SetActive(true);
     private void SetStatus(string msg)   { if (statusLabel    != null) statusLabel.text = msg; }
-    private void SetSpinner(bool visible){ if (loadingSpinner  != null) loadingSpinner.SetActive(visible); }
-
     private IEnumerator FadeTo(float target, float duration, System.Action onDone = null)
     {
         float start = _cg.alpha, elapsed = 0f;

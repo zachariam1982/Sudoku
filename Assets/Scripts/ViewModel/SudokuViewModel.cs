@@ -1,7 +1,9 @@
 using System;
 using System.Collections.Generic;
 using NUnit.Framework;
+using Unity.Mathematics;
 using Unity.VisualScripting;
+using UnityEngine;
 
 
 /// <summary>
@@ -12,10 +14,12 @@ public class SudokuViewModel
 {
     private readonly SudokuModel _model = new SudokuModel();
     private Stack<ValueTuple<int,int,int>> replacedValueStack = new Stack<ValueTuple<int, int, int>>();
-    
+    private bool demoMode = false;
+    public void SetDemoMode() => demoMode = true;
+    public void ResetDemoMode() => demoMode = false;    
 
     // ── Bindable Properties ───────────────────────────────────────────────────
-
+    public BindableProperty<bool>    HideHUD      { get; } = new BindableProperty<bool>(false);
     public BindableProperty<int[,]>  BoardValues  { get; } = new BindableProperty<int[,]>();
     public BindableProperty<bool[,]> GivenMask    { get; } = new BindableProperty<bool[,]>();
     public BindableProperty<int>     SelectedRow  { get; } = new BindableProperty<int>(-1);
@@ -89,8 +93,8 @@ public class SudokuViewModel
     public BindableProperty<object> SelectedCellTransform { get; }
         = new BindableProperty<object>();
 
-    public BindableProperty<List<(int row, int col, bool isFill)>> SOSChangedCells { get; }
-        = new BindableProperty<List<(int, int, bool)>>(new List<(int, int, bool)>());
+    public BindableProperty<List<(int row, int col, int number)>> SOSChangedCells { get; }
+        = new BindableProperty<List<(int, int, int)>>(new List<(int, int, int)>());
     // ── Commands ──────────────────────────────────────────────────────────────
 
     public ICommand SelectCellCommand    { get; }
@@ -213,7 +217,7 @@ public class SudokuViewModel
         // Check conflict on entered cell
         bool hasConflict = _model.HasConflict(row, col);
 
-        if (hasConflict)
+        if (hasConflict && !this.demoMode)
         {
             this.LivesRemaining.Value--;
         }
@@ -262,8 +266,7 @@ public class SudokuViewModel
     // ── Helpers ───────────────────────────────────────────────────────────────
     public void ApplySOSHint()
     {
-        // Collect every cell that changes so SudokuGrid can animate them
-        var changedCells = new List<(int row, int col, bool isFill)>();
+        var changedCells = new List<(int row, int col, int number)>();
  
         // ── Step 1: fix all wrong entries ─────────────────────────────────────
         for (int row = 0; row < 9; row++)
@@ -276,55 +279,31 @@ public class SudokuViewModel
                 int correct = _model.GetSolutionValue(row, col);
  
                 if (current != 0 && current != correct)
-                {
-                    replacedValueStack.Push(new ValueTuple<int, int, int>(row, col, current));
-                    _model.SetValue(row, col, correct);
- 
-                    // isFill = false → this was a correction, not a fresh fill
-                    changedCells.Add((row, col, false));
-                }
+                    changedCells.Add((row, col, correct));
             }
         }
- 
-        // ── Step 2: fill exactly one empty cell ───────────────────────────────
-        bool filledOne = false;
-        for (int row = 0; row < 9 && !filledOne; row++)
+
+        // ── Step 2: fix one empty entry ─────────────────────────────────────
+        bool fillEmpty = false;
+        for (int row = 0; row < 9 && !fillEmpty; row++)
         {
-            for (int col = 0; col < 9 && !filledOne; col++)
+            for (int col = 0; col < 9 && !fillEmpty; col++)
             {
                 if (_model.IsGiven(row, col)) continue;
  
                 if (_model.IsCellEmpty(row, col))
                 {
                     int correct = _model.GetSolutionValue(row, col);
-                    replacedValueStack.Push(new ValueTuple<int, int, int>(row, col, 0));
-                    _model.SetValue(row, col, correct);
- 
-                    // isFill = true → this was an empty cell being filled
-                    changedCells.Add((row, col, true));
-                    filledOne = true;
+
+                    changedCells.Add((row, col, correct));
+                    fillEmpty = true;
                 }
             }
         }
  
         if (changedCells.Count == 0) return;
  
-        // ── Step 3: publish board state then fire animation list ──────────────
-        PublishBoard();
-        UpdateConflictingCells();
- 
-        // Fire SOSChangedCells — SudokuGrid subscribes and staggers animations
         SOSChangedCells.Value = changedCells;
- 
-        // ── Step 4: check for completion ──────────────────────────────────────
-        bool isValid    = _model.Validate();
-        bool isComplete = _model.IsComplete() && isValid;
- 
-        IsBoardValid.Value = isValid;
-        IsComplete.Value   = isComplete;
- 
-        if (isComplete)
-            GameStateMachine.Instance?.TransitionTo(GameStateMachine.Instance.Validating);
     }
     private void PublishBoard()
     {

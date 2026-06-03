@@ -57,8 +57,6 @@ public class OrientationManager : MonoBehaviour
     {
         float gridSize = CalculateGridSize(Screen.width, Screen.height);
 
-        Debug.Log($"[OrientationManager] Orientation: {Screen.orientation} " +
-                  $"Screen: {Screen.width}x{Screen.height}  GridSize: {gridSize:F1}");
         using (new Benchmark("Grid rebuild")){
             gridBuilder.Rebuild(gridSize);
         }

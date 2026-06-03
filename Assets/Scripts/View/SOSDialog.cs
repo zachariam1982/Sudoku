@@ -2,6 +2,10 @@ using System.Collections;
 using UnityEngine;
 using UnityEngine.UI;
 using TMPro;
+using System.Collections.Generic;
+using System;
+using TMPro.EditorUtilities;
+using System.Threading.Tasks;
 
 public class SOSAdDialog : MonoBehaviour
 {
@@ -49,10 +53,41 @@ public class SOSAdDialog : MonoBehaviour
     public void Bind(SudokuViewModel vm)
     { 
         _vm = vm;
-        _vm.IsSOSMode.OnChanged += Show;
+        _vm.IsSOSMode.OnChanged       += Show;
     }
+    private async void MakeChangesProvidedBySOS(SudokuViewModel _vm)
+    {
+        _vm.SetDemoMode();
+        _vm.HideHUD.Value = false;
+        var arglist = _vm.SOSChangedCells.Value;
+        try{
 
-    // ── Show ──────────────────────────────────────────────────────────────────
+            foreach(var entry in arglist)
+            {
+                if(_vm.BoardValues.Value[entry.row, entry.col] != 0)
+                {
+                    _vm.SelectedRow.Value = entry.row;
+                    _vm.SelectedCol.Value = entry.col;
+                    _vm.EnterValueCommand.Execute(0);
+                    await Task.Delay(1000);
+                    _vm.SelectedRow.Value = entry.row;
+                    _vm.SelectedCol.Value = entry.col;
+                    _vm.EnterValueCommand.Execute(entry.number);
+                    await Task.Delay(1000);
+                }
+                _vm.SelectedRow.Value = entry.row;
+                _vm.SelectedCol.Value = entry.col;
+                _vm.EnterValueCommand.Execute(entry.number);
+                await Task.Delay(1000);
+            }
+        }finally{
+            _vm.ResetDemoMode();
+            _vm.HideHUD.Value = true;
+            _vm.SOSChangedCells.Value.Clear();
+        }
+
+        return;
+    }
 
     public void Show(bool arg)
     {
@@ -184,8 +219,10 @@ public class SOSAdDialog : MonoBehaviour
         _adInProgress = false;
         Hide();
 
-        if (_adCompleted)
-            _vm?.ApplySOSHint();
+        if (_adCompleted && _vm != null){
+            _vm.ApplySOSHint();
+            MakeChangesProvidedBySOS(_vm);
+        }
     }
 
     private void Hide()

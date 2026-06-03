@@ -1,13 +1,17 @@
+using System;
 using UnityEngine;
 
 public class HUD : MonoBehaviour
 {
     private SudokuViewModel viewModel;
+    private Action<bool>    hideHudAction;
     public void Bind(SudokuViewModel arg)
     {
         viewModel = arg;
+        hideHudAction = (arg) => this.gameObject.SetActive(arg);
 
         viewModel.IsEraseMode.OnChanged += OnEraseModeChange;
+        viewModel.HideHUD.OnChanged     += hideHudAction;
 
         if(SOSAdDialog.Instance != null) SOSAdDialog.Instance.Bind(viewModel);
     }
@@ -43,6 +47,7 @@ public class HUD : MonoBehaviour
         if(viewModel == null) return;
 
         viewModel.IsEraseMode.OnChanged -= OnEraseModeChange;
+        viewModel.HideHUD.OnChanged     -= hideHudAction;
     }
 
     private void OnEraseModeChange(bool arg)

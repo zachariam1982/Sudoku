@@ -309,4 +309,71 @@ public class SudokuViewModel
         }
         return this.replacedValueStack.Pop();
     }
+    public SaveGameData GetSaveData()
+    {
+        var data = new SaveGameData
+        {
+            Level          = _model.CurrentLevel,
+            Difficulty     = (int)_model.CurrentDifficulty,
+            ElapsedSeconds = ElapsedSeconds.Value,
+            LivesRemaining = LivesRemaining.Value,
+        };
+
+        // Flatten the 9×9 board to a 1-D array (row-major)
+        for (int row = 0; row < 9; row++)
+            for (int col = 0; col < 9; col++)
+                data.BoardFlat[row * 9 + col] = _model.GetValue(row, col);
+
+        // Serialise undo stack — bottom-first so Load() can Push() in order
+        var stackArray = replacedValueStack.ToArray(); // ToArray() gives top-first
+        for (int i = stackArray.Length - 1; i >= 0; i--)
+        {
+            var (r, c, v) = stackArray[i];
+            data.UndoStack.Add($"{r},{c},{v}");
+        }
+
+        return data;
+    }
+    public void LoadSaveData(SaveGameData data)
+    {
+        // 1. Restore level & difficulty on the model, then regenerate the
+        //    original puzzle so GivenMask is rebuilt correctly.
+        _model.AddLevel(data.Level - _model.CurrentLevel); // bring level to saved value
+        // Clamp difficulty to saved ordinal
+        while ((int)_model.CurrentDifficulty < data.Difficulty) _model.increaseDifficulty();
+        while ((int)_model.CurrentDifficulty > data.Difficulty) _model.decreaseDifficulty();
+
+        _model.LoadCurrentLevelPuzzle(); // regenerates the solution & GivenMask
+
+        // 2. Overwrite board cells with the saved player progress
+        //    (skip given cells — they're already correct from LoadCurrentLevelPuzzle)
+        for (int row = 0; row < 9; row++)
+            for (int col = 0; col < 9; col++)
+                if (!_model.IsGiven(row, col))
+                    _model.SetValue(row, col, data.BoardFlat[row * 9 + col]);
+
+        // 3. Restore session stats
+        ElapsedSeconds.Value = data.ElapsedSeconds;
+        LivesRemaining.Value = data.LivesRemaining;
+
+        // 4. Restore undo stack (entries were saved bottom-first)
+        replacedValueStack.Clear();
+        foreach (string entry in data.UndoStack)
+        {
+            string[] parts = entry.Split(',');
+            if (parts.Length == 3 &&
+                int.TryParse(parts[0], out int r) &&
+                int.TryParse(parts[1], out int c) &&
+                int.TryParse(parts[2], out int v))
+            {
+                replacedValueStack.Push((r, c, v));
+            }
+        }
+
+        // 5. Push the board state to all bound views
+        PublishBoard();
+        UpdateConflictingCells();
+        IsBoardValid.Value = _model.Validate();
+        IsComplete.Value   = _model.IsComplete() && IsBoardValid.Value;
+    }
 }

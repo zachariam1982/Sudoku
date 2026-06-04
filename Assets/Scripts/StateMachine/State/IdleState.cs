@@ -21,7 +21,7 @@ public class IdleState : IGameState
     public void Enter()
     {
         using (new Benchmark("Creating a new Sudoku puzzle")){
-        _vm.ResetPuzzle();
+            _vm.ResetPuzzle();
         }
         _vm.LivesRemaining.Value = 3;        
         _vm.FirstCellTapped.OnChanged += OnFirstCellTapped;

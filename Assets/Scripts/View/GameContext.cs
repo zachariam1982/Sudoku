@@ -22,5 +22,9 @@ public class GameContext : MonoBehaviour
         GetComponentInChildren<GameStateView>()?.Bind(ViewModel);
 
         GameStateMachine.Instance.Initialise(ViewModel);
+        User.Instance.ViewModel = ViewModel;
+        bool resumed = User.Instance.TryLoadSave();
+        
+        if (!resumed) ViewModel.ResetPuzzle();
     }
 }

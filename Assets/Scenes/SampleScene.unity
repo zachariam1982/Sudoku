@@ -8485,6 +8485,7 @@ GameObject:
   - component: {fileID: 2027544919}
   - component: {fileID: 2027544918}
   - component: {fileID: 2027544920}
+  - component: {fileID: 2027544921}
   m_Layer: 5
   m_Name: Canvas
   m_TagString: Untagged
@@ -8693,6 +8694,18 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: b7fadcbec23395c409d0275c5ccdd2e3, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::GameStateMachine
+--- !u!114 &2027544921
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 2027544907}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 2a3037bb952b9944abf4603f2766407a, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::User
 --- !u!1 &2033075579
 GameObject:
   m_ObjectHideFlags: 0

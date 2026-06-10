@@ -1,3 +1,4 @@
+using System;
 /// <summary>
 /// Lose state — player ran out of lives.
 /// Shows the lose screen with options to retry or new game.
@@ -20,7 +21,6 @@ public class LoseState : IGameState
 
         // Tell Views to show lose screen
         _vm.IsLost.Value = true;
-
         // Subscribe to player choices
         _vm.NewGameRequested.OnChanged   += OnNewGameRequested;
         _vm.RetryGameRequested.OnChanged += OnRetryRequested;
@@ -39,6 +39,7 @@ public class LoseState : IGameState
         _vm.IsLost.Value = false;
         _vm.NewGameRequested.Value   = false;
         _vm.RetryGameRequested.Value = false;
+        _vm.ElapsedSeconds.Value = 0f;
     }
 
     private void OnNewGameRequested(bool requested)

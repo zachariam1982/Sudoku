@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using NUnit.Framework;
 using Unity.Mathematics;
 using Unity.VisualScripting;
+using Unity.VisualScripting.FullSerializer;
 using UnityEngine;
 
 
@@ -17,8 +18,9 @@ public class SudokuViewModel
     private bool demoMode = false;
     public void SetDemoMode() => demoMode = true;
     public void ResetDemoMode() => demoMode = false;    
-
-
+    public int GetLevel { get{ return _model.CurrentLevel;}}
+    public int GetDifficulty { get{ return (int)_model.CurrentDifficulty;}}
+    public ScorePenalties Penalties { get; } = new ScorePenalties(0,0,0);
     public BindableProperty<bool>    HideHUD      { get; }    = new BindableProperty<bool>(false);
     public BindableProperty<int[,]>  BoardValues  { get; }    = new BindableProperty<int[,]>();
     public BindableProperty<bool[,]> GivenMask    { get; }    = new BindableProperty<bool[,]>();
@@ -62,7 +64,8 @@ public class SudokuViewModel
         = new BindableProperty<object>();
     public BindableProperty<List<(int row, int col, int number)>> SOSChangedCells { get; }
         = new BindableProperty<List<(int, int, int)>>(new List<(int, int, int)>());
-
+    public BindableProperty<(string title, string message, string status)> ShowMessage { get;} 
+        = new BindableProperty<(string title, string message, string status)>(("","",""));
     public ICommand SelectCellCommand    { get; }
     public ICommand EnterValueCommand    { get; }
     public ICommand CancelPickerCommand  { get; }
@@ -86,8 +89,7 @@ public class SudokuViewModel
             {
                 var t = (ValueTuple<int, int, object>)param;
                 OnSelectCell((t.Item1, t.Item2, t.Item3));
-            }//,
-            //canExecute: _ => !IsPickerOpen.Value
+            }
         );
         EnterValueCommand = new RelayCommand(
             execute: param => OnEnterValue((int)param)
@@ -97,11 +99,20 @@ public class SudokuViewModel
         );
         SetEraseModeCommand = new RelayCommand(
             execute: _ => IsEraseMode.Value = !IsEraseMode.Value,
-            canExecute: _ => IsPencilMode.Value == false && replacedValueStack.Count != 0 
+            canExecute: _ => IsPencilMode.Value == false && replacedValueStack.Count != 0,
+            getMessage: new (Func<bool> fn, Action showMessage)[]
+            {
+                (() => IsPencilMode.Value == true, () => ShowMessage.Value = ("", "Pencil mode is set. Click on Pencil again to enable Erase.", "")),
+                (() => replacedValueStack.Count == 0, () => ShowMessage.Value = ("", "No number is selected before which can be brought back.", ""))
+            }
         );
         SetPencilModeCommand = new RelayCommand(
             execute: _ => IsPencilMode.Value = !IsPencilMode.Value,
-            canExecute: _ => IsEraseMode.Value == false
+            canExecute: _ => IsEraseMode.Value == false,
+            getMessage: new (Func<bool> fn, Action showMessage)[]
+            {
+                (() => IsEraseMode.Value == true, () => ShowMessage.Value = ("", "Erase mode is set. Click on Erase again to enable Pencil mode.", ""))
+            }            
         );
         UndoCommand = new RelayCommand(
             execute: _ =>
@@ -110,23 +121,37 @@ public class SudokuViewModel
                 if(t.Item1 == -1 || t.Item2 == -1 || t.Item3 == -1) return;
                 OnEnterValueForUndoOperation(t.Item1, t.Item2, t.Item3);
             },
-            canExecute: _ => IsPencilMode.Value == false && IsEraseMode.Value == false
+            canExecute: _ => IsPencilMode.Value == false && IsEraseMode.Value == false,
+            getMessage: new (Func<bool> fn, Action showMessage)[]
+                        {
+                            (() => IsPencilMode.Value == true, () => this.ShowMessage.Value = ("", "Pencil mode is set. Click on Pencil again to enable undo.", "")),
+                            (() => IsEraseMode.Value == true, () => this.ShowMessage.Value = ("", "Erase mode is set. Click on Erase again to enable undo.", ""))
+                        }
         );
         SOSCommand = new RelayCommand(
             execute: _ => 
             {
                 IsSOSMode.Value = !IsSOSMode.Value;
             },
-            canExecute: _ => IsPencilMode.Value == false && IsEraseMode.Value == false
+            canExecute: _ => IsPencilMode.Value == false && IsEraseMode.Value == false,
+            getMessage: new (Func<bool> fn, Action showMessage)[]
+            {
+                (() => IsPencilMode.Value == true, () => ShowMessage.Value = ("", "Pencil mode is set. Click on Pencil again to enable SOS.", "")),
+                (() => IsEraseMode.Value == true, () => ShowMessage.Value = ("", "Erase mode is set. Click on Erase again to enable SOS.", ""))
+            }
         );
         ApplySOSCommand = new RelayCommand(
             execute: _ => ApplySOSHint(),
-            canExecute: _ => IsPencilMode.Value == false && IsEraseMode.Value == false
+            canExecute: _ => IsPencilMode.Value == false && IsEraseMode.Value == false,
+            getMessage: new (Func<bool> fn, Action showMessage)[]
+            {
+                (() => IsPencilMode.Value == true, () => ShowMessage.Value = ("", "Pencil mode is set. Click on Pencil again to enable SOS.", "")),
+                (() => IsEraseMode.Value == true, () => ShowMessage.Value = ("", "Erase mode is set. Click on Erase again to enable SOS.", ""))
+            }
         );
         PauseCommand = new RelayCommand(
             execute: _ => PauseRequested.Value = true,
-            canExecute: _ => GameStateMachine.Instance?.CurrentState
-                             is PlayingState && IsEraseMode.Value == false && IsPencilMode.Value == false
+            canExecute: _ => GameStateMachine.Instance?.CurrentState is PlayingState && IsEraseMode.Value == false && IsPencilMode.Value == false
         );
  
         ResumeCommand = new RelayCommand(
@@ -188,6 +213,7 @@ public class SudokuViewModel
         if (hasConflict && !this.demoMode)
         {
             this.LivesRemaining.Value--;
+            this.Penalties.AddMistake();
         }
 
         // Notify SudokuGrid to play entry or error animation on entered cell
@@ -243,7 +269,10 @@ public class SudokuViewModel
                 int correct = _model.GetSolutionValue(row, col);
  
                 if (current != 0 && current != correct)
+                { 
                     changedCells.Add((row, col, correct));
+                    Penalties.AddSOSWrongCell();
+                }
             }
         }
 
@@ -260,6 +289,7 @@ public class SudokuViewModel
                     int correct = _model.GetSolutionValue(row, col);
 
                     changedCells.Add((row, col, correct));
+                    Penalties.AddSOSEmptyCell();
                     fillEmpty = true;
                 }
             }
@@ -295,6 +325,7 @@ public class SudokuViewModel
         _model.LoadCurrentLevelPuzzle();
         PublishBoard();
         ClosePicker();
+        Penalties.Reset();
         IsBoardValid.Value     = true;
         IsComplete.Value       = false;
         ConflictingCells.Value = new HashSet<(int, int)>();
@@ -311,12 +342,21 @@ public class SudokuViewModel
     }
     public SaveGameData GetSaveData()
     {
+        //Need to store how many livess are spent
+        //Need to keep things which lead to point score
         var data = new SaveGameData
         {
             Level          = _model.CurrentLevel,
             Difficulty     = (int)_model.CurrentDifficulty,
             ElapsedSeconds = ElapsedSeconds.Value,
             LivesRemaining = LivesRemaining.Value,
+            IsWon          = IsWon.Value,
+            IsLost         = IsLost.Value,
+            PauseRequested = PauseRequested.Value,
+            statename      = CurrentStateName.Value,
+            Mistakes       = Penalties.Mistakes,
+            SOSEmptyCells  = Penalties.SOSEmptyCells,
+            SOSWrongCells  = Penalties.SOSWrongCells
         };
 
         // Flatten the 9×9 board to a 1-D array (row-major)
@@ -372,8 +412,36 @@ public class SudokuViewModel
 
         // 5. Push the board state to all bound views
         PublishBoard();
+        IsBoardValid.Value      = _model.Validate();
+        IsComplete.Value        = _model.IsComplete() && IsBoardValid.Value;
+        IsWon.Value             = data.IsWon;
+        IsLost.Value            = data.IsLost;
+        PauseRequested.Value    = data.PauseRequested;
+        Penalties.Mistakes      = data.Mistakes;
+        Penalties.SOSEmptyCells = data.SOSEmptyCells;
+        Penalties.SOSWrongCells = data.SOSWrongCells;
         UpdateConflictingCells();
-        IsBoardValid.Value = _model.Validate();
-        IsComplete.Value   = _model.IsComplete() && IsBoardValid.Value;
+        
+        switch (data.statename)
+        {
+            case "IdleState":
+                GameStateMachine.Instance.TransitionTo(GameStateMachine.Instance.Idle);
+                break;
+            case "PlayingState":
+                GameStateMachine.Instance.TransitionTo(GameStateMachine.Instance.Playing);
+                break;
+            case "PausedState":
+                GameStateMachine.Instance.TransitionTo(GameStateMachine.Instance.Paused);
+                break;
+            case "ValidatingState":
+                GameStateMachine.Instance.TransitionTo(GameStateMachine.Instance.Validating);
+                break;
+            case "WinState":
+                GameStateMachine.Instance.TransitionTo(GameStateMachine.Instance.Win);
+                break;
+            case "LoseState":
+                GameStateMachine.Instance.TransitionTo(GameStateMachine.Instance.Lose);
+                break;
+        }
     }
 }

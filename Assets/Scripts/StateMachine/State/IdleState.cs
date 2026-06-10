@@ -36,8 +36,6 @@ public class IdleState : IGameState
     {
         _vm.FirstCellTapped.OnChanged -= OnFirstCellTapped;
         _vm.FirstCellTapped.Value = false;
-        // Reset all game tracking values for a fresh puzzle
-        _vm.ElapsedSeconds.Value = 0f;
     }
 
     private void OnFirstCellTapped(bool tapped)

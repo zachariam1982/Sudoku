@@ -1,3 +1,4 @@
+using System;
 using System.Collections.Generic;
 
 /// <summary>
@@ -31,6 +32,7 @@ public class PlayingState : IGameState
         _vm.LastEnteredCell.OnChanged += OnCellValueEntered;
         _vm.IsComplete.OnChanged      += OnBoardComplete;
         _vm.PauseRequested.OnChanged  += OnPauseRequested;
+
     }
 
     public void Update(float deltaTime)
@@ -55,8 +57,19 @@ public class PlayingState : IGameState
     {
         if (!entry.hasConflict) return;
 
-        if (_vm.LivesRemaining.Value <= 0)
+        if (_vm.LivesRemaining.Value <= 0){
+            GameDatabase.Insert(new GameRecord
+            {
+                Level          = _vm.GetLevel /* expose _model.CurrentLevel via a property */,
+                Difficulty     = _vm.GetDifficulty,
+                ElapsedSeconds = _vm.ElapsedSeconds.Value,
+                LivesRemaining = _vm.LivesRemaining.Value,
+                IsWon          = false,
+                Points         = 0,
+                CompletedAt    = DateTime.Now.ToString("o"),
+            });
             _machine.TransitionTo(_machine.Lose);
+        }
     }
 
     private void OnBoardComplete(bool isComplete)

@@ -26,4 +26,13 @@ public class SaveGameData
     /// Bottom of stack = index 0, top = last element.
     /// </summary>
     public List<string> UndoStack = new List<string>();
+    public bool IsWon = false;
+    public bool IsLost = false;
+    public bool PauseRequested = false;
+    public string statename    = "";
+    // ── Penalties Stat ────────────────────────────────────────────────────────────
+    public int Mistakes = 0;
+    public int SOSEmptyCells = 0; // empty cells SOS filled
+    public int SOSWrongCells = 0; // wrong cells SOS fixed
+
 }

@@ -1,10 +1,7 @@
-/// <summary>
-/// Pure data model for a Sudoku puzzle.
-/// No Unity dependencies.
-/// </summary>
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using UnityEngine;
 
 public enum SudokuDifficulty
 {   
@@ -23,12 +20,116 @@ public class SudokuResult
     public int[,] Puzzle;   // The grid with holes (0 represents empty)
     public int[,] Solution; // The completed grid
 }
+public static class ScoringSystem
+{
+    // ── Penalty constants ─────────────────────────────────────────────────────
+    public const int PenaltyPerMistake        =  5;  // wrong manual entry (conflict)
+    public const int PenaltySOSFillsEmpty     = 10;  // SOS filled a blank cell
+    public const int PenaltySOSFixesWrong     = 15;  // SOS corrected a wrong entry
+ 
+    // ── Par times (seconds) ───────────────────────────────────────────────────
+    private static readonly int[] ParSeconds =
+    {
+         60,  // Infant    (~1 min)
+        120,  // Beginner  (~2 min)
+        180,  // Easy      (~3 min)
+        240,  // Novice    (~4 min)
+        360,  // Moderate  (~6 min)
+        480,  // Advanced  (~8 min)
+        600,  // Hard      (~10 min)
+        780,  // Expert    (~13 min)
+        960,  // Hardest   (~16 min)
+    };
+ 
+    private static int DifficultyScore(SudokuDifficulty difficulty)
+    {
+        int ordinal = (int)difficulty;
+        return Mathf.RoundToInt((ordinal + 1) / 9f * 100f);
+    }
+
+    private const float DecayRate = 0.002f;
+ 
+    private static int TimeScore(SudokuDifficulty difficulty, float elapsedSeconds)
+    {
+        int par = ParSeconds[(int)difficulty];
+        if (elapsedSeconds <= par) return 100;
+        float overtime = elapsedSeconds - par;
+        return Mathf.Max(0, Mathf.RoundToInt(100f * Mathf.Exp(-DecayRate * overtime)));
+    }
+ 
+    // ── Public API ────────────────────────────────────────────────────────────
+ 
+    /// <summary>Returns final score out of 200, floored at 0.</summary>
+    public static int Calculate(
+        SudokuDifficulty difficulty,
+        float            elapsedSeconds,
+        ScorePenalties   penalties)
+    {
+        var (total, _, _, _) = CalculateDetailed(difficulty, elapsedSeconds, penalties);
+        return total;
+    }
+ 
+    /// <summary>
+    /// Returns a full breakdown: total, difficulty pts, time pts, total penalty.
+    /// Total is floored at 0.
+    /// </summary>
+    public static (int total, int diffScore, int timeScore, int penalty) CalculateDetailed(
+        SudokuDifficulty difficulty,
+        float            elapsedSeconds,
+        ScorePenalties   penalties)
+    {
+        int diff    = DifficultyScore(difficulty);
+        int time    = TimeScore(difficulty, elapsedSeconds);
+        int pen     = penalties.TotalPenalty();
+        int total   = Mathf.Max(0, diff + time - pen);
+ 
+        return (total, diff, time, pen);
+    }
+ 
+    /// <summary>Letter grade based on final score out of 200.</summary>
+    public static string Grade(int totalScore) => totalScore switch
+    {
+        >= 180 => "S",
+        >= 160 => "A",
+        >= 130 => "B",
+        >= 100 => "C",
+        >=  70 => "D",
+        _      => "F",
+    };
+}
+
+public class ScorePenalties
+{
+    public int Mistakes      { get; set; } // wrong manual entries
+    public int SOSEmptyCells { get; set; } // empty cells SOS filled
+    public int SOSWrongCells { get; set; } // wrong cells SOS fixed
+
+    public ScorePenalties(int arg1, int arg2, int arg3)
+    {
+        Mistakes = arg1;
+        SOSEmptyCells = arg2;
+        SOSWrongCells = arg3;
+    }
+    public void AddMistake()       => Mistakes++;
+    public void AddSOSEmptyCell()  => SOSEmptyCells++;
+    public void AddSOSWrongCell()  => SOSWrongCells++;
+ 
+    public int TotalPenalty() =>
+        Mistakes      * ScoringSystem.PenaltyPerMistake    +
+        SOSEmptyCells * ScoringSystem.PenaltySOSFillsEmpty +
+        SOSWrongCells * ScoringSystem.PenaltySOSFixesWrong;
+ 
+    public void Reset()
+    {
+        Mistakes = SOSEmptyCells = SOSWrongCells = 0;
+    }
+}
 public static class SudokuGenerator
 {
     public static SudokuResult GenerateSudoku(int level, SudokuDifficulty difficulty)
     {
         // 1. Initialize Seeded Random
-        Random rng = new Random(level);
+        System.Random rng = new System.Random(level);
 
         int[,] solution = new int[9, 9];
         FillBoard(solution, rng);
@@ -52,8 +153,8 @@ public static class SudokuGenerator
         };
 
         // 3. Dig holes in the puzzle
-        int holesToRemove = 81 - targetClues;
-        while (holesToRemove > 0)
+        int holesToMake = 81 - targetClues;
+        while (holesToMake > 0)
         {
             int row = rng.Next(0, 9);
             int col = rng.Next(0, 9);
@@ -61,7 +162,7 @@ public static class SudokuGenerator
             if (puzzle[row, col] != 0)
             {
                 puzzle[row, col] = 0;
-                holesToRemove--;
+                holesToMake--;
             }
         }
 
@@ -72,7 +173,7 @@ public static class SudokuGenerator
         };
     }
 
-    private static bool FillBoard(int[,] board, Random rng)
+    private static bool FillBoard(int[,] board, System.Random rng)
     {
         for (int row = 0; row < 9; row++)
         {
@@ -128,14 +229,8 @@ public class SudokuModel
     {
         _currentLevel = _currentLevel + increment;
     }
-    public void increaseDifficulty()
-    {
-        _currentDifficulty = (SudokuDifficulty)Math.Min((int)SudokuDifficulty.Hardest, (int)_currentDifficulty + 1);
-    }
-    public void decreaseDifficulty()
-    {
-        _currentDifficulty = (SudokuDifficulty)Math.Max((int)SudokuDifficulty.Infant, (int)_currentDifficulty - 1);
-    }
+    public void increaseDifficulty() => _currentDifficulty = (SudokuDifficulty)Math.Min((int)SudokuDifficulty.Hardest, (int)_currentDifficulty + 1);
+    public void decreaseDifficulty() => _currentDifficulty = (SudokuDifficulty)Math.Max((int)SudokuDifficulty.Infant, (int)_currentDifficulty - 1);
     public void LoadCurrentLevelPuzzle()
     {
         this.ret = SudokuGenerator.GenerateSudoku(_currentLevel, _currentDifficulty);

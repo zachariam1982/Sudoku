@@ -18,13 +18,12 @@ public class GameContext : MonoBehaviour
         ViewModel = new SudokuViewModel();
         
         GetComponent<SudokuGrid>()?.Bind(ViewModel);
+        GetComponent<ErrorMessage>()?.Bind(ViewModel);
         GetComponentInChildren<NumberPicker>()?.Bind(ViewModel);
         GetComponentInChildren<GameStateView>()?.Bind(ViewModel);
 
-        GameStateMachine.Instance.Initialise(ViewModel);
         User.Instance.ViewModel = ViewModel;
-        bool resumed = User.Instance.TryLoadSave();
-        
-        if (!resumed) ViewModel.ResetPuzzle();
+        GameStateMachine.Instance.Initialise(ViewModel);
+        User.Instance.TryLoadSave();
     }
 }

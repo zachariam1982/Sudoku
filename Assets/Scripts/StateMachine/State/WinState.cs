@@ -1,3 +1,4 @@
+using System;
 /// <summary>
 /// Win state — puzzle solved correctly.
 /// Calculates star rating based on time and mistakes, then shows win screen.
@@ -23,9 +24,6 @@ public class WinState : IGameState
 
     public void Enter()
     {
-        // Calculate star rating
-        int stars = CalculateStars();
-
         // Stop the timer
         _vm.IsTimerRunning.Value = false;
 
@@ -46,25 +44,7 @@ public class WinState : IGameState
         _vm.IsWon.Value = false;
         _vm.NewGameRequested.Value = false;
         _vm.NewGameRequested.OnChanged -= OnNewGameRequested;
-    }
-
-    // ── Star Calculation ──────────────────────────────────────────────────────
-
-    private int CalculateStars()
-    {
-        int    lives = _vm.LivesRemaining.Value;
-        float  time     = _vm.ElapsedSeconds.Value;
-
-        // 1 mistake or less AND fast time = 3 stars
-        if (lives >= 1 && time <= TargetTimeSeconds)
-            return 3;
-
-        // Barely survived with all 3 mistakes = 1 star
-        if (lives >= 0)
-            return 1;
-
-        // Everything else = 2 stars
-        return 2;
+        _vm.ElapsedSeconds.Value = 0f;
     }
 
     private void OnNewGameRequested(bool requested)

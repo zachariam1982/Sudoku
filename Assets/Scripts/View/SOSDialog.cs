@@ -10,7 +10,8 @@ using System.Threading.Tasks;
 public class SOSAdDialog : MonoBehaviour
 {
     public static SOSAdDialog Instance { get; private set; }
-    private GameObject dialogPanel;
+    [Header("Main AD Dialog")]
+    [SerializeField] private GameObject      dialogPanel;
 
     [Header("Video Display")]
     [SerializeField] private RawImage        videoArea;
@@ -39,13 +40,11 @@ public class SOSAdDialog : MonoBehaviour
     void Awake()
     {
         Instance = this;
-        dialogPanel = this.gameObject;
 
         _cg = dialogPanel.GetComponent<CanvasGroup>();
         if (_cg == null) _cg = dialogPanel.AddComponent<CanvasGroup>();
 
         dialogPanel.SetActive(false);
-
         closeButton.onClick.AddListener(OnClosePressed);
         closeButton.gameObject.SetActive(false);
     }
@@ -55,7 +54,7 @@ public class SOSAdDialog : MonoBehaviour
         _vm = vm;
         _vm.IsSOSMode.OnChanged       += Show;
     }
-    private async void MakeChangesProvidedBySOS(SudokuViewModel _vm)
+    public async void MakeChangesProvidedBySOS(SudokuViewModel _vm)
     {
         _vm.SetDemoMode();
         _vm.HideHUD.Value = false;
@@ -120,9 +119,6 @@ public class SOSAdDialog : MonoBehaviour
         SetProgressFill(0f);
         SetTimerText(0f, 0f);
     }
-
-    // ── Ad Playback ───────────────────────────────────────────────────────────
-
     private void StartAd()
     {
         if (AdManager.Instance == null)
@@ -147,8 +143,6 @@ public class SOSAdDialog : MonoBehaviour
         if (_progressCoroutine != null) StopCoroutine(_progressCoroutine);
         _progressCoroutine = StartCoroutine(UpdateProgress());
     }
-
-    // ── Progress ──────────────────────────────────────────────────────────────
 
     private IEnumerator UpdateProgress()
     {

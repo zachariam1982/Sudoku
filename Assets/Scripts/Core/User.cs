@@ -18,6 +18,7 @@ public class User : MonoBehaviour
         Instance = this;
         DontDestroyOnLoad(gameObject);  // survive scene reloads
  
+        GameDatabase.Init(); 
         StartCoroutine(SaveLoop());
     }
     public bool TryLoadSave()
@@ -28,7 +29,7 @@ public class User : MonoBehaviour
         if (data == null) return false;
  
         ViewModel?.LoadSaveData(data);
-        Debug.Log("[User] Previous game state restored.");
+        //ViewModel?.ResetPuzzle();
         return true;
     }
     private IEnumerator SaveLoop()

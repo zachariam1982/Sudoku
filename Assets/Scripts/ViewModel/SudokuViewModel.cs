@@ -420,7 +420,6 @@ public class SudokuViewModel
         Penalties.Mistakes      = data.Mistakes;
         Penalties.SOSEmptyCells = data.SOSEmptyCells;
         Penalties.SOSWrongCells = data.SOSWrongCells;
-        UpdateConflictingCells();
         
         switch (data.statename)
         {
@@ -429,6 +428,7 @@ public class SudokuViewModel
                 break;
             case "PlayingState":
                 GameStateMachine.Instance.TransitionTo(GameStateMachine.Instance.Playing);
+                UpdateConflictingCells();
                 break;
             case "PausedState":
                 GameStateMachine.Instance.TransitionTo(GameStateMachine.Instance.Paused);

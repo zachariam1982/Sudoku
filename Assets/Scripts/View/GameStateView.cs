@@ -45,7 +45,7 @@ public class GameStateView : MonoBehaviour
     [Header("Win Panel")]
     [SerializeField] private GameObject      winPanel;
     [SerializeField] private TextMeshProUGUI winTimeLabel;
-    [SerializeField] private TextMeshProUGUI winMistakesLabel;
+    [SerializeField] private TextMeshProUGUI winPointsLabel;
 
     [Header("Lose Panel")]
     [SerializeField] private GameObject      losePanel;
@@ -168,7 +168,18 @@ public class GameStateView : MonoBehaviour
     {
         if (overlay != null) overlay.SetActive(isWon);
         if (winPanel != null) winPanel.SetActive(isWon);
-        if (isWon) UpdateWinPanel();
+        if(isWon == false) return;
+        if (winTimeLabel != null)
+        {
+            int minutes = (int)(_vm.ElapsedSeconds.Value / 60f);
+            int secs    = (int)(_vm.ElapsedSeconds.Value % 60f);
+            winTimeLabel.text = $"{minutes:00}:{secs:00}";
+        }
+        if (winPointsLabel != null)
+        {
+            var total = ScoringSystem.Calculate( (SudokuDifficulty)_vm.GetDifficulty, _vm.ElapsedSeconds.Value, _vm.Penalties);
+            winPointsLabel.text = $"Points: {total}/200";
+        }
     }
 
     private void OnLostChanged(bool isLost)
@@ -184,12 +195,7 @@ public class GameStateView : MonoBehaviour
 
     private void UpdateWinPanel()
     {
-        if (winTimeLabel != null)
-        {
-            int minutes = (int)(_vm.ElapsedSeconds.Value / 60f);
-            int secs    = (int)(_vm.ElapsedSeconds.Value % 60f);
-            winTimeLabel.text = $"Time: {minutes:00}:{secs:00}";
-        }
+
     }
 
     public void OnNewGamePressed() 

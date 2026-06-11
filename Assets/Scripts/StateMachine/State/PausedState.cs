@@ -15,6 +15,8 @@ public class PausedState : IGameState
 
     public void Enter()
     {
+        // Tell the View the game is paused so it can dim the board
+        _vm.IsPaused.Value = true;
         _vm.ResumeRequested.OnChanged += OnResumeRequested;
     }
 
@@ -26,6 +28,7 @@ public class PausedState : IGameState
     public void Exit()
     {
         _vm.ResumeRequested.OnChanged -= OnResumeRequested;
+        _vm.IsPaused.Value = false;
         _vm.PauseRequested.Value  = false;
         _vm.ResumeRequested.Value = false;
     }

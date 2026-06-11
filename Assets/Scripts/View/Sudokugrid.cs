@@ -177,7 +177,10 @@ public class SudokuGrid : MonoBehaviour
         cellsReady = true;
 
         if (viewModel != null)
+        {
             OnBoardChanged<int[,]>(null);
+            OnConflictsChanged(viewModel.ConflictingCells.Value);
+        }
     }
 
     public void SaveCurrentState() { }

@@ -33,8 +33,19 @@ public class ValidatingState : IGameState
         {
             bool isValid = _vm.IsBoardValid.Value;
 
-            if (isValid)
+            if (isValid){
+                GameDatabase.Insert(new GameRecord
+                {
+                    Level          = _vm.GetLevel /* expose _model.CurrentLevel via a property */,
+                    Difficulty     = _vm.GetDifficulty,
+                    ElapsedSeconds = _vm.ElapsedSeconds.Value,
+                    LivesRemaining = _vm.LivesRemaining.Value,
+                    IsWon          = true,
+                    Points         = ScoringSystem.Calculate( (SudokuDifficulty)_vm.GetDifficulty, _vm.ElapsedSeconds.Value, _vm.Penalties),
+                    CompletedAt    = System.DateTime.Now.ToString("o"),
+                });
                 _machine.TransitionTo(_machine.Win);
+            }
             else
             {
                 // Board is complete but has errors — send back to Playing

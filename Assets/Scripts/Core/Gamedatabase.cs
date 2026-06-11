@@ -37,6 +37,7 @@ public static class GameDatabase
     {
         try
         {
+            Debug.Log($"DB stored at {DbPath}");
             _db = new SQLiteConnection(DbPath);
             _db.CreateTable<GameRecord>();
             Debug.Log($"[GameDatabase] Initialised at {DbPath}");

@@ -15,33 +15,11 @@ public class HUD : MonoBehaviour
 
         if(SOSAdDialog.Instance != null) SOSAdDialog.Instance.Bind(viewModel);
     }
-
-    public void EraseButtonPressed()
-    {
-        if(viewModel == null) return;
-
-        viewModel.SetEraseModeCommand.Execute();
-    }
-
-    public void PencilButtonPressed()
-    {
-        if(viewModel == null) return;
-
-        viewModel.SetPencilModeCommand.Execute();
-    }
-    public void OnSOSPressed()
-    {
-        if (viewModel == null) return;
-
-        viewModel.SOSCommand.Execute();
-    }
-    public void UndoButtonPressed()
-    {
-        if(viewModel == null) return;
-
-        viewModel.UndoCommand.Execute();
-    }
-
+    public void EraseButtonPressed() => viewModel?.SetEraseModeCommand.Execute();
+    public void PencilButtonPressed() => viewModel?.SetPencilModeCommand.Execute();
+    public void OnSOSPressed() => viewModel?.SOSCommand.Execute();
+    public void UndoButtonPressed() => viewModel?.UndoCommand.Execute();
+    public void PauseButtonPressed() => viewModel?.PauseCommand.Execute();
     private void OnDestroy()
     {
         if(viewModel == null) return;

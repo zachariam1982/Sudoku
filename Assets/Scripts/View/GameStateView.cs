@@ -67,9 +67,7 @@ public class GameStateView : MonoBehaviour
         vm.LivesRemaining.OnChanged   += OnLivesChanged;
         vm.IsWon.OnChanged            += OnWonChanged;
         vm.IsLost.OnChanged           += OnLostChanged;
-        vm.IsPaused.OnChanged         += OnPausedChanged;
 
-        // Start with all panels hidden
         SetAllPanelsHidden();
     }
 
@@ -82,7 +80,6 @@ public class GameStateView : MonoBehaviour
         _vm.LivesRemaining.OnChanged   -= OnLivesChanged;
         _vm.IsWon.OnChanged            -= OnWonChanged;
         _vm.IsLost.OnChanged           -= OnLostChanged;
-        _vm.IsPaused.OnChanged         -= OnPausedChanged;
     }
 
     // ── State Change Handlers ─────────────────────────────────────────────────
@@ -105,8 +102,9 @@ public class GameStateView : MonoBehaviour
                 break;
 
             case "PausedState":
-                hudPanel?.SetActive(true);
-                pausePanel?.SetActive(true);
+                pausePanel?.SetActive(true);                
+                Button btn = this.pausePanel.GetComponentInChildren<Button>();
+                btn.onClick.AddListener(OnPlayPressed);
                 break;
 
             case "ValidatingState":
@@ -188,11 +186,6 @@ public class GameStateView : MonoBehaviour
         if (losePanel != null) losePanel.SetActive(isLost);
     }
 
-    private void OnPausedChanged(bool isPaused)
-    {
-        if (pausePanel != null) pausePanel.SetActive(isPaused);
-    }
-
     private void UpdateWinPanel()
     {
 
@@ -212,9 +205,10 @@ public class GameStateView : MonoBehaviour
         overlay?.SetActive(false);
         _vm?.RetryCommand.Execute();
     }
-    public void OnPausePressed()
-    { 
-        _vm?.PauseCommand.Execute();
+    public void OnPlayPressed()
+    {
+         pausePanel.SetActive(false);
+        _vm?.ResumeCommand.Execute();
     }
     public void OnResumePressed()   => _vm?.ResumeCommand.Execute();
 

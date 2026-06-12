@@ -150,7 +150,7 @@ public class SudokuViewModel
             }
         );
         PauseCommand = new RelayCommand(
-            execute: _ => PauseRequested.Value = true,
+            execute: _ => PauseRequested.Value = !PauseRequested.Value,
             canExecute: _ => GameStateMachine.Instance?.CurrentState is PlayingState && IsEraseMode.Value == false && IsPencilMode.Value == false
         );
  

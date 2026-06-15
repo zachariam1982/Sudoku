@@ -23,9 +23,9 @@ public class SudokuResult
 public static class ScoringSystem
 {
     // ── Penalty constants ─────────────────────────────────────────────────────
-    public const int PenaltyPerMistake        =  5;  // wrong manual entry (conflict)
-    public const int PenaltySOSFillsEmpty     = 10;  // SOS filled a blank cell
-    public const int PenaltySOSFixesWrong     = 15;  // SOS corrected a wrong entry
+    public const int PenaltyPerMistake        = 2;  // wrong manual entry (conflict)
+    public const int PenaltySOSFillsEmpty     = 7;  // SOS filled a blank cell
+    public const int PenaltySOSFixesWrong     = 9;  // SOS corrected a wrong entry
  
     // ── Par times (seconds) ───────────────────────────────────────────────────
     private static readonly int[] ParSeconds =
@@ -59,6 +59,7 @@ public static class ScoringSystem
  
     // ── Public API ────────────────────────────────────────────────────────────
  
+    public static int GetAbsoluteMaximumScore(SudokuDifficulty difficulty) => 100 + DifficultyScore(difficulty);
     /// <summary>Returns final score out of 200, floored at 0.</summary>
     public static int Calculate(
         SudokuDifficulty difficulty,
@@ -89,7 +90,7 @@ public static class ScoringSystem
     /// <summary>Letter grade based on final score out of 200.</summary>
     public static string Grade(int totalScore) => totalScore switch
     {
-        >= 180 => "S",
+        >= 180 => "A+",
         >= 160 => "A",
         >= 130 => "B",
         >= 100 => "C",
@@ -225,12 +226,64 @@ public class SudokuModel
 
     public SudokuDifficulty CurrentDifficulty { get { return _currentDifficulty; }}
     public int CurrentLevel { get {return _currentLevel;}}
-    public void AddLevel(int increment)
+    public void AddLevel(int increment) => _currentLevel = _currentLevel + increment;
+    public void SetDifficulty(SudokuDifficulty difficulty) => _currentDifficulty = difficulty;
+    public void increaseDifficulty() 
     {
-        _currentLevel = _currentLevel + increment;
+        var lst = GameDatabase.GetLastNRecordByDate(3);
+        if (lst == null || lst.Count < 3) return;
+
+        if (lst[0].Difficulty == lst[1].Difficulty && lst[1].Difficulty == lst[2].Difficulty) 
+        {
+            float efficiencySum = 0f;
+            SudokuDifficulty matchDifficulty = (SudokuDifficulty)lst[0].Difficulty;
+            int maxScore = ScoringSystem.GetAbsoluteMaximumScore(matchDifficulty);
+
+            if (maxScore == 0)
+
+            foreach (var entry in lst)
+            {
+                efficiencySum += ((float)entry.Points / maxScore);
+            }
+
+            float finalEfficiency = efficiencySum / 3f;
+
+            if (finalEfficiency > 0.89f)
+            {
+                var prev = _currentDifficulty;
+                _currentDifficulty = (SudokuDifficulty)Math.Min((int)SudokuDifficulty.Hardest, (int)_currentDifficulty + 1);
+                Debug.Log($"CONGRATS!!!! Moving to next tier. Current Difficulty: {prev} promoting to {_currentDifficulty}");
+            }
+        }
     }
-    public void increaseDifficulty() => _currentDifficulty = (SudokuDifficulty)Math.Min((int)SudokuDifficulty.Hardest, (int)_currentDifficulty + 1);
-    public void decreaseDifficulty() => _currentDifficulty = (SudokuDifficulty)Math.Max((int)SudokuDifficulty.Infant, (int)_currentDifficulty - 1);
+    public void decreaseDifficulty()
+    {
+        var lst = GameDatabase.GetLastNRecordByDate(3);
+        if (lst == null || lst.Count < 3) return;
+
+        if (lst[0].Difficulty == lst[1].Difficulty && lst[1].Difficulty == lst[2].Difficulty) 
+        {
+            float efficiencySum = 0f;
+            SudokuDifficulty matchDifficulty = (SudokuDifficulty)lst[0].Difficulty;
+            int maxScore = ScoringSystem.GetAbsoluteMaximumScore(matchDifficulty);
+
+            if (maxScore == 0) return;
+
+            foreach (var entry in lst)
+            {
+                efficiencySum += ((float)entry.Points / maxScore);
+            }
+
+            float finalEfficiency = efficiencySum / 3f;
+
+            if (finalEfficiency < 0.55f)
+            {
+                var prev = _currentDifficulty;
+                _currentDifficulty = (SudokuDifficulty)Math.Max((int)SudokuDifficulty.Infant, (int)_currentDifficulty - 1);
+                Debug.Log($"Moving to below tier. Current Difficulty: {prev} demoting to {_currentDifficulty}");
+            }
+        }
+    }
     public void LoadCurrentLevelPuzzle()
     {
         this.ret = SudokuGenerator.GenerateSudoku(_currentLevel, _currentDifficulty);

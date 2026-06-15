@@ -133,7 +133,21 @@ public static class GameDatabase
             return 0;
         }
     }
-
+    public static List<GameRecord> GetLastNRecordByDate(int number)
+    {
+        try
+        {
+            return _db.Table<GameRecord>()
+                    .OrderByDescending(r => r.CompletedAt) // Sort by ISO-8601 string descending
+                    .Take(number)                               // Limit to the top N  records
+                    .ToList();
+        }
+        catch (Exception ex)
+        {
+            Debug.LogError($"[GameDatabase] GetLastNRecordByDate failed: {ex.Message}");
+            return new List<GameRecord>();
+        }
+    }
     // ── Teardown ──────────────────────────────────────────────────────────────
 
     /// <summary>

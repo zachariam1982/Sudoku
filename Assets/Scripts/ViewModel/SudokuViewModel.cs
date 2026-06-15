@@ -379,10 +379,7 @@ public class SudokuViewModel
         // 1. Restore level & difficulty on the model, then regenerate the
         //    original puzzle so GivenMask is rebuilt correctly.
         _model.AddLevel(data.Level - _model.CurrentLevel); // bring level to saved value
-        // Clamp difficulty to saved ordinal
-        while ((int)_model.CurrentDifficulty < data.Difficulty) _model.increaseDifficulty();
-        while ((int)_model.CurrentDifficulty > data.Difficulty) _model.decreaseDifficulty();
-
+        _model.SetDifficulty((SudokuDifficulty)data.Difficulty);
         _model.LoadCurrentLevelPuzzle(); // regenerates the solution & GivenMask
 
         // 2. Overwrite board cells with the saved player progress

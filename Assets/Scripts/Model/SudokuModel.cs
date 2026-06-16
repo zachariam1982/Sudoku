@@ -26,19 +26,21 @@ public static class ScoringSystem
     public const int PenaltyPerMistake        = 2;  // wrong manual entry (conflict)
     public const int PenaltySOSFillsEmpty     = 7;  // SOS filled a blank cell
     public const int PenaltySOSFixesWrong     = 9;  // SOS corrected a wrong entry
+
+    private const int minutes                 = 60;
  
     // ── Par times (seconds) ───────────────────────────────────────────────────
     private static readonly int[] ParSeconds =
     {
-         60,  // Infant    (~1 min)
-        120,  // Beginner  (~2 min)
-        180,  // Easy      (~3 min)
-        240,  // Novice    (~4 min)
-        360,  // Moderate  (~6 min)
-        480,  // Advanced  (~8 min)
-        600,  // Hard      (~10 min)
-        780,  // Expert    (~13 min)
-        960,  // Hardest   (~16 min)
+         2 * minutes,  // Infant    
+         4 * minutes,  // Beginner 
+         6 * minutes,  // Easy     
+         8 * minutes,  // Novice    
+        10 * minutes,  // Moderate  
+        12 * minutes,  // Advanced 
+        15 * minutes,  // Hard    
+        20 * minutes,  // Expert  
+        25 * minutes,  // Hardest 
     };
  
     private static int DifficultyScore(SudokuDifficulty difficulty)
@@ -86,17 +88,6 @@ public static class ScoringSystem
  
         return (total, diff, time, pen);
     }
- 
-    /// <summary>Letter grade based on final score out of 200.</summary>
-    public static string Grade(int totalScore) => totalScore switch
-    {
-        >= 180 => "A+",
-        >= 160 => "A",
-        >= 130 => "B",
-        >= 100 => "C",
-        >=  70 => "D",
-        _      => "F",
-    };
 }
 
 public class ScorePenalties
@@ -239,7 +230,7 @@ public class SudokuModel
             SudokuDifficulty matchDifficulty = (SudokuDifficulty)lst[0].Difficulty;
             int maxScore = ScoringSystem.GetAbsoluteMaximumScore(matchDifficulty);
 
-            if (maxScore == 0)
+            Debug.Log($"Last 3 points {((float)lst[0].Points / maxScore)} {((float)lst[1].Points / maxScore)} {((float)lst[2].Points / maxScore)}");
 
             foreach (var entry in lst)
             {

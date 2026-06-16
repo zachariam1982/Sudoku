@@ -30,6 +30,5 @@ public class GameRecord
 
     /// <summary>ISO-8601 timestamp e.g. "2025-06-04T14:32:00"</summary>
     [NotNull]
-    [Indexed]
     public string CompletedAt    { get; set; }
 }

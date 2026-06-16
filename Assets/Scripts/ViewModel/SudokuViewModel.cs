@@ -151,7 +151,13 @@ public class SudokuViewModel
         );
         PauseCommand = new RelayCommand(
             execute: _ => PauseRequested.Value = !PauseRequested.Value,
-            canExecute: _ => GameStateMachine.Instance?.CurrentState is PlayingState && IsEraseMode.Value == false && IsPencilMode.Value == false
+            canExecute: _ => GameStateMachine.Instance?.CurrentState is PlayingState && IsEraseMode.Value == false && IsPencilMode.Value == false,
+            getMessage: new (Func<bool> fn, Action showMessage)[]
+            {
+                (() => IsEraseMode.Value == true, () => ShowMessage.Value = ("", "Erase mode is set. Click on Erase again to enable Pause.", "")),
+                (() => IsPencilMode.Value == true, () => ShowMessage.Value = ("", "Pencil mode is set. Click on Pencil again to enable Pause.", "")),
+                (() => GameStateMachine.Instance?.CurrentState is IdleState, () => ShowMessage.Value = ("", "Game play is not started. Press an empty box to start the game.", ""))
+            }
         );
  
         ResumeCommand = new RelayCommand(

@@ -138,7 +138,7 @@ public static class GameDatabase
         try
         {
             return _db.Table<GameRecord>()
-                    .OrderByDescending(r => r.CompletedAt) // Sort by ISO-8601 string descending
+                    .OrderByDescending(r => r.Id) // Sort by ISO-8601 string descending
                     .Take(number)                               // Limit to the top N  records
                     .ToList();
         }
@@ -146,6 +146,20 @@ public static class GameDatabase
         {
             Debug.LogError($"[GameDatabase] GetLastNRecordByDate failed: {ex.Message}");
             return new List<GameRecord>();
+        }
+    }
+    public static GameRecord GetLastRecord()
+    {
+        try
+        {
+            return _db.Table<GameRecord>()
+                      .OrderByDescending(r => r.Id)
+                      .FirstOrDefault();
+        }
+        catch(Exception ex)
+        {
+            Debug.LogError($"[GameDatabase] GetLastRecord failed: {ex.Message}");
+            return null;
         }
     }
     // ── Teardown ──────────────────────────────────────────────────────────────

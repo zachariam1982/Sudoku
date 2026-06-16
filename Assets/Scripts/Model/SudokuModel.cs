@@ -217,7 +217,11 @@ public class SudokuModel
 
     public SudokuDifficulty CurrentDifficulty { get { return _currentDifficulty; }}
     public int CurrentLevel { get {return _currentLevel;}}
-    public void AddLevel(int increment) => _currentLevel = _currentLevel + increment;
+    public void AddLevel(int increment)
+    {
+        int level = GameDatabase.GetLastRecord()?.Level ?? _currentLevel;
+        _currentLevel = _currentLevel + increment;
+    }
     public void SetDifficulty(SudokuDifficulty difficulty) => _currentDifficulty = difficulty;
     public void increaseDifficulty() 
     {

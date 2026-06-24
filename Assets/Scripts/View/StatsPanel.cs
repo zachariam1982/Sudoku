@@ -7,13 +7,12 @@ using System.Collections.Generic;
 
 public class StatsPanel : MonoBehaviour
 {
-    // ── Inspector refs ────────────────────────────────────────────────────
 
     [Header("Controls")]
     [SerializeField] private Button          tabButton;
     [SerializeField] private Button          closeButton;
     [SerializeField] private Button          backdropButton;
-    [SerializeField] private TextMeshProUGUI tabArrowLabel;      // "◀" / "▶"
+    [SerializeField] private TextMeshProUGUI tabArrowLabel;
 
     [Header("Panel root")]
     [SerializeField] private RectTransform   panelRT;
@@ -29,13 +28,13 @@ public class StatsPanel : MonoBehaviour
     [SerializeField] private TextMeshProUGUI levelValue;
     [SerializeField] private TextMeshProUGUI difficultyValue;
     [SerializeField] private TextMeshProUGUI timeValue;
-    [SerializeField] private Image[]         liveDots;           // 3 dot Images: on=red, off=bg3
+    [SerializeField] private Image[]         liveDots;
     [SerializeField] private TextMeshProUGUI mistakesValue;
     [SerializeField] private TextMeshProUGUI sosValue;
 
     [Header("Win-rate bar")]
     [SerializeField] private TextMeshProUGUI winRatePctLabel;
-    [SerializeField] private RectTransform   winRateBarFill;     // child of BarBG, anchored left
+    [SerializeField] private RectTransform   winRateBarFill;
 
     [Header("All-time stat cards — value labels")]
     [SerializeField] private TextMeshProUGUI totalGamesValue;
@@ -72,8 +71,6 @@ public class StatsPanel : MonoBehaviour
     private float loadThreshold = 0.08f;
     private List<GameObject> lstOfRecords = new List<GameObject>();
 
-    // ── Lifecycle ─────────────────────────────────────────────────────────
-
     void Awake()
     {
         _hiddenX = panelRT.sizeDelta.x;
@@ -92,8 +89,6 @@ public class StatsPanel : MonoBehaviour
 
         SetTabArrow(false);
     }
-
-    // ── Public API ────────────────────────────────────────────────────────
 
     public void Bind(SudokuViewModel vm)
     {
@@ -119,17 +114,13 @@ public class StatsPanel : MonoBehaviour
     }
     private void OnScroll(Vector2 pos)
     {
-        Debug.Log($"Position = {pos}");
         if(pos.y == 1 || pos.y == 0) return;
 
         if (!_loading && !_allLoaded && pos.y <= loadThreshold)
         {
-            Debug.Log($"Fetching next set of data.");
             _vm.FetchHistoricalData.Execute();
         }
-            //LoadNextPage();
     }
-    // ── Open / Close ──────────────────────────────────────────────────────
 
     private void TogglePanel() { if (_open) ClosePanel(); else OpenPanel(); }
 

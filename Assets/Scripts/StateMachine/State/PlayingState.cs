@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using UnityEngine;
 
 /// <summary>
 /// Playing state — timer runs, player enters numbers.
@@ -58,7 +59,7 @@ public class PlayingState : IGameState
         if (!entry.hasConflict) return;
 
         if (_vm.LivesRemaining.Value <= 0){
-            GameDatabase.Insert(new GameRecord
+            GameRecord val = new GameRecord
             {
                 Level          = _vm.GetLevel /* expose _model.CurrentLevel via a property */,
                 Difficulty     = _vm.GetDifficulty,
@@ -67,7 +68,10 @@ public class PlayingState : IGameState
                 IsWon          = false,
                 Points         = 0,
                 CompletedAt    = DateTime.Now.ToString("o"),
-            });
+            };
+            
+            PlayerSettings.Instance.SavePlayerPref(val);
+            GameDatabase.Insert(val);
             _machine.TransitionTo(_machine.Lose);
         }
     }

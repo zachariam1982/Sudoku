@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.IO;
+using System.Linq;
 using SQLite;
 using UnityEngine;
 
@@ -113,7 +114,7 @@ public static class GameDatabase
         {
             return _db.Table<GameRecord>()
                       .Where(r => r.IsWon && r.Difficulty == difficulty)
-                      .OrderBy(r => r.ElapsedSeconds)
+                      .OrderBy(r => r.Points)
                       .FirstOrDefault();
         }
         catch (Exception ex)
@@ -123,6 +124,65 @@ public static class GameDatabase
         }
     }
 
+    public static GameRecord GetBestWin()
+    {
+        try
+        {
+            return _db.Table<GameRecord>()
+                      .OrderByDescending(r => r.Points)
+                      .FirstOrDefault();
+        }
+        catch (Exception ex)
+        {
+            Debug.LogError($"[GameDatabase] GetBestWin failed: {ex.Message}");
+            return null;
+        }
+    }
+
+    public static GameRecord GetFastestWin()
+    {
+        try
+        {
+            return _db.Table<GameRecord>()
+                    .Where(r => r.IsWon == true)
+                    .OrderBy(r => r.ElapsedSeconds)
+                    .FirstOrDefault();
+        }
+        catch (Exception ex)
+        {
+            Debug.LogError($"[GameDatabase] GetFastestWin failed: {ex.Message}");
+            return null;
+        }
+    }
+    public static int GetTotalPoints()
+    {
+        try
+        {
+            return _db.Table<GameRecord>()
+                    .Where(r => r.IsWon)
+                    .Sum(r => r.Points);
+        }
+        catch (Exception ex)
+        {
+            Debug.LogError($"[GameDatabase] GetFastestWin failed: {ex.Message}");
+            return 0;
+        }  
+    }
+
+    public static int GetTotalWins()
+    {
+        try
+        {
+            return _db.Table<GameRecord>()
+                    .Where(r => r.IsWon)
+                    .Count();
+        }
+        catch (Exception ex)
+        {
+            Debug.LogError($"[GameDatabase] GetFastestWin failed: {ex.Message}");
+            return 0;
+        }  
+    }
     /// <summary>Returns the total number of games played.</summary>
     public static int GetTotalGamesPlayed()
     {

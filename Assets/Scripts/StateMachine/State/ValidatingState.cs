@@ -34,7 +34,7 @@ public class ValidatingState : IGameState
             bool isValid = _vm.IsBoardValid.Value;
 
             if (isValid){
-                GameDatabase.Insert(new GameRecord
+                GameRecord val = new GameRecord
                 {
                     Level          = _vm.GetLevel /* expose _model.CurrentLevel via a property */,
                     Difficulty     = _vm.GetDifficulty,
@@ -43,7 +43,10 @@ public class ValidatingState : IGameState
                     IsWon          = true,
                     Points         = ScoringSystem.Calculate( (SudokuDifficulty)_vm.GetDifficulty, _vm.ElapsedSeconds.Value, _vm.Penalties),
                     CompletedAt    = System.DateTime.Now.ToString("o"),
-                });
+                };
+
+                PlayerSettings.Instance.SavePlayerPref(val);
+                GameDatabase.Insert(val);
                 _machine.TransitionTo(_machine.Win);
             }
             else

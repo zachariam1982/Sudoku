@@ -5,7 +5,7 @@ using UnityEngine;
 
 public enum SudokuDifficulty
 {   
-    Infant,
+    Simple,
     Beginner,
     Easy,
     Novice,
@@ -32,7 +32,7 @@ public static class ScoringSystem
     // ── Par times (seconds) ───────────────────────────────────────────────────
     private static readonly int[] ParSeconds =
     {
-         2 * minutes,  // Infant    
+         2 * minutes,  // Simple    
          4 * minutes,  // Beginner 
          6 * minutes,  // Easy     
          8 * minutes,  // Novice    
@@ -132,7 +132,7 @@ public static class SudokuGenerator
         // 2. Determine how many clues to keep
         int targetClues = difficulty switch
         {
-            SudokuDifficulty.Infant    => rng.Next(66, 72), // Too easy
+            SudokuDifficulty.Simple    => rng.Next(66, 72), // Too easy
             SudokuDifficulty.Beginner  => rng.Next(50, 56), // Very easy, almost full board
             SudokuDifficulty.Easy      => rng.Next(40, 46), // Standard easy
             SudokuDifficulty.Novice    => rng.Next(36, 40), // Bridge between Easy and Moderate
@@ -274,7 +274,7 @@ public class SudokuModel
             if (finalEfficiency < 0.55f)
             {
                 var prev = _currentDifficulty;
-                _currentDifficulty = (SudokuDifficulty)Math.Max((int)SudokuDifficulty.Infant, (int)_currentDifficulty - 1);
+                _currentDifficulty = (SudokuDifficulty)Math.Max((int)SudokuDifficulty.Simple, (int)_currentDifficulty - 1);
                 Debug.Log($"Moving to below tier. Current Difficulty: {prev} demoting to {_currentDifficulty}");
             }
         }

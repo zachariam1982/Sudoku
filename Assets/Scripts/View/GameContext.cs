@@ -21,6 +21,7 @@ public class GameContext : MonoBehaviour
         GetComponent<ErrorMessage>()?.Bind(ViewModel);
         GetComponentInChildren<NumberPicker>()?.Bind(ViewModel);
         GetComponentInChildren<GameStateView>()?.Bind(ViewModel);
+        GetComponentInChildren<StatsPanel>()?.Bind(ViewModel);
 
         User.Instance.ViewModel = ViewModel;
         GameStateMachine.Instance.Initialise(ViewModel);

@@ -35,6 +35,7 @@ public class NumberPicker : MonoBehaviour
     private RectTransform   selectedCellRT;
     private Vector2         lastPickerPos;
     private Coroutine       activeAnimation;
+    private SudokuCell      _selectedCell;
 
     void Awake()
     {
@@ -46,7 +47,12 @@ public class NumberPicker : MonoBehaviour
             TextMeshProUGUI lbl = numberButtons[i].GetComponentInChildren<TextMeshProUGUI>();
             if (lbl != null) lbl.text = number.ToString();
             numberButtons[i].onClick.AddListener(() =>
-                viewModel?.EnterValueCommand.Execute(number));
+            {
+                if (viewModel?.IsPencilMode.Value == true)
+                    _selectedCell?.TogglePencilNumber(number);
+                else
+                    viewModel?.EnterValueCommand.Execute(number);
+            });
         }
 
         // Start hidden without animation
@@ -73,6 +79,9 @@ public class NumberPicker : MonoBehaviour
     private void OnSelectedCellTransformChanged(object cellTransform)
     {
         selectedCellRT = cellTransform as RectTransform;
+        _selectedCell  = selectedCellRT != null
+                    ? selectedCellRT.GetComponent<SudokuCell>()
+                    : null;
     }
 
     private void OnPickerOpenChanged(bool isOpen)
@@ -103,6 +112,7 @@ public class NumberPicker : MonoBehaviour
     public void SetSelectedCellTransform(RectTransform cellRT)
     {
         selectedCellRT = cellRT;
+        _selectedCell  = cellRT != null ? cellRT.GetComponent<SudokuCell>() : null;
     }
 
     private void ResizePickerButtons()
@@ -185,7 +195,7 @@ public class NumberPicker : MonoBehaviour
         float pickerHalfW = pickerPanel.sizeDelta.x    / 2f;
 
         float belowY  = cellLocalPos.y - cellHalfH - yGap - pickerHalfH;
-        float aboveY  = cellLocalPos.y + cellHalfH + yGap + pickerHalfH;
+        float aboveY  = cellLocalPos.y + cellHalfH + yGap;// + pickerHalfH;
         float pickerY = (belowY - pickerHalfH < -gridHalfH) ? aboveY : belowY;
 
         float pickerX = Mathf.Clamp(cellLocalPos.x, -gridHalfW + pickerHalfW, gridHalfW - pickerHalfW);

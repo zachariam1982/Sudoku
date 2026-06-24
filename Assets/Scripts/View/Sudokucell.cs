@@ -33,6 +33,7 @@ public class SudokuCell : MonoBehaviour
     private Color           baseColor;
     private HashSet<TMP_Text> btnTextInPencilMode = new HashSet<TMP_Text>();
 
+    private Button[] _pencilButtons;
     public int  Value   { get; private set; }
     public bool IsGiven { get; private set; }
 
@@ -52,6 +53,7 @@ public class SudokuCell : MonoBehaviour
         }
         
         Button[] btns = GetComponentsInChildren<Button>(true);
+        var pencilBtnList = new List<Button>();
         foreach(Button btn in btns)
         {
             //Debug.Log(btn.transform.parent.name);
@@ -59,12 +61,24 @@ public class SudokuCell : MonoBehaviour
             {
                 Button b = btn;
                 btn.onClick.AddListener(() => OnPencilModeButtonClick(b));
+                pencilBtnList.Add(b);
             }
         }
+        _pencilButtons = pencilBtnList.ToArray();
     }
 
     private void OnPencilModeButtonClick(Button arg)
     {
+        if (viewModel != null && viewModel.IsPencilMode.Value)
+        {
+            if (NumberPicker.Instance != null)
+                NumberPicker.Instance.SetSelectedCellTransform(GetComponent<RectTransform>());
+ 
+            viewModel.SelectCellCommand.Execute(
+                new ValueTuple<int, int, object>(row, col, GetComponent<RectTransform>()));
+            return;
+        }
+
         TMP_Text text = arg.GetComponentInChildren<TMP_Text>();
         if (text == null) return;
 
@@ -108,6 +122,33 @@ public class SudokuCell : MonoBehaviour
     private void OnDestroy()
     {
         viewModel.CurrentStateName.OnChanged -= OnStateChanged;
+    }
+
+    public void TogglePencilNumber(int number)
+    {
+        if (_pencilButtons == null || number < 1 || number > 9) return;
+ 
+        int idx = number - 1;
+        if (idx >= _pencilButtons.Length) return;
+ 
+        TMP_Text text = _pencilButtons[idx].GetComponentInChildren<TMP_Text>();
+        if (text == null) return;
+ 
+        Color32 grey    = new Color32(80, 80, 80, 255);
+        Color32 current = text.color;          // implicit Color → Color32 conversion
+ 
+        if (current.r == 80 && current.g == 80 && current.b == 80)
+        {
+            // Grey → white  (activate note)
+            text.color = Color.white;
+            btnTextInPencilMode.Add(text);
+        }
+        else
+        {
+            // White → grey  (clear note)
+            text.color = grey;
+            btnTextInPencilMode.Remove(text);
+        }
     }
     // ── Render ────────────────────────────────────────────────────────────────
 

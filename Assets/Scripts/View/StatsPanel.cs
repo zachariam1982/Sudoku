@@ -3,6 +3,7 @@ using UnityEngine;
 using UnityEngine.UI;
 using TMPro;
 using Unity.VisualScripting;
+using System.Collections.Generic;
 
 public class StatsPanel : MonoBehaviour
 {
@@ -69,8 +70,7 @@ public class StatsPanel : MonoBehaviour
     private bool _loading = false;
     private bool _allLoaded = false;
     private float loadThreshold = 0.08f;
-    private int lastLoadedRow = 0;
-    private int _page = 0;
+    private List<GameObject> lstOfRecords = new List<GameObject>();
 
     // ── Lifecycle ─────────────────────────────────────────────────────────
 
@@ -100,27 +100,31 @@ public class StatsPanel : MonoBehaviour
         _vm = vm;
         vm.ElapsedSeconds.OnChanged += _ => { if (_open) RefreshSession(); };
         vm.LivesRemaining.OnChanged += _ => { if (_open) RefreshSession(); };
-        vm.PastHistory.OnChanged    += _ => { StartCoroutine(AddRecords()); };
+        vm.PastHistory.OnChanged    += param => { StartCoroutine(AddRecords(param)); };
     }
 
-    private IEnumerator AddRecords()
+    private IEnumerator AddRecords(List<GameRecord> arg)
     {
         _loading = true;
-        for(; lastLoadedRow < _vm.PastHistory.Value.Count; lastLoadedRow++)
+        for(int i = 0; i < arg.Count; i++)
         {
-            GameRecord d = _vm.PastHistory.Value[lastLoadedRow];
             var newRow = Instantiate(this.recordScroll, this.parentScroll);
 
-            newRow.GetComponent<RecordScript>()?.Setup(d.Level.ToString(), ((SudokuDifficulty)d.Difficulty).ToString(), d.Points.ToString());
-            yield return null;
+            newRow.GetComponent<RecordScript>()?.Setup(arg[i].Level.ToString(), ((SudokuDifficulty)arg[i].Difficulty).ToString(), arg[i].Points.ToString());
+            lstOfRecords.Add(newRow);
+            yield return new WaitForEndOfFrame();
         }
         _loading = false;
         yield return true;
     }
     private void OnScroll(Vector2 pos)
     {
+        Debug.Log($"Position = {pos}");
+        if(pos.y == 1 || pos.y == 0) return;
+
         if (!_loading && !_allLoaded && pos.y <= loadThreshold)
         {
+            Debug.Log($"Fetching next set of data.");
             _vm.FetchHistoricalData.Execute();
         }
             //LoadNextPage();
@@ -134,6 +138,7 @@ public class StatsPanel : MonoBehaviour
         _open = true;
         SetTabArrow(true);
         if (backdropButton != null) backdropButton.gameObject.SetActive(true);
+        _vm.FetchHistoricalData.Execute();
         RefreshSession();
         RefreshAllTime();
         if (_slideAnim != null) StopCoroutine(_slideAnim);
@@ -267,6 +272,11 @@ public class StatsPanel : MonoBehaviour
         }
         panelRT.anchoredPosition = new Vector2(_hiddenX, panelRT.anchoredPosition.y);
         panelCG.alpha = 0f;
+        _vm.ResetHistoricalData.Execute();
+        for(int i = 0; i < lstOfRecords.Count; i++)
+            Destroy(lstOfRecords[i]);
+        
+        lstOfRecords.Clear();
     }
 
     private IEnumerator AnimateBar(float targetRate)

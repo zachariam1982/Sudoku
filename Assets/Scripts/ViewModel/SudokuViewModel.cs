@@ -88,6 +88,7 @@ public class SudokuViewModel
     public ICommand IncreaseDifficulty   { get; }
     public ICommand DecreaseDifficulty   { get; }
     public ICommand FetchHistoricalData  { get; }
+    public ICommand ResetHistoricalData  { get; }
 
     public SudokuViewModel()
     {
@@ -195,6 +196,14 @@ public class SudokuViewModel
 
         FetchHistoricalData = new RelayCommand(
             execute: _ => FetchData()
+        );
+
+        ResetHistoricalData = new RelayCommand(
+            execute: _ => 
+            {
+                offset = 0;
+                PastHistory.Value.Clear();
+            }
         );
     }
     private void OnSelectCell((int row, int col, object cellTransform) cell)

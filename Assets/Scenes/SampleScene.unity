@@ -2317,8 +2317,8 @@ MonoBehaviour:
   colorGreen: {r: 0.11, g: 0.73, b: 0.48, a: 1}
   colorDotOn: {r: 0.88, g: 0.27, b: 0.27, a: 1}
   colorDotOff: {r: 0.15, g: 0.15, b: 0.31, a: 1}
-  slideDuration: 2
-  barDuration: 2
+  slideDuration: 0.26
+  barDuration: 0.8
   scrollRect: {fileID: 1935979372}
   parentScroll: {fileID: 1579671873}
   recordScroll: {fileID: 8125523581376138801, guid: 4d5e8ca8a6ef3c846b629c90cbf1bba1, type: 3}

@@ -2,73 +2,8 @@ using System.Collections;
 using UnityEngine;
 using UnityEngine.UI;
 using TMPro;
+using Unity.VisualScripting;
 
-/// <summary>
-/// Slide-out stats sidebar — improved UI version.
-///
-/// HIERARCHY
-/// ─────────────────────────────────────────────────────────────────────────
-///  StatsSidebar          [this component, RectTransform stretching full canvas]
-///  ├─ Backdrop           [full-screen Image (alpha 0) + Button — tap to close]
-///  ├─ TabButton          [~20×54 px, anchor middle-right, pivot (1,0.5)]
-///  │  └─ TabArrow        [TMP "◀" / "▶"]
-///  └─ StatsPanel         [972×1920, anchor top-right, pivot (1,1)]
-///     ├─ PanelBG         [Image – color #14142E]
-///     ├─ Header          [HorizontalLayoutGroup]
-///     │  ├─ TitleLabel   [TMP – "STATS", spaced, uppercased, 28 pt]
-///     │  └─ CloseButton  [Button – "✕"]
-///     └─ ScrollView → Viewport → Content [VerticalLayoutGroup]
-///        │
-///        ├─ ScoreRing                  [see ScoreRing section below]
-///        │  ├─ RingBG                  [Image, Type=Filled, FillMethod=Radial360, color #1C1C3C]
-///        │  ├─ RingFill                [Image, Type=Filled, FillMethod=Radial360, color #FFC832]
-///        │  └─ RingCenter
-///        │     ├─ ScoreValueLabel      [TMP mono, 72 pt]
-///        │     └─ ScoreMaxLabel        [TMP "/ 1000", 22 pt, dimmed]
-///        │
-///        ├─ StatGrid                   [GridLayoutGroup, 2 cols, gap 8]
-///        │  ├─ Pill_Level
-///        │  ├─ Pill_Difficulty
-///        │  ├─ Pill_Time
-///        │  ├─ Pill_Lives              [contains LivesDots child, not a TMP value]
-///        │  ├─ Pill_Mistakes
-///        │  └─ Pill_SOS
-///        │     Each Pill: [VerticalLayoutGroup] → KeyLabel (TMP 22pt) + ValueLabel (TMP 34pt)
-///        │     Pill_Lives replaces ValueLabel with LivesDots [HorizontalLayoutGroup]
-///        │       └─ three Dot images (circle sprites, 20×20)
-///        │
-///        ├─ Divider                    ["ALL TIME" label + decorative line]
-///        │
-///        ├─ WinRateRow                 [VerticalLayoutGroup]
-///        │  ├─ WinRateHeader           [HorizontalLayoutGroup]
-///        │  │  ├─ WinRateLabel         [TMP "Win rate"]
-///        │  │  └─ WinRatePctLabel      [TMP "65.9%", green]
-///        │  ├─ BarBG                   [Image, height 5, color #252550]
-///        │  └─ BarFill                 [Image child of BarBG, anchored left,
-///        │                              scale X animated 0→winRate%]
-///        │
-///        ├─ AllTimeGrid               [GridLayoutGroup, 3 cols, gap 8]
-///        │  ├─ AtCard_Played
-///        │  ├─ AtCard_Wins
-///        │  └─ AtCard_BestTime
-///        │     Each AtCard: [VerticalLayoutGroup] → ValueLabel (TMP 34pt) + KeyLabel (TMP 18pt)
-///        │
-///        └─ StreakChip                [HorizontalLayoutGroup, bg #1D2B47, border blue]
-///           ├─ StreakIcon             [TMP "⚡", 32 pt]
-///           └─ StreakTextCol          [VerticalLayoutGroup]
-///              ├─ StreakNumber        [TMP mono, 42 pt, blue]
-///              └─ StreakDesc          [TMP "Win streak — keep going", 20 pt, dimmed]
-///
-/// COLORS (match your Cell Prefab palette)
-///   bg0 #0D0D23   bg1 #14142E   bg2 #1C1C3C   bg3 #252550
-///   Blue  #4682FF   Gold #FFC832   Red #E04444   Green #1DB97A
-///   text1 #E8E8F5   text2 #8A8AAF  text3 #4A4A72
-///
-/// BINDING
-///   Call statsPanel.Bind(vm) alongside your other Bind() calls.
-///   RecordWin / RecordGamePlayed are triggered automatically via IsWon / IsLost.
-/// ─────────────────────────────────────────────────────────────────────────
-/// </summary>
 public class StatsPanel : MonoBehaviour
 {
     // ── Inspector refs ────────────────────────────────────────────────────
@@ -121,22 +56,21 @@ public class StatsPanel : MonoBehaviour
     [SerializeField] private float slideDuration = 0.26f;
     [SerializeField] private float barDuration   = 0.80f;
 
-    // ── PlayerPrefs keys ──────────────────────────────────────────────────
-
-    private const string PK_GAMES       = "sp_games";
-    private const string PK_WINS        = "sp_wins";
-    private const string PK_BEST_TIME   = "sp_best_time";
-    private const string PK_TOTAL_SCORE = "sp_total_score";
-    private const string PK_STREAK      = "sp_streak";
-    private const string PK_BEST_STREAK = "sp_best_streak";
-
-    // ── Runtime ───────────────────────────────────────────────────────────
+    [Header("ScrollView")]
+    [SerializeField] private ScrollRect scrollRect;
+    [SerializeField] private Transform parentScroll;
+    [SerializeField] private GameObject recordScroll;
 
     private SudokuViewModel _vm;
     private bool            _open;
     private Coroutine       _slideAnim;
     private Coroutine       _barAnim;
     private float           _hiddenX;
+    private bool _loading = false;
+    private bool _allLoaded = false;
+    private float loadThreshold = 0.08f;
+    private int lastLoadedRow = 0;
+    private int _page = 0;
 
     // ── Lifecycle ─────────────────────────────────────────────────────────
 
@@ -154,6 +88,7 @@ public class StatsPanel : MonoBehaviour
         tabButton.onClick.AddListener(TogglePanel);
         if (closeButton    != null) closeButton.onClick.AddListener(ClosePanel);
         if (backdropButton != null) backdropButton.onClick.AddListener(ClosePanel);
+        if (scrollRect     != null) scrollRect.onValueChanged.AddListener(OnScroll);
 
         SetTabArrow(false);
     }
@@ -165,10 +100,31 @@ public class StatsPanel : MonoBehaviour
         _vm = vm;
         vm.ElapsedSeconds.OnChanged += _ => { if (_open) RefreshSession(); };
         vm.LivesRemaining.OnChanged += _ => { if (_open) RefreshSession(); };
-        vm.IsWon.OnChanged          += OnGameWon;
-        vm.IsLost.OnChanged         += OnGameLost;
+        vm.PastHistory.OnChanged    += _ => { StartCoroutine(AddRecords()); };
     }
 
+    private IEnumerator AddRecords()
+    {
+        _loading = true;
+        for(; lastLoadedRow < _vm.PastHistory.Value.Count; lastLoadedRow++)
+        {
+            GameRecord d = _vm.PastHistory.Value[lastLoadedRow];
+            var newRow = Instantiate(this.recordScroll, this.parentScroll);
+
+            newRow.GetComponent<RecordScript>()?.Setup(d.Level.ToString(), ((SudokuDifficulty)d.Difficulty).ToString(), d.Points.ToString());
+            yield return null;
+        }
+        _loading = false;
+        yield return true;
+    }
+    private void OnScroll(Vector2 pos)
+    {
+        if (!_loading && !_allLoaded && pos.y <= loadThreshold)
+        {
+            _vm.FetchHistoricalData.Execute();
+        }
+            //LoadNextPage();
+    }
     // ── Open / Close ──────────────────────────────────────────────────────
 
     private void TogglePanel() { if (_open) ClosePanel(); else OpenPanel(); }
@@ -248,7 +204,6 @@ public class StatsPanel : MonoBehaviour
         int   games    = PlayerPrefs.GetInt(PlayerSettings.TotalGamePlayed, 0);
         int   wins     = PlayerPrefs.GetInt(PlayerSettings.TotalWins, 0);
         float bestSecs = PlayerPrefs.GetFloat(PlayerSettings.BestWinTime, -1f);
-        //int   totScore = PlayerPrefs.GetInt(PK_TOTAL_SCORE, 0);
         int   streak   = PlayerPrefs.GetInt(PlayerSettings.CurrentStreak, 0);
 
         float rate     = games > 0 ? wins / (float)games : 0f;
@@ -272,48 +227,6 @@ public class StatsPanel : MonoBehaviour
         if (streakDesc   != null) streakDesc.text   = streak > 1
             ? $"Win streak — keep it up"
             : streak == 1 ? "On a roll" : "Start a streak";
-    }
-
-    // ── Persistence ───────────────────────────────────────────────────────
-
-    private void RecordWin()
-    {
-        if (_vm == null) return;
-        int   games    = PlayerPrefs.GetInt(PlayerSettings.TotalGamePlayed, 0) + 1;
-        int   wins     = PlayerPrefs.GetInt(PlayerSettings.TotalWins, 0) + 1;
-        int   streak   = PlayerPrefs.GetInt(PlayerSettings.CurrentStreak, 0) + 1;
-        float best_t   = PlayerPrefs.GetFloat(PlayerSettings.BestWinTime, float.MaxValue);
-        int   totScore = PlayerPrefs.GetInt(PK_TOTAL_SCORE, 0) + CalculateScore();
-        float elapsed  = _vm.ElapsedSeconds.Value;
-
-        PlayerPrefs.SetInt(PK_GAMES, games);
-        PlayerPrefs.SetInt(PK_WINS, wins);
-        PlayerPrefs.SetInt(PK_STREAK, streak);
-        PlayerPrefs.SetInt(PK_TOTAL_SCORE, totScore);
-        if (elapsed < best_t) PlayerPrefs.SetFloat(PK_BEST_TIME, elapsed);
-        PlayerPrefs.Save();
-    }
-
-    private void RecordLoss()
-    {
-        PlayerPrefs.SetInt(PK_GAMES, PlayerPrefs.GetInt(PK_GAMES, 0) + 1);
-        PlayerPrefs.SetInt(PK_STREAK, 0);   // reset streak on loss
-        PlayerPrefs.Save();
-    }
-
-    private void OnGameWon(bool won)  { if (won)  RecordWin(); }
-    private void OnGameLost(bool lost) { if (lost) RecordLoss(); }
-
-    // ── Score formula ─────────────────────────────────────────────────────
-
-    private int CalculateScore()
-    {
-        if (_vm == null) return 0;
-        int raw = 1000
-                  - Mathf.FloorToInt(_vm.ElapsedSeconds.Value / 10)
-                  - (_vm.Penalties.Mistakes * 50)
-                  - ((_vm.Penalties.SOSEmptyCells + _vm.Penalties.SOSWrongCells) * 100);
-        return Mathf.Max(0, raw);
     }
 
     // ── Animations ────────────────────────────────────────────────────────

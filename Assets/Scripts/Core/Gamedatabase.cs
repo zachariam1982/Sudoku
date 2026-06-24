@@ -74,9 +74,9 @@ public static class GameDatabase
     {
         try
         {
-            return _db.Table<GameRecord>()
-                      .OrderByDescending(r => r.Id)
-                      .ToList();
+            string query = "select * from completed_games order by Id";
+
+            return _db.Query<GameRecord>(query);
         }
         catch (Exception ex)
         {
@@ -85,57 +85,18 @@ public static class GameDatabase
         }
     }
 
-    /// <summary>
-    /// Returns won games for a specific difficulty, fastest time first.
-    /// Useful for a per-difficulty leaderboard or personal best list.
-    /// </summary>
-    public static List<GameRecord> GetWinsByDifficulty(int difficulty)
+    public static List<GameRecord> GetNextSet(int offset)
     {
         try
         {
-            return _db.Table<GameRecord>()
-                      .Where(r => r.IsWon && r.Difficulty == difficulty)
-                      .OrderBy(r => r.ElapsedSeconds)
-                      .ToList();
+            string query = "SELECT * FROM completed_games ORDER BY Id DESC LIMIT 10 OFFSET ?";
+
+            return _db.Query<GameRecord>(query, offset);
         }
         catch (Exception ex)
         {
-            Debug.LogError($"[GameDatabase] GetWinsByDifficulty failed: {ex.Message}");
+            Debug.LogError($"[GameDatabase] GetNextSet failed: {ex.Message}");
             return new List<GameRecord>();
-        }
-    }
-
-    /// <summary>
-    /// Returns the single fastest win for a given difficulty, or null if none.
-    /// </summary>
-    public static GameRecord GetBestWin(int difficulty)
-    {
-        try
-        {
-            return _db.Table<GameRecord>()
-                      .Where(r => r.IsWon && r.Difficulty == difficulty)
-                      .OrderBy(r => r.Points)
-                      .FirstOrDefault();
-        }
-        catch (Exception ex)
-        {
-            Debug.LogError($"[GameDatabase] GetBestWin failed: {ex.Message}");
-            return null;
-        }
-    }
-
-    public static GameRecord GetBestWin()
-    {
-        try
-        {
-            return _db.Table<GameRecord>()
-                      .OrderByDescending(r => r.Points)
-                      .FirstOrDefault();
-        }
-        catch (Exception ex)
-        {
-            Debug.LogError($"[GameDatabase] GetBestWin failed: {ex.Message}");
-            return null;
         }
     }
 
@@ -143,10 +104,9 @@ public static class GameDatabase
     {
         try
         {
-            return _db.Table<GameRecord>()
-                    .Where(r => r.IsWon == true)
-                    .OrderBy(r => r.ElapsedSeconds)
-                    .FirstOrDefault();
+            string query = "SELECT * from completed_games where IsWon = true order by ElapsedSeconds limit 1";
+
+            return _db.Query<GameRecord>(query)[0];
         }
         catch (Exception ex)
         {
@@ -158,9 +118,9 @@ public static class GameDatabase
     {
         try
         {
-            return _db.Table<GameRecord>()
-                    .Where(r => r.IsWon)
-                    .Sum(r => r.Points);
+            string query = "SELECT SUM(Points) from completed_games where IsWon = true";
+
+            return _db.ExecuteScalar<int>(query);
         }
         catch (Exception ex)
         {
@@ -173,9 +133,9 @@ public static class GameDatabase
     {
         try
         {
-            return _db.Table<GameRecord>()
-                    .Where(r => r.IsWon)
-                    .Count();
+            string query = "select count(*) from completed_games where IsWon = true";
+
+            return _db.ExecuteScalar<int>(query);
         }
         catch (Exception ex)
         {
@@ -186,7 +146,12 @@ public static class GameDatabase
     /// <summary>Returns the total number of games played.</summary>
     public static int GetTotalGamesPlayed()
     {
-        try   { return _db.Table<GameRecord>().Count(); }
+        try   
+        {
+            string query = "SELECT count(*) from completed_games";
+
+            return _db.ExecuteScalar<int>(query); 
+        }
         catch (Exception ex)
         {
             Debug.LogError($"[GameDatabase] GetTotalGamesPlayed failed: {ex.Message}");
@@ -197,10 +162,9 @@ public static class GameDatabase
     {
         try
         {
-            return _db.Table<GameRecord>()
-                    .OrderByDescending(r => r.Id) // Sort by ISO-8601 string descending
-                    .Take(number)                               // Limit to the top N  records
-                    .ToList();
+            string query = "SELECT * from completed_games where IsWon = true order by Id limit ?";
+
+            return _db.Query<GameRecord>(query, number);
         }
         catch (Exception ex)
         {
@@ -212,9 +176,9 @@ public static class GameDatabase
     {
         try
         {
-            return _db.Table<GameRecord>()
-                      .OrderByDescending(r => r.Id)
-                      .FirstOrDefault();
+            string query = "SELECT * from completed_games order by Id limit 1";
+
+            return _db.Query<GameRecord>(query)[0];
         }
         catch(Exception ex)
         {

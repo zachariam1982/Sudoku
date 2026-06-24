@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.Linq.Expressions;
 using NUnit.Framework;
 using Unity.Mathematics;
 using Unity.VisualScripting;
@@ -16,6 +17,7 @@ public class SudokuViewModel
     private readonly SudokuModel _model = new SudokuModel();
     private Stack<ValueTuple<int,int,int>> replacedValueStack = new Stack<ValueTuple<int, int, int>>();
     private bool demoMode = false;
+    private int offset = 0;
     public void SetDemoMode() => demoMode = true;
     public void ResetDemoMode() => demoMode = false;    
     public int GetLevel { get{ return _model.CurrentLevel;}}
@@ -64,6 +66,10 @@ public class SudokuViewModel
         = new BindableProperty<object>();
     public BindableProperty<List<(int row, int col, int number)>> SOSChangedCells { get; }
         = new BindableProperty<List<(int, int, int)>>(new List<(int, int, int)>());
+    
+    public BindableProperty<List<GameRecord>> PastHistory { get; }
+        = new BindableProperty<List<GameRecord>>(new List<GameRecord>());
+        
     public BindableProperty<(string title, string message, string status)> ShowMessage { get;} 
         = new BindableProperty<(string title, string message, string status)>(("","",""));
     public ICommand SelectCellCommand    { get; }
@@ -81,6 +87,7 @@ public class SudokuViewModel
     public ICommand AddLevel             { get; }
     public ICommand IncreaseDifficulty   { get; }
     public ICommand DecreaseDifficulty   { get; }
+    public ICommand FetchHistoricalData  { get; }
 
     public SudokuViewModel()
     {
@@ -184,6 +191,10 @@ public class SudokuViewModel
 
         DecreaseDifficulty = new RelayCommand(
             execute: _ => _model?.decreaseDifficulty()
+        );
+
+        FetchHistoricalData = new RelayCommand(
+            execute: _ => FetchData()
         );
     }
     private void OnSelectCell((int row, int col, object cellTransform) cell)
@@ -305,6 +316,17 @@ public class SudokuViewModel
  
         SOSChangedCells.Value = changedCells;
     }
+    private void FetchData()
+    {
+        List<GameRecord> lst = GameDatabase.GetNextSet(offset);
+
+        if(lst.Count > 0) 
+        {
+            PastHistory.Value.AddRange(lst);
+            offset += 10;
+            PastHistory.ForceNotify();
+        }
+    }
     private void PublishBoard()
     {
         BoardValues.Value = _model.Board;
@@ -326,6 +348,8 @@ public class SudokuViewModel
     {
         this.SelectedRow.Value = -1;
         this.SelectedCol.Value = -1;
+        this.offset            = 0;
+        this.PastHistory.Value.Clear();
         replacedValueStack.Clear();
         ConflictingCells.Value.Clear();
         _model.LoadCurrentLevelPuzzle();

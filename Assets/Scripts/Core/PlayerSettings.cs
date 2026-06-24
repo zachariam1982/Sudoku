@@ -53,7 +53,7 @@ public class PlayerSettings : MonoBehaviour
             int current_streak = 0;
             PlayerPrefs.SetInt(CurrentStreak, current_streak);
         }
-        if (!PlayerPrefs.HasKey(TotalPossiblePoints))
+        //if (!PlayerPrefs.HasKey(TotalPossiblePoints))
         {
             List<GameRecord> lst = GameDatabase.GetAll();
             int total_possible_score = 0;
@@ -81,7 +81,7 @@ public class PlayerSettings : MonoBehaviour
         total_game_played++;
         total_points += arg.Points;
         total_wins = arg.IsWon ? total_wins + 1 : total_wins;
-        total_max_points = ScoringSystem.GetAbsoluteMaximumScore((SudokuDifficulty)arg.Difficulty);
+        total_max_points += ScoringSystem.GetAbsoluteMaximumScore((SudokuDifficulty)arg.Difficulty);
         if(best_elapsed_t > arg.ElapsedSeconds) best_elapsed_t = arg.ElapsedSeconds;
 
         PlayerPrefs.SetInt(TotalGamePlayed, total_game_played);

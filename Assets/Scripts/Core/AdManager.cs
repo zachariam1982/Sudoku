@@ -6,10 +6,9 @@ public class AdManager : MonoBehaviour
 {
     public static AdManager Instance { get; private set; }
 
-    [Header("LevelPlay Credentials — from platform.ironsrc.com")]
-    [SerializeField] private string androidAppKey    = "your-android-app-key";
-    [SerializeField] private string iosAppKey        = "your-ios-app-key";
-    [SerializeField] private string rewardedAdUnitId = "your-rewarded-ad-unit-id";
+    private string androidAppKey    = "268449ef5";
+    private string iosAppKey        = "268454b8d";
+    private string rewardedAdUnitId = "9a823d25w9b6odf8";
 
     // ── Private state ─────────────────────────────────────────────────────────
     private LevelPlayRewardedAd _rewardedAd;

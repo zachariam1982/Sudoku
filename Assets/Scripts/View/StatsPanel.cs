@@ -293,7 +293,7 @@ public class StatsPanel : MonoBehaviour
 
     private void SetTabArrow(bool open)
     {
-        if (tabArrowLabel != null) tabArrowLabel.text = open ? "▶" : "◀";
+        if (tabArrowLabel != null) tabArrowLabel.text = open ? ">>" : "<<";
     }
 
     private static void Set(TextMeshProUGUI tmp, string text)

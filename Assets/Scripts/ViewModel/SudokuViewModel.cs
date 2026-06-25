@@ -331,9 +331,8 @@ public class SudokuViewModel
 
         if(lst.Count > 0) 
         {
-            PastHistory.Value.AddRange(lst);
+            PastHistory.Value = lst;
             offset += 10;
-            PastHistory.ForceNotify();
         }
     }
     private void PublishBoard()

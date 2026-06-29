@@ -176,7 +176,7 @@ public class AdManager : MonoBehaviour
 
         if (!_isInitialised)
         {
-            Debug.LogWarning("[AdManager] SDK not initialised yet.");
+            Debug.LogWarning("[AdManager] SDK not initialised yet. Calling onFailed path");
             onFailed?.Invoke();
             return;
         }
@@ -187,7 +187,7 @@ public class AdManager : MonoBehaviour
         }
         else
         {
-            Debug.LogWarning("[AdManager] No ad ready.");
+            Debug.LogWarning("[AdManager] No ad ready. Calling onFailed path.");
             onFailed?.Invoke();
         }
     }

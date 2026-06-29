@@ -40,22 +40,6 @@ public static class GameDatabase
         try
         {
             Debug.Log($"DB stored at {DbPath}");
-            // Force initialize SQLitePCL raw bundle via Reflection to bypass CS0103
-            try
-            {
-                Assembly assembly = Assembly.Load("SQLitePCLRaw.batteries_v2");
-                if (assembly != null)
-                {
-                    Type batteriesType = assembly.GetType("SQLitePCL.Batteries_V2");
-                    MethodInfo initMethod = batteriesType?.GetMethod("Init", BindingFlags.Public | BindingFlags.Static);
-                    initMethod?.Invoke(null, null);
-                    Debug.Log("SQLitePCL Native Provider Initialized Successfully.");
-                }
-            }
-            catch (Exception ex)
-            {
-                Debug.LogWarning("SQLitePCL Reflection Setup skipped or failed: " + ex.Message);
-            }            
             _db = new SQLiteConnection(DbPath);
             _db.CreateTable<GameRecord>();
             Debug.Log($"[GameDatabase] Initialised at {DbPath}");

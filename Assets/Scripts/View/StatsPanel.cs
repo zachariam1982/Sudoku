@@ -8,6 +8,8 @@ using System.Collections.Generic;
 public class StatsPanel : MonoBehaviour
 {
 
+    [Header("Canvas")]
+    [SerializeField] private RectTransform canvas;
     [Header("Controls")]
     [SerializeField] private Button          tabButton;
     [SerializeField] private Button          closeButton;
@@ -70,7 +72,8 @@ public class StatsPanel : MonoBehaviour
     private bool _allLoaded = false;
     private float loadThreshold = 0.08f;
     private List<GameObject> lstOfRecords = new List<GameObject>();
-
+    private float statsPanelWidth = 972;
+    
     void Awake()
     {
         _hiddenX = panelRT.sizeDelta.x;
@@ -86,8 +89,13 @@ public class StatsPanel : MonoBehaviour
         if (closeButton    != null) closeButton.onClick.AddListener(ClosePanel);
         if (backdropButton != null) backdropButton.onClick.AddListener(ClosePanel);
         if (scrollRect     != null) scrollRect.onValueChanged.AddListener(OnScroll);
-
         SetTabArrow(false);
+    }
+    void OnRectTransformDimensionsChange()
+    {
+        float minCanvasDimension = Mathf.Min(Mathf.Min(canvas.rect.width, canvas.rect.height), statsPanelWidth);
+        Debug.Log($"Width for the stats panel is {minCanvasDimension}. Canvas width is {canvas.rect.width} and Canvas height is {canvas.rect.height} and width is {statsPanelWidth}");
+        panelRT.sizeDelta = new Vector2(minCanvasDimension, panelRT.sizeDelta.y);        
     }
 
     public void Bind(SudokuViewModel vm)

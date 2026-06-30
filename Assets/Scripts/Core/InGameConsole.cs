@@ -1,30 +1,33 @@
 using UnityEngine;
+using UnityEngine.UI; // Required for ScrollRect
 using TMPro;
 using System.Collections.Concurrent;
+using System.Collections.Generic;
 using System.Text;
 
 public class InGameConsole : MonoBehaviour
 {
+    [Header("UI References")]
     [SerializeField] private TextMeshProUGUI logDisplay;
-    [SerializeField] private int maxCharacters = 5000;
+    [SerializeField] private ScrollRect scrollRect; // Drag your ScrollRect here
 
-    // A thread-safe queue to collect logs from any thread
-    private ConcurrentQueue<string> logQueue = new ConcurrentQueue<string>();
-    private StringBuilder stringBuilder = new StringBuilder();
+    [Header("Settings")]
+    [SerializeField] private int maxLines = 5000;
+
+    private readonly ConcurrentQueue<string> incomingLogQueue = new ConcurrentQueue<string>();
+    private readonly Queue<string> logHistory = new Queue<string>();
+    private readonly StringBuilder stringBuilder = new StringBuilder();
 
     void OnEnable()
     {
-        // Listen to logs across all threads
         Application.logMessageReceivedThreaded += HandleLogThreaded;
     }
 
     void OnDisable()
     {
-        // Unsubscribe to prevent memory leaks
         Application.logMessageReceivedThreaded -= HandleLogThreaded;
     }
 
-    // This method runs on whatever thread threw the log
     private void HandleLogThreaded(string logString, string stackTrace, LogType type)
     {
         string color = "white";
@@ -40,37 +43,49 @@ public class InGameConsole : MonoBehaviour
                 break;
         }
 
-        // Format the message with rich text color codes
-        string formattedLog = $"<color={color}>[{type}] {logString}</color>\n";
-        
-        // Push safely to the queue
-        logQueue.Enqueue(formattedLog);
+        string formattedLog = $"<color={color}>[{type}] {logString}</color>";
+        incomingLogQueue.Enqueue(formattedLog);
     }
 
     void Update()
     {
-        // Only process if the queue has messages (Runs on the Main Thread)
-        if (!logQueue.IsEmpty)
+        if (incomingLogQueue.IsEmpty) return;
+
+        bool hasChanged = false;
+
+        while (incomingLogQueue.TryDequeue(out string newLog))
         {
-            // Initialize the builder with current UI text
-            stringBuilder.Clear();
-            stringBuilder.Append(logDisplay.text);
+            logHistory.Enqueue(newLog);
+            hasChanged = true;
 
-            // Dequeue all pending items collected since the last frame
-            while (logQueue.TryDequeue(out string newLog))
+            while (logHistory.Count > maxLines)
             {
-                stringBuilder.Append(newLog);
+                logHistory.Dequeue();
             }
-
-            // Truncate older entries if text size limits are breached
-            if (stringBuilder.Length > maxCharacters)
-            {
-                int excessLength = stringBuilder.Length - maxCharacters;
-                stringBuilder.Remove(0, excessLength);
-            }
-
-            // Push the final concatenated string to the UI
-            logDisplay.text = stringBuilder.ToString();
         }
+
+        if (hasChanged)
+        {
+            stringBuilder.Clear();
+            foreach (string logLine in logHistory)
+            {
+                stringBuilder.AppendLine(logLine);
+            }
+            logDisplay.text = stringBuilder.ToString();
+
+            // Trigger the auto-scroll behavior
+            ScrollToBottom();
+        }
+    }
+
+    private void ScrollToBottom()
+    {
+        if (scrollRect == null) return;
+
+        // Force Unity UI to recalculate the size of the content layout right now
+        Canvas.ForceUpdateCanvases();
+
+        // 0f represents the absolute bottom of the ScrollRect vertical space
+        scrollRect.verticalNormalizedPosition = 0f;
     }
 }

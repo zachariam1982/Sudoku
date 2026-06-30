@@ -106,8 +106,9 @@ public static class GameDatabase
         try
         {
             string query = "SELECT * from completed_games where IsWon = true order by ElapsedSeconds limit 1";
+            var tmp = _db.Query<GameRecord>(query);
 
-            return _db.Query<GameRecord>(query)[0];
+            return tmp.Count == 0 ? null : tmp[0];
         }
         catch (Exception ex)
         {
@@ -178,8 +179,9 @@ public static class GameDatabase
         try
         {
             string query = "SELECT * from completed_games order by Id limit 1";
+            var tmp = _db.Query<GameRecord>(query);
 
-            return _db.Query<GameRecord>(query)[0];
+            return tmp.Count == 0 ? null : tmp[0];
         }
         catch(Exception ex)
         {

@@ -45,7 +45,7 @@ public class PlayerSettings : MonoBehaviour
         }
         if (!PlayerPrefs.HasKey(BestWinTime))
         {
-            float best_win_time = GameDatabase.GetFastestWin().ElapsedSeconds;
+            float best_win_time = GameDatabase.GetFastestWin()?.ElapsedSeconds ?? 0f;
             PlayerPrefs.SetFloat(BestWinTime, best_win_time);
         }
         if (!PlayerPrefs.HasKey(CurrentStreak))

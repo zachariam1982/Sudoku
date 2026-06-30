@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="utf-8"?>
+<data-extraction-rules>
+    <cloud-backup>
+        <!-- Unity saves PlayerPrefs and local persistent files here -->
+        <include domain="sharedpref" path="."/>
+        <include domain="file" path="."/>
+    </cloud-backup>
+    <device-to-device-transfer>
+        <include domain="sharedpref" path="."/>
+        <include domain="file" path="."/>
+    </device-to-device-transfer>
+</data-extraction-rules>

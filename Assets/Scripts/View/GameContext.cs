@@ -11,6 +11,7 @@ public class GameContext : MonoBehaviour
 {
     /// <summary>Shared ViewModel — accessible by GridBuilder after Awake.</summary>
     public SudokuViewModel ViewModel { get; private set; }
+    public static int cnt = 0;
 
     void Awake()
     {
@@ -26,5 +27,11 @@ public class GameContext : MonoBehaviour
         User.Instance.ViewModel = ViewModel;
         GameStateMachine.Instance.Initialise(ViewModel);
         User.Instance.TryLoadSave();
+    }
+    void Update()
+    {
+        GameContext.cnt++;
+        if( GameContext.cnt < 30)
+            Debug.Log("asdasdasdasd");
     }
 }

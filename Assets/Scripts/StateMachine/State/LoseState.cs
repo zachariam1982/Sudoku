@@ -46,6 +46,7 @@ public class LoseState : IGameState
     {
         if (requested){
             _vm?.AddLevel.Execute();
+            _vm?.DecreaseDifficulty.Execute(); //See if the level needs to be decreased.
             _machine.TransitionTo(_machine.Idle);
         }
     }

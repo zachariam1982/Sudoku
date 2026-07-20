@@ -164,7 +164,7 @@ public static class GameDatabase
     {
         try
         {
-            string query = "SELECT * from completed_games where IsWon = true order by Id desc limit ?";
+            string query = "SELECT * from completed_games order by Id desc limit ?";
 
             return _db.Query<GameRecord>(query, number);
         }

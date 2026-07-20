@@ -249,11 +249,15 @@ public class SudokuModel
                 _currentDifficulty = (SudokuDifficulty)Math.Min((int)SudokuDifficulty.Hardest, (int)_currentDifficulty + 1);
                 Debug.Log($"CONGRATS!!!! Moving to next tier. Current Difficulty: {prev} promoting to {_currentDifficulty}");
             }
+            else if (finalEfficiency < 0.55f)
+            {
+                decreaseDifficulty();
+            }
         }
     }
-    public void decreaseDifficulty()
+    public void decreaseDifficulty(List<GameRecord> lst = null)
     {
-        var lst = GameDatabase.GetLastNRecordByDate(3);
+        lst = lst ?? GameDatabase.GetLastNRecordByDate(3);
         if (lst == null || lst.Count < 3) return;
 
         if (lst[0].Difficulty == lst[1].Difficulty && lst[1].Difficulty == lst[2].Difficulty) 

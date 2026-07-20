@@ -28,10 +28,4 @@ public class GameContext : MonoBehaviour
         GameStateMachine.Instance.Initialise(ViewModel);
         User.Instance.TryLoadSave();
     }
-    void Update()
-    {
-        GameContext.cnt++;
-        if( GameContext.cnt < 30)
-            Debug.Log("asdasdasdasd");
-    }
 }

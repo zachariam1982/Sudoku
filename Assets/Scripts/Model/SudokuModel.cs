@@ -24,8 +24,8 @@ public static class ScoringSystem
 {
     // ── Penalty constants ─────────────────────────────────────────────────────
     public const int PenaltyPerMistake        = 2;  // wrong manual entry (conflict)
-    public const int PenaltySOSFillsEmpty     = 7;  // SOS filled a blank cell
-    public const int PenaltySOSFixesWrong     = 9;  // SOS corrected a wrong entry
+    public const int PenaltySOSFillsEmpty     = 5;  // SOS filled a blank cell
+    public const int PenaltySOSFixesWrong     = 7;  // SOS corrected a wrong entry
 
     private const int minutes                 = 60;
  
@@ -37,10 +37,10 @@ public static class ScoringSystem
          6 * minutes,  // Easy     
          8 * minutes,  // Novice    
         10 * minutes,  // Moderate  
-        12 * minutes,  // Advanced 
-        15 * minutes,  // Hard    
-        20 * minutes,  // Expert  
-        25 * minutes,  // Hardest 
+        13 * minutes,  // Advanced 
+        18 * minutes,  // Hard    
+        30 * minutes,  // Expert  
+        250 * minutes,  // Hardest 
     };
  
     private static int DifficultyScore(SudokuDifficulty difficulty)
@@ -133,14 +133,14 @@ public static class SudokuGenerator
         int targetClues = difficulty switch
         {
             SudokuDifficulty.Simple    => rng.Next(66, 72), // Too easy
-            SudokuDifficulty.Beginner  => rng.Next(50, 56), // Very easy, almost full board
-            SudokuDifficulty.Easy      => rng.Next(40, 46), // Standard easy
-            SudokuDifficulty.Novice    => rng.Next(36, 40), // Bridge between Easy and Moderate
-            SudokuDifficulty.Moderate  => rng.Next(32, 36), // Standard medium
-            SudokuDifficulty.Advanced  => rng.Next(28, 32), // Bridge between Moderate and Hard
-            SudokuDifficulty.Hard      => rng.Next(24, 28), // Standard hard
-            SudokuDifficulty.Expert    => rng.Next(20, 24), // Demands advanced logic techniques
-            SudokuDifficulty.Hardest   => rng.Next(17, 20), // Absolute minimum for unique puzzles
+            SudokuDifficulty.Beginner  => rng.Next(60, 66), // Very easy, almost full board
+            SudokuDifficulty.Easy      => rng.Next(54, 60), // Standard easy
+            SudokuDifficulty.Novice    => rng.Next(48, 54), // Bridge between Easy and Moderate
+            SudokuDifficulty.Moderate  => rng.Next(42, 48), // Standard medium
+            SudokuDifficulty.Advanced  => rng.Next(36, 42), // Bridge between Moderate and Hard
+            SudokuDifficulty.Hard      => rng.Next(30, 36), // Standard hard
+            SudokuDifficulty.Expert    => rng.Next(24, 30), // Demands advanced logic techniques
+            SudokuDifficulty.Hardest   => rng.Next(17, 24), // Absolute minimum for unique puzzles
             _ => 30
         };
 

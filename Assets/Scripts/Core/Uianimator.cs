@@ -28,12 +28,11 @@ public static class UIAnimator
     /// Use on empty cell tap.
     /// </summary>
     public static IEnumerator ScalePunch(Transform target,
+                                          Vector3 originalScale,
                                           float shrink    = 0.88f,
                                           float overshoot = 1.14f,
                                           float duration  = 2.0f)
     {
-        Vector3 original = target.localScale;
-
         // Phase 1 — shrink down
         float elapsed = 0f;
         float phase1  = duration * 0.35f;
@@ -41,7 +40,7 @@ public static class UIAnimator
         {
             elapsed += Time.deltaTime;
             float t  = Mathf.Clamp01(elapsed / phase1);
-            target.localScale = Vector3.LerpUnclamped(original, original * shrink, EaseOut(t));
+            target.localScale = Vector3.LerpUnclamped(originalScale, originalScale * shrink, EaseOut(t));
             yield return null;
         }
 
@@ -53,11 +52,11 @@ public static class UIAnimator
         {
             elapsed += Time.deltaTime;
             float t  = Mathf.Clamp01(elapsed / phase2);
-            target.localScale = Vector3.LerpUnclamped(from, original, EaseOutElastic(t));
+            target.localScale = Vector3.LerpUnclamped(from, originalScale, EaseOutElastic(t));
             yield return null;
         }
 
-        target.localScale = original;
+        target.localScale = originalScale;
     }
 
     /// <summary>
@@ -65,11 +64,10 @@ public static class UIAnimator
     /// Use when a correct number is entered into a cell.
     /// </summary>
     public static IEnumerator ScaleBounce(Transform target,
+                                           Vector3 originalScale,
                                            float peak     = 1.2f,
                                            float duration = 0.22f)
     {
-        Vector3 original = target.localScale;
-
         // Phase 1 — grow
         float elapsed = 0f;
         float phase1  = duration * 0.4f;
@@ -77,7 +75,7 @@ public static class UIAnimator
         {
             elapsed += Time.deltaTime;
             float t  = Mathf.Clamp01(elapsed / phase1);
-            target.localScale = Vector3.LerpUnclamped(original, original * peak, EaseOut(t));
+            target.localScale = Vector3.LerpUnclamped(originalScale, originalScale * peak, EaseOut(t));
             yield return null;
         }
 
@@ -89,11 +87,11 @@ public static class UIAnimator
         {
             elapsed += Time.deltaTime;
             float t  = Mathf.Clamp01(elapsed / phase2);
-            target.localScale = Vector3.LerpUnclamped(from, original, EaseOutElastic(t));
+            target.localScale = Vector3.LerpUnclamped(from, originalScale, EaseOutElastic(t));
             yield return null;
         }
 
-        target.localScale = original;
+        target.localScale = originalScale;
     }
 
     // ── Shake ─────────────────────────────────────────────────────────────────
@@ -102,11 +100,11 @@ public static class UIAnimator
     /// Horizontal shake. Use on wrong number entry.
     /// </summary>
     public static IEnumerator Shake(Transform target,
+                                     Vector3 originalPosition,
                                      float magnitude = 18f,
                                      float duration  = 0.45f,
                                      int   vibrato   = 5)
     {
-        Vector3 original = target.localPosition;
         float   elapsed  = 0f;
 
         while (elapsed < duration)
@@ -116,11 +114,11 @@ public static class UIAnimator
             float dampen    = 1f - EaseOut(progress);   // gets weaker over time
             float offsetX   = Mathf.Sin(progress * Mathf.PI * vibrato * 2f)
                               * magnitude * dampen;
-            target.localPosition = original + new Vector3(offsetX, 0f, 0f);
+            target.localPosition = originalPosition + new Vector3(offsetX, 0f, 0f);
             yield return null;
         }
 
-        target.localPosition = original;
+        target.localPosition = originalPosition;
     }
 
     // ── Color Flash ───────────────────────────────────────────────────────────
@@ -257,10 +255,10 @@ public static class UIAnimator
     /// Small rotation wobble. Use on given cell tap (can't be edited feedback).
     /// </summary>
     public static IEnumerator Wobble(Transform target,
+                                      Quaternion originalRotation,
                                       float angle    = 6f,
                                       float duration = 0.25f)
     {
-        Quaternion original = target.localRotation;
         float      elapsed  = 0f;
 
         while (elapsed < duration)
@@ -268,11 +266,11 @@ public static class UIAnimator
             elapsed  += Time.deltaTime;
             float t   = elapsed / duration;
             float rot = Mathf.Sin(t * Mathf.PI * 3f) * angle * (1f - t);
-            target.localRotation = original * Quaternion.Euler(0f, 0f, rot);
+            target.localRotation = originalRotation * Quaternion.Euler(0f, 0f, rot);
             yield return null;
         }
 
-        target.localRotation = original;
+        target.localRotation = originalRotation;
     }
 
     // ── Overlay Fade ──────────────────────────────────────────────────────────

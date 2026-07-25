@@ -251,13 +251,13 @@ public class SudokuModel
             }
             else if (finalEfficiency < 0.55f)
             {
-                decreaseDifficulty();
+                decreaseDifficulty(lst);
             }
         }
     }
     public void decreaseDifficulty(List<GameRecord> lst = null)
     {
-        lst = lst ?? GameDatabase.GetLastNRecordByDate(3);
+         lst = lst ?? GameDatabase.GetLastNRecordByDate(3);
         if (lst == null || lst.Count < 3) return;
 
         if (lst[0].Difficulty == lst[1].Difficulty && lst[1].Difficulty == lst[2].Difficulty) 

@@ -114,7 +114,7 @@ public class StatsPanel : MonoBehaviour
             var newRow = Instantiate(this.recordScroll, this.parentScroll);
 
             var recordScript = newRow.GetComponent<RecordScript>();
-            if (recordScript != null) recordScript.Setup(arg[i].Level.ToString(), (SudokuDifficulty)arg[i].Difficulty, arg[i].Points.ToString());
+            if (recordScript != null) recordScript.Setup(_vm, arg[i].Id, arg[i].Level.ToString(), (SudokuDifficulty)arg[i].Difficulty, arg[i].Points.ToString());
             lstOfRecords.Add(newRow);
             yield return new WaitForEndOfFrame();
         }

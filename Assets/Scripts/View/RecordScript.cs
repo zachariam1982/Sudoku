@@ -8,6 +8,10 @@ using System.Collections.Generic;
 
 public class RecordScript : MonoBehaviour
 {
+    private int _Id;
+    private SudokuViewModel _vm;
+    private Button _retakeBtn;
+
     [Header("DB Values")]
     [SerializeField] private TextMeshProUGUI Level;
     [SerializeField] private TextMeshProUGUI Difficulty;
@@ -50,11 +54,13 @@ public class RecordScript : MonoBehaviour
         { SudokuDifficulty.Hardest,   ("#3A1A20", "#E23B5C80", "#9B59B680") },
     };
 
-    public void Setup(string arg1, SudokuDifficulty arg2, string arg3)
+    public void Setup(SudokuViewModel viewModel, int Id, string arg1, SudokuDifficulty arg2, string arg3)
     {
+        _Id = Id;
         Level.text = arg1;
         Difficulty.text = arg2.ToString();
         Points.text = arg3;
+        _vm = viewModel;
 
         Color color_1, color_2, color_3;
         if( UnityEngine.ColorUtility.TryParseHtmlString( RecordScript.ColorMap_3[arg2].bg, out color_1) && 
@@ -70,5 +76,28 @@ public class RecordScript : MonoBehaviour
             Difficulty.color = color_3;
         }
 
+        _retakeBtn = transform.Find("Restart/Value").GetComponent<Button>();
+
+        StateChange(_vm.CurrentStateName.Value);
+
+        //Register for state change.
+        _vm.CurrentStateName.OnChanged += StateChange;
+    }
+
+    public void OnDestroy()
+    {
+        _vm.CurrentStateName.OnChanged -= StateChange;
+    }
+
+    private void StateChange(string stateName)
+    {      
+        if(stateName == "IdleState")
+        {
+            if( _retakeBtn != null) _retakeBtn.interactable = true;
+        }
+        else
+        {
+            if( _retakeBtn != null) _retakeBtn.interactable = false;
+        }
     }
 }

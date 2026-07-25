@@ -63,19 +63,17 @@ public class SOSAdDialog : MonoBehaviour
         var arglist = vm.SOSChangedCells.Value;
         try
         {
+            //First remove all the wrong entries
             foreach (var entry in arglist)
             {
-                if (vm.BoardValues.Value[entry.row, entry.col] != 0)
-                {
-                    vm.SelectedRow.Value = entry.row;
-                    vm.SelectedCol.Value = entry.col;
-                    vm.EnterValueCommand.Execute(0);
-                    await Task.Delay(1000);
-                    vm.SelectedRow.Value = entry.row;
-                    vm.SelectedCol.Value = entry.col;
-                    vm.EnterValueCommand.Execute(entry.number);
-                    await Task.Delay(1000);
-                }
+                vm.SelectedRow.Value = entry.row;
+                vm.SelectedCol.Value = entry.col;
+                vm.EnterValueCommand.Execute(0);
+                await Task.Delay(1000);
+            }
+            //Now set the values so that conflict doesnt show up.
+            foreach (var entry in arglist)
+            {
                 vm.SelectedRow.Value = entry.row;
                 vm.SelectedCol.Value = entry.col;
                 vm.EnterValueCommand.Execute(entry.number);

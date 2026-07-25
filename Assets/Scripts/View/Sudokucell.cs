@@ -33,9 +33,13 @@ public class SudokuCell : MonoBehaviour
     private Color           baseColor;
     private HashSet<TMP_Text> btnTextInPencilMode = new HashSet<TMP_Text>();
 
+
     private Button[] _pencilButtons;
     public int  Value   { get; private set; }
     public bool IsGiven { get; private set; }
+    private Vector3 _originalScale;
+    private Vector3 _originalPosition;
+    private Quaternion _originalRotation;
 
     void Awake()
     {
@@ -65,6 +69,10 @@ public class SudokuCell : MonoBehaviour
             }
         }
         _pencilButtons = pencilBtnList.ToArray();
+
+        _originalScale = transform.localScale;
+        _originalPosition = transform.localPosition;
+        _originalRotation = transform.localRotation;
     }
 
     private void OnPencilModeButtonClick(Button arg)
@@ -196,9 +204,8 @@ public class SudokuCell : MonoBehaviour
     public void SetPickerHighlight(bool active)
     {
         if (isConflict && !active) return; // keep error color visible behind picker highlight
-        baseColor = active
-            ? pickerHighlight
-            : (isDimmed ? dimmedColor : (IsGiven ? givenColor : normalColor));
+        baseColor = active ? pickerHighlight : 
+                             (isDimmed ? dimmedColor : (IsGiven ? givenColor : normalColor));
         if (background != null)
             background.color = baseColor;
     }
@@ -230,22 +237,23 @@ public class SudokuCell : MonoBehaviour
         }
     }
 
-    // ── Animations ────────────────────────────────────────────────────────────
+    void OnDisable()
+    {
+        transform.localScale = Vector3.one;
+    }
 
+    // ── Animations ────────────────────────────────────────────────────────────
     public void PlayTapAnimation()
     {
-        StartCoroutine(UIAnimator.ScalePunch(transform));
+        StartCoroutine(UIAnimator.ScalePunch(transform, _originalScale));
     }
-
     public void PlayEntryAnimation()
     {
-        StartCoroutine(UIAnimator.ScaleBounce(transform));
+        StartCoroutine(UIAnimator.ScaleBounce(transform, _originalScale));
     }
-
     public void PlayErrorAnimation()
     {
         StartCoroutine(PlayErrorSequence());
-        StartCoroutine(UIAnimator.Shake(transform));
     }
 
     private System.Collections.IEnumerator PlayErrorSequence()
@@ -266,7 +274,7 @@ public class SudokuCell : MonoBehaviour
 
     public void PlayLockedAnimation()
     {
-        StartCoroutine(UIAnimator.Wobble(transform));
+        StartCoroutine(UIAnimator.Wobble(transform, _originalRotation));
     }
 
     // ── Input ─────────────────────────────────────────────────────────────────

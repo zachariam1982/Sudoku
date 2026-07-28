@@ -124,12 +124,12 @@ public class SudokuCell : MonoBehaviour
         row       = cellRow;
         col       = cellCol;
         viewModel = vm;
-        viewModel.CurrentStateName.OnChanged += OnStateChanged;
+        if( viewModel != null) viewModel.CurrentStateName.OnChanged += OnStateChanged;
     }
 
     private void OnDestroy()
     {
-        viewModel.CurrentStateName.OnChanged -= OnStateChanged;
+        if( viewModel != null) viewModel.CurrentStateName.OnChanged -= OnStateChanged;
     }
 
     public void TogglePencilNumber(int number)

@@ -177,7 +177,7 @@ public class StatsPanel : MonoBehaviour
             string colorStr = "#FFC832";
             Color color;
 
-            if(percentage < 35)
+            if(percentage <= 20)
             {
                 colorStr = "#FF4D4D";
             }

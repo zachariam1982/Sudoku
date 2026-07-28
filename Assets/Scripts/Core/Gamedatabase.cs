@@ -204,14 +204,30 @@ public static class GameDatabase
         }
     }
     // ── Teardown ──────────────────────────────────────────────────────────────
+    public static void FlushToDisk()
+    {
+        if (_db == null) return;
 
+        try
+        {
+            // Merges the temporary WAL file into the targeted main game_history.db file
+            _db.Execute("PRAGMA wal_checkpoint(TRUNCATE);");
+        }
+        catch (Exception)
+        {
+        }
+    }
     /// <summary>
     /// Closes the connection. Call from OnApplicationQuit if you want a clean
     /// shutdown, though sqlite-net-pcl handles this gracefully without it.
     /// </summary>
     public static void Close()
     {
-        _db?.Close();
-        _db = null;
+        if (_db != null)
+        {
+            FlushToDisk();
+            _db.Close();
+            _db = null;
+        }
     }
 }

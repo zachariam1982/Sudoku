@@ -18626,6 +18626,7 @@ GameObject:
   - component: {fileID: 2027544921}
   - component: {fileID: 2027544922}
   - component: {fileID: 2027544923}
+  - component: {fileID: 2027544925}
   m_Layer: 5
   m_Name: Canvas
   m_TagString: Untagged
@@ -18892,6 +18893,18 @@ MonoBehaviour:
   logDisplay: {fileID: 1776614550}
   scrollRect: {fileID: 1821104618}
   maxLines: 5000
+--- !u!114 &2027544925
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 2027544907}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 1fbefb2661e03ac4eb2a675113f46308, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::DatabaseLifecycleHandler
 --- !u!1 &2028732161
 GameObject:
   m_ObjectHideFlags: 0

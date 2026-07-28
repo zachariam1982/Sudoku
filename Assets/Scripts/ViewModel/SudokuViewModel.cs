@@ -189,7 +189,7 @@ public class SudokuViewModel
         NextLevel             = new RelayCommand(
             execute: _ => 
             {
-                int level = GameDatabase.GetLastRecord()?.Level ?? 0;
+                int level = GameDatabase.GetLastRecord()?.Level ?? 1;
                 _model?.SetLevel(level + 1);
             }
         );

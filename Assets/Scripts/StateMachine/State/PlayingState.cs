@@ -71,7 +71,9 @@ public class PlayingState : IGameState
             };
             
             PlayerSettings.Instance.SavePlayerPref(val);
-            GameDatabase.Insert(val);
+            
+            if(_vm.RetryGameData.id == -1) GameDatabase.Insert(val); //Add into DB the record if it is a new game and not a retry
+
             _machine.TransitionTo(_machine.Lose);
         }
     }

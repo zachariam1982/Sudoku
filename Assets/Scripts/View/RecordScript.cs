@@ -54,18 +54,20 @@ public class RecordScript : MonoBehaviour
         { SudokuDifficulty.Hardest,   ("#3A1A20", "#E23B5C80", "#9B59B680") },
     };
 
-    public void Setup(SudokuViewModel viewModel, int Id, string arg1, SudokuDifficulty arg2, string arg3)
+    public void Setup(SudokuViewModel viewModel, int Id, int arg1, int arg2, int arg3)
     {
         _Id = Id;
-        Level.text = arg1;
-        Difficulty.text = arg2.ToString();
-        Points.text = arg3;
+        Level.text = arg1.ToString();
+        Difficulty.text = ((SudokuDifficulty)arg2).ToString();
+        Points.text = arg3.ToString();
         _vm = viewModel;
 
+        SudokuDifficulty difficulty = (SudokuDifficulty)arg2;
+
         Color color_1, color_2, color_3;
-        if( UnityEngine.ColorUtility.TryParseHtmlString( RecordScript.ColorMap_3[arg2].bg, out color_1) && 
-            UnityEngine.ColorUtility.TryParseHtmlString( RecordScript.ColorMap_3[arg2].outline, out color_2) && 
-            UnityEngine.ColorUtility.TryParseHtmlString( RecordScript.ColorMap_3[arg2].txtClr, out color_3))
+        if( UnityEngine.ColorUtility.TryParseHtmlString( RecordScript.ColorMap_3[difficulty].bg, out color_1) && 
+            UnityEngine.ColorUtility.TryParseHtmlString( RecordScript.ColorMap_3[difficulty].outline, out color_2) && 
+            UnityEngine.ColorUtility.TryParseHtmlString( RecordScript.ColorMap_3[difficulty].txtClr, out color_3))
         {
             var rowBackGround = gameObject.GetComponent<Image>();
             rowBackGround.color = color_1;
@@ -82,6 +84,11 @@ public class RecordScript : MonoBehaviour
 
         //Register for state change.
         _vm.CurrentStateName.OnChanged += StateChange;
+        _retakeBtn.onClick.AddListener(() => 
+        {
+            Debug.Log($"RETRY FEATURE: Button clicked for Id = {Id}");
+            _vm.RetryOlderGameCommand.Execute((Id, arg1, arg2, arg3));
+        });
     }
 
     public void OnDestroy()
@@ -91,13 +98,15 @@ public class RecordScript : MonoBehaviour
 
     private void StateChange(string stateName)
     {      
+        if( _retakeBtn == null) return; 
+
         if(stateName == "IdleState")
         {
-            if( _retakeBtn != null) _retakeBtn.interactable = true;
+            _retakeBtn.interactable = true;
         }
         else
         {
-            if( _retakeBtn != null) _retakeBtn.interactable = false;
+            _retakeBtn.interactable = false;
         }
     }
 }

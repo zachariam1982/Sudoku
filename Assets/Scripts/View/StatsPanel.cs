@@ -114,7 +114,7 @@ public class StatsPanel : MonoBehaviour
             var newRow = Instantiate(this.recordScroll, this.parentScroll);
 
             var recordScript = newRow.GetComponent<RecordScript>();
-            if (recordScript != null) recordScript.Setup(_vm, arg[i].Id, arg[i].Level.ToString(), (SudokuDifficulty)arg[i].Difficulty, arg[i].Points.ToString());
+            if (recordScript != null) recordScript.Setup(_vm, arg[i].Id, (int)arg[i].Level, (int)arg[i].Difficulty, (int)arg[i].Points);
             lstOfRecords.Add(newRow);
             yield return new WaitForEndOfFrame();
         }
@@ -171,8 +171,25 @@ public class StatsPanel : MonoBehaviour
         int max_score = PlayerPrefs.GetInt(PlayerSettings.TotalPossiblePoints);
         Set(scoreValueLabel, score.ToString());
         Set(scoreMaxLabel, " / " + max_score.ToString());
-        if (ringFill != null)
+        if (ringFill != null) {
             ringFill.fillAmount = Mathf.Clamp01(score / (float)max_score);
+            int percentage = (score * 100)/max_score;
+            string colorStr = "#FFC832";
+            Color color;
+
+            if(percentage < 35)
+            {
+                colorStr = "#FF4D4D";
+            }
+            else if (percentage >= 80)
+            {
+                colorStr = "#2ECC71";
+            }
+            if(UnityEngine.ColorUtility.TryParseHtmlString( colorStr, out color))
+            {
+                ringFill.color = color;
+            }
+        }
 
         // Pills
         Set(levelValue, $"{_vm.GetLevel}");

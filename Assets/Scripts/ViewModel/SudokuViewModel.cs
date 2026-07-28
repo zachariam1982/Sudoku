@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.Linq.Expressions;
 using NUnit.Framework;
+using Unity.Android.Gradle.Manifest;
 using Unity.Mathematics;
 using Unity.VisualScripting;
 using Unity.VisualScripting.FullSerializer;
@@ -23,6 +24,7 @@ public class SudokuViewModel
     public int GetLevel { get{ return _model.CurrentLevel;}}
     public int GetDifficulty { get{ return (int)_model.CurrentDifficulty;}}
     public ScorePenalties Penalties { get; } = new ScorePenalties(0,0,0);
+    public (int id, int level, int difficulty, int points) RetryGameData {get; set;}
     public BindableProperty<bool>    HideHUD      { get; }    = new BindableProperty<bool>(false);
     public BindableProperty<int[,]>  BoardValues  { get; }    = new BindableProperty<int[,]>();
     public BindableProperty<bool[,]> GivenMask    { get; }    = new BindableProperty<bool[,]>();
@@ -58,6 +60,8 @@ public class SudokuViewModel
     public BindableProperty<bool> NewGameRequested   { get; } = new BindableProperty<bool>(false);
     /// <summary>Set to true by Retry button on lose screen — triggers Lose → Idle.</summary>
     public BindableProperty<bool> RetryGameRequested { get; } = new BindableProperty<bool>(false);
+    public BindableProperty<bool> RetryOlderGameRequested { get; } = new BindableProperty<bool>(false);
+
     public BindableProperty<(int row, int col, bool hasConflict)> LastEnteredCell { get; } 
         = new BindableProperty<(int, int, bool)>();
     public BindableProperty<HashSet<(int row, int col)>> ConflictingCells { get; }
@@ -84,7 +88,8 @@ public class SudokuViewModel
     public ICommand ResumeCommand        { get; }
     public ICommand NewGameCommand       { get; }
     public ICommand RetryCommand         { get; }
-    public ICommand AddLevel             { get; }
+    public ICommand RetryOlderGameCommand{ get;}
+    public ICommand NextLevel            { get; }
     public ICommand IncreaseDifficulty   { get; }
     public ICommand DecreaseDifficulty   { get; }
     public ICommand FetchHistoricalData  { get; }
@@ -92,37 +97,37 @@ public class SudokuViewModel
 
     public SudokuViewModel()
     {
-        SelectCellCommand = new RelayCommand(
+        SelectCellCommand     = new RelayCommand(
             execute: param =>
             {
                 var t = (ValueTuple<int, int, object>)param;
                 OnSelectCell((t.Item1, t.Item2, t.Item3));
             }
         );
-        EnterValueCommand = new RelayCommand(
+        EnterValueCommand     = new RelayCommand(
             execute: param => OnEnterValue((int)param)
         );
-        CancelPickerCommand = new RelayCommand(
+        CancelPickerCommand   = new RelayCommand(
             execute: _ => ClosePicker()
         );
-        SetEraseModeCommand = new RelayCommand(
+        SetEraseModeCommand   = new RelayCommand(
             execute: _ => IsEraseMode.Value = !IsEraseMode.Value,
             canExecute: _ => IsPencilMode.Value == false && replacedValueStack.Count != 0,
-            getMessage: new (Func<bool> fn, Action showMessage)[]
+            getMessage: new (Func<bool> fn, System.Action showMessage)[]
             {
                 (() => IsPencilMode.Value == true, () => ShowMessage.Value = ("", "Pencil mode is set. Click on Pencil again to enable Erase.", "")),
                 (() => replacedValueStack.Count == 0, () => ShowMessage.Value = ("", "No number is selected before which can be brought back.", ""))
             }
         );
-        SetPencilModeCommand = new RelayCommand(
+        SetPencilModeCommand  = new RelayCommand(
             execute: _ => IsPencilMode.Value = !IsPencilMode.Value,
             canExecute: _ => IsEraseMode.Value == false,
-            getMessage: new (Func<bool> fn, Action showMessage)[]
+            getMessage: new (Func<bool> fn, System.Action showMessage)[]
             {
                 (() => IsEraseMode.Value == true, () => ShowMessage.Value = ("", "Erase mode is set. Click on Erase again to enable Pencil mode.", ""))
             }            
         );
-        UndoCommand = new RelayCommand(
+        UndoCommand           = new RelayCommand(
             execute: _ =>
             {
                 var t = getPreviousValues();
@@ -130,75 +135,80 @@ public class SudokuViewModel
                 OnEnterValueForUndoOperation(t.Item1, t.Item2, t.Item3);
             },
             canExecute: _ => IsPencilMode.Value == false && IsEraseMode.Value == false,
-            getMessage: new (Func<bool> fn, Action showMessage)[]
+            getMessage: new (Func<bool> fn, System.Action showMessage)[]
                         {
                             (() => IsPencilMode.Value == true, () => this.ShowMessage.Value = ("", "Pencil mode is set. Click on Pencil again to enable undo.", "")),
                             (() => IsEraseMode.Value == true, () => this.ShowMessage.Value = ("", "Erase mode is set. Click on Erase again to enable undo.", ""))
                         }
         );
-        SOSCommand = new RelayCommand(
+        SOSCommand            = new RelayCommand(
             execute: _ => 
             {
                 IsSOSMode.Value = !IsSOSMode.Value;
             },
             canExecute: _ => IsPencilMode.Value == false && IsEraseMode.Value == false,
-            getMessage: new (Func<bool> fn, Action showMessage)[]
+            getMessage: new (Func<bool> fn, System.Action showMessage)[]
             {
                 (() => IsPencilMode.Value == true, () => ShowMessage.Value = ("", "Pencil mode is set. Click on Pencil again to enable SOS.", "")),
                 (() => IsEraseMode.Value == true, () => ShowMessage.Value = ("", "Erase mode is set. Click on Erase again to enable SOS.", ""))
             }
         );
-        ApplySOSCommand = new RelayCommand(
+        ApplySOSCommand       = new RelayCommand(
             execute: _ => ApplySOSHint(),
             canExecute: _ => IsPencilMode.Value == false && IsEraseMode.Value == false,
-            getMessage: new (Func<bool> fn, Action showMessage)[]
+            getMessage: new (Func<bool> fn, System.Action showMessage)[]
             {
                 (() => IsPencilMode.Value == true, () => ShowMessage.Value = ("", "Pencil mode is set. Click on Pencil again to enable SOS.", "")),
                 (() => IsEraseMode.Value == true, () => ShowMessage.Value = ("", "Erase mode is set. Click on Erase again to enable SOS.", ""))
             }
         );
-        PauseCommand = new RelayCommand(
+        PauseCommand          = new RelayCommand(
             execute: _ => PauseRequested.Value = !PauseRequested.Value,
             canExecute: _ => GameStateMachine.Instance?.CurrentState is PlayingState && IsEraseMode.Value == false && IsPencilMode.Value == false,
-            getMessage: new (Func<bool> fn, Action showMessage)[]
+            getMessage: new (Func<bool> fn, System.Action showMessage)[]
             {
                 (() => IsEraseMode.Value == true, () => ShowMessage.Value = ("", "Erase mode is set. Click on Erase again to enable Pause.", "")),
                 (() => IsPencilMode.Value == true, () => ShowMessage.Value = ("", "Pencil mode is set. Click on Pencil again to enable Pause.", "")),
                 (() => GameStateMachine.Instance?.CurrentState is IdleState, () => ShowMessage.Value = ("", "Game play is not started. Press an empty box to start the game.", ""))
             }
         );
- 
-        ResumeCommand = new RelayCommand(
+        ResumeCommand         = new RelayCommand(
             execute: _ => ResumeRequested.Value = true
         );
- 
-        NewGameCommand = new RelayCommand(
+        NewGameCommand        = new RelayCommand(
             execute: _ => {
                 NewGameRequested.Value = true;
             }
         );
- 
-        RetryCommand = new RelayCommand(
+        RetryCommand          = new RelayCommand(
             execute: _ => RetryGameRequested.Value = true
         );
-
-        AddLevel = new RelayCommand(
-            execute: _ => _model?.AddLevel((int)1)
+        RetryOlderGameCommand = new RelayCommand(
+            execute: param => 
+            {
+                RetryGameData = ((int, int, int, int))param;
+                Debug.Log($"RETRY FEATURE: Retry old game requested: Id = {RetryGameData.id}" + 
+                           $", Level = {RetryGameData.level}, difficulty = {RetryGameData.difficulty}, points = {RetryGameData.points}");
+                RetryOlderGameRequested.Value = true;
+            }
         );
-
-        IncreaseDifficulty = new RelayCommand(
+        NextLevel             = new RelayCommand(
+            execute: _ => 
+            {
+                int level = GameDatabase.GetLastRecord()?.Level ?? 0;
+                _model?.SetLevel(level + 1);
+            }
+        );
+        IncreaseDifficulty    = new RelayCommand(
             execute: _ => _model?.increaseDifficulty()
         );
-
-        DecreaseDifficulty = new RelayCommand(
+        DecreaseDifficulty    = new RelayCommand(
             execute: _ => _model?.decreaseDifficulty()
         );
-
-        FetchHistoricalData = new RelayCommand(
+        FetchHistoricalData   = new RelayCommand(
             execute: _ => FetchData()
         );
-
-        ResetHistoricalData = new RelayCommand(
+        ResetHistoricalData   = new RelayCommand(
             execute: _ => 
             {
                 offset = 0;
@@ -352,6 +362,14 @@ public class SudokuViewModel
 
         ConflictingCells.Value = conflicts;
     }
+    public void SetGameLevelAndDifficulty(int level, SudokuDifficulty difficulty)
+    {
+        Debug.Log($"RETRY FEATURE: Set Game  Level and Difficulty");
+        Debug.Log($"RETRY FEATURE: level = {level}, CurrentLevel = {_model.CurrentLevel}, difficulty = {difficulty.ToString()}");
+
+        _model.SetLevel(level);
+        _model.SetDifficulty(difficulty);
+    }
     public void ResetPuzzle()
     {
         this.SelectedRow.Value = -1;
@@ -384,17 +402,22 @@ public class SudokuViewModel
         //Need to keep things which lead to point score
         var data = new SaveGameData
         {
-            Level          = _model.CurrentLevel,
-            Difficulty     = (int)_model.CurrentDifficulty,
-            ElapsedSeconds = ElapsedSeconds.Value,
-            LivesRemaining = LivesRemaining.Value,
-            IsWon          = IsWon.Value,
-            IsLost         = IsLost.Value,
-            PauseRequested = PauseRequested.Value,
-            statename      = CurrentStateName.Value,
-            Mistakes       = Penalties.Mistakes,
-            SOSEmptyCells  = Penalties.SOSEmptyCells,
-            SOSWrongCells  = Penalties.SOSWrongCells
+            Level                     = _model.CurrentLevel,
+            Difficulty                = (int)_model.CurrentDifficulty,
+            ElapsedSeconds            = ElapsedSeconds.Value,
+            LivesRemaining            = LivesRemaining.Value,
+            IsWon                     = IsWon.Value,
+            IsLost                    = IsLost.Value,
+            PauseRequested            = PauseRequested.Value,
+            statename                 = CurrentStateName.Value,
+            Mistakes                  = Penalties.Mistakes,
+            SOSEmptyCells             = Penalties.SOSEmptyCells,
+            SOSWrongCells             = Penalties.SOSWrongCells,
+            RetryOlderGame            = RetryOlderGameRequested.Value,
+            RetryOlderGame_Id         = RetryGameData.id,
+            RetryOlderGame_Level      = RetryGameData.level,
+            RetryOlderGame_Difficulty = RetryGameData.difficulty,
+            RetryOlderGame_Points     = RetryGameData.points
         };
 
         // Flatten the 9×9 board to a 1-D array (row-major)
@@ -416,7 +439,7 @@ public class SudokuViewModel
     {
         // 1. Restore level & difficulty on the model, then regenerate the
         //    original puzzle so GivenMask is rebuilt correctly.
-        _model.AddLevel(data.Level - _model.CurrentLevel); // bring level to saved value
+        _model.SetLevel(data.Level); // bring level to saved value
         _model.SetDifficulty((SudokuDifficulty)data.Difficulty);
         _model.LoadCurrentLevelPuzzle(); // regenerates the solution & GivenMask
 
@@ -447,14 +470,16 @@ public class SudokuViewModel
 
         // 5. Push the board state to all bound views
         PublishBoard();
-        IsBoardValid.Value      = _model.Validate();
-        IsComplete.Value        = _model.IsComplete() && IsBoardValid.Value;
-        IsWon.Value             = data.IsWon;
-        IsLost.Value            = data.IsLost;
-        PauseRequested.Value    = data.PauseRequested;
-        Penalties.Mistakes      = data.Mistakes;
-        Penalties.SOSEmptyCells = data.SOSEmptyCells;
-        Penalties.SOSWrongCells = data.SOSWrongCells;
+        IsBoardValid.Value            = _model.Validate();
+        IsComplete.Value              = _model.IsComplete() && IsBoardValid.Value;
+        IsWon.Value                   = data.IsWon;
+        IsLost.Value                  = data.IsLost;
+        PauseRequested.Value          = data.PauseRequested;
+        Penalties.Mistakes            = data.Mistakes;
+        Penalties.SOSEmptyCells       = data.SOSEmptyCells;
+        Penalties.SOSWrongCells       = data.SOSWrongCells;
+        RetryOlderGameRequested.Value = data.RetryOlderGame;
+        RetryGameData                 = (data.RetryOlderGame_Id, data.RetryOlderGame_Level, data.RetryOlderGame_Difficulty, data.RetryOlderGame_Points);
         
         switch (data.statename)
         {

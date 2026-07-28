@@ -217,10 +217,9 @@ public class SudokuModel
 
     public SudokuDifficulty CurrentDifficulty { get { return _currentDifficulty; }}
     public int CurrentLevel { get {return _currentLevel;}}
-    public void AddLevel(int increment)
+    public void SetLevel(int level)
     {
-        int level = GameDatabase.GetLastRecord()?.Level ?? _currentLevel;
-        _currentLevel = _currentLevel + increment;
+        _currentLevel = level;
     }
     public void SetDifficulty(SudokuDifficulty difficulty) => _currentDifficulty = difficulty;
     public void increaseDifficulty() 
@@ -254,6 +253,10 @@ public class SudokuModel
                 decreaseDifficulty(lst);
             }
         }
+        else
+        {
+            _currentDifficulty = (SudokuDifficulty)lst[0].Difficulty;
+        }
     }
     public void decreaseDifficulty(List<GameRecord> lst = null)
     {
@@ -281,6 +284,10 @@ public class SudokuModel
                 _currentDifficulty = (SudokuDifficulty)Math.Max((int)SudokuDifficulty.Simple, (int)_currentDifficulty - 1);
                 Debug.Log($"Moving to below tier. Current Difficulty: {prev} demoting to {_currentDifficulty}");
             }
+        }
+        else
+        {
+            _currentDifficulty = (SudokuDifficulty)lst[0].Difficulty;
         }
     }
     public void LoadCurrentLevelPuzzle()

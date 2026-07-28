@@ -67,6 +67,20 @@ public static class GameDatabase
             Debug.LogError($"[GameDatabase] Insert failed: {ex.Message}");
         }
     }
+    public static void Update(GameRecord record)
+    {
+        try
+        {
+            _db.Update(record);
+            Debug.Log($"[GameDatabase] Record saved — Level={record.Level} " +
+                      $"Difficulty={record.Difficulty} Won={record.IsWon} " +
+                      $"Time={record.ElapsedSeconds:F0}s");            
+        }
+        catch(Exception ex)
+        {
+            Debug.LogError($"[GameDatabase] Update failed: {ex.Message}");            
+        }
+    }
 
     // ── Read ──────────────────────────────────────────────────────────────────
 

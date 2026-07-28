@@ -1,3 +1,5 @@
+using System.Globalization;
+
 /// <summary>
 /// Validating state — all cells are filled.
 /// Does a final validation check then transitions to Win or back to Playing.
@@ -46,7 +48,18 @@ public class ValidatingState : IGameState
                 };
 
                 PlayerSettings.Instance.SavePlayerPref(val);
-                GameDatabase.Insert(val);
+
+                if(_vm != null && _vm.RetryGameData.id != -1 && _vm.RetryGameData.difficulty != -1 && _vm.RetryGameData.level != -1)
+                {
+                    val.Id         = _vm.RetryGameData.id;
+                    val.Difficulty = _vm.RetryGameData.difficulty;
+                    val.Level      = _vm.RetryGameData.level;
+                    GameDatabase.Update(val);
+                }
+                else
+                {
+                    GameDatabase.Insert(val);
+                }
                 _machine.TransitionTo(_machine.Win);
             }
             else

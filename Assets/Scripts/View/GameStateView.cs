@@ -55,6 +55,8 @@ public class GameStateView : MonoBehaviour
     [SerializeField] private GameObject      pausePanel;
 
     private SudokuViewModel _vm;
+    private HUD _hud;
+
 
     // ── Binding ───────────────────────────────────────────────────────────────
 
@@ -67,6 +69,11 @@ public class GameStateView : MonoBehaviour
         vm.LivesRemaining.OnChanged   += OnLivesChanged;
         vm.IsWon.OnChanged            += OnWonChanged;
         vm.IsLost.OnChanged           += OnLostChanged;
+        _hud = hudPanel != null
+            ? hudPanel.GetComponent<HUD>()
+            : null;
+
+        _hud?.Bind(vm);
 
         SetAllPanelsHidden();
     }
@@ -92,9 +99,6 @@ public class GameStateView : MonoBehaviour
         {
             case "IdleState":
                 if (hudPanel != null) hudPanel.SetActive(false);
-                HUD hud = null;
-                if (hudPanel != null) hud = hudPanel.GetComponent<HUD>();
-                if (hud != null) hud.Bind(_vm);
                 if (Lives != null) Lives.SetActive(true);
                 if (Timer != null) Timer.SetActive(true);
                 break;

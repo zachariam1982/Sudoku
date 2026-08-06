@@ -10,25 +10,43 @@ public class SOSAdDialog : MonoBehaviour
     public static SOSAdDialog Instance { get; private set; }
 
     private SudokuViewModel _vm;
+    private bool _isSOSRunning;
 
     void Awake()
     {
         Instance = this;
+        _isSOSRunning = false;
     }
 
     public void Bind(SudokuViewModel vm)
     {
-        _vm = vm;
-        _vm.IsSOSMode.OnChanged += Show;
-    }
+        if (ReferenceEquals(_vm, vm)) return;
+        if (_vm != null) _vm.IsSOSMode.OnChanged -= Show;
 
+        _vm = vm;
+
+        if (_vm != null) _vm.IsSOSMode.OnChanged += Show;
+    }
+    private void OnDestroy()
+    {
+        if (_vm != null)
+            _vm.IsSOSMode.OnChanged -= Show;
+
+        if (Instance == this)
+            Instance = null;
+    }
     public void Show(bool arg)
     {
+        if (_vm == null || _isSOSRunning) return;
+
+        _isSOSRunning = true;
+
         try{
             StartAd();
         }
         catch(Exception ex)
         {
+            _isSOSRunning = false;
             Debug.Log($"SOS Pressed: {ex.Message}");
         }
     }
@@ -39,6 +57,7 @@ public class SOSAdDialog : MonoBehaviour
         {
             _vm.ApplySOSCommand.Execute();
             MakeChangesProvidedBySOS(_vm);
+            _isSOSRunning = false;
             return;
         }
 
@@ -47,12 +66,14 @@ public class SOSAdDialog : MonoBehaviour
             onFailed:    OnAdCompleted
         );
     }
+    
     private void OnAdCompleted()
     {
         if (_vm != null)
         {
             _vm.ApplySOSCommand.Execute();
             MakeChangesProvidedBySOS(_vm);
+            _isSOSRunning = false;
         }
     }
 

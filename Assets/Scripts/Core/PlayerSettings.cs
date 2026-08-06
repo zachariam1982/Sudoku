@@ -33,6 +33,10 @@ public class PlayerSettings : MonoBehaviour
             int total_played = GameDatabase.GetTotalGamesPlayed();
             PlayerPrefs.SetInt(TotalGamePlayed, total_played);
         }
+        else
+        {
+            
+        }
         if (!PlayerPrefs.HasKey(TotalPoints))
         {
             int total_points = GameDatabase.GetTotalPoints();

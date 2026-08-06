@@ -46,7 +46,7 @@ public static class GameDatabase
         }
         catch (Exception ex)
         {
-            Debug.LogError($"[GameDatabase] Init failed: {ex.Message}");
+            Debug.LogError($"[GameDatabase] Init failed: {ex.GetType().Name}: {ex}");
         }
     }
 

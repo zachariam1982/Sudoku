@@ -267,7 +267,6 @@ GameObject:
   - component: {fileID: 5342933}
   - component: {fileID: 5342936}
   - component: {fileID: 5342935}
-  - component: {fileID: 5342937}
   m_Layer: 5
   m_Name: Pause
   m_TagString: Untagged
@@ -332,22 +331,6 @@ CanvasRenderer:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 5342932}
   m_CullTransparentMesh: 1
---- !u!114 &5342937
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 5342932}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 6a0e025bd63ee9d49aa3e3571b7bf816, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: Assembly-CSharp::SafeAreaPadding
-  applyTop: 0
-  applyBottom: 1
-  applyLeft: 0
-  applyRight: 0
 --- !u!1 &5418291
 GameObject:
   m_ObjectHideFlags: 0
@@ -10462,7 +10445,6 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 1248505542}
-  - component: {fileID: 1248505543}
   - component: {fileID: 1248505545}
   - component: {fileID: 1248505544}
   m_Layer: 5
@@ -10491,22 +10473,6 @@ RectTransform:
   m_AnchoredPosition: {x: 0, y: 0}
   m_SizeDelta: {x: 100, y: 100}
   m_Pivot: {x: 0.5, y: 0.5}
---- !u!114 &1248505543
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 1248505541}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 6a0e025bd63ee9d49aa3e3571b7bf816, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: Assembly-CSharp::SafeAreaPadding
-  applyTop: 0
-  applyBottom: 1
-  applyLeft: 1
-  applyRight: 0
 --- !u!114 &1248505544
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -17079,7 +17045,6 @@ GameObject:
   - component: {fileID: 1908638173}
   - component: {fileID: 1908638176}
   - component: {fileID: 1908638175}
-  - component: {fileID: 1908638177}
   m_Layer: 5
   m_Name: Erase
   m_TagString: Untagged
@@ -17144,22 +17109,6 @@ CanvasRenderer:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 1908638172}
   m_CullTransparentMesh: 1
---- !u!114 &1908638177
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 1908638172}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 6a0e025bd63ee9d49aa3e3571b7bf816, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: Assembly-CSharp::SafeAreaPadding
-  applyTop: 1
-  applyBottom: 0
-  applyLeft: 0
-  applyRight: 1
 --- !u!1 &1913184496
 GameObject:
   m_ObjectHideFlags: 0
@@ -18522,7 +18471,6 @@ GameObject:
   - component: {fileID: 2024862921}
   - component: {fileID: 2024862924}
   - component: {fileID: 2024862923}
-  - component: {fileID: 2024862925}
   m_Layer: 5
   m_Name: Pencil
   m_TagString: Untagged
@@ -18587,22 +18535,6 @@ CanvasRenderer:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 2024862920}
   m_CullTransparentMesh: 1
---- !u!114 &2024862925
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 2024862920}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 6a0e025bd63ee9d49aa3e3571b7bf816, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: Assembly-CSharp::SafeAreaPadding
-  applyTop: 0
-  applyBottom: 1
-  applyLeft: 0
-  applyRight: 0
 --- !u!1 &2027544907
 GameObject:
   m_ObjectHideFlags: 0
@@ -19440,7 +19372,6 @@ GameObject:
   - component: {fileID: 2123521691}
   - component: {fileID: 2123521694}
   - component: {fileID: 2123521693}
-  - component: {fileID: 2123521695}
   m_Layer: 5
   m_Name: Undo
   m_TagString: Untagged
@@ -19505,22 +19436,6 @@ CanvasRenderer:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 2123521690}
   m_CullTransparentMesh: 1
---- !u!114 &2123521695
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 2123521690}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 6a0e025bd63ee9d49aa3e3571b7bf816, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: Assembly-CSharp::SafeAreaPadding
-  applyTop: 0
-  applyBottom: 1
-  applyLeft: 0
-  applyRight: 0
 --- !u!1 &2130778682
 GameObject:
   m_ObjectHideFlags: 0

@@ -40,7 +40,7 @@ public static class ScoringSystem
         13 * minutes,  // Advanced 
         18 * minutes,  // Hard    
         30 * minutes,  // Expert  
-        250 * minutes,  // Hardest 
+        50 * minutes,  // Hardest 
     };
  
     private static int DifficultyScore(SudokuDifficulty difficulty)
@@ -214,6 +214,8 @@ public class SudokuModel
     private int _currentLevel = 1;
     private SudokuDifficulty _currentDifficulty = SudokuDifficulty.Easy;
     private SudokuResult ret;
+    private const int _NoOfLastGames = 5;
+    private const float _NoOfLastGamesFloat = _NoOfLastGames;
 
     public SudokuDifficulty CurrentDifficulty { get { return _currentDifficulty; }}
     public int CurrentLevel { get {return _currentLevel;}}
@@ -224,31 +226,37 @@ public class SudokuModel
     public void SetDifficulty(SudokuDifficulty difficulty) => _currentDifficulty = difficulty;
     public void increaseDifficulty() 
     {
-        var lst = GameDatabase.GetLastNRecordByDate(3);
-        if (lst == null || lst.Count < 3) return;
+        var lst = GameDatabase.GetLastNRecordByDate(_NoOfLastGames);
+        bool AllDifficultySame = true;
+        int wins = 0;
+        float efficiencySum = 0f;
 
-        if (lst[0].Difficulty == lst[1].Difficulty && lst[1].Difficulty == lst[2].Difficulty) 
+        if (lst == null || lst.Count < _NoOfLastGames) return;
+
+        Debug.Log($"Last {_NoOfLastGames} points");
+        for(int i = 0; i < lst.Count; i++)
         {
-            float efficiencySum = 0f;
-            SudokuDifficulty matchDifficulty = (SudokuDifficulty)lst[0].Difficulty;
+            SudokuDifficulty matchDifficulty = (SudokuDifficulty)lst[i].Difficulty;
             int maxScore = ScoringSystem.GetAbsoluteMaximumScore(matchDifficulty);
 
-            Debug.Log($"Last 3 points {((float)lst[0].Points / maxScore)} {((float)lst[1].Points / maxScore)} {((float)lst[2].Points / maxScore)}");
+            Debug.Log($" {((float)lst[0].Points / maxScore)}");
+            if(i < (_NoOfLastGames - 1) && lst[i].Difficulty != lst[i + 1].Difficulty) AllDifficultySame = false;
+            if(lst[0].IsWon) ++wins;
+            
+            efficiencySum += (float)lst[i].Points / maxScore;
+        }
 
-            foreach (var entry in lst)
-            {
-                efficiencySum += ((float)entry.Points / maxScore);
-            }
+        if (AllDifficultySame) 
+        {
+            float finalEfficiency = efficiencySum / _NoOfLastGamesFloat;
 
-            float finalEfficiency = efficiencySum / 3f;
-
-            if (finalEfficiency > 0.89f)
+            if (finalEfficiency >= 0.80f && wins >= 4)
             {
                 var prev = _currentDifficulty;
                 _currentDifficulty = (SudokuDifficulty)Math.Min((int)SudokuDifficulty.Hardest, (int)_currentDifficulty + 1);
                 Debug.Log($"CONGRATS!!!! Moving to next tier. Current Difficulty: {prev} promoting to {_currentDifficulty}");
             }
-            else if (finalEfficiency < 0.55f)
+            else if (wins <= 2 || finalEfficiency < 0.45f)
             {
                 decreaseDifficulty(lst);
             }
@@ -260,25 +268,31 @@ public class SudokuModel
     }
     public void decreaseDifficulty(List<GameRecord> lst = null)
     {
-         lst = lst ?? GameDatabase.GetLastNRecordByDate(3);
-        if (lst == null || lst.Count < 3) return;
+        bool AllDifficultySame = true;
+        int wins = 0;
+        float efficiencySum = 0f;
 
-        if (lst[0].Difficulty == lst[1].Difficulty && lst[1].Difficulty == lst[2].Difficulty) 
+        lst = lst ?? GameDatabase.GetLastNRecordByDate(_NoOfLastGames);
+        if (lst == null || lst.Count < _NoOfLastGames) return;
+
+        Debug.Log($"Last {_NoOfLastGames} points");
+        for(int i = 0; i < lst.Count; i++)
         {
-            float efficiencySum = 0f;
-            SudokuDifficulty matchDifficulty = (SudokuDifficulty)lst[0].Difficulty;
+            SudokuDifficulty matchDifficulty = (SudokuDifficulty)lst[i].Difficulty;
             int maxScore = ScoringSystem.GetAbsoluteMaximumScore(matchDifficulty);
 
-            if (maxScore == 0) return;
+            Debug.Log($" {((float)lst[0].Points / maxScore)}");
+            if(i < (_NoOfLastGames - 1) && lst[i].Difficulty != lst[i + 1].Difficulty) AllDifficultySame = false;
+            if(lst[0].IsWon) ++wins;
+            
+            efficiencySum += (float)lst[i].Points / maxScore;
+        }
 
-            foreach (var entry in lst)
-            {
-                efficiencySum += ((float)entry.Points / maxScore);
-            }
+        if (AllDifficultySame) 
+        {
+            float finalEfficiency = efficiencySum / _NoOfLastGamesFloat;
 
-            float finalEfficiency = efficiencySum / 3f;
-
-            if (finalEfficiency < 0.55f)
+            if (wins <= 2 || finalEfficiency < 0.45f)
             {
                 var prev = _currentDifficulty;
                 _currentDifficulty = (SudokuDifficulty)Math.Max((int)SudokuDifficulty.Simple, (int)_currentDifficulty - 1);

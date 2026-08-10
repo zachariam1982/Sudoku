@@ -33,10 +33,6 @@ public class PlayerSettings : MonoBehaviour
             int total_played = GameDatabase.GetTotalGamesPlayed();
             PlayerPrefs.SetInt(TotalGamePlayed, total_played);
         }
-        else
-        {
-            
-        }
         if (!PlayerPrefs.HasKey(TotalPoints))
         {
             int total_points = GameDatabase.GetTotalPoints();
@@ -71,7 +67,19 @@ public class PlayerSettings : MonoBehaviour
         }
         PlayerPrefs.Save();
     }
-
+    public void UpdateSettings(string arg, int old_value, int new_value)
+    {
+        int currentValue = PlayerPrefs.GetInt(arg, old_value);
+        currentValue = currentValue - old_value;
+        PlayerPrefs.SetInt(arg, currentValue + new_value);
+    }
+    public void UpdateSettings(string arg, float old_value, float new_value)
+    {
+        float currentValue = PlayerPrefs.GetFloat(arg, old_value);
+        currentValue = currentValue - old_value;
+        PlayerPrefs.SetFloat(arg, currentValue + new_value);
+    }
+    public int GetSetting(string arg) => PlayerPrefs.GetInt(arg, 0);
     public void SavePlayerPref(GameRecord arg)
     {
         int total_game_played = PlayerPrefs.GetInt(TotalGamePlayed, 0);
@@ -86,7 +94,7 @@ public class PlayerSettings : MonoBehaviour
         total_points += arg.Points;
         total_wins = arg.IsWon ? total_wins + 1 : total_wins;
         total_max_points += ScoringSystem.GetAbsoluteMaximumScore((SudokuDifficulty)arg.Difficulty);
-        if(best_elapsed_t > arg.ElapsedSeconds) best_elapsed_t = arg.ElapsedSeconds;
+        if(arg.IsWon && best_elapsed_t > arg.ElapsedSeconds) best_elapsed_t = arg.ElapsedSeconds;
 
         PlayerPrefs.SetInt(TotalGamePlayed, total_game_played);
         PlayerPrefs.SetInt(TotalPoints, total_points);

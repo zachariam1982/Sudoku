@@ -47,19 +47,23 @@ public class ValidatingState : IGameState
                     CompletedAt    = System.DateTime.Now.ToString("o"),
                 };
 
-                PlayerSettings.Instance.SavePlayerPref(val);
-
                 if(_vm != null && _vm.RetryGameData.id != -1 && _vm.RetryGameData.difficulty != -1 && _vm.RetryGameData.level != -1)
                 {
                     val.Id         = _vm.RetryGameData.id;
                     val.Difficulty = _vm.RetryGameData.difficulty;
                     val.Level      = _vm.RetryGameData.level;
+                    PlayerSettings.Instance.UpdateSettings(PlayerSettings.TotalPoints, _vm.RetryGameData.points, val.Points);
+                    int wons = PlayerSettings.Instance.GetSetting(PlayerSettings.TotalWins);
+                    PlayerSettings.Instance.UpdateSettings(PlayerSettings.TotalWins, wons, wons + 1);
+                    
                     GameDatabase.Update(val);
                 }
                 else
                 {
+                    PlayerSettings.Instance.SavePlayerPref(val);
                     GameDatabase.Insert(val);
                 }
+
                 _machine.TransitionTo(_machine.Win);
             }
             else

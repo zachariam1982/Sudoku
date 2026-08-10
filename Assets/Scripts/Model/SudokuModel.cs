@@ -239,7 +239,7 @@ public class SudokuModel
             SudokuDifficulty matchDifficulty = (SudokuDifficulty)lst[i].Difficulty;
             int maxScore = ScoringSystem.GetAbsoluteMaximumScore(matchDifficulty);
 
-            Debug.Log($" {((float)lst[0].Points / maxScore)}");
+            Debug.Log($" {((float)lst[i].Points / maxScore)}");
             if(i < (_NoOfLastGames - 1) && lst[i].Difficulty != lst[i + 1].Difficulty) AllDifficultySame = false;
             if(lst[i].IsWon) ++wins;
             
@@ -281,7 +281,7 @@ public class SudokuModel
             SudokuDifficulty matchDifficulty = (SudokuDifficulty)lst[i].Difficulty;
             int maxScore = ScoringSystem.GetAbsoluteMaximumScore(matchDifficulty);
 
-            Debug.Log($" {((float)lst[0].Points / maxScore)}");
+            Debug.Log($" {((float)lst[i].Points / maxScore)}");
             if(i < (_NoOfLastGames - 1) && lst[i].Difficulty != lst[i + 1].Difficulty) AllDifficultySame = false;
             if(lst[i].IsWon) ++wins;
             

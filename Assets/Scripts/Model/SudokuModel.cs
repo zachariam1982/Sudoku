@@ -241,7 +241,7 @@ public class SudokuModel
 
             Debug.Log($" {((float)lst[0].Points / maxScore)}");
             if(i < (_NoOfLastGames - 1) && lst[i].Difficulty != lst[i + 1].Difficulty) AllDifficultySame = false;
-            if(lst[0].IsWon) ++wins;
+            if(lst[i].IsWon) ++wins;
             
             efficiencySum += (float)lst[i].Points / maxScore;
         }
@@ -283,7 +283,7 @@ public class SudokuModel
 
             Debug.Log($" {((float)lst[0].Points / maxScore)}");
             if(i < (_NoOfLastGames - 1) && lst[i].Difficulty != lst[i + 1].Difficulty) AllDifficultySame = false;
-            if(lst[0].IsWon) ++wins;
+            if(lst[i].IsWon) ++wins;
             
             efficiencySum += (float)lst[i].Points / maxScore;
         }

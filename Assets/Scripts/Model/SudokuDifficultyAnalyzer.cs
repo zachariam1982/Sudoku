@@ -25,30 +25,92 @@ public class SudokuDifficultyResult
 
 public static class SudokuDifficultyAnalyzer
 {
+    private sealed class SolverState
+    {
+        public int[,] Board { get; }
+        public HashSet<int>[,] Candidates { get; }
+
+        public SolverState(int[,] puzzle)
+        {
+            Board = (int[,])puzzle.Clone();
+
+            Candidates = new HashSet<int>[9, 9];
+
+            for (int row = 0; row < 9; row++)
+            {
+                for (int col = 0; col < 9; col++)
+                {
+                    Candidates[row, col] = new HashSet<int>();
+
+                    if (Board[row, col] != 0) continue;
+
+                    foreach (int candidate in SudokuSolver.GetCandidates(Board,row,col))
+                        Candidates[row, col].Add(candidate);
+                }
+            }
+        }
+
+        public void Place(int row,int col,int value)
+        {
+            Board[row, col] = value;
+            Candidates[row, col].Clear();
+
+            // Remove from row / column.
+            for (int i = 0; i < 9; i++)
+            {
+                if (Board[row, i] == 0)
+                    Candidates[row, i].Remove(value);
+
+                if (Board[i, col] == 0)
+                    Candidates[i, col].Remove(value);
+            }
+
+            // Remove from box.
+            int startRow = (row / 3) * 3;
+
+            int startCol = (col / 3) * 3;
+
+            for (int r = startRow; r < startRow + 3; r++)
+            {
+                for (int c = startCol; c < startCol + 3; c++)
+                {
+                    if (Board[r, c] == 0)
+                    {
+                        Candidates[r, c].Remove(value);
+                    }
+                }
+            }
+        }
+    }
     public static SudokuDifficultyResult Analyze(int[,] puzzle)
     {
-        int[,] board = (int[,])puzzle.Clone();
+        SolverState state = new SolverState(puzzle);
         int steps = 0;
-
         SudokuTechnique hardest = SudokuTechnique.NakedSingle;
 
-        while (!IsComplete(board))
+        while (!IsComplete(state.Board))
         {
-            if (TryNakedSingle(board))
+            if (TryNakedSingle(state))
             {
-                hardest = Max(hardest,SudokuTechnique.NakedSingle);
+                hardest = Max(
+                    hardest,
+                    SudokuTechnique.NakedSingle);
+
                 steps++;
                 continue;
             }
 
-            if (TryHiddenSingle(board))
+            if (TryHiddenSingle(state))
             {
-                hardest = Max(hardest,SudokuTechnique.HiddenSingle);
+                hardest = Max(
+                    hardest,
+                    SudokuTechnique.HiddenSingle);
+
                 steps++;
                 continue;
             }
 
-            if (TryLockedCandidate(board))
+            if (TryLockedCandidate(state))
             {
                 hardest = Max(
                     hardest,
@@ -58,7 +120,7 @@ public static class SudokuDifficultyAnalyzer
                 continue;
             }
 
-            if (TryNakedPair(board))
+            if (TryNakedPair(state))
             {
                 hardest = Max(
                     hardest,
@@ -68,7 +130,8 @@ public static class SudokuDifficultyAnalyzer
                 continue;
             }
 
-            hardest = SudokuTechnique.SearchRequired;
+            hardest =
+                SudokuTechnique.SearchRequired;
 
             break;
         }
@@ -85,7 +148,7 @@ public static class SudokuDifficultyAnalyzer
             SolveSteps = steps,
 
             SolvedLogically =
-                IsComplete(board)
+                IsComplete(state.Board)
         };
     }
     private static SudokuTechnique Max(SudokuTechnique a,SudokuTechnique b) => (SudokuTechnique) Math.Max((int)a, (int)b);
@@ -138,31 +201,40 @@ public static class SudokuDifficultyAnalyzer
                 return SudokuDifficulty.Easy;
         }
     }
-    private static bool TryNakedSingle(int[,] board)
+    private static bool TryNakedSingle(
+        SolverState state)
     {
         for (int row = 0; row < 9; row++)
         {
             for (int col = 0; col < 9; col++)
             {
-                if (board[row, col] != 0)
+                if (state.Board[row, col] != 0)
                     continue;
 
-                List<int> candidates = SudokuSolver.GetCandidates(board, row, col);
+                if (state.Candidates[row, col].Count != 1)
+                    continue;
 
-                if (candidates.Count == 1)
-                {
-                    board[row, col] = candidates[0];
+                int value =
+                    state.Candidates[row, col].First();
 
-                    return true;
-                }
+                state.Place(
+                    row,
+                    col,
+                    value);
+
+                return true;
             }
         }
 
         return false;
-    }
-    private static bool TryHiddenSingle(int[,] board)
+    }    
+    private static bool TryHiddenSingle(
+        SolverState state)
     {
-        // Rows
+        // --------------------
+        // ROWS
+        // --------------------
+
         for (int row = 0; row < 9; row++)
         {
             for (int number = 1;
@@ -170,35 +242,41 @@ public static class SudokuDifficultyAnalyzer
                 number++)
             {
                 int foundCol = -1;
-                int locations = 0;
+                int count = 0;
 
-                for (int col = 0; col < 9; col++)
+                for (int col = 0;
+                    col < 9;
+                    col++)
                 {
-                    if (board[row, col] != 0)
+                    if (state.Board[row, col] != 0)
                         continue;
 
-                    var candidates =
-                        SudokuSolver.GetCandidates(
-                            board,
+                    if (state.Candidates[
                             row,
-                            col);
-
-                    if (candidates.Contains(number))
+                            col]
+                        .Contains(number))
                     {
-                        locations++;
                         foundCol = col;
+                        count++;
                     }
                 }
 
-                if (locations == 1)
+                if (count == 1)
                 {
-                    board[row, foundCol] = number;
+                    state.Place(
+                        row,
+                        foundCol,
+                        number);
+
                     return true;
                 }
             }
         }
 
-        // Columns
+        // --------------------
+        // COLUMNS
+        // --------------------
+
         for (int col = 0; col < 9; col++)
         {
             for (int number = 1;
@@ -206,35 +284,41 @@ public static class SudokuDifficultyAnalyzer
                 number++)
             {
                 int foundRow = -1;
-                int locations = 0;
+                int count = 0;
 
-                for (int row = 0; row < 9; row++)
+                for (int row = 0;
+                    row < 9;
+                    row++)
                 {
-                    if (board[row, col] != 0)
+                    if (state.Board[row, col] != 0)
                         continue;
 
-                    var candidates =
-                        SudokuSolver.GetCandidates(
-                            board,
+                    if (state.Candidates[
                             row,
-                            col);
-
-                    if (candidates.Contains(number))
+                            col]
+                        .Contains(number))
                     {
-                        locations++;
                         foundRow = row;
+                        count++;
                     }
                 }
 
-                if (locations == 1)
+                if (count == 1)
                 {
-                    board[foundRow, col] = number;
+                    state.Place(
+                        foundRow,
+                        col,
+                        number);
+
                     return true;
                 }
             }
         }
 
-        // 3x3 boxes
+        // --------------------
+        // 3x3 BOXES
+        // --------------------
+
         for (int boxRow = 0;
             boxRow < 3;
             boxRow++)
@@ -243,49 +327,55 @@ public static class SudokuDifficultyAnalyzer
                 boxCol < 3;
                 boxCol++)
             {
+                int startRow =
+                    boxRow * 3;
+
+                int startCol =
+                    boxCol * 3;
+
                 for (int number = 1;
                     number <= 9;
                     number++)
                 {
                     int foundRow = -1;
                     int foundCol = -1;
-                    int locations = 0;
+                    int count = 0;
 
                     for (int r = 0; r < 3; r++)
                     {
                         for (int c = 0; c < 3; c++)
                         {
                             int row =
-                                boxRow * 3 + r;
+                                startRow + r;
 
                             int col =
-                                boxCol * 3 + c;
+                                startCol + c;
 
-                            if (board[row, col] != 0)
+                            if (state.Board[
+                                    row,
+                                    col] != 0)
+                            {
                                 continue;
+                            }
 
-                            var candidates =
-                                SudokuSolver
-                                    .GetCandidates(
-                                        board,
-                                        row,
-                                        col);
-
-                            if (candidates
+                            if (state.Candidates[
+                                    row,
+                                    col]
                                 .Contains(number))
                             {
-                                locations++;
                                 foundRow = row;
                                 foundCol = col;
+                                count++;
                             }
                         }
                     }
 
-                    if (locations == 1)
+                    if (count == 1)
                     {
-                        board[
+                        state.Place(
                             foundRow,
-                            foundCol] = number;
+                            foundCol,
+                            number);
 
                         return true;
                     }
@@ -295,87 +385,159 @@ public static class SudokuDifficultyAnalyzer
 
         return false;
     }
-    private static bool TryLockedCandidate(int[,] board)
+    private static bool TryLockedCandidate(
+        SolverState state)
     {
-        // Process each 3x3 box.
-        for (int boxRow = 0; boxRow < 3; boxRow++)
+        for (int boxRow = 0;
+            boxRow < 3;
+            boxRow++)
         {
-            for (int boxCol = 0; boxCol < 3; boxCol++)
+            for (int boxCol = 0;
+                boxCol < 3;
+                boxCol++)
             {
-                int startRow = boxRow * 3;
-                int startCol = boxCol * 3;
+                int startRow =
+                    boxRow * 3;
 
-                for (int number = 1; number <= 9; number++)
+                int startCol =
+                    boxCol * 3;
+
+                for (int number = 1;
+                    number <= 9;
+                    number++)
                 {
-                    var candidateCells = new List<(int row, int col)>();
+                    var cells =
+                        new List<(int row, int col)>();
 
-                    // Find all locations for this number inside the box.
+                    /*
+                    * Find all candidate positions for
+                    * this number inside this box.
+                    */
                     for (int r = 0; r < 3; r++)
                     {
                         for (int c = 0; c < 3; c++)
                         {
-                            int row = startRow + r;
-                            int col = startCol + c;
+                            int row =
+                                startRow + r;
 
-                            if (board[row, col] != 0) continue;
+                            int col =
+                                startCol + c;
 
-                            var candidates = SudokuSolver.GetCandidates(board,row,col);
+                            if (state.Board[
+                                    row,
+                                    col] != 0)
+                            {
+                                continue;
+                            }
 
-                            if (candidates.Contains(number)) candidateCells.Add((row, col));
+                            if (state.Candidates[
+                                    row,
+                                    col]
+                                .Contains(number))
+                            {
+                                cells.Add(
+                                    (row, col));
+                            }
                         }
                     }
 
-                    if (candidateCells.Count < 2) continue;
+                    if (cells.Count < 2)
+                        continue;
 
-                    int commonRow = candidateCells[0].row;
+                    // =========================
+                    // POINTING ROW
+                    // =========================
 
-                    bool sameRow = candidateCells.All(cell => cell.row == commonRow);
+                    int commonRow =
+                        cells[0].row;
+
+                    bool sameRow =
+                        cells.All(
+                            cell =>
+                                cell.row ==
+                                commonRow);
 
                     if (sameRow)
                     {
-                        for (int col = 0; col < 9; col++)
+                        bool changed = false;
+
+                        for (int col = 0;
+                            col < 9;
+                            col++)
                         {
-                            if (col >= startCol && col < startCol + 3) continue;
-                            if (board[commonRow, col] != 0) continue;
-
-                            var candidates = SudokuSolver.GetCandidates(board,commonRow,col);
-
-                            if (!candidates.Contains(number)) continue;
-
-                            candidates.Remove(number);
-
-                            if (candidates.Count == 1)
+                            // Skip the current box.
+                            if (col >= startCol &&
+                                col < startCol + 3)
                             {
-                                board[commonRow, col] = candidates[0];
+                                continue;
+                            }
 
-                                return true;
+                            if (state.Board[
+                                    commonRow,
+                                    col] != 0)
+                            {
+                                continue;
+                            }
+
+                            if (state.Candidates[
+                                    commonRow,
+                                    col]
+                                .Remove(number))
+                            {
+                                changed = true;
                             }
                         }
+
+                        if (changed)
+                            return true;
                     }
 
-                    int commonCol = candidateCells[0].col;
-                    bool sameCol = candidateCells.All(cell => cell.col == commonCol);
+                    // =========================
+                    // POINTING COLUMN
+                    // =========================
+
+                    int commonCol =
+                        cells[0].col;
+
+                    bool sameCol =
+                        cells.All(
+                            cell =>
+                                cell.col ==
+                                commonCol);
 
                     if (sameCol)
                     {
-                        for (int row = 0; row < 9; row++)
+                        bool changed = false;
+
+                        for (int row = 0;
+                            row < 9;
+                            row++)
                         {
-                            if (row >= startRow && row < startRow + 3) continue;
-                            if (board[row, commonCol] != 0) continue;
-
-                            var candidates = SudokuSolver.GetCandidates(board,row,commonCol);
-
-                            if (!candidates.Contains(number))continue;
-
-                            candidates.Remove(number);
-
-                            if (candidates.Count == 1)
+                            // Skip the current box.
+                            if (row >= startRow &&
+                                row < startRow + 3)
                             {
-                                board[row, commonCol] = candidates[0];
+                                continue;
+                            }
 
-                                return true;
+                            if (state.Board[
+                                    row,
+                                    commonCol] != 0)
+                            {
+                                continue;
+                            }
+
+                            if (state.Candidates[
+                                    row,
+                                    commonCol]
+                                .Remove(number))
+                            {
+                                changed = true;
                             }
                         }
+
+                        if (changed)
+                            return true;
                     }
                 }
             }
@@ -383,121 +545,192 @@ public static class SudokuDifficultyAnalyzer
 
         return false;
     }
-    private static bool TryNakedPair(int[,] board)
+    private static bool TryNakedPair(
+        SolverState state)
     {
-        // Rows
+        // --------------------
+        // ROWS
+        // --------------------
+
         for (int row = 0; row < 9; row++)
         {
-            var cells = new List<(int row, int col)>();
+            var cells =
+                new List<(int row, int col)>();
 
-            for (int col = 0; col < 9; col++)
+            for (int col = 0;
+                col < 9;
+                col++)
             {
-                if (board[row, col] == 0) cells.Add((row, col));
+                if (state.Board[row, col] == 0)
+                {
+                    cells.Add((row, col));
+                }
             }
 
-            if (TryNakedPairInUnit(board, cells))
+            if (TryNakedPairInUnit(
+                    state,
+                    cells))
+            {
                 return true;
+            }
         }
 
-        // Columns
+        // --------------------
+        // COLUMNS
+        // --------------------
+
         for (int col = 0; col < 9; col++)
         {
-            var cells = new List<(int row, int col)>();
+            var cells =
+                new List<(int row, int col)>();
 
-            for (int row = 0; row < 9; row++)
+            for (int row = 0;
+                row < 9;
+                row++)
             {
-                if (board[row, col] == 0) cells.Add((row, col));
+                if (state.Board[row, col] == 0)
+                {
+                    cells.Add((row, col));
+                }
             }
 
-            if (TryNakedPairInUnit(board, cells))
+            if (TryNakedPairInUnit(
+                    state,
+                    cells))
+            {
                 return true;
+            }
         }
 
-        // 3x3 boxes
-        for (int boxRow = 0; boxRow < 3; boxRow++)
+        // --------------------
+        // BOXES
+        // --------------------
+
+        for (int boxRow = 0;
+            boxRow < 3;
+            boxRow++)
         {
-            for (int boxCol = 0; boxCol < 3; boxCol++)
+            for (int boxCol = 0;
+                boxCol < 3;
+                boxCol++)
             {
-                var cells = new List<(int row, int col)>();
-                int startRow = boxRow * 3;
-                int startCol = boxCol * 3;
+                var cells =
+                    new List<(int row, int col)>();
+
+                int startRow =
+                    boxRow * 3;
+
+                int startCol =
+                    boxCol * 3;
 
                 for (int r = 0; r < 3; r++)
                 {
                     for (int c = 0; c < 3; c++)
                     {
-                        int row = startRow + r;
-                        int col = startCol + c;
+                        int row =
+                            startRow + r;
 
-                        if (board[row, col] == 0)
+                        int col =
+                            startCol + c;
+
+                        if (state.Board[
+                                row,
+                                col] == 0)
                         {
-                            cells.Add((row, col));
+                            cells.Add(
+                                (row, col));
                         }
                     }
                 }
 
-                if (TryNakedPairInUnit(board, cells))
+                if (TryNakedPairInUnit(
+                        state,
+                        cells))
+                {
+                    return true;
+                }
+            }
+        }
+
+        return false;
+    }
+    private static bool TryNakedPairInUnit(
+        SolverState state,
+        List<(int row, int col)> cells)
+    {
+        for (int i = 0;
+            i < cells.Count;
+            i++)
+        {
+            var first = cells[i];
+
+            HashSet<int> firstCandidates =
+                state.Candidates[
+                    first.row,
+                    first.col];
+
+            if (firstCandidates.Count != 2)
+                continue;
+
+            for (int j = i + 1;
+                j < cells.Count;
+                j++)
+            {
+                var second = cells[j];
+
+                HashSet<int> secondCandidates =
+                    state.Candidates[
+                        second.row,
+                        second.col];
+
+                if (secondCandidates.Count != 2)
+                    continue;
+
+                if (!firstCandidates.SetEquals(
+                        secondCandidates))
+                {
+                    continue;
+                }
+
+                int[] pair =
+                    firstCandidates.ToArray();
+
+                bool changed = false;
+
+                foreach (var cell in cells)
+                {
+                    if (cell == first ||
+                        cell == second)
+                    {
+                        continue;
+                    }
+
+                    HashSet<int> candidates =
+                        state.Candidates[
+                            cell.row,
+                            cell.col];
+
+                    if (candidates.Remove(pair[0]))
+                        changed = true;
+
+                    if (candidates.Remove(pair[1]))
+                        changed = true;
+                }
+
+                /*
+                * Important:
+                *
+                * We return true when candidates
+                * were eliminated — we DON'T require
+                * the elimination to immediately
+                * solve a cell.
+                */
+                if (changed)
                     return true;
             }
         }
 
         return false;
-    }
-    private static bool TryNakedPairInUnit(int[,] board,List<(int row, int col)> cells)
-    {
-        for (int i = 0; i < cells.Count; i++)
-        {
-            var first = cells[i];
-
-            List<int> firstCandidates = SudokuSolver.GetCandidates(board,first.row,first.col);
-
-            if (firstCandidates.Count != 2) continue;
-
-            for (int j = i + 1;j < cells.Count;j++)
-            {
-                var second = cells[j];
-                List<int> secondCandidates = SudokuSolver.GetCandidates(board,second.row,second.col);
-
-                if (secondCandidates.Count != 2) continue;
-
-                // Same exact pair?
-                if (!HaveSameCandidates(firstCandidates,secondCandidates)) continue;
-
-                int candidate1 = firstCandidates[0];
-                int candidate2 = firstCandidates[1];
-
-                foreach (var cell in cells)
-                {
-                    if (cell == first || cell == second) continue;
-
-                    List<int> candidates = SudokuSolver.GetCandidates(board,cell.row,cell.col);
-                    bool changed = false;
-
-                    if (candidates.Remove(candidate1)) changed = true;
-                    if (candidates.Remove(candidate2)) changed = true;
-
-                    if (changed && candidates.Count == 1)
-                    {
-                        board[cell.row, cell.col] = candidates[0];
-
-                        return true;
-                    }
-                }
-            }
-        }
-
-        return false;
-    }
-    private static bool HaveSameCandidates(List<int> a, List<int> b)
-    {
-        if (a.Count != b.Count) return false;
-
-        for (int i = 0; i < a.Count; i++)
-        {
-            if (!b.Contains(a[i])) return false;
-        }
-
-        return true;
     }
 }
 

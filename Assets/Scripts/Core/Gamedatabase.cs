@@ -6,42 +6,24 @@ using System.Reflection;
 using SQLite;
 using UnityEngine;
 
-/// <summary>
-/// Manages a SQLite database of completed game sessions using sqlite-net-pcl.
-/// Database file lives at Application.persistentDataPath/game_history.db
-///
-/// Setup:
-///   1. Download SQLite.cs + SQLiteAsync.cs from https://github.com/praeclarum/sqlite-net
-///      and drop both files anywhere inside your Assets/ folder.
-///   2. Call GameDatabase.Init() once at app startup (e.g. User.Awake).
-///
-/// Usage:
-///   GameDatabase.Insert(record);
-///   List<GameRecord> all      = GameDatabase.GetAll();
-///   List<GameRecord> bestWins = GameDatabase.GetWinsByDifficulty("Hard");
-///   GameRecord       best     = GameDatabase.GetBestWin("Hard");
-/// </summary>
 public static class GameDatabase
 {
     private static SQLiteConnection _db;
-
-    private static string DbPath =>
-        Path.Combine(Application.persistentDataPath, "game_history.db");
-
-    // ── Schema ────────────────────────────────────────────────────────────────
-
-    /// <summary>
-    /// Opens the database and creates the table if it doesn't exist.
-    /// Safe to call every time the app starts — CreateTable is a no-op if
-    /// the table already exists.
-    /// </summary>
+    private static string DbPath => Path.Combine(Application.persistentDataPath, "game_history.db");
     public static void Init()
     {
         try
         {
             Debug.Log($"DB stored at {DbPath}");
+            
             _db = new SQLiteConnection(DbPath);
+            
             _db.CreateTable<GameRecord>();
+            _db.CreateTable<GameStats>();
+
+            InitializeGameStats();
+            CreateGameStatsTriggers();
+            
             Debug.Log($"[GameDatabase] Initialised at {DbPath}");
         }
         catch (Exception ex)
@@ -49,10 +31,6 @@ public static class GameDatabase
             Debug.LogError($"[GameDatabase] Init failed: {ex.GetType().Name}: {ex}");
         }
     }
-
-    // ── Write ─────────────────────────────────────────────────────────────────
-
-    /// <summary>Inserts a completed game record into the database.</summary>
     public static void Insert(GameRecord record)
     {
         try
@@ -81,10 +59,6 @@ public static class GameDatabase
             Debug.LogError($"[GameDatabase] Update failed: {ex.Message}");            
         }
     }
-
-    // ── Read ──────────────────────────────────────────────────────────────────
-
-    /// <summary>Returns all completed game records, newest first.</summary>
     public static List<GameRecord> GetAll()
     {
         try
@@ -99,7 +73,6 @@ public static class GameDatabase
             return new List<GameRecord>();
         }
     }
-
     public static List<GameRecord> GetNextSet(int offset)
     {
         try
@@ -114,7 +87,6 @@ public static class GameDatabase
             return new List<GameRecord>();
         }
     }
-
     public static GameRecord GetFastestWin()
     {
         try
@@ -144,7 +116,6 @@ public static class GameDatabase
             return 0;
         }  
     }
-
     public static int GetTotalWins()
     {
         try
@@ -159,7 +130,6 @@ public static class GameDatabase
             return 0;
         }  
     }
-    /// <summary>Returns the total number of games played.</summary>
     public static int GetTotalGamesPlayed()
     {
         try   
@@ -203,7 +173,6 @@ public static class GameDatabase
             return null;
         }
     }
-    // ── Teardown ──────────────────────────────────────────────────────────────
     public static void FlushToDisk()
     {
         if (_db == null) return;
@@ -217,10 +186,6 @@ public static class GameDatabase
         {
         }
     }
-    /// <summary>
-    /// Closes the connection. Call from OnApplicationQuit if you want a clean
-    /// shutdown, though sqlite-net-pcl handles this gracefully without it.
-    /// </summary>
     public static void Close()
     {
         if (_db != null)
@@ -229,5 +194,385 @@ public static class GameDatabase
             _db.Close();
             _db = null;
         }
+    }
+    public static GameStats GetGameStats()
+    {
+        try
+        {
+            return _db.Find<GameStats>(1);
+        }
+        catch (Exception ex)
+        {
+            Debug.LogError( $"[GameDatabase] GetGameStats failed: " + $"{ex.Message}");
+            return null;
+        }
+    }
+    private static void InitializeGameStats()
+    {
+        string sql = @"
+            INSERT OR IGNORE INTO game_stats
+            (
+                Id,
+                TotalGames,
+                TotalWins,
+                TotalPoints,
+                FastestWinSeconds,
+
+                SimpleCount,
+                BeginnerCount,
+                EasyCount,
+                NoviceCount,
+                ModerateCount,
+                AdvancedCount,
+                HardCount,
+                ExpertCount,
+                HardestCount
+            )
+            SELECT
+                1,
+
+                COUNT(*),
+
+                COALESCE(
+                    SUM(
+                        CASE
+                            WHEN IsWon = 1 THEN 1
+                            ELSE 0
+                        END
+                    ),
+                    0
+                ),
+
+                COALESCE(
+                    SUM(
+                        CASE
+                            WHEN IsWon = 1 THEN Points
+                            ELSE 0
+                        END
+                    ),
+                    0
+                ),
+
+                MIN(
+                    CASE
+                        WHEN IsWon = 1
+                        THEN ElapsedSeconds
+                        ELSE NULL
+                    END
+                ),
+
+                SUM(CASE WHEN Difficulty = 0 THEN 1 ELSE 0 END),
+                SUM(CASE WHEN Difficulty = 1 THEN 1 ELSE 0 END),
+                SUM(CASE WHEN Difficulty = 2 THEN 1 ELSE 0 END),
+                SUM(CASE WHEN Difficulty = 3 THEN 1 ELSE 0 END),
+                SUM(CASE WHEN Difficulty = 4 THEN 1 ELSE 0 END),
+                SUM(CASE WHEN Difficulty = 5 THEN 1 ELSE 0 END),
+                SUM(CASE WHEN Difficulty = 6 THEN 1 ELSE 0 END),
+                SUM(CASE WHEN Difficulty = 7 THEN 1 ELSE 0 END),
+                SUM(CASE WHEN Difficulty = 8 THEN 1 ELSE 0 END)
+
+            FROM completed_games;
+        ";
+
+        _db.Execute(sql);
+    }
+    private static void CreateGameStatsTriggers()
+    {
+        CreateInsertStatsTrigger();
+        CreateUpdateStatsTrigger();
+        CreateDeleteStatsTrigger();
+    }
+    private static void CreateInsertStatsTrigger()
+    {
+        string sql = @"
+            CREATE TRIGGER IF NOT EXISTS
+                trg_completed_games_insert
+
+            AFTER INSERT ON completed_games
+
+            BEGIN
+
+                UPDATE game_stats
+
+                SET
+                    TotalGames =
+                        TotalGames + 1,
+
+                    TotalWins =
+                        TotalWins +
+                        CASE
+                            WHEN NEW.IsWon = 1
+                            THEN 1
+                            ELSE 0
+                        END,
+
+                    TotalPoints =
+                        TotalPoints +
+                        CASE
+                            WHEN NEW.IsWon = 1
+                            THEN NEW.Points
+                            ELSE 0
+                        END,
+
+                    FastestWinSeconds =
+                        CASE
+                            WHEN NEW.IsWon = 1
+                                AND
+                                (
+                                    FastestWinSeconds IS NULL
+                                    OR NEW.ElapsedSeconds <
+                                    FastestWinSeconds
+                                )
+                            THEN NEW.ElapsedSeconds
+
+                            ELSE FastestWinSeconds
+                        END,
+
+                    SimpleCount =
+                        SimpleCount +
+                        CASE
+                            WHEN NEW.Difficulty = 0 THEN 1
+                            ELSE 0
+                        END,
+
+                    BeginnerCount =
+                        BeginnerCount +
+                        CASE
+                            WHEN NEW.Difficulty = 1 THEN 1
+                            ELSE 0
+                        END,
+
+                    EasyCount =
+                        EasyCount +
+                        CASE
+                            WHEN NEW.Difficulty = 2 THEN 1
+                            ELSE 0
+                        END,
+
+                    NoviceCount =
+                        NoviceCount +
+                        CASE
+                            WHEN NEW.Difficulty = 3 THEN 1
+                            ELSE 0
+                        END,
+
+                    ModerateCount =
+                        ModerateCount +
+                        CASE
+                            WHEN NEW.Difficulty = 4 THEN 1
+                            ELSE 0
+                        END,
+
+                    AdvancedCount =
+                        AdvancedCount +
+                        CASE
+                            WHEN NEW.Difficulty = 5 THEN 1
+                            ELSE 0
+                        END,
+
+                    HardCount =
+                        HardCount +
+                        CASE
+                            WHEN NEW.Difficulty = 6 THEN 1
+                            ELSE 0
+                        END,
+
+                    ExpertCount =
+                        ExpertCount +
+                        CASE
+                            WHEN NEW.Difficulty = 7 THEN 1
+                            ELSE 0
+                        END,
+
+                    HardestCount =
+                        HardestCount +
+                        CASE
+                            WHEN NEW.Difficulty = 8 THEN 1
+                            ELSE 0
+                        END
+
+                WHERE Id = 1;
+
+            END;
+        ";
+
+        _db.Execute(sql);
+    }
+    private static void CreateUpdateStatsTrigger()
+    {
+        string sql = @"
+            CREATE TRIGGER IF NOT EXISTS
+                trg_completed_games_update
+
+            AFTER UPDATE ON completed_games
+
+            BEGIN
+
+                UPDATE game_stats
+
+                SET
+                    TotalWins =
+                        TotalWins
+                        - CASE
+                            WHEN OLD.IsWon = 1 THEN 1
+                            ELSE 0
+                        END
+                        + CASE
+                            WHEN NEW.IsWon = 1 THEN 1
+                            ELSE 0
+                        END,
+
+                    TotalPoints =
+                        TotalPoints
+                        - CASE
+                            WHEN OLD.IsWon = 1
+                            THEN OLD.Points
+                            ELSE 0
+                        END
+                        + CASE
+                            WHEN NEW.IsWon = 1
+                            THEN NEW.Points
+                            ELSE 0
+                        END,
+
+                    FastestWinSeconds =
+                    (
+                        SELECT MIN(ElapsedSeconds)
+                        FROM completed_games
+                        WHERE IsWon = 1
+                    ),
+
+                    SimpleCount =
+                        SimpleCount
+                        - CASE WHEN OLD.Difficulty = 0 THEN 1 ELSE 0 END
+                        + CASE WHEN NEW.Difficulty = 0 THEN 1 ELSE 0 END,
+
+                    BeginnerCount =
+                        BeginnerCount
+                        - CASE WHEN OLD.Difficulty = 1 THEN 1 ELSE 0 END
+                        + CASE WHEN NEW.Difficulty = 1 THEN 1 ELSE 0 END,
+
+                    EasyCount =
+                        EasyCount
+                        - CASE WHEN OLD.Difficulty = 2 THEN 1 ELSE 0 END
+                        + CASE WHEN NEW.Difficulty = 2 THEN 1 ELSE 0 END,
+
+                    NoviceCount =
+                        NoviceCount
+                        - CASE WHEN OLD.Difficulty = 3 THEN 1 ELSE 0 END
+                        + CASE WHEN NEW.Difficulty = 3 THEN 1 ELSE 0 END,
+
+                    ModerateCount =
+                        ModerateCount
+                        - CASE WHEN OLD.Difficulty = 4 THEN 1 ELSE 0 END
+                        + CASE WHEN NEW.Difficulty = 4 THEN 1 ELSE 0 END,
+
+                    AdvancedCount =
+                        AdvancedCount
+                        - CASE WHEN OLD.Difficulty = 5 THEN 1 ELSE 0 END
+                        + CASE WHEN NEW.Difficulty = 5 THEN 1 ELSE 0 END,
+
+                    HardCount =
+                        HardCount
+                        - CASE WHEN OLD.Difficulty = 6 THEN 1 ELSE 0 END
+                        + CASE WHEN NEW.Difficulty = 6 THEN 1 ELSE 0 END,
+
+                    ExpertCount =
+                        ExpertCount
+                        - CASE WHEN OLD.Difficulty = 7 THEN 1 ELSE 0 END
+                        + CASE WHEN NEW.Difficulty = 7 THEN 1 ELSE 0 END,
+
+                    HardestCount =
+                        HardestCount
+                        - CASE WHEN OLD.Difficulty = 8 THEN 1 ELSE 0 END
+                        + CASE WHEN NEW.Difficulty = 8 THEN 1 ELSE 0 END
+
+                WHERE Id = 1;
+
+            END;
+        ";
+
+        _db.Execute(sql);
+    }
+    private static void CreateDeleteStatsTrigger()
+    {
+        string sql = @"
+            CREATE TRIGGER IF NOT EXISTS
+                trg_completed_games_delete
+
+            AFTER DELETE ON completed_games
+
+            BEGIN
+
+                UPDATE game_stats
+
+                SET
+                    TotalGames =
+                        TotalGames - 1,
+
+                    TotalWins =
+                        TotalWins -
+                        CASE
+                            WHEN OLD.IsWon = 1 THEN 1
+                            ELSE 0
+                        END,
+
+                    TotalPoints =
+                        TotalPoints -
+                        CASE
+                            WHEN OLD.IsWon = 1
+                            THEN OLD.Points
+                            ELSE 0
+                        END,
+
+                    FastestWinSeconds =
+                    (
+                        SELECT MIN(ElapsedSeconds)
+                        FROM completed_games
+                        WHERE IsWon = 1
+                    ),
+
+                    SimpleCount =
+                        SimpleCount -
+                        CASE WHEN OLD.Difficulty = 0 THEN 1 ELSE 0 END,
+
+                    BeginnerCount =
+                        BeginnerCount -
+                        CASE WHEN OLD.Difficulty = 1 THEN 1 ELSE 0 END,
+
+                    EasyCount =
+                        EasyCount -
+                        CASE WHEN OLD.Difficulty = 2 THEN 1 ELSE 0 END,
+
+                    NoviceCount =
+                        NoviceCount -
+                        CASE WHEN OLD.Difficulty = 3 THEN 1 ELSE 0 END,
+
+                    ModerateCount =
+                        ModerateCount -
+                        CASE WHEN OLD.Difficulty = 4 THEN 1 ELSE 0 END,
+
+                    AdvancedCount =
+                        AdvancedCount -
+                        CASE WHEN OLD.Difficulty = 5 THEN 1 ELSE 0 END,
+
+                    HardCount =
+                        HardCount -
+                        CASE WHEN OLD.Difficulty = 6 THEN 1 ELSE 0 END,
+
+                    ExpertCount =
+                        ExpertCount -
+                        CASE WHEN OLD.Difficulty = 7 THEN 1 ELSE 0 END,
+
+                    HardestCount =
+                        HardestCount -
+                        CASE WHEN OLD.Difficulty = 8 THEN 1 ELSE 0 END
+
+                WHERE Id = 1;
+
+            END;
+        ";
+
+        _db.Execute(sql);
     }
 }

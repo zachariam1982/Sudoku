@@ -118,103 +118,84 @@ public class ScorePenalties
 }
 public static class SudokuGenerator
 {
-    private static void RemoveClues(int[,] puzzle, int targetClues, System.Random rng)
-    {
-        List<int> cells = Enumerable.Range(0, 81)
-                                    .OrderBy(_ => rng.Next())
-                                    .ToList();
-
-        int clueCount = 81;
-
-        foreach (int index in cells)
-        {
-            if (clueCount <= targetClues) break;
-
-            int row = index / 9;
-            int col = index % 9;
-            int previous = puzzle[row, col];
-
-            puzzle[row, col] = 0;
-
-            if (SudokuSolver.HasUniqueSolution( puzzle))
-            {
-                clueCount--;
-            }
-            else
-            {
-                puzzle[row, col] = previous;
-            }
-        }
-    }
-    private static int GetTargetClueCount(SudokuDifficulty difficulty, System.Random rng)
+    private static ( int minClues, int maxClues) GetSearchRange( SudokuDifficulty difficulty)
     {
         return difficulty switch
         {
-            SudokuDifficulty.Simple => rng.Next(60, 72),
-            SudokuDifficulty.Beginner => rng.Next(54, 66),
-            SudokuDifficulty.Easy => rng.Next(48, 60),
-            SudokuDifficulty.Novice => rng.Next(42, 55),
-            SudokuDifficulty.Moderate => rng.Next(36, 50),
-            SudokuDifficulty.Advanced => rng.Next(32, 45),
-            SudokuDifficulty.Hard => rng.Next(28, 40),
-            SudokuDifficulty.Expert => rng.Next(24, 35),
-            SudokuDifficulty.Hardest => rng.Next(17, 31),
-            _ => 35
+            SudokuDifficulty.Simple => (66, 71),
+            SudokuDifficulty.Beginner => (56, 65),
+            SudokuDifficulty.Easy => (45, 55),
+            SudokuDifficulty.Novice => (36, 52),
+            SudokuDifficulty.Moderate => (30, 48),
+            SudokuDifficulty.Advanced => (27, 44),
+            SudokuDifficulty.Hard => (24, 40),
+            SudokuDifficulty.Expert => (21, 36),
+            SudokuDifficulty.Hardest => (17, 32),
+            _ => (25, 55)
         };
     }
-    public static SudokuResult GenerateSudoku(int level, SudokuDifficulty requestedDifficulty)
+    public static SudokuResult GenerateSudoku( int level, SudokuDifficulty requestedDifficulty)
     {
         const int MaxAttempts = 100;
+        var (minClues, maxClues) = GetSearchRange(requestedDifficulty);
 
-        for (int attempt = 0; attempt < MaxAttempts; attempt++)
+        for (int attempt = 0;attempt < MaxAttempts;attempt++)
         {
             int seed = unchecked(level * 397 ^ ((int)requestedDifficulty + 1) * 7919 ^ attempt * 104729);
-
             System.Random rng = new System.Random(seed);
-
             int[,] solution = new int[9, 9];
 
-            FillBoard(solution, rng);
+            FillBoard( solution, rng);
 
             int[,] puzzle = (int[,])solution.Clone();
+            List<int> cells = Enumerable.Range(0, 81).OrderBy(_ => rng.Next()).ToList();
+            int clueCount = 81;
 
-            int targetClues = GetTargetClueCount(requestedDifficulty,rng);
-
-            RemoveClues(puzzle, targetClues, rng);
-
-            SudokuDifficultyResult rating = SudokuDifficultyAnalyzer.Analyze(puzzle);
-
-            Debug.Log(
-                $"Generated candidate " +
-                $"attempt={attempt}, " +
-                $"requested={requestedDifficulty}, " +
-                $"actual={rating.Difficulty}, " +
-                $"technique={rating.HardestTechnique}, " +
-                $"steps={rating.SolveSteps}"
-            );
-
-            /*
-            * THIS is the key.
-            *
-            * Don't trust requested clue count.
-            * Trust the solver's actual rating.
-            */
-            if (rating.Difficulty ==
-                requestedDifficulty)
+            foreach (int index in cells)
             {
-                return new SudokuResult
+                int row = index / 9;
+                int col = index % 9;
+                int previous = puzzle[row, col];
+
+                puzzle[row, col] = 0;
+
+                if (!SudokuSolver.HasUniqueSolution(puzzle))
                 {
-                    Puzzle = puzzle,
-                    Solution = solution
-                };
+                    puzzle[row, col] = previous;
+                    continue;
+                }
+
+                clueCount--;
+
+                if (clueCount > maxClues) continue;
+                if (clueCount <= minClues) break;
+
+                SudokuDifficultyResult rating = SudokuDifficultyAnalyzer.Analyze(puzzle);
+
+                if (rating.Difficulty == requestedDifficulty)
+                {
+                    Debug.Log(
+                        $"Generated candidate " +
+                        $"attempt={attempt}, " +
+                        $"requested={requestedDifficulty}, " +
+                        $"actual={rating.Difficulty}, " +
+                        $"clues={clueCount}, " +
+                        $"empty={81 - clueCount}, " +
+                        $"technique={rating.HardestTechnique}, " +
+                        $"steps={rating.SolveSteps}, " +
+                        $"logical={rating.SolvedLogically}"
+                    );
+
+                    return new SudokuResult
+                    {
+                        Puzzle = (int[,])puzzle.Clone(),
+                        Solution = (int[,])solution.Clone()
+                    };
+                }
             }
         }
 
-        throw new InvalidOperationException(
-            $"Could not generate a " +
-            $"{requestedDifficulty} Sudoku " +
-            $"after {MaxAttempts} attempts."
-        );
+        throw new InvalidOperationException( $"Could not generate a " + $"{requestedDifficulty} Sudoku " + $"after {MaxAttempts} generation paths.");
     }
     private static bool FillBoard(int[,] board, System.Random rng)
     {
@@ -242,7 +223,6 @@ public static class SudokuGenerator
         }
         return true;
     }
-
     private static bool IsValid(int[,] board, int row, int col, int num)
     {
         for (int i = 0; i < 9; i++)
@@ -269,11 +249,8 @@ public class SudokuModel
     private const float _NoOfLastGamesFloat = _NoOfLastGames;
 
     public SudokuDifficulty CurrentDifficulty { get { return _currentDifficulty; }}
-    public int CurrentLevel { get {return _currentLevel;}}
-    public void SetLevel(int level)
-    {
-        _currentLevel = level;
-    }
+    public int CurrentLevel => return _currentLevel;
+    public void SetLevel(int level) => _currentLevel = level;
     public void SetDifficulty(SudokuDifficulty difficulty) => _currentDifficulty = difficulty;
     public void increaseDifficulty() 
     {

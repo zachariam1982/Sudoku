@@ -25,7 +25,6 @@ public class StatsPanel : MonoBehaviour
     [SerializeField] private TextMeshProUGUI scoreValueLabel;
     [SerializeField] private TextMeshProUGUI scoreMaxLabel;
 
-
     [Header("Session stat pills — value labels")]
     [SerializeField] private TextMeshProUGUI levelValue;
     [SerializeField] private TextMeshProUGUI difficultyValue;
@@ -46,7 +45,9 @@ public class StatsPanel : MonoBehaviour
     [Header("Streak chip")]
     [SerializeField] private TextMeshProUGUI streakNumber;
     [SerializeField] private TextMeshProUGUI streakDesc;
-
+    [Header("Progression")]
+    [SerializeField] private TextMeshProUGUI[] recentGameLabels;
+    [SerializeField] private TextMeshProUGUI progressionText;
     [Header("Colors")]
     [SerializeField] private Color colorGold    = new Color(1.00f, 0.78f, 0.20f);
     [SerializeField] private Color colorRed     = new Color(0.88f, 0.27f, 0.27f);
@@ -141,6 +142,7 @@ public class StatsPanel : MonoBehaviour
         _vm.FetchHistoricalData.Execute();
         RefreshSession();
         RefreshAllTime();
+        RefreshProgression();
         if (_slideAnim != null) StopCoroutine(_slideAnim);
         _slideAnim = StartCoroutine(SlideIn());
     }
@@ -250,7 +252,223 @@ public class StatsPanel : MonoBehaviour
             ? $"Win streak — keep it up"
             : streak == 1 ? "On a roll" : "Start a streak";
     }
+    private void RefreshProgression()
+    {
+        const int ProgressionWindow = 5;
 
+        // SQLite database is the source of truth.
+        // Results are returned newest -> oldest.
+        List<GameRecord> recent = GameDatabase.GetLastNRecordByDate( ProgressionWindow);
+
+        RefreshRecentGameResults(recent);
+
+        if (progressionText != null)
+        {
+            progressionText.text =
+                BuildProgressionText(recent);
+        }
+    }
+    private void RefreshRecentGameResults(List<GameRecord> recent)
+    {
+        if (recentGameLabels == null) return;
+
+        // Clear all five positions first.
+        for (int i = 0; i < recentGameLabels.Length; i++)
+        {
+            if (recentGameLabels[i] == null) continue;
+
+            recentGameLabels[i].text = "—";
+            recentGameLabels[i].color = colorDotOff;
+        }
+
+        if (recent == null || recent.Count == 0) return;
+
+        int count = Mathf.Min( recent.Count, recentGameLabels.Length);
+        int startPosition = recentGameLabels.Length - count;
+
+        for (int i = 0; i < count; i++)
+        {
+            GameRecord record = recent[count - 1 - i];
+
+            int uiIndex = startPosition + i;
+
+            TextMeshProUGUI label = recentGameLabels[uiIndex];
+
+            if (label == null) continue;
+
+            if (record.IsWon)
+            {
+                label.text = "W";
+                label.color = colorGreen;
+            }
+            else
+            {
+                label.text = "L";
+                label.color = colorRed;
+            }
+        }
+    }
+
+    private string BuildProgressionText( List<GameRecord> recent)
+    {
+        const int WindowSize = 5;
+        const int RequiredWins = 4;
+        const float RequiredEfficiency = 0.80f;
+        int requiredPercent = 0;
+
+        if (recent == null || recent.Count == 0) return "Complete games to begin your progression. Advancement requires 4 wins in 5 games with at least 80% average efficiency.";
+
+        SudokuDifficulty difficulty = (SudokuDifficulty)recent[0].Difficulty;
+
+        if (difficulty == SudokuDifficulty.Hardest) return $"Current: {difficulty}\nYou are at the highest difficulty.";
+
+        SudokuDifficulty nextDifficulty = (SudokuDifficulty)( (int)difficulty + 1);
+        int maxScore = ScoringSystem.GetAbsoluteMaximumScore( difficulty);
+
+        if (maxScore <= 0) return $"Current: {difficulty}";
+
+        List<GameRecord> tierGames = new List<GameRecord>();
+
+        foreach (GameRecord record in recent)
+        {
+            if (record.Difficulty != (int)difficulty) break;
+
+            tierGames.Add(record);
+        }
+
+        int gamesPlayed = tierGames.Count;
+        int wins = 0;
+        int totalPoints = 0;
+
+        foreach (GameRecord record in tierGames)
+        {
+            if (record.IsWon) wins++;
+
+            totalPoints += record.Points;
+        }
+
+
+        if (gamesPlayed < WindowSize)
+        {
+            int gamesRemaining = WindowSize - gamesPlayed;
+            int winsNeeded = Mathf.Max( 0, RequiredWins - wins );
+            int requiredTotalPoints = Mathf.CeilToInt( WindowSize * RequiredEfficiency * maxScore );
+            int pointsStillNeeded = Mathf.Max( 0, requiredTotalPoints - totalPoints );
+            float requiredAverage = pointsStillNeeded / (float)( gamesRemaining * maxScore );
+
+            if (winsNeeded > gamesRemaining || requiredAverage > 1f)
+            {
+                return
+                    $"Current: {difficulty}\n" +
+                    $"Progress: {wins}/{gamesPlayed} wins. " +
+                    $"This 5-game window can no longer " +
+                    $"reach the promotion target. " +
+                    $"Keep winning to build a stronger " +
+                    $"rolling window toward {nextDifficulty}.";
+            }
+
+            requiredPercent = Mathf.CeilToInt( requiredAverage * 100f);
+            string winRequirement;
+
+            if (winsNeeded == 0)
+            {
+                winRequirement ="You already have enough wins";
+            }
+            else if (winsNeeded == 1)
+            {
+                winRequirement = $"You need 1 more win";
+            }
+            else
+            {
+                winRequirement = $"You need {winsNeeded} more wins";
+            }
+
+            return
+                $"Current: {difficulty}\n" +
+                $"{gamesPlayed}/5 games completed • " +
+                $"{wins} win{(wins == 1 ? "" : "s")}.\n" +
+                $"To reach {nextDifficulty}: " +
+                $"{winRequirement}, with about " +
+                $"{requiredPercent}% average efficiency " +
+                $"across the remaining " +
+                $"{gamesRemaining} game" +
+                $"{(gamesRemaining == 1 ? "" : "s")}.";
+        }
+
+        float averageEfficiency = totalPoints / (float)(WindowSize * maxScore);
+
+
+        if (wins >= RequiredWins && averageEfficiency >= RequiredEfficiency)
+        {
+            return
+                $"Current: {difficulty}\n" +
+                $"Last 5: {wins}/5 wins • " +
+                $"{averageEfficiency * 100f:F0}% efficiency.\n" +
+                $"Promotion target reached — " +
+                $"you qualify for {nextDifficulty}.";
+        }
+
+        int retainedWins = 0;
+        int retainedPoints = 0;
+        int gamesToRetain = Mathf.Min(4, tierGames.Count);
+
+        for (int i = 0; i < gamesToRetain; i++)
+        {
+            GameRecord record = tierGames[i];
+
+            if (record.IsWon) retainedWins++;
+
+            retainedPoints += record.Points;
+        }
+
+        int requiredWinsFromNextGame = RequiredWins - retainedWins;
+        int promotionPointTarget = Mathf.CeilToInt( WindowSize * RequiredEfficiency * maxScore);
+        int pointsNeededNextGame = Mathf.Max( 0, promotionPointTarget - retainedPoints);
+
+        /*
+        * One game cannot fix this window.
+        */
+        if (requiredWinsFromNextGame > 1 || pointsNeededNextGame > maxScore)
+        {
+            return
+                $"Current: {difficulty}\n" +
+                $"Last 5: {wins}/5 wins • " +
+                $"{averageEfficiency * 100f:F0}% efficiency.\n" +
+                $"To reach {nextDifficulty}, build toward " +
+                $"4 wins in a rolling 5-game window " +
+                $"while maintaining 80%+ average efficiency.";
+        }
+
+        requiredPercent = Mathf.CeilToInt( pointsNeededNextGame / (float)maxScore * 100f );
+
+        /*
+        * Next game must specifically be a win.
+        */
+        if (requiredWinsFromNextGame == 1)
+        {
+            return
+                $"Current: {difficulty}\n" +
+                $"Last 5: {wins}/5 wins • " +
+                $"{averageEfficiency * 100f:F0}% efficiency.\n" +
+                $"To reach {nextDifficulty} on the next " +
+                $"evaluation, win your next game with at " +
+                $"least {pointsNeededNextGame} points " +
+                $"(~{requiredPercent}% efficiency).";
+        }
+
+        /*
+        * The retained four already contain
+        * at least four wins.
+        */
+        return
+            $"Current: {difficulty}\n" +
+            $"Last 5: {wins}/5 wins • " +
+            $"{averageEfficiency * 100f:F0}% efficiency.\n" +
+            $"Your win requirement is already satisfied. " +
+            $"Score at least {pointsNeededNextGame} points " +
+            $"(~{requiredPercent}% efficiency) in your next game " +
+            $"to reach {nextDifficulty}.";
+    }
     // ── Animations ────────────────────────────────────────────────────────
 
     private IEnumerator SlideIn()

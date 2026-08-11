@@ -70,8 +70,6 @@ public class PlayingState : IGameState
                 CompletedAt    = DateTime.Now.ToString("o"),
             };
             
-            PlayerSettings.Instance.SavePlayerPref(val);
-            
             if(_vm.RetryGameData.id == -1) GameDatabase.Insert(val); //Add into DB the record if it is a new game and not a retry
 
             _machine.TransitionTo(_machine.Lose);

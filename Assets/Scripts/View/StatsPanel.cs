@@ -74,6 +74,8 @@ public class StatsPanel : MonoBehaviour
     private float loadThreshold = 0.08f;
     private List<GameObject> lstOfRecords = new List<GameObject>();
     private float statsPanelWidth = 972;
+    private GameStats _gameStats;
+    private int _totalPossiblePoints;
     
     void Awake()
     {
@@ -140,6 +142,10 @@ public class StatsPanel : MonoBehaviour
         SetTabArrow(true);
         if (backdropButton != null) backdropButton.gameObject.SetActive(true);
         _vm.FetchHistoricalData.Execute();
+
+        _gameStats = GameDatabase.GetGameStats();
+        _totalPossiblePoints = GameDatabase.GetTotalPossiblePoints(_gameStats);
+
         RefreshSession();
         RefreshAllTime();
         RefreshProgression();
@@ -169,8 +175,8 @@ public class StatsPanel : MonoBehaviour
         string   diff  = ((SudokuDifficulty)_vm.GetDifficulty).ToString();
 
         // Score ring
-        int score = PlayerPrefs.GetInt(PlayerSettings.TotalPoints);
-        int max_score = PlayerPrefs.GetInt(PlayerSettings.TotalPossiblePoints);
+        int score = _gameStats?.TotalPoints ?? 0;;
+        int max_score = _totalPossiblePoints;
         Set(scoreValueLabel, score.ToString());
         Set(scoreMaxLabel, " / " + max_score.ToString());
         if (ringFill != null) {
@@ -225,15 +231,12 @@ public class StatsPanel : MonoBehaviour
 
     private void RefreshAllTime()
     {
-        int   games    = PlayerPrefs.GetInt(PlayerSettings.TotalGamePlayed, 0);
-        int   wins     = PlayerPrefs.GetInt(PlayerSettings.TotalWins, 0);
-        float bestSecs = PlayerPrefs.GetFloat(PlayerSettings.BestWinTime, -1f);
-        int   streak   = PlayerPrefs.GetInt(PlayerSettings.CurrentStreak, 0);
-
+        int games = _gameStats?.TotalGames ?? 0;
+        int wins = _gameStats?.TotalWins ?? 0;
+        int streak = _gameStats?.CurrentStreak ?? 0;
+        float bestSecs = _gameStats?.FastestWinSeconds != null ? (float) _gameStats.FastestWinSeconds.Value : -1f;
         float rate     = games > 0 ? wins / (float)games : 0f;
-        string bestStr = bestSecs >= 0
-            ? $"{(int)bestSecs / 60:00}:{(int)bestSecs % 60:00}"
-            : "--:--";
+        string bestStr = bestSecs >= 0 ? $"{(int)bestSecs / 60:00}:{(int)bestSecs % 60:00}" : "--:--";
 
         Set(totalGamesValue, $"{games}");
         Set(winsValue, $"{wins}");

@@ -118,53 +118,104 @@ public class ScorePenalties
 }
 public static class SudokuGenerator
 {
-    public static SudokuResult GenerateSudoku(int level, SudokuDifficulty difficulty)
+    private static void RemoveClues(int[,] puzzle, int targetClues, System.Random rng)
     {
-        // 1. Initialize Seeded Random
-        System.Random rng = new System.Random(level);
+        List<int> cells = Enumerable.Range(0, 81)
+                                    .OrderBy(_ => rng.Next())
+                                    .ToList();
 
-        int[,] solution = new int[9, 9];
-        FillBoard(solution, rng);
+        int clueCount = 81;
 
-        // Create a deep copy for the puzzle
-        int[,] puzzle = (int[,])solution.Clone();
-
-        // 2. Determine how many clues to keep
-        int targetClues = difficulty switch
+        foreach (int index in cells)
         {
-            SudokuDifficulty.Simple    => rng.Next(66, 72), // Too easy
-            SudokuDifficulty.Beginner  => rng.Next(60, 66), // Very easy, almost full board
-            SudokuDifficulty.Easy      => rng.Next(54, 60), // Standard easy
-            SudokuDifficulty.Novice    => rng.Next(48, 54), // Bridge between Easy and Moderate
-            SudokuDifficulty.Moderate  => rng.Next(42, 48), // Standard medium
-            SudokuDifficulty.Advanced  => rng.Next(36, 42), // Bridge between Moderate and Hard
-            SudokuDifficulty.Hard      => rng.Next(30, 36), // Standard hard
-            SudokuDifficulty.Expert    => rng.Next(24, 30), // Demands advanced logic techniques
-            SudokuDifficulty.Hardest   => rng.Next(17, 24), // Absolute minimum for unique puzzles
-            _ => 30
-        };
+            if (clueCount <= targetClues) break;
 
-        // 3. Dig holes in the puzzle
-        int holesToMake = 81 - targetClues;
-        while (holesToMake > 0)
-        {
-            int row = rng.Next(0, 9);
-            int col = rng.Next(0, 9);
+            int row = index / 9;
+            int col = index % 9;
+            int previous = puzzle[row, col];
 
-            if (puzzle[row, col] != 0)
+            puzzle[row, col] = 0;
+
+            if (SudokuSolver.HasUniqueSolution( puzzle))
             {
-                puzzle[row, col] = 0;
-                holesToMake--;
+                clueCount--;
+            }
+            else
+            {
+                puzzle[row, col] = previous;
+            }
+        }
+    }
+    private static int GetTargetClueCount(SudokuDifficulty difficulty, System.Random rng)
+    {
+        return difficulty switch
+        {
+            SudokuDifficulty.Simple => rng.Next(60, 72),
+            SudokuDifficulty.Beginner => rng.Next(54, 66),
+            SudokuDifficulty.Easy => rng.Next(48, 60),
+            SudokuDifficulty.Novice => rng.Next(42, 55),
+            SudokuDifficulty.Moderate => rng.Next(36, 50),
+            SudokuDifficulty.Advanced => rng.Next(32, 45),
+            SudokuDifficulty.Hard => rng.Next(28, 40),
+            SudokuDifficulty.Expert => rng.Next(24, 35),
+            SudokuDifficulty.Hardest => rng.Next(17, 31),
+            _ => 35
+        };
+    }
+    public static SudokuResult GenerateSudoku(int level, SudokuDifficulty requestedDifficulty)
+    {
+        const int MaxAttempts = 100;
+
+        for (int attempt = 0; attempt < MaxAttempts; attempt++)
+        {
+            int seed = unchecked(level * 397 ^ ((int)requestedDifficulty + 1) * 7919 ^ attempt * 104729);
+
+            System.Random rng = new System.Random(seed);
+
+            int[,] solution = new int[9, 9];
+
+            FillBoard(solution, rng);
+
+            int[,] puzzle = (int[,])solution.Clone();
+
+            int targetClues = GetTargetClueCount(requestedDifficulty,rng);
+
+            RemoveClues(puzzle, targetClues, rng);
+
+            SudokuDifficultyResult rating = SudokuDifficultyAnalyzer.Analyze(puzzle);
+
+            Debug.Log(
+                $"Generated candidate " +
+                $"attempt={attempt}, " +
+                $"requested={requestedDifficulty}, " +
+                $"actual={rating.Difficulty}, " +
+                $"technique={rating.HardestTechnique}, " +
+                $"steps={rating.SolveSteps}"
+            );
+
+            /*
+            * THIS is the key.
+            *
+            * Don't trust requested clue count.
+            * Trust the solver's actual rating.
+            */
+            if (rating.Difficulty ==
+                requestedDifficulty)
+            {
+                return new SudokuResult
+                {
+                    Puzzle = puzzle,
+                    Solution = solution
+                };
             }
         }
 
-        return new SudokuResult
-        {
-            Puzzle = puzzle,
-            Solution = solution
-        };
+        throw new InvalidOperationException(
+            $"Could not generate a " +
+            $"{requestedDifficulty} Sudoku " +
+            $"after {MaxAttempts} attempts."
+        );
     }
-
     private static bool FillBoard(int[,] board, System.Random rng)
     {
         for (int row = 0; row < 9; row++)

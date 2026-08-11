@@ -102,28 +102,25 @@ public static class SudokuDifficultyAnalyzer
 
         return true;
     }
-    private static SudokuDifficulty MapToDifficulty(
-        SudokuTechnique technique,
-        int steps)
+    private static SudokuDifficulty MapToDifficulty(SudokuTechnique technique,int steps)
     {
         switch (technique)
         {
             case SudokuTechnique.NakedSingle:
-                // Split simple single-only puzzles
-                // based on how much solving is required.
-                return steps <= 15
-                    ? SudokuDifficulty.Simple
-                    : SudokuDifficulty.Beginner;
+            {
+                if (steps <= 15) return SudokuDifficulty.Simple;
+                if (steps <= 25) return SudokuDifficulty.Beginner;
+
+                return SudokuDifficulty.Easy;
+            }
 
             case SudokuTechnique.HiddenSingle:
-                return SudokuDifficulty.Easy;
-
-            case SudokuTechnique.LockedCandidate:
                 return SudokuDifficulty.Novice;
 
-            case SudokuTechnique.NakedPair:
+            case SudokuTechnique.LockedCandidate:
                 return SudokuDifficulty.Moderate;
 
+            case SudokuTechnique.NakedPair:
             case SudokuTechnique.HiddenPair:
                 return SudokuDifficulty.Advanced;
 
@@ -131,9 +128,9 @@ public static class SudokuDifficultyAnalyzer
                 return SudokuDifficulty.Hard;
 
             case SudokuTechnique.XWing:
+            case SudokuTechnique.Swordfish:
                 return SudokuDifficulty.Expert;
 
-            case SudokuTechnique.Swordfish:
             case SudokuTechnique.SearchRequired:
                 return SudokuDifficulty.Hardest;
 

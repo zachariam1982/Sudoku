@@ -29,6 +29,8 @@ public class SudokuViewModel
     public BindableProperty<bool>    IsComplete   { get; }    = new BindableProperty<bool>(false);
     public BindableProperty<bool>    IsEraseMode  { get; }    = new BindableProperty<bool>(false);
     public BindableProperty<bool>    IsPencilMode { get; }    = new BindableProperty<bool>(false);
+    public BindableProperty<int>     AutoFillCandidatesRequested { get; } = new BindableProperty<int>(0);
+    public BindableProperty<int> HighlightedCandidateNumber { get; } = new BindableProperty<int>(0);
     /// <summary>Name of the current state — Views use this to show/hide panels.</summary>
     public BindableProperty<string> CurrentStateName { get; } = new BindableProperty<string>("");
     /// <summary>Timer value in seconds. PlayingState increments this every frame.</summary>
@@ -70,12 +72,14 @@ public class SudokuViewModel
         
     public BindableProperty<(string title, string message, string status)> ShowMessage { get;} 
         = new BindableProperty<(string title, string message, string status)>(("","",""));
+    
     public ICommand SelectCellCommand    { get; }
     public ICommand EnterValueCommand    { get; }
     public ICommand CancelPickerCommand  { get; }
     public ICommand SetEraseModeCommand  { get; }
     public ICommand SetPencilModeCommand { get; }
     public ICommand SOSCommand           { get; }
+    public ICommand AutoFillCandidatesCommand { get; }
     public ICommand ApplySOSCommand      { get; }
     public ICommand UndoCommand          { get; }
     public ICommand PauseCommand         { get; }
@@ -114,7 +118,14 @@ public class SudokuViewModel
             }
         );
         SetPencilModeCommand  = new RelayCommand(
-            execute: _ => IsPencilMode.Value = !IsPencilMode.Value,
+            execute: _ => 
+            {
+                IsPencilMode.Value = !IsPencilMode.Value;
+                if (!IsPencilMode.Value)
+                {
+                    HighlightedCandidateNumber.Value = 0;
+                }                
+            },
             canExecute: _ => IsEraseMode.Value == false,
             getMessage: new (Func<bool> fn, System.Action showMessage)[]
             {
@@ -146,6 +157,27 @@ public class SudokuViewModel
                 (() => IsPencilMode.Value == true, () => ShowMessage.Value = ("", "Pencil mode is set. Click on Pencil again to enable SOS.", "")),
                 (() => IsEraseMode.Value == true, () => ShowMessage.Value = ("", "Erase mode is set. Click on Erase again to enable SOS.", ""))
             }
+        );
+        AutoFillCandidatesCommand = new RelayCommand(
+            execute: _ =>
+            {
+
+                if (!IsPencilMode.Value) IsPencilMode.Value = true;
+
+                ClosePicker();
+                AutoFillCandidatesRequested.Value++;
+
+                if (!FirstCellTapped.Value)FirstCellTapped.Value = true;
+
+            },
+            canExecute: _ =>
+                IsEraseMode.Value == false &&
+                IsComplete.Value == false,
+            getMessage: new (Func<bool> fn, System.Action showMessage)[]
+                {
+                    (() => IsEraseMode.Value == true, () => ShowMessage.Value =  ("", "Erase mode is set. Turn off Erase before using Auto Candidates.", "" )),
+                    (() => IsComplete.Value == true,() => ShowMessage.Value = ("","The puzzle is already complete.",""))
+                }
         );
         ApplySOSCommand       = new RelayCommand(
             execute: _ => ApplySOSHint(),
@@ -368,6 +400,7 @@ public class SudokuViewModel
     {
         this.SelectedRow.Value = -1;
         this.SelectedCol.Value = -1;
+        HighlightedCandidateNumber.Value = 0;
         this.offset            = 0;
         this.PastHistory.Value.Clear();
         replacedValueStack.Clear();

@@ -23,6 +23,9 @@ public class SudokuCell : MonoBehaviour
     public Color pickerHighlight;
     public Color highlightColor;
     public Color errorColor;
+    
+    [Header("Pencil Candidate Highlight")]
+    [SerializeField] private Color candidateHighlightColor = new Color32(255,200,50,255);
 
     // ── Internal state ────────────────────────────────────────────────────────
     private int             row;
@@ -35,6 +38,19 @@ public class SudokuCell : MonoBehaviour
 
 
     private Button[] _pencilButtons;
+    private static readonly Color32 PencilInactiveColor =
+        new Color32(
+            80,
+            80,
+            80,
+            255);
+
+    private static readonly Color32 PencilActiveColor =
+        new Color32(
+            255,
+            255,
+            255,
+            255);
     public int  Value   { get; private set; }
     public bool IsGiven { get; private set; }
     private Vector3 _originalScale;
@@ -88,34 +104,40 @@ public class SudokuCell : MonoBehaviour
         }
 
         TMP_Text text = arg.GetComponentInChildren<TMP_Text>();
+
         if (text == null) return;
 
-        Color32 targetGrey = new Color32(80,80,80,255);
-        Color32 currentColor = text.color;
+        bool isActive = btnTextInPencilMode.Contains(text);
 
-        if(currentColor.r == 80 && currentColor.g == 80 && currentColor.b == 80)
+        if (isActive)
         {
-            text.color = Color.white;
-            btnTextInPencilMode.Add(text);
+            btnTextInPencilMode.Remove(text);
+            text.color = PencilInactiveColor;
         }
         else
         {
-            text.color = targetGrey;
-            btnTextInPencilMode.Remove(text);
+            btnTextInPencilMode.Add(text);
+            text.color = PencilActiveColor;
         }
+
+        SetCandidateHighlight(viewModel != null ? viewModel.HighlightedCandidateNumber.Value : 0);
     }
 
     private void OnStateChanged(string stateName)
     {
-        if(stateName == "IdleState")
-        {
-            Color32 targetGrey = new Color32(80,80,80,255);
+        if (stateName != "IdleState") return;
 
-            foreach(var text in btnTextInPencilMode)
+        foreach (TMP_Text text in btnTextInPencilMode)
+        {
+            if (text != null)
             {
-                text.color = targetGrey;
+                text.color = PencilInactiveColor;
             }
         }
+
+        btnTextInPencilMode.Clear();
+
+        SetCandidateHighlight(0);
     }
     // ── Binding ───────────────────────────────────────────────────────────────
 
@@ -132,30 +154,147 @@ public class SudokuCell : MonoBehaviour
         if( viewModel != null) viewModel.CurrentStateName.OnChanged -= OnStateChanged;
     }
 
+    public void SetCandidateHighlight(int number)
+    {
+        if (_pencilButtons == null) return;
+
+        for (int i = 0;i < _pencilButtons.Length && i < 9;i++)
+        {
+            Button button = _pencilButtons[i];
+
+            if (button == null) continue;
+
+            TMP_Text text = button.GetComponentInChildren<TMP_Text>();
+
+            if (text == null) continue;
+
+
+            bool isActive = btnTextInPencilMode.Contains(text);
+
+            if (!isActive)
+            {
+
+                text.color = PencilInactiveColor;
+                continue;
+            }
+
+            int candidateNumber = i + 1;
+
+            if (number > 0 && candidateNumber == number)
+            {
+
+                text.color = candidateHighlightColor;
+            }
+            else
+            {
+                text.color = PencilActiveColor;
+            }
+        }
+    }
     public void TogglePencilNumber(int number)
     {
         if (_pencilButtons == null || number < 1 || number > 9) return;
- 
+        
         int idx = number - 1;
+
         if (idx >= _pencilButtons.Length) return;
- 
+
         TMP_Text text = _pencilButtons[idx].GetComponentInChildren<TMP_Text>();
+
         if (text == null) return;
- 
-        Color32 grey    = new Color32(80, 80, 80, 255);
-        Color32 current = text.color;          // implicit Color → Color32 conversion
- 
-        if (current.r == 80 && current.g == 80 && current.b == 80)
+
+        bool isActive = btnTextInPencilMode.Contains(text);
+
+        if (isActive)
         {
-            // Grey → white  (activate note)
-            text.color = Color.white;
-            btnTextInPencilMode.Add(text);
+            btnTextInPencilMode.Remove(text);
+            text.color = PencilInactiveColor;
         }
         else
         {
-            // White → grey  (clear note)
-            text.color = grey;
-            btnTextInPencilMode.Remove(text);
+            btnTextInPencilMode.Add(text);
+            text.color = PencilActiveColor;
+        }
+
+        if (viewModel != null)
+        {
+            viewModel.HighlightedCandidateNumber.Value = number;
+        }
+    }
+    public bool RemovePencilCandidate(int number)
+    {
+        if (_pencilButtons == null || number < 1 || number > 9) return false;
+
+        int index = number - 1;
+
+        if (index >= _pencilButtons.Length) return false;
+
+        Button button = _pencilButtons[index];
+
+        if (button == null) return false;
+
+        TMP_Text text = button.GetComponentInChildren<TMP_Text>();
+
+        if (text == null) return false;
+
+        if (!btnTextInPencilMode.Contains(text)) return false;
+
+        btnTextInPencilMode.Remove(text);
+
+        text.color = PencilInactiveColor;
+
+        return true;
+    }
+
+    public void ClearAllPencilCandidates()
+    {
+        if (_pencilButtons == null) return;
+
+        foreach (TMP_Text text in btnTextInPencilMode)
+        {
+            if (text != null)
+            {
+                text.color = PencilInactiveColor;
+            }
+        }
+
+        btnTextInPencilMode.Clear();
+    }
+
+    public void SetPencilCandidates(IEnumerable<int> candidates)
+    {
+        if (_pencilButtons == null) return;
+
+        HashSet<int> candidateSet = new HashSet<int>(candidates);
+        btnTextInPencilMode.Clear();
+        Color32 inactiveColor = new Color32(80,80,80,255);
+
+        for (int i = 0;i < _pencilButtons.Length && i < 9;i++)
+        {
+            Button button = _pencilButtons[i];
+
+            if (button == null) continue;
+
+            TMP_Text text = button.GetComponentInChildren<TMP_Text>();
+
+            if (text == null) continue;
+
+            int number = i + 1;
+
+            if (candidateSet.Contains(number))
+            {
+                btnTextInPencilMode.Add(text);
+                text.color = Color.white;
+            }
+            else
+            {
+                text.color = inactiveColor;
+            }
+        }
+
+        if (viewModel != null)
+        {
+            SetCandidateHighlight(viewModel.HighlightedCandidateNumber.Value);
         }
     }
     // ── Render ────────────────────────────────────────────────────────────────

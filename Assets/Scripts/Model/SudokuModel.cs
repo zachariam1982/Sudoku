@@ -168,24 +168,15 @@ public static class SudokuGenerator
                 clueCount--;
 
                 if (clueCount > maxClues) continue;
-                if (clueCount <= minClues) break;
+                if (clueCount < minClues) break;
 
                 SudokuDifficultyResult rating = SudokuDifficultyAnalyzer.Analyze(puzzle);
 
-                if (rating.Difficulty == requestedDifficulty)
+                if (requestedDifficulty == SudokuDifficulty.Simple || 
+                    requestedDifficulty == SudokuDifficulty.Beginner ||
+                    (int)rating.Difficulty >= (int)requestedDifficulty || 
+                    (int)rating.Difficulty - 1 == (int)requestedDifficulty)
                 {
-                    Debug.Log(
-                        $"Generated candidate " +
-                        $"attempt={attempt}, " +
-                        $"requested={requestedDifficulty}, " +
-                        $"actual={rating.Difficulty}, " +
-                        $"clues={clueCount}, " +
-                        $"empty={81 - clueCount}, " +
-                        $"technique={rating.HardestTechnique}, " +
-                        $"steps={rating.SolveSteps}, " +
-                        $"logical={rating.SolvedLogically}"
-                    );
-
                     return new SudokuResult
                     {
                         Puzzle = (int[,])puzzle.Clone(),

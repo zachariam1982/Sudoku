@@ -1020,28 +1020,17 @@ public static class GameDatabase
         }
     }
 
-    public static List<GameRecord>
-        GetLastNRecordByDate(
-            int number)
+    public static List<GameRecord> GetLastNRecordByDate(int number)
     {
         try
         {
-            string query =
-                "SELECT * " +
-                "FROM completed_games " +
-                "ORDER BY Id DESC " +
-                "LIMIT ?";
+            string query = "SELECT *  FROM completed_games ORDER BY Id DESC LIMIT ?";
 
-            return _db.Query<GameRecord>(
-                query,
-                number);
+            return _db.Query<GameRecord>(query,number);
         }
         catch (Exception ex)
         {
-            Debug.LogError(
-                "[GameDatabase] " +
-                "GetLastNRecordByDate failed: " +
-                $"{ex.Message}");
+            Debug.LogError($"[GameDatabase] GetLastNRecordByDate failed: {ex.Message}");
 
             return new List<GameRecord>();
         }

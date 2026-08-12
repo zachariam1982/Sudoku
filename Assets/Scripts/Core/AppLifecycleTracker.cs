@@ -36,12 +36,5 @@ public class AppLifecycleTracker : MonoBehaviour
     void OnAppUpdated(string oldVersion, string newVersion)
     {
         Debug.Log($"[Lifecycle] App updated from {oldVersion} to {newVersion}");
-        // Remove all the playerPrefs except PlayerID.
-        PlayerPrefs.DeleteKey(PlayerSettings.TotalGamePlayed);
-        PlayerPrefs.DeleteKey(PlayerSettings.TotalPoints);
-        PlayerPrefs.DeleteKey(PlayerSettings.TotalWins);
-        PlayerPrefs.DeleteKey(PlayerSettings.BestWinTime);
-        PlayerPrefs.DeleteKey(PlayerSettings.CurrentStreak);
-        PlayerPrefs.DeleteKey(PlayerSettings.TotalPossiblePoints);
     }
 }

@@ -249,7 +249,7 @@ public class SudokuModel
     private const float _NoOfLastGamesFloat = _NoOfLastGames;
 
     public SudokuDifficulty CurrentDifficulty { get { return _currentDifficulty; }}
-    public int CurrentLevel => return _currentLevel;
+    public int CurrentLevel { get {return _currentLevel;}}
     public void SetLevel(int level) => _currentLevel = level;
     public void SetDifficulty(SudokuDifficulty difficulty) => _currentDifficulty = difficulty;
     public void increaseDifficulty() 
@@ -288,6 +288,10 @@ public class SudokuModel
             {
                 decreaseDifficulty(lst);
             }
+            else
+            {
+                _currentDifficulty = (SudokuDifficulty)lst[0].Difficulty;
+            }
         }
         else
         {
@@ -325,6 +329,10 @@ public class SudokuModel
                 var prev = _currentDifficulty;
                 _currentDifficulty = (SudokuDifficulty)Math.Max((int)SudokuDifficulty.Simple, (int)_currentDifficulty - 1);
                 Debug.Log($"Moving to below tier. Current Difficulty: {prev} demoting to {_currentDifficulty}");
+            }
+            else
+            {
+                _currentDifficulty = (SudokuDifficulty)lst[0].Difficulty;
             }
         }
         else

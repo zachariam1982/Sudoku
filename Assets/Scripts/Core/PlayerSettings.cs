@@ -9,45 +9,26 @@ public class PlayerSettings : MonoBehaviour
         private set;
     }
 
-    public static readonly string PlayerID =
-        "player_id";
+    public static readonly string PlayerID = "player_id";
 
-    public Dictionary<string, object> Dict
-    {
-        get;
-        private set;
-    }
+    public Dictionary<string, object> Dict { get; private set; }
 
-    public int Version
-    {
-        get;
-        private set;
-    }
+    public int Version { get; private set; }
 
     private void Awake()
     {
         if (Instance == null)
         {
             Instance = this;
-
             Version = 0;
-
-            Dict =
-                new Dictionary<
-                    string,
-                    object>();
+            Dict = new Dictionary< string, object>();
         }
 
         if (!PlayerPrefs.HasKey(PlayerID))
         {
-            string newId =
-                System.Guid.NewGuid()
-                    .ToString();
+            string newId = System.Guid.NewGuid().ToString();
 
-            PlayerPrefs.SetString(
-                PlayerID,
-                newId);
-
+            PlayerPrefs.SetString( PlayerID, newId);
             PlayerPrefs.Save();
         }
     }

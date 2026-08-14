@@ -106,10 +106,7 @@ public class GameStateView : MonoBehaviour
 
             case "PlayingState":
                 if (hudPanel != null) hudPanel.SetActive(true);
-                if(_vm != null)
-                {
-                    Level.text = ((SudokuDifficulty)_vm.GetDifficulty).ToString();
-                }
+                if(_vm != null) Level.text = ((SudokuDifficulty)_vm.GetDifficulty).ToString();
                 break;
 
             case "PausedState":

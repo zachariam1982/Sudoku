@@ -33,6 +33,7 @@ public class GameStateView : MonoBehaviour
     [Header("TopBar Items")]
     [SerializeField] private GameObject Lives;
     [SerializeField] private GameObject Timer;
+    [SerializeField] private TextMeshProUGUI Level;
     [Header("HUD — always visible during play")]
     [SerializeField] private TextMeshProUGUI timerLabel;
     [SerializeField] private Image[]         lifeIcons;       // 3 heart images
@@ -105,6 +106,10 @@ public class GameStateView : MonoBehaviour
 
             case "PlayingState":
                 if (hudPanel != null) hudPanel.SetActive(true);
+                if(_vm != null)
+                {
+                    Level.text = ((SudokuDifficulty)_vm.GetDifficulty).ToString();
+                }
                 break;
 
             case "PausedState":

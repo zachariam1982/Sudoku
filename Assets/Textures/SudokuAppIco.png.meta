@@ -1,13 +1,10 @@
 fileFormatVersion: 2
-guid: d25f83d5d0c2e454e9068fd26aa66cf0
+guid: b4580364968d63142a35990efece343c
 TextureImporter:
   internalIDToNameTable:
   - first:
-      213: 9137258612965740104
-    second: Auto Fill_0
-  - first:
-      213: -7782999609390656963
-    second: Auto Fill_1
+      213: 7992753697259488408
+    second: SudokuAppIco_0
   externalObjects: {}
   serializedVersion: 13
   mipmaps:
@@ -155,13 +152,13 @@ TextureImporter:
     serializedVersion: 2
     sprites:
     - serializedVersion: 2
-      name: Auto Fill_0
+      name: SudokuAppIco_0
       rect:
         serializedVersion: 2
         x: 0
-        y: 133
-        width: 994
-        height: 1364
+        y: 0
+        width: 1254
+        height: 1254
       alignment: 0
       pivot: {x: 0, y: 0}
       border: {x: 0, y: 0, z: 0, w: 0}
@@ -170,30 +167,8 @@ TextureImporter:
       physicsShape: []
       tessellationDetail: -1
       bones: []
-      spriteID: 84e83b61c401ece70800000000000000
-      internalID: 9137258612965740104
-      vertices: []
-      indices: 
-      edges: []
-      weights: []
-    - serializedVersion: 2
-      name: Auto Fill_1
-      rect:
-        serializedVersion: 2
-        x: 688
-        y: 151
-        width: 9
-        height: 10
-      alignment: 0
-      pivot: {x: 0, y: 0}
-      border: {x: 0, y: 0, z: 0, w: 0}
-      customData: 
-      outline: []
-      physicsShape: []
-      tessellationDetail: -1
-      bones: []
-      spriteID: d321443671b3df390800000000000000
-      internalID: -7782999609390656963
+      spriteID: 8948756e327fbee60800000000000000
+      internalID: 7992753697259488408
       vertices: []
       indices: 
       edges: []
@@ -212,8 +187,7 @@ TextureImporter:
     spriteCustomMetadata:
       entries: []
     nameFileIdTable:
-      Auto Fill_0: 9137258612965740104
-      Auto Fill_1: -7782999609390656963
+      SudokuAppIco_0: 7992753697259488408
   mipmapLimitGroupName: 
   pSDRemoveMatte: 0
   userData: 

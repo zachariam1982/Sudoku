@@ -102,6 +102,7 @@ public class GameStateView : MonoBehaviour
                 if (hudPanel != null) hudPanel.SetActive(false);
                 if (Lives != null) Lives.SetActive(true);
                 if (Timer != null) Timer.SetActive(true);
+                if(_vm != null) Level.text = "        ";
                 break;
 
             case "PlayingState":

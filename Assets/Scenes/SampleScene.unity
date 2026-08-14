@@ -9816,12 +9816,12 @@ MonoBehaviour:
   m_faceColor:
     serializedVersion: 2
     rgba: 4294967295
-  m_fontSize: 36
+  m_fontSize: 38
   m_fontSizeBase: 50
   m_fontWeight: 400
   m_enableAutoSizing: 1
   m_fontSizeMin: 22
-  m_fontSizeMax: 36
+  m_fontSizeMax: 38
   m_fontStyle: 0
   m_HorizontalAlignment: 2
   m_VerticalAlignment: 512
@@ -14332,6 +14332,7 @@ GameObject:
   - component: {fileID: 1515388381}
   - component: {fileID: 1515388383}
   - component: {fileID: 1515388384}
+  - component: {fileID: 1515388385}
   m_Layer: 5
   m_Name: TopBar
   m_TagString: Untagged
@@ -14442,6 +14443,24 @@ MonoBehaviour:
   baseRight: 24
   baseTop: 16
   baseBottom: 16
+--- !u!114 &1515388385
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1515388379}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: ced77acaa21e3f544a819745121989de, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::ResponsiveTopBar
+  livesContainer: {fileID: 898213588}
+  level: {fileID: 1107887578}
+  timer: {fileID: 1480642199}
+  pauseBlock: {fileID: 1639129483}
+  landscapeScale: 1.4
+  portraitScale: 1
 --- !u!1 &1540856545
 GameObject:
   m_ObjectHideFlags: 0

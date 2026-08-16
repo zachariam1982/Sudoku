@@ -16,6 +16,7 @@ public class AdManager : MonoBehaviour
     private Action              _onFailed;
     private bool                _rewardGranted = false;
     private bool                _isInitialised = false;
+    private bool _callbackInvoked;
 
     // ── Lifecycle ─────────────────────────────────────────────────────────────
 
@@ -128,9 +129,8 @@ public class AdManager : MonoBehaviour
     private void OnAdDisplayFailed(LevelPlayAdInfo adInfo, LevelPlayAdError error)
     {
         Debug.LogWarning($"[AdManager] Rewarded ad display failed: {error.ErrorMessage}");
-        _onFailed?.Invoke();
-        _onCompleted = null;
-        _onFailed    = null;
+        CompleteOnce(false);
+        if(_rewardedAd != null) _rewardedAd.LoadAd();
     }
 
     private void OnAdClicked(LevelPlayAdInfo adInfo)
@@ -140,22 +140,17 @@ public class AdManager : MonoBehaviour
     {
         Debug.Log($"[AdManager] Reward earned: {reward.Name} x{reward.Amount}");
         _rewardGranted = true;
+
+        CompleteOnce(true);
     }
 
     private void OnAdClosed(LevelPlayAdInfo adInfo)
     {
         Debug.Log($"[AdManager] Rewarded ad closed. Reward granted: {_rewardGranted}");
 
-        if (_rewardGranted)
-            _onCompleted?.Invoke();
-        else
-            _onFailed?.Invoke();
+        CompleteOnce(false);
 
-        _rewardGranted = false;
-        _onCompleted   = null;
-        _onFailed      = null;
-
-        CreateAndLoadRewardedAd();
+        if(_rewardedAd != null) _rewardedAd.LoadAd();
     }
 
     // ── Public API ────────────────────────────────────────────────────────────
@@ -173,6 +168,7 @@ public class AdManager : MonoBehaviour
         _onCompleted   = onCompleted;
         _onFailed      = onFailed;
         _rewardGranted = false;
+        _callbackInvoked = false;
 
         if (!_isInitialised)
         {
@@ -190,5 +186,19 @@ public class AdManager : MonoBehaviour
             Debug.LogWarning("[AdManager] No ad ready. Calling onFailed path.");
             onFailed?.Invoke();
         }
+    }
+
+    private void CompleteOnce(bool rewarded)
+    {
+        if (_callbackInvoked) return;
+
+        _callbackInvoked = true;
+
+        Action callback = rewarded ? _onCompleted : _onFailed;
+
+        _onCompleted = null;
+        _onFailed = null;
+
+        callback?.Invoke();
     }
 }

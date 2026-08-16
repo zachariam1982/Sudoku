@@ -289,8 +289,8 @@ public class StatsPanel : MonoBehaviour
 
         if (progressionText != null)
         {
-            progressionText.text =
-                BuildProgressionText(recent);
+            SudokuDifficulty currentDifficulty = (SudokuDifficulty)_vm.GetDifficulty;            
+            progressionText.text = BuildProgressionText(recent);
         }
     }
     private void RefreshRecentGameResults(List<GameRecord> recent)
@@ -334,7 +334,7 @@ public class StatsPanel : MonoBehaviour
         }
     }
 
-    private string BuildProgressionText( List<GameRecord> recent)
+    private string BuildProgressionText( List<GameRecord> recent, SudokuDifficulty difficulty)
     {
         const int WindowSize = 5;
         const int RequiredWins = 4;
@@ -342,8 +342,6 @@ public class StatsPanel : MonoBehaviour
         int requiredPercent = 0;
 
         if (recent == null || recent.Count == 0) return "Complete games to begin your progression. Advancement requires 4 wins in 5 games with at least 80% average efficiency.";
-
-        SudokuDifficulty difficulty = (SudokuDifficulty)recent[0].Difficulty;
 
         if (difficulty == SudokuDifficulty.Hardest) return $"Current: {difficulty}\nYou are at the highest difficulty.";
 

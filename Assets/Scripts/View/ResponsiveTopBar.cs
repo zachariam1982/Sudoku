@@ -4,44 +4,25 @@ using UnityEngine.UI;
 public class ResponsiveTopBar : MonoBehaviour
 {
     [Header("TopBar Items")]
-    [SerializeField]
-    private RectTransform livesContainer;
-
-    [SerializeField]
-    private RectTransform level;
-
-    [SerializeField]
-    private RectTransform timer;
-
-    [SerializeField]
-    private RectTransform pauseBlock;
+    [SerializeField] private RectTransform livesContainer;
+    [SerializeField] private RectTransform level;
+    [SerializeField] private RectTransform timer;
+    [SerializeField] private RectTransform pauseBlock;
+    [SerializeField] private RectTransform settingsBlock;
 
 
     [Header("Scaling")]
-    [SerializeField]
-    [Range(1f, 2f)]
-    private float landscapeScale = 1.4f;
-
-    [SerializeField]
-    private float portraitScale = 1f;
-
+    [SerializeField] [Range(1f, 2f)] private float landscapeScale = 1.4f;
+    [SerializeField] private float portraitScale = 1f;
 
     private bool? _lastLandscape;
-
     private RectTransform _topBar;
-
 
     private void Awake()
     {
-        _topBar =
-            GetComponent<RectTransform>();
+        _topBar = GetComponent<RectTransform>();
 
-        /*
-         * Make sure the layout system takes
-         * child scaling into account.
-         */
-        HorizontalLayoutGroup layout =
-            GetComponent<HorizontalLayoutGroup>();
+        HorizontalLayoutGroup layout = GetComponent<HorizontalLayoutGroup>();
 
         if (layout != null)
         {
@@ -113,6 +94,10 @@ public class ResponsiveTopBar : MonoBehaviour
 
         ApplyScale(
             pauseBlock,
+            targetScale);
+
+        ApplyScale(
+            settingsBlock,
             targetScale);
 
 

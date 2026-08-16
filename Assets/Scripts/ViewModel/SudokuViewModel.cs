@@ -18,7 +18,7 @@ public class SudokuViewModel
     public int GetLevel { get{ return _model.CurrentLevel;}}
     public int GetDifficulty { get{ return (int)_model.CurrentDifficulty;}}
     public ScorePenalties Penalties { get; } = new ScorePenalties(0,0,0);
-    public (int id, int level, int difficulty, int points) RetryGameData {get; set;}
+    public (int id, int level, int difficulty, int points) RetryGameData {get; set;} = (-1, -1, -1, -1);
     public BindableProperty<bool>    HideHUD      { get; }    = new BindableProperty<bool>(false);
     public BindableProperty<int[,]>  BoardValues  { get; }    = new BindableProperty<int[,]>();
     public BindableProperty<bool[,]> GivenMask    { get; }    = new BindableProperty<bool[,]>();

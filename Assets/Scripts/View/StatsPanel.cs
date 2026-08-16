@@ -290,7 +290,7 @@ public class StatsPanel : MonoBehaviour
         if (progressionText != null)
         {
             SudokuDifficulty currentDifficulty = (SudokuDifficulty)_vm.GetDifficulty;            
-            progressionText.text = BuildProgressionText(recent);
+            progressionText.text = BuildProgressionText(recent, currentDifficulty);
         }
     }
     private void RefreshRecentGameResults(List<GameRecord> recent)

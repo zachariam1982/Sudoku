@@ -10,10 +10,8 @@ public class StatsPanel : MonoBehaviour
     [Header("Canvas")]
     [SerializeField] private RectTransform canvas;
     [Header("Controls")]
-    [SerializeField] private Button          tabButton;
     [SerializeField] private Button          closeButton;
     [SerializeField] private Button          backdropButton;
-    [SerializeField] private TextMeshProUGUI tabArrowLabel;
 
     [Header("Panel root")]
     [SerializeField] private RectTransform   panelRT;
@@ -77,7 +75,6 @@ public class StatsPanel : MonoBehaviour
     private bool _allLoaded = false;
     private float loadThreshold = 0.08f;
     private List<GameObject> lstOfRecords = new List<GameObject>();
-    private float statsPanelWidth = 972;
     private GameStats _gameStats;
     private int _totalPossiblePoints;
     
@@ -92,11 +89,9 @@ public class StatsPanel : MonoBehaviour
 
         if (backdropButton != null) backdropButton.gameObject.SetActive(false);
 
-        tabButton.onClick.AddListener(TogglePanel);
         if (closeButton    != null) closeButton.onClick.AddListener(ClosePanel);
         if (backdropButton != null) backdropButton.onClick.AddListener(ClosePanel);
         if (scrollRect     != null) scrollRect.onValueChanged.AddListener(OnScroll);
-        SetTabArrow(false);
     }
     void OnRectTransformDimensionsChange()
     {
@@ -168,7 +163,6 @@ public class StatsPanel : MonoBehaviour
     private void OpenPanel()
     {
         _open = true;
-        SetTabArrow(true);
         if (backdropButton != null) backdropButton.gameObject.SetActive(true);
         _vm.FetchHistoricalData.Execute();
 
@@ -185,7 +179,6 @@ public class StatsPanel : MonoBehaviour
     private void ClosePanel()
     {
         _open = false;
-        SetTabArrow(false);
         if (backdropButton != null) backdropButton.gameObject.SetActive(false);
         if (_slideAnim != null) StopCoroutine(_slideAnim);
         _slideAnim = StartCoroutine(SlideOut());
@@ -566,11 +559,6 @@ public class StatsPanel : MonoBehaviour
     // ── Helpers ───────────────────────────────────────────────────────────
 
     private static float EaseOut(float t) => 1f - Mathf.Pow(1f - t, 3f);  // cubic ease-out
-
-    private void SetTabArrow(bool open)
-    {
-        if (tabArrowLabel != null) tabArrowLabel.text = open ? ">>" : "<<";
-    }
 
     private static void Set(TextMeshProUGUI tmp, string text)
     {

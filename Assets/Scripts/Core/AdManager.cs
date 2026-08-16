@@ -120,7 +120,12 @@ public class AdManager : MonoBehaviour
     private void OnAdLoadFailed(LevelPlayAdError error)
     {
         Debug.LogWarning($"[AdManager] Rewarded ad load failed: {error.ErrorMessage}");
-        Invoke(nameof(CreateAndLoadRewardedAd), 30f);
+        Invoke(nameof(RetryLoadRewardedAd), 30f);
+    }
+
+    private void RetryLoadRewardedAd()
+    {
+        _rewardedAd?.LoadAd();
     }
 
     private void OnAdDisplayed(LevelPlayAdInfo adInfo)
@@ -173,7 +178,7 @@ public class AdManager : MonoBehaviour
         if (!_isInitialised)
         {
             Debug.LogWarning("[AdManager] SDK not initialised yet. Calling onFailed path");
-            onFailed?.Invoke();
+            CompleteOnce(false);
             return;
         }
 
@@ -184,7 +189,7 @@ public class AdManager : MonoBehaviour
         else
         {
             Debug.LogWarning("[AdManager] No ad ready. Calling onFailed path.");
-            onFailed?.Invoke();
+            CompleteOnce(false);
         }
     }
 

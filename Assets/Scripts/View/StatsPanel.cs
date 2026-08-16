@@ -62,6 +62,11 @@ public class StatsPanel : MonoBehaviour
     [SerializeField] private ScrollRect scrollRect;
     [SerializeField] private Transform parentScroll;
     [SerializeField] private GameObject recordScroll;
+    [Header("Responsive Layout")]
+    [SerializeField] private RectTransform contentRT;
+
+    private const float StatsDesignWidth = 972f;
+    private const float StatsDesignHeight = 1920f;
 
     private SudokuViewModel _vm;
     private bool            _open;
@@ -95,9 +100,34 @@ public class StatsPanel : MonoBehaviour
     }
     void OnRectTransformDimensionsChange()
     {
-        float minCanvasDimension = Mathf.Min(Mathf.Min(canvas.rect.width, canvas.rect.height), statsPanelWidth);
-        Debug.Log($"Width for the stats panel is {minCanvasDimension}. Canvas width is {canvas.rect.width} and Canvas height is {canvas.rect.height} and width is {statsPanelWidth}");
-        panelRT.sizeDelta = new Vector2(minCanvasDimension, panelRT.sizeDelta.y);        
+        if (canvas == null || panelRT == null) return;
+
+        float availableWidth = canvas.rect.width;
+        float availableHeight = canvas.rect.height;
+
+        // Sidebar itself fills the available height,
+        // but never grows wider than its 972-unit design width.
+        float panelWidth = Mathf.Min(availableWidth, StatsDesignWidth);
+
+        panelRT.sizeDelta =  new Vector2( panelWidth, availableHeight);
+
+        if (contentRT != null)
+        {
+            // Scale the original 972x1920 layout down only when needed.
+            float widthScale = panelWidth / StatsDesignWidth;
+            float heightScale = availableHeight / StatsDesignHeight;
+            float scale = Mathf.Min( 1f, Mathf.Min(widthScale, heightScale));
+
+            contentRT.sizeDelta = new Vector2( StatsDesignWidth, StatsDesignHeight);
+            contentRT.localScale = new Vector3(scale, scale, 1f);
+            // Keep scaled content attached to top-right.
+            contentRT.anchoredPosition = Vector2.zero;
+        }
+
+        // IMPORTANT: panel width can change after orientation changes.
+        _hiddenX = panelWidth;
+
+        if (!_open) panelRT.anchoredPosition = new Vector2( _hiddenX, panelRT.anchoredPosition.y);
     }
 
     public void Bind(SudokuViewModel vm)
@@ -133,7 +163,7 @@ public class StatsPanel : MonoBehaviour
         }
     }
 
-    private void TogglePanel() { if (_open) ClosePanel(); else OpenPanel(); }
+    public void TogglePanel() { if (_open) ClosePanel(); else OpenPanel(); }
 
     private void OpenPanel()
     {

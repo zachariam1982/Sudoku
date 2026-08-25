@@ -23,14 +23,21 @@ public class User : MonoBehaviour
     }
     public bool TryLoadSave()
     {
-        if (!SaveSystem.HasSave()) return false;
- 
         SaveGameData data = SaveSystem.Load();
-        if (data == null) return false;
- 
-        ViewModel?.LoadSaveData(data);
-        //ViewModel?.ResetPuzzle();
-        return true;
+
+        if (data != null)
+        {
+            ViewModel?.LoadSaveData(data);
+            return true;
+        }
+
+        if (ViewModel == null) return false;
+
+        bool recovered = ViewModel.RecoverFromHistory();
+
+        if (recovered) SaveSystem.Save(ViewModel.GetSaveData());
+
+        return recovered;
     }
     private IEnumerator SaveLoop()
     {

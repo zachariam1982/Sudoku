@@ -33,8 +33,8 @@ public class SudokuGrid : MonoBehaviour
 
         vm.BoardValues.OnChanged      += OnBoardChanged;
         vm.GivenMask.OnChanged        += OnBoardChanged;
-        vm.SelectedRow.OnChanged      += _ => RefreshHighlights();
-        vm.SelectedCol.OnChanged      += _ => RefreshHighlights();
+        vm.SelectedRow.OnChanged      += OnSelectedRowOrColumnChanged;
+        vm.SelectedCol.OnChanged      += OnSelectedRowOrColumnChanged;
         vm.IsPickerOpen.OnChanged     += OnPickerOpenChanged;
         vm.LastEnteredCell.OnChanged  += OnCellValueEntered;
         vm.ConflictingCells.OnChanged += OnConflictsChanged;
@@ -51,20 +51,23 @@ public class SudokuGrid : MonoBehaviour
 
         viewModel.BoardValues.OnChanged      -= OnBoardChanged;
         viewModel.GivenMask.OnChanged        -= OnBoardChanged;
-        viewModel.SelectedRow.OnChanged      -= _ => RefreshHighlights();
-        viewModel.SelectedCol.OnChanged      -= _ => RefreshHighlights();
+        viewModel.SelectedRow.OnChanged      -= OnSelectedRowOrColumnChanged;
+        viewModel.SelectedCol.OnChanged      -= OnSelectedRowOrColumnChanged;
         viewModel.IsPickerOpen.OnChanged     -= OnPickerOpenChanged;
         viewModel.LastEnteredCell.OnChanged  -= OnCellValueEntered;
         viewModel.ConflictingCells.OnChanged -= OnConflictsChanged;
         viewModel.IsEraseMode.OnChanged      -= OnEraseModeChanged;
         viewModel.IsPencilMode.OnChanged     -= OnPencilModeChanged;
         viewModel.HighlightedCandidateNumber.OnChanged -= OnCandidateHighlightChanged;
-        viewModel.AutoFillCandidatesRequested.OnChanged += OnAutoFillCandidatesRequested;
+        viewModel.AutoFillCandidatesRequested.OnChanged -= OnAutoFillCandidatesRequested;
 
     }
 
     // ── Binding Handlers ──────────────────────────────────────────────────────
-
+    private void OnSelectedRowOrColumnChanged(int _)
+    {
+        RefreshHighlights();
+    }
     private void OnAutoFillCandidatesRequested(int requestNumber)
     {
         if (!cellsReady || viewModel == null) return;

@@ -415,6 +415,32 @@ public class SudokuViewModel
         this.FirstCellTapped.Value = false;
         this.ElapsedSeconds.Value = 0f;
     }
+    public bool RecoverFromHistory()
+    {
+        GameRecord last = GameDatabase.GetLastRecord();
+
+        if (last == null) return false;
+
+        _model.SetLevel(last.Level + 1);
+        _model.SetDifficulty((SudokuDifficulty)last.Difficulty);
+
+        if (last.IsWon)
+        {
+            _model.increaseDifficulty();
+        }
+        else
+        {
+            _model.decreaseDifficulty();
+        }
+
+        RetryGameData = (-1, -1, -1, -1);
+        RetryOlderGameRequested.Value = false;
+
+        ResetPuzzle();
+
+        return true;
+    }
+
     public ValueTuple<int,int,int> getPreviousValues()
     {
         if(this.replacedValueStack.Count == 0)

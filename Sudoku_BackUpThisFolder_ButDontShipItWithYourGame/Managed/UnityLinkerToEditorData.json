@@ -51,7 +51,7 @@
           {
             "name": "AudioBehaviour",
             "scenes": [
-              "Assets/Scenes/SampleScene.unity"
+              "Assets/Scenes/SudokuGame.unity"
             ],
             "dependencyType": 0,
             "icon": null
@@ -65,7 +65,7 @@
           {
             "name": "AudioListener",
             "scenes": [
-              "Assets/Scenes/SampleScene.unity"
+              "Assets/Scenes/SudokuGame.unity"
             ],
             "dependencyType": 0,
             "icon": null
@@ -108,7 +108,7 @@
           {
             "name": "Camera",
             "scenes": [
-              "Assets/Scenes/SampleScene.unity"
+              "Assets/Scenes/SudokuGame.unity"
             ],
             "dependencyType": 0,
             "icon": null
@@ -146,7 +146,7 @@
           {
             "name": "EditorExtension",
             "scenes": [
-              "Assets/Scenes/SampleScene.unity"
+              "Assets/Scenes/SudokuGame.unity"
             ],
             "dependencyType": 1,
             "icon": null
@@ -160,7 +160,7 @@
           {
             "name": "GameObject",
             "scenes": [
-              "Assets/Scenes/SampleScene.unity"
+              "Assets/Scenes/SudokuGame.unity"
             ],
             "dependencyType": 0,
             "icon": null
@@ -192,7 +192,7 @@
           {
             "name": "LevelGameManager",
             "scenes": [
-              "Assets/Scenes/SampleScene.unity"
+              "Assets/Scenes/SudokuGame.unity"
             ],
             "dependencyType": 1,
             "icon": null
@@ -224,7 +224,7 @@
           {
             "name": "LightmapSettings",
             "scenes": [
-              "Assets/Scenes/SampleScene.unity"
+              "Assets/Scenes/SudokuGame.unity"
             ],
             "dependencyType": 0,
             "icon": null
@@ -238,7 +238,7 @@
           {
             "name": "Material",
             "scenes": [
-              "Assets/Scenes/SampleScene.unity"
+              "Assets/Scenes/SudokuGame.unity"
             ],
             "dependencyType": 0,
             "icon": null
@@ -264,7 +264,7 @@
           {
             "name": "MonoBehaviour",
             "scenes": [
-              "Assets/Scenes/SampleScene.unity"
+              "Assets/Scenes/SudokuGame.unity"
             ],
             "dependencyType": 0,
             "icon": null
@@ -278,7 +278,7 @@
           {
             "name": "MonoScript",
             "scenes": [
-              "Assets/Scenes/SampleScene.unity"
+              "Assets/Scenes/SudokuGame.unity"
             ],
             "dependencyType": 1,
             "icon": null
@@ -286,7 +286,7 @@
           {
             "name": "NamedObject",
             "scenes": [
-              "Assets/Scenes/SampleScene.unity"
+              "Assets/Scenes/SudokuGame.unity"
             ],
             "dependencyType": 1,
             "icon": null
@@ -324,7 +324,7 @@
           {
             "name": "RectTransform",
             "scenes": [
-              "Assets/Scenes/SampleScene.unity"
+              "Assets/Scenes/SudokuGame.unity"
             ],
             "dependencyType": 0,
             "icon": null
@@ -338,7 +338,7 @@
           {
             "name": "RenderSettings",
             "scenes": [
-              "Assets/Scenes/SampleScene.unity"
+              "Assets/Scenes/SudokuGame.unity"
             ],
             "dependencyType": 0,
             "icon": null
@@ -370,7 +370,7 @@
           {
             "name": "Shader",
             "scenes": [
-              "Assets/Scenes/SampleScene.unity"
+              "Assets/Scenes/SudokuGame.unity"
             ],
             "dependencyType": 0,
             "icon": null
@@ -388,15 +388,9 @@
             "icon": null
           },
           {
-            "name": "SortingGroup",
-            "scenes": [],
-            "dependencyType": 0,
-            "icon": null
-          },
-          {
             "name": "Sprite",
             "scenes": [
-              "Assets/Scenes/SampleScene.unity"
+              "Assets/Scenes/SudokuGame.unity"
             ],
             "dependencyType": 0,
             "icon": null
@@ -428,7 +422,7 @@
           {
             "name": "Texture",
             "scenes": [
-              "Assets/Scenes/SampleScene.unity"
+              "Assets/Scenes/SudokuGame.unity"
             ],
             "dependencyType": 0,
             "icon": null
@@ -436,7 +430,7 @@
           {
             "name": "Texture2D",
             "scenes": [
-              "Assets/Scenes/SampleScene.unity"
+              "Assets/Scenes/SudokuGame.unity"
             ],
             "dependencyType": 0,
             "icon": null
@@ -502,12 +496,6 @@
             "icon": "package/com.unity.modules.graphicsstatecollectionserializer"
           },
           {
-            "name": "Required by Grid Module",
-            "scenes": [],
-            "dependencyType": 2,
-            "icon": "package/com.unity.modules.grid"
-          },
-          {
             "name": "Required by HierarchyCore Module",
             "scenes": [],
             "dependencyType": 2,
@@ -568,12 +556,6 @@
             "icon": "package/com.unity.modules.physics"
           },
           {
-            "name": "Required by Physics2D Module",
-            "scenes": [],
-            "dependencyType": 2,
-            "icon": "package/com.unity.modules.physics2d"
-          },
-          {
             "name": "Required by PhysicsBackendPhysX Module",
             "scenes": [],
             "dependencyType": 2,
@@ -596,24 +578,6 @@
             "scenes": [],
             "dependencyType": 2,
             "icon": "package/com.unity.modules.runtimeinitializeonloadmanagerinitializer"
-          },
-          {
-            "name": "Required by SpriteMask Module",
-            "scenes": [],
-            "dependencyType": 2,
-            "icon": "package/com.unity.modules.spritemask"
-          },
-          {
-            "name": "Required by SpriteShape Module",
-            "scenes": [],
-            "dependencyType": 2,
-            "icon": "package/com.unity.modules.spriteshape"
-          },
-          {
-            "name": "Required by Subsystems Module",
-            "scenes": [],
-            "dependencyType": 2,
-            "icon": "package/com.unity.modules.subsystems"
           },
           {
             "name": "Required by TLS Module",
@@ -644,12 +608,6 @@
             "scenes": [],
             "dependencyType": 2,
             "icon": "package/com.unity.modules.textrendering"
-          },
-          {
-            "name": "Required by Tilemap Module",
-            "scenes": [],
-            "dependencyType": 2,
-            "icon": "package/com.unity.modules.tilemap"
           },
           {
             "name": "Required by UI Module",
@@ -698,18 +656,6 @@
             "scenes": [],
             "dependencyType": 2,
             "icon": "package/com.unity.modules.vfx"
-          },
-          {
-            "name": "Required by VR Module",
-            "scenes": [],
-            "dependencyType": 2,
-            "icon": "package/com.unity.modules.vr"
-          },
-          {
-            "name": "Required by XR Module",
-            "scenes": [],
-            "dependencyType": 2,
-            "icon": "package/com.unity.modules.xr"
           }
         ]
       },
@@ -732,23 +678,6 @@
             "scenes": [],
             "dependencyType": 3,
             "icon": "class/DefaultAsset"
-          }
-        ]
-      },
-      {
-        "name": "Grid",
-        "dependencies": [
-          {
-            "name": "GridLayout",
-            "scenes": [],
-            "dependencyType": 0,
-            "icon": null
-          },
-          {
-            "name": "Required by Tilemap Module",
-            "scenes": [],
-            "dependencyType": 2,
-            "icon": "package/com.unity.modules.tilemap"
           }
         ]
       },
@@ -810,20 +739,7 @@
       },
       {
         "name": "Input",
-        "dependencies": [
-          {
-            "name": "Required by VR Module",
-            "scenes": [],
-            "dependencyType": 2,
-            "icon": "package/com.unity.modules.vr"
-          },
-          {
-            "name": "Required by XR Module",
-            "scenes": [],
-            "dependencyType": 2,
-            "icon": "package/com.unity.modules.xr"
-          }
-        ]
+        "dependencies": []
       },
       {
         "name": "InputForUI",
@@ -904,12 +820,6 @@
             "icon": "package/com.unity.modules.runtimeinitializeonloadmanagerinitializer"
           },
           {
-            "name": "Required by Subsystems Module",
-            "scenes": [],
-            "dependencyType": 2,
-            "icon": "package/com.unity.modules.subsystems"
-          },
-          {
             "name": "Required by UIElements Module",
             "scenes": [],
             "dependencyType": 2,
@@ -926,18 +836,6 @@
             "scenes": [],
             "dependencyType": 2,
             "icon": "package/com.unity.modules.unityconsent"
-          },
-          {
-            "name": "Required by VR Module",
-            "scenes": [],
-            "dependencyType": 2,
-            "icon": "package/com.unity.modules.vr"
-          },
-          {
-            "name": "Required by XR Module",
-            "scenes": [],
-            "dependencyType": 2,
-            "icon": "package/com.unity.modules.xr"
           }
         ]
       },
@@ -973,47 +871,6 @@
             "scenes": [],
             "dependencyType": 2,
             "icon": "package/com.unity.modules.uielements"
-          },
-          {
-            "name": "Required by VR Module",
-            "scenes": [],
-            "dependencyType": 2,
-            "icon": "package/com.unity.modules.vr"
-          },
-          {
-            "name": "Required by XR Module",
-            "scenes": [],
-            "dependencyType": 2,
-            "icon": "package/com.unity.modules.xr"
-          }
-        ]
-      },
-      {
-        "name": "Physics2D",
-        "dependencies": [
-          {
-            "name": "Collider2D",
-            "scenes": [],
-            "dependencyType": 0,
-            "icon": null
-          },
-          {
-            "name": "Physics2DSettings",
-            "scenes": [],
-            "dependencyType": 1,
-            "icon": null
-          },
-          {
-            "name": "Rigidbody2D",
-            "scenes": [],
-            "dependencyType": 0,
-            "icon": null
-          },
-          {
-            "name": "Required by Tilemap Module",
-            "scenes": [],
-            "dependencyType": 2,
-            "icon": "package/com.unity.modules.tilemap"
           }
         ]
       },
@@ -1100,12 +957,6 @@
             "icon": "package/com.unity.modules.graphicsstatecollectionserializer"
           },
           {
-            "name": "Required by Grid Module",
-            "scenes": [],
-            "dependencyType": 2,
-            "icon": "package/com.unity.modules.grid"
-          },
-          {
             "name": "Required by HierarchyCore Module",
             "scenes": [],
             "dependencyType": 2,
@@ -1166,12 +1017,6 @@
             "icon": "package/com.unity.modules.physics"
           },
           {
-            "name": "Required by Physics2D Module",
-            "scenes": [],
-            "dependencyType": 2,
-            "icon": "package/com.unity.modules.physics2d"
-          },
-          {
             "name": "Required by PhysicsBackendPhysX Module",
             "scenes": [],
             "dependencyType": 2,
@@ -1194,24 +1039,6 @@
             "scenes": [],
             "dependencyType": 2,
             "icon": "package/com.unity.modules.runtimeinitializeonloadmanagerinitializer"
-          },
-          {
-            "name": "Required by SpriteMask Module",
-            "scenes": [],
-            "dependencyType": 2,
-            "icon": "package/com.unity.modules.spritemask"
-          },
-          {
-            "name": "Required by SpriteShape Module",
-            "scenes": [],
-            "dependencyType": 2,
-            "icon": "package/com.unity.modules.spriteshape"
-          },
-          {
-            "name": "Required by Subsystems Module",
-            "scenes": [],
-            "dependencyType": 2,
-            "icon": "package/com.unity.modules.subsystems"
           },
           {
             "name": "Required by TLS Module",
@@ -1242,12 +1069,6 @@
             "scenes": [],
             "dependencyType": 2,
             "icon": "package/com.unity.modules.textrendering"
-          },
-          {
-            "name": "Required by Tilemap Module",
-            "scenes": [],
-            "dependencyType": 2,
-            "icon": "package/com.unity.modules.tilemap"
           },
           {
             "name": "Required by UI Module",
@@ -1296,44 +1117,6 @@
             "scenes": [],
             "dependencyType": 2,
             "icon": "package/com.unity.modules.vfx"
-          },
-          {
-            "name": "Required by VR Module",
-            "scenes": [],
-            "dependencyType": 2,
-            "icon": "package/com.unity.modules.vr"
-          },
-          {
-            "name": "Required by XR Module",
-            "scenes": [],
-            "dependencyType": 2,
-            "icon": "package/com.unity.modules.xr"
-          }
-        ]
-      },
-      {
-        "name": "SpriteMask",
-        "dependencies": []
-      },
-      {
-        "name": "SpriteShape",
-        "dependencies": [
-          {
-            "name": "Required by SpriteMask Module",
-            "scenes": [],
-            "dependencyType": 2,
-            "icon": "package/com.unity.modules.spritemask"
-          }
-        ]
-      },
-      {
-        "name": "Subsystems",
-        "dependencies": [
-          {
-            "name": "Required by XR Module",
-            "scenes": [],
-            "dependencyType": 2,
-            "icon": "package/com.unity.modules.xr"
           }
         ]
       },
@@ -1423,7 +1206,7 @@
           {
             "name": "Font",
             "scenes": [
-              "Assets/Scenes/SampleScene.unity"
+              "Assets/Scenes/SudokuGame.unity"
             ],
             "dependencyType": 0,
             "icon": null
@@ -1461,35 +1244,12 @@
         ]
       },
       {
-        "name": "Tilemap",
-        "dependencies": [
-          {
-            "name": "Tilemap",
-            "scenes": [],
-            "dependencyType": 0,
-            "icon": null
-          },
-          {
-            "name": "TilemapRenderer",
-            "scenes": [],
-            "dependencyType": 0,
-            "icon": null
-          },
-          {
-            "name": "Required by SpriteMask Module",
-            "scenes": [],
-            "dependencyType": 2,
-            "icon": "package/com.unity.modules.spritemask"
-          }
-        ]
-      },
-      {
         "name": "UI",
         "dependencies": [
           {
             "name": "Canvas",
             "scenes": [
-              "Assets/Scenes/SampleScene.unity"
+              "Assets/Scenes/SudokuGame.unity"
             ],
             "dependencyType": 0,
             "icon": null
@@ -1497,7 +1257,7 @@
           {
             "name": "CanvasGroup",
             "scenes": [
-              "Assets/Scenes/SampleScene.unity"
+              "Assets/Scenes/SudokuGame.unity"
             ],
             "dependencyType": 0,
             "icon": null
@@ -1505,7 +1265,7 @@
           {
             "name": "CanvasRenderer",
             "scenes": [
-              "Assets/Scenes/SampleScene.unity"
+              "Assets/Scenes/SudokuGame.unity"
             ],
             "dependencyType": 0,
             "icon": null
@@ -1550,22 +1310,10 @@
         "name": "UnityAnalyticsCommon",
         "dependencies": [
           {
-            "name": "Required by Subsystems Module",
-            "scenes": [],
-            "dependencyType": 2,
-            "icon": "package/com.unity.modules.subsystems"
-          },
-          {
             "name": "Required by UnityAnalytics Module",
             "scenes": [],
             "dependencyType": 2,
             "icon": "package/com.unity.modules.unityanalytics"
-          },
-          {
-            "name": "Required by VR Module",
-            "scenes": [],
-            "dependencyType": 2,
-            "icon": "package/com.unity.modules.vr"
           }
         ]
       },
@@ -1670,21 +1418,6 @@
             "scenes": [],
             "dependencyType": 1,
             "icon": null
-          }
-        ]
-      },
-      {
-        "name": "VR",
-        "dependencies": []
-      },
-      {
-        "name": "XR",
-        "dependencies": [
-          {
-            "name": "Required by VR Module",
-            "scenes": [],
-            "dependencyType": 2,
-            "icon": "package/com.unity.modules.vr"
           }
         ]
       }

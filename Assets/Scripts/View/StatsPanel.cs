@@ -202,8 +202,10 @@ public class StatsPanel : MonoBehaviour
         Set(scoreValueLabel, score.ToString());
         Set(scoreMaxLabel, " / " + max_score.ToString());
         if (ringFill != null) {
-            ringFill.fillAmount = Mathf.Clamp01(score / (float)max_score);
-            int percentage = (score * 100)/max_score;
+            float ratio = max_score > 0 ? score / (float)max_score : 0f;
+
+            ringFill.fillAmount = Mathf.Clamp01(ratio);
+            int percentage = max_score > 0 ? Mathf.RoundToInt(ratio * 100f) : 0;
             string colorStr = "#FFC832";
             Color color;
 

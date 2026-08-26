@@ -1,6 +1,3 @@
-#if UNITY_WEBGL && !UNITY_EDITOR
-
-using System.Runtime.InteropServices;
 using UnityEngine;
 using YTGameSDK;
 
@@ -12,12 +9,6 @@ public class YouTubePlatformManager : MonoBehaviour
         private set;
     }
 
-    [DllImport("__Internal")]
-    private static extern void YT_FirstFrameReady();
-
-    [DllImport("__Internal")]
-    private static extern void YT_GameReady();
-
     [System.NonSerialized]
     private YTGameWrapper ytGameWrapper;
 
@@ -26,7 +17,7 @@ public class YouTubePlatformManager : MonoBehaviour
 
     private void Awake()
     {
-        if (Instance != null)
+        if (Instance != null && Instance != this)
         {
             Destroy(gameObject);
             return;
@@ -39,80 +30,112 @@ public class YouTubePlatformManager : MonoBehaviour
 
     private void Start()
     {
-        if (ytGameWrapper == null) ytGameWrapper = FindFirstObjectByType<YTGameWrapper>();
+        YTGameWrapper wrapper = GetWrapper();
 
-        if (ytGameWrapper != null) ytGameWrapper.SetOnPauseCallback( OnYouTubePause );
-        else Debug.LogError("[YouTube] YTGameWrapper not found.");
+        if (wrapper != null)
+        {
+            wrapper.SetOnPauseCallback(OnYouTubePause);
+        }
+        else
+        {
+            Debug.LogError(
+                "[YouTube] YTGameWrapper not found."
+            );
+        }
 
         SendFirstFrameReady();
     }
 
+    private YTGameWrapper GetWrapper()
+    {
+        if (ytGameWrapper == null)
+        {
+            ytGameWrapper =
+                FindFirstObjectByType<YTGameWrapper>();
+        }
+
+        return ytGameWrapper;
+    }
+
     public void SendFirstFrameReady()
     {
-        if (_firstFrameSent) return;
+        if (_firstFrameSent)
+            return;
+
+        YTGameWrapper wrapper = GetWrapper();
+
+        if (wrapper == null)
+        {
+            Debug.LogError(
+                "[YouTube] Cannot send firstFrameReady - YTGameWrapper not found."
+            );
+
+            return;
+        }
+
+        wrapper.SendGameFirstFrameReady();
 
         _firstFrameSent = true;
 
-        YT_FirstFrameReady();
-
-        Debug.Log("[YouTube] firstFrameReady sent.");
+        Debug.Log(
+            "[YouTube] firstFrameReady sent."
+        );
     }
 
     public void SendGameReady()
     {
-        if (_gameReadySent) return;
+        if (_gameReadySent)
+            return;
 
-        if (!_firstFrameSent) SendFirstFrameReady();
+        if (!_firstFrameSent)
+        {
+            SendFirstFrameReady();
+        }
+
+        YTGameWrapper wrapper = GetWrapper();
+
+        if (wrapper == null)
+        {
+            Debug.LogError(
+                "[YouTube] Cannot send gameReady - YTGameWrapper not found."
+            );
+
+            return;
+        }
+
+        wrapper.SendGameIsReady();
 
         _gameReadySent = true;
 
-        YT_GameReady();
-
-        Debug.Log("[YouTube] gameReady sent.");
+        Debug.Log(
+            "[YouTube] gameReady sent."
+        );
     }
 
     private void OnYouTubePause()
     {
-        Debug.Log("[YouTube] Pause requested.");
+        Debug.Log(
+            "[YouTube] Pause requested."
+        );
 
-        if (User.Instance?.ViewModel == null) return;
+        if (User.Instance?.ViewModel == null)
+            return;
 
-        SudokuViewModel vm = User.Instance.ViewModel;
+        SudokuViewModel vm =
+            User.Instance.ViewModel;
 
         // Save immediately before YouTube may evict us.
-        SaveSystem.Save(vm.GetSaveData());
+        SaveSystem.Save(
+            vm.GetSaveData()
+        );
 
-        if (GameStateMachine.Instance != null && GameStateMachine.Instance.CurrentState is PlayingState)
+        if (
+            GameStateMachine.Instance != null &&
+            GameStateMachine.Instance.CurrentState
+                is PlayingState
+        )
         {
             vm.PauseCommand.Execute();
         }
     }
 }
-
-#else
-
-using UnityEngine;
-
-public class YouTubePlatformManager : MonoBehaviour
-{
-    public static YouTubePlatformManager Instance
-    {
-        get;
-        private set;
-    }
-
-    private void Awake()
-    {
-        Instance = this;
-    }
-
-    public void SendFirstFrameReady()
-    {
-    }
-
-    public void SendGameReady()
-    {
-    }
-}
-
-#endif

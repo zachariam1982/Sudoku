@@ -23,6 +23,8 @@ public class OrientationManager : MonoBehaviour
     // Canvas reference resolution (must match Canvas Scaler settings)
     private const float RefW = 1080f;
     private const float RefH = 1920f;
+    private int lastScreenWidth = -1;
+    private int lastScreenHeight = -1;
 
     void Start()
     {
@@ -41,12 +43,14 @@ public class OrientationManager : MonoBehaviour
 
     void Update()
     {
-        // Detect orientation change
-        if (Screen.orientation != lastOrientation)
-        {
-            lastOrientation = Screen.orientation;
-            RebuildForCurrentOrientation();
-        }
+        bool orientationChanged = Screen.orientation != lastOrientation;
+        bool sizeChanged = Screen.width != lastScreenWidth || Screen.height != lastScreenHeight;
+
+        if (!orientationChanged && !sizeChanged) return;
+
+        lastOrientation = Screen.orientation;
+
+        RebuildForCurrentOrientation();
     }
 
     /// <summary>
@@ -55,7 +59,15 @@ public class OrientationManager : MonoBehaviour
     /// </summary>
     public void RebuildForCurrentOrientation()
     {
-        float gridSize = CalculateGridSize(Screen.width, Screen.height);
+        int screenW = Screen.width;
+        int screenH = Screen.height;
+
+        if (screenW <= 0 || screenH <= 0) return;
+
+        lastScreenWidth = screenW;
+        lastScreenHeight = screenH;
+
+        float gridSize = CalculateGridSize(screenW, screenH);
 
         using (new Benchmark("Grid rebuild")){
             gridBuilder.Rebuild(gridSize);

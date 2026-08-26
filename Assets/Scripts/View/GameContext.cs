@@ -37,9 +37,14 @@ public class GameContext : MonoBehaviour
         GameStateMachine.Instance.Initialise(ViewModel);
         User.Instance.TryLoadSave();
 
+    }
+
+    private void Start()
+    {
         #if UNITY_WEBGL && !UNITY_EDITOR
 
         if (YouTubePlatformManager.Instance != null) YouTubePlatformManager.Instance.SendGameReady();
+        else Debug.LogError("[YouTube] YouTubePlatformManager not found.");
 
         #endif
     }

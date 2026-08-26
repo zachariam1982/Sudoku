@@ -36,5 +36,11 @@ public class GameContext : MonoBehaviour
         User.Instance.ViewModel = ViewModel;
         GameStateMachine.Instance.Initialise(ViewModel);
         User.Instance.TryLoadSave();
+
+        #if UNITY_WEBGL && !UNITY_EDITOR
+
+        if (YouTubePlatformManager.Instance != null) YouTubePlatformManager.Instance.SendGameReady();
+
+        #endif
     }
 }

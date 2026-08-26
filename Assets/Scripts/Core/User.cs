@@ -131,7 +131,11 @@ public class User : MonoBehaviour
             TrySave();
         }
     }
-    private void TrySave()
+    public void TrySave()
+    {
+        SaveNow();
+    }
+    public void SaveNow()
     {
         #if UNITY_WEBGL && !UNITY_EDITOR
 

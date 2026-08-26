@@ -45,7 +45,12 @@ public class LoseState : IGameState
     private void OnNewGameRequested(bool requested)
     {
         if (requested){
-            _vm?.AddLevel.Execute();
+            _vm?.NextLevel.Execute();
+            _vm?.DecreaseDifficulty.Execute(); //See if the level needs to be decreased.
+            if(_vm != null && _vm.RetryGameData.id != -1)
+            {
+                _vm.RetryGameData = (-1,-1,-1,-1);
+            }
             _machine.TransitionTo(_machine.Idle);
         }
     }

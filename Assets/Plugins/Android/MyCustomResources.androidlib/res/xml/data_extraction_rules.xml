@@ -1,0 +1,56 @@
+<?xml version="1.0" encoding="utf-8"?>
+
+<data-extraction-rules>
+
+    <!-- Google cloud backup -->
+    <cloud-backup>
+
+        <!-- Unity PlayerPrefs -->
+        <include
+            domain="sharedpref"
+            path="." />
+
+        <!-- Android internal files -->
+        <include
+            domain="file"
+            path="." />
+
+        <!-- Android internal databases -->
+        <include
+            domain="database"
+            path="." />
+
+        <!--
+            Unity Application.persistentDataPath.
+
+            game_history.db is here.
+        -->
+        <include
+            domain="external"
+            path="." />
+
+    </cloud-backup>
+
+
+    <!-- Phone-to-phone migration -->
+    <device-transfer>
+
+        <include
+            domain="sharedpref"
+            path="." />
+
+        <include
+            domain="file"
+            path="." />
+
+        <include
+            domain="database"
+            path="." />
+
+        <include
+            domain="external"
+            path="." />
+
+    </device-transfer>
+
+</data-extraction-rules>

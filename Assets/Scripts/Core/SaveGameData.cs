@@ -25,13 +25,18 @@ public class SaveGameData
     /// Each entry encodes one undo frame as "row,col,value".
     /// Bottom of stack = index 0, top = last element.
     /// </summary>
-    public List<string> UndoStack = new List<string>();
-    public bool IsWon = false;
-    public bool IsLost = false;
-    public bool PauseRequested = false;
-    public string statename    = "";
+    public List<string> UndoStack        = new List<string>();
+    public bool IsWon                    = false;
+    public bool IsLost                   = false;
+    public bool PauseRequested           = false;
+    public bool RetryOlderGame           = false;
+    public int RetryOlderGame_Id         = -1;
+    public int RetryOlderGame_Level      = -1;
+    public int RetryOlderGame_Difficulty = -1;
+    public int RetryOlderGame_Points     = -1;
+    public string statename              = "";
     // ── Penalties Stat ────────────────────────────────────────────────────────────
-    public int Mistakes = 0;
+    public int Mistakes      = 0;
     public int SOSEmptyCells = 0; // empty cells SOS filled
     public int SOSWrongCells = 0; // wrong cells SOS fixed
 

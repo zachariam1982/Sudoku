@@ -11,17 +11,27 @@ public class GameContext : MonoBehaviour
 {
     /// <summary>Shared ViewModel — accessible by GridBuilder after Awake.</summary>
     public SudokuViewModel ViewModel { get; private set; }
+    public static int cnt = 0;
 
     void Awake()
     {
         // Create the ViewModel (loads starting puzzle automatically)
         ViewModel = new SudokuViewModel();
         
-        GetComponent<SudokuGrid>()?.Bind(ViewModel);
-        GetComponent<ErrorMessage>()?.Bind(ViewModel);
-        GetComponentInChildren<NumberPicker>()?.Bind(ViewModel);
-        GetComponentInChildren<GameStateView>()?.Bind(ViewModel);
-        GetComponentInChildren<StatsPanel>()?.Bind(ViewModel);
+        SudokuGrid grid = GetComponent<SudokuGrid>();
+        if (grid != null) grid.Bind(ViewModel);
+
+        ErrorMessage error = GetComponent<ErrorMessage>();
+        if (error != null) error.Bind(ViewModel);
+
+        NumberPicker picker = GetComponentInChildren<NumberPicker>();
+        if (picker != null) picker.Bind(ViewModel);
+
+        GameStateView stateView = GetComponentInChildren<GameStateView>();
+        if (stateView != null) stateView.Bind(ViewModel);
+
+        StatsPanel stats = GetComponentInChildren<StatsPanel>();
+        if (stats != null) stats.Bind(ViewModel);
 
         User.Instance.ViewModel = ViewModel;
         GameStateMachine.Instance.Initialise(ViewModel);

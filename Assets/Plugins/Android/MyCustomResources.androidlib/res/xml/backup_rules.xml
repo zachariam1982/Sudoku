@@ -1,0 +1,29 @@
+<?xml version="1.0" encoding="utf-8"?>
+
+<full-backup-content>
+
+    <!-- Unity PlayerPrefs -->
+    <include
+        domain="sharedpref"
+        path="." />
+
+    <!-- Android internal files -->
+    <include
+        domain="file"
+        path="." />
+
+    <!-- Native/internal Android databases -->
+    <include
+        domain="database"
+        path="." />
+
+    <!--
+        Unity Application.persistentDataPath on Android.
+
+        This is where game_history.db currently lives.
+    -->
+    <include
+        domain="external"
+        path="." />
+
+</full-backup-content>

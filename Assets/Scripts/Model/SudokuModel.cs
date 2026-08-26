@@ -24,8 +24,8 @@ public static class ScoringSystem
 {
     // ── Penalty constants ─────────────────────────────────────────────────────
     public const int PenaltyPerMistake        = 2;  // wrong manual entry (conflict)
-    public const int PenaltySOSFillsEmpty     = 7;  // SOS filled a blank cell
-    public const int PenaltySOSFixesWrong     = 9;  // SOS corrected a wrong entry
+    public const int PenaltySOSFillsEmpty     = 5;  // SOS filled a blank cell
+    public const int PenaltySOSFixesWrong     = 7;  // SOS corrected a wrong entry
 
     private const int minutes                 = 60;
  
@@ -37,10 +37,10 @@ public static class ScoringSystem
          6 * minutes,  // Easy     
          8 * minutes,  // Novice    
         10 * minutes,  // Moderate  
-        12 * minutes,  // Advanced 
-        15 * minutes,  // Hard    
-        20 * minutes,  // Expert  
-        25 * minutes,  // Hardest 
+        13 * minutes,  // Advanced 
+        18 * minutes,  // Hard    
+        30 * minutes,  // Expert  
+        50 * minutes,  // Hardest 
     };
  
     private static int DifficultyScore(SudokuDifficulty difficulty)
@@ -118,53 +118,76 @@ public class ScorePenalties
 }
 public static class SudokuGenerator
 {
-    public static SudokuResult GenerateSudoku(int level, SudokuDifficulty difficulty)
+    private static ( int minClues, int maxClues) GetSearchRange( SudokuDifficulty difficulty)
     {
-        // 1. Initialize Seeded Random
-        System.Random rng = new System.Random(level);
-
-        int[,] solution = new int[9, 9];
-        FillBoard(solution, rng);
-
-        // Create a deep copy for the puzzle
-        int[,] puzzle = (int[,])solution.Clone();
-
-        // 2. Determine how many clues to keep
-        int targetClues = difficulty switch
+        return difficulty switch
         {
-            SudokuDifficulty.Simple    => rng.Next(66, 72), // Too easy
-            SudokuDifficulty.Beginner  => rng.Next(50, 56), // Very easy, almost full board
-            SudokuDifficulty.Easy      => rng.Next(40, 46), // Standard easy
-            SudokuDifficulty.Novice    => rng.Next(36, 40), // Bridge between Easy and Moderate
-            SudokuDifficulty.Moderate  => rng.Next(32, 36), // Standard medium
-            SudokuDifficulty.Advanced  => rng.Next(28, 32), // Bridge between Moderate and Hard
-            SudokuDifficulty.Hard      => rng.Next(24, 28), // Standard hard
-            SudokuDifficulty.Expert    => rng.Next(20, 24), // Demands advanced logic techniques
-            SudokuDifficulty.Hardest   => rng.Next(17, 20), // Absolute minimum for unique puzzles
-            _ => 30
+            SudokuDifficulty.Simple => (66, 71),
+            SudokuDifficulty.Beginner => (56, 65),
+            SudokuDifficulty.Easy => (45, 55),
+            SudokuDifficulty.Novice => (36, 52),
+            SudokuDifficulty.Moderate => (30, 48),
+            SudokuDifficulty.Advanced => (27, 44),
+            SudokuDifficulty.Hard => (24, 40),
+            SudokuDifficulty.Expert => (21, 36),
+            SudokuDifficulty.Hardest => (17, 32),
+            _ => (25, 55)
         };
+    }
+    public static SudokuResult GenerateSudoku( int level, SudokuDifficulty requestedDifficulty)
+    {
+        const int MaxAttempts = 100;
+        var (minClues, maxClues) = GetSearchRange(requestedDifficulty);
 
-        // 3. Dig holes in the puzzle
-        int holesToMake = 81 - targetClues;
-        while (holesToMake > 0)
+        for (int attempt = 0;attempt < MaxAttempts;attempt++)
         {
-            int row = rng.Next(0, 9);
-            int col = rng.Next(0, 9);
+            int seed = unchecked(level * 397 ^ ((int)requestedDifficulty + 1) * 7919 ^ attempt * 104729);
+            System.Random rng = new System.Random(seed);
+            int[,] solution = new int[9, 9];
 
-            if (puzzle[row, col] != 0)
+            FillBoard( solution, rng);
+
+            int[,] puzzle = (int[,])solution.Clone();
+            List<int> cells = Enumerable.Range(0, 81).OrderBy(_ => rng.Next()).ToList();
+            int clueCount = 81;
+
+            foreach (int index in cells)
             {
+                int row = index / 9;
+                int col = index % 9;
+                int previous = puzzle[row, col];
+
                 puzzle[row, col] = 0;
-                holesToMake--;
+
+                if (!SudokuSolver.HasUniqueSolution(puzzle))
+                {
+                    puzzle[row, col] = previous;
+                    continue;
+                }
+
+                clueCount--;
+
+                if (clueCount > maxClues) continue;
+                if (clueCount < minClues) break;
+
+                SudokuDifficultyResult rating = SudokuDifficultyAnalyzer.Analyze(puzzle);
+
+                if (requestedDifficulty == SudokuDifficulty.Simple || 
+                    requestedDifficulty == SudokuDifficulty.Beginner ||
+                    (int)rating.Difficulty >= (int)requestedDifficulty || 
+                    (int)rating.Difficulty - 1 == (int)requestedDifficulty)
+                {
+                    return new SudokuResult
+                    {
+                        Puzzle = (int[,])puzzle.Clone(),
+                        Solution = (int[,])solution.Clone()
+                    };
+                }
             }
         }
 
-        return new SudokuResult
-        {
-            Puzzle = puzzle,
-            Solution = solution
-        };
+        throw new InvalidOperationException( $"Could not generate a " + $"{requestedDifficulty} Sudoku " + $"after {MaxAttempts} generation paths.");
     }
-
     private static bool FillBoard(int[,] board, System.Random rng)
     {
         for (int row = 0; row < 9; row++)
@@ -191,7 +214,6 @@ public static class SudokuGenerator
         }
         return true;
     }
-
     private static bool IsValid(int[,] board, int row, int col, int num)
     {
         for (int i = 0; i < 9; i++)
@@ -214,69 +236,99 @@ public class SudokuModel
     private int _currentLevel = 1;
     private SudokuDifficulty _currentDifficulty = SudokuDifficulty.Easy;
     private SudokuResult ret;
+    private const int _NoOfLastGames = 5;
+    private const float _NoOfLastGamesFloat = _NoOfLastGames;
 
     public SudokuDifficulty CurrentDifficulty { get { return _currentDifficulty; }}
     public int CurrentLevel { get {return _currentLevel;}}
-    public void AddLevel(int increment)
-    {
-        int level = GameDatabase.GetLastRecord()?.Level ?? _currentLevel;
-        _currentLevel = _currentLevel + increment;
-    }
+    public void SetLevel(int level) => _currentLevel = level;
     public void SetDifficulty(SudokuDifficulty difficulty) => _currentDifficulty = difficulty;
     public void increaseDifficulty() 
     {
-        var lst = GameDatabase.GetLastNRecordByDate(3);
-        if (lst == null || lst.Count < 3) return;
+        var lst = GameDatabase.GetLastNRecordByDate(_NoOfLastGames);
+        bool AllDifficultySame = true;
+        int wins = 0;
+        float efficiencySum = 0f;
 
-        if (lst[0].Difficulty == lst[1].Difficulty && lst[1].Difficulty == lst[2].Difficulty) 
+        if (lst == null || lst.Count < _NoOfLastGames) return;
+
+        Debug.Log($"Last {_NoOfLastGames} points");
+        for(int i = 0; i < lst.Count; i++)
         {
-            float efficiencySum = 0f;
-            SudokuDifficulty matchDifficulty = (SudokuDifficulty)lst[0].Difficulty;
+            SudokuDifficulty matchDifficulty = (SudokuDifficulty)lst[i].Difficulty;
             int maxScore = ScoringSystem.GetAbsoluteMaximumScore(matchDifficulty);
 
-            Debug.Log($"Last 3 points {((float)lst[0].Points / maxScore)} {((float)lst[1].Points / maxScore)} {((float)lst[2].Points / maxScore)}");
+            Debug.Log($" {((float)lst[i].Points / maxScore)}");
+            if(i < (_NoOfLastGames - 1) && lst[i].Difficulty != lst[i + 1].Difficulty) AllDifficultySame = false;
+            if(lst[i].IsWon) ++wins;
+            
+            efficiencySum += (float)lst[i].Points / maxScore;
+        }
 
-            foreach (var entry in lst)
-            {
-                efficiencySum += ((float)entry.Points / maxScore);
-            }
+        if (AllDifficultySame) 
+        {
+            float finalEfficiency = efficiencySum / _NoOfLastGamesFloat;
 
-            float finalEfficiency = efficiencySum / 3f;
-
-            if (finalEfficiency > 0.89f)
+            if (finalEfficiency >= 0.80f && wins >= 4)
             {
                 var prev = _currentDifficulty;
                 _currentDifficulty = (SudokuDifficulty)Math.Min((int)SudokuDifficulty.Hardest, (int)_currentDifficulty + 1);
                 Debug.Log($"CONGRATS!!!! Moving to next tier. Current Difficulty: {prev} promoting to {_currentDifficulty}");
             }
+            else if (wins <= 2 || finalEfficiency < 0.45f)
+            {
+                decreaseDifficulty(lst);
+            }
+            else
+            {
+                _currentDifficulty = (SudokuDifficulty)lst[0].Difficulty;
+            }
+        }
+        else
+        {
+            _currentDifficulty = (SudokuDifficulty)lst[0].Difficulty;
         }
     }
-    public void decreaseDifficulty()
+    public void decreaseDifficulty(List<GameRecord> lst = null)
     {
-        var lst = GameDatabase.GetLastNRecordByDate(3);
-        if (lst == null || lst.Count < 3) return;
+        bool AllDifficultySame = true;
+        int wins = 0;
+        float efficiencySum = 0f;
 
-        if (lst[0].Difficulty == lst[1].Difficulty && lst[1].Difficulty == lst[2].Difficulty) 
+        lst = lst ?? GameDatabase.GetLastNRecordByDate(_NoOfLastGames);
+        if (lst == null || lst.Count < _NoOfLastGames) return;
+
+        Debug.Log($"Last {_NoOfLastGames} points");
+        for(int i = 0; i < lst.Count; i++)
         {
-            float efficiencySum = 0f;
-            SudokuDifficulty matchDifficulty = (SudokuDifficulty)lst[0].Difficulty;
+            SudokuDifficulty matchDifficulty = (SudokuDifficulty)lst[i].Difficulty;
             int maxScore = ScoringSystem.GetAbsoluteMaximumScore(matchDifficulty);
 
-            if (maxScore == 0) return;
+            Debug.Log($" {((float)lst[i].Points / maxScore)}");
+            if(i < (_NoOfLastGames - 1) && lst[i].Difficulty != lst[i + 1].Difficulty) AllDifficultySame = false;
+            if(lst[i].IsWon) ++wins;
+            
+            efficiencySum += (float)lst[i].Points / maxScore;
+        }
 
-            foreach (var entry in lst)
-            {
-                efficiencySum += ((float)entry.Points / maxScore);
-            }
+        if (AllDifficultySame) 
+        {
+            float finalEfficiency = efficiencySum / _NoOfLastGamesFloat;
 
-            float finalEfficiency = efficiencySum / 3f;
-
-            if (finalEfficiency < 0.55f)
+            if (wins <= 2 || finalEfficiency < 0.45f)
             {
                 var prev = _currentDifficulty;
                 _currentDifficulty = (SudokuDifficulty)Math.Max((int)SudokuDifficulty.Simple, (int)_currentDifficulty - 1);
                 Debug.Log($"Moving to below tier. Current Difficulty: {prev} demoting to {_currentDifficulty}");
             }
+            else
+            {
+                _currentDifficulty = (SudokuDifficulty)lst[0].Difficulty;
+            }
+        }
+        else
+        {
+            _currentDifficulty = (SudokuDifficulty)lst[0].Difficulty;
         }
     }
     public void LoadCurrentLevelPuzzle()

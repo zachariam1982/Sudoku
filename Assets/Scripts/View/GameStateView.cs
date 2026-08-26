@@ -33,6 +33,7 @@ public class GameStateView : MonoBehaviour
     [Header("TopBar Items")]
     [SerializeField] private GameObject Lives;
     [SerializeField] private GameObject Timer;
+    [SerializeField] private TextMeshProUGUI Level;
     [Header("HUD — always visible during play")]
     [SerializeField] private TextMeshProUGUI timerLabel;
     [SerializeField] private Image[]         lifeIcons;       // 3 heart images
@@ -55,6 +56,8 @@ public class GameStateView : MonoBehaviour
     [SerializeField] private GameObject      pausePanel;
 
     private SudokuViewModel _vm;
+    private HUD _hud;
+
 
     // ── Binding ───────────────────────────────────────────────────────────────
 
@@ -67,6 +70,11 @@ public class GameStateView : MonoBehaviour
         vm.LivesRemaining.OnChanged   += OnLivesChanged;
         vm.IsWon.OnChanged            += OnWonChanged;
         vm.IsLost.OnChanged           += OnLostChanged;
+        _hud = hudPanel != null
+            ? hudPanel.GetComponent<HUD>()
+            : null;
+
+        _hud?.Bind(vm);
 
         SetAllPanelsHidden();
     }
@@ -91,26 +99,27 @@ public class GameStateView : MonoBehaviour
         switch (stateName)
         {
             case "IdleState":
-                hudPanel?.SetActive(false);
-                hudPanel?.GetComponent<HUD>()?.Bind(_vm);
-                Lives?.SetActive(true);
-                Timer?.SetActive(true);
+                if (hudPanel != null) hudPanel.SetActive(false);
+                if (Lives != null) Lives.SetActive(true);
+                if (Timer != null) Timer.SetActive(true);
+                if(_vm != null) Level.text = "        ";
                 break;
 
             case "PlayingState":
-                hudPanel?.SetActive(true);
+                if (hudPanel != null) hudPanel.SetActive(true);
+                if(_vm != null) Level.text = ((SudokuDifficulty)_vm.GetDifficulty).ToString();
                 break;
 
             case "PausedState":
-                pausePanel?.SetActive(true);                
+                if(pausePanel != null)pausePanel.SetActive(true);                
                 Button btn = this.pausePanel.GetComponentInChildren<Button>();
                 btn.onClick.AddListener(OnPlayPressed);
                 break;
 
             case "ValidatingState":
-                hudPanel?.SetActive(false);
-                Lives?.SetActive(false);
-                Timer?.SetActive(false);
+                if(hudPanel != null ) hudPanel.SetActive(false);
+                if (Lives != null) Lives.SetActive(false);
+                if (Timer != null) Timer.SetActive(false);
                 break;
 
             case "WinState":
@@ -122,9 +131,9 @@ public class GameStateView : MonoBehaviour
                 break;
 
             case "LoseState":
-                Lives?.SetActive(false);
-                Timer?.SetActive(false);
-                losePanel?.SetActive(true);
+                if (Lives != null) Lives.SetActive(false);
+                if (Timer != null) Timer.SetActive(false);
+                if (losePanel != null) losePanel.SetActive(true);
                 break;
         }
     }
@@ -193,21 +202,21 @@ public class GameStateView : MonoBehaviour
 
     public void OnNewGamePressed() 
     {
-        winPanel?.SetActive(false);
-        losePanel?.SetActive(false);
-        overlay?.SetActive(false);
+        if (winPanel != null) winPanel.SetActive(false);
+        if (losePanel != null) losePanel.SetActive(false);
+        if (overlay != null) overlay.SetActive(false);
         _vm?.NewGameCommand.Execute();
     }
     public void OnRetryPressed()    
     {
-        winPanel?.SetActive(false);
-        losePanel?.SetActive(false);
-        overlay?.SetActive(false);
+        if (winPanel != null) winPanel.SetActive(false);
+        if (losePanel != null) losePanel.SetActive(false);
+        if (overlay != null) overlay.SetActive(false);
         _vm?.RetryCommand.Execute();
     }
     public void OnPlayPressed()
     {
-         pausePanel.SetActive(false);
+        if (pausePanel != null) pausePanel.SetActive(false);
         _vm?.ResumeCommand.Execute();
     }
     public void OnResumePressed()   => _vm?.ResumeCommand.Execute();

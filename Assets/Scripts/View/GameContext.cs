@@ -38,7 +38,14 @@ public class GameContext : MonoBehaviour
 
         #if UNITY_WEBGL && !UNITY_EDITOR
 
-        if (YouTubePlatformManager.Instance != null) YouTubePlatformManager.Instance.SendFirstFrameReady();
+        // Restore the local mirrored save immediately.
+        // This keeps startup behavior identical to Milestone 3A.
+        User.Instance.TryLoadSave();
+
+        if (YouTubePlatformManager.Instance != null)
+        {
+            YouTubePlatformManager.Instance.SendGameReady();
+        }
 
         #else
 
@@ -53,7 +60,14 @@ public class GameContext : MonoBehaviour
     {
         yield return null;
 
-        User.Instance.TryLoadSaveFromCloud( () => {if(YouTubePlatformManager.Instance != null) YouTubePlatformManager.Instance.SendGameReady();});
+        User.Instance.TryLoadSaveFromCloud(
+            () =>
+            {
+                Debug.Log(
+                    "[YouTube] Initial cloud synchronization completed."
+                );
+            }
+        );
     }
 
     #endif

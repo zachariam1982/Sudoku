@@ -221,8 +221,12 @@ public class SudokuViewModel
         NextLevel             = new RelayCommand(
             execute: _ => 
             {
+                #if UNITY_WEBGL && !UNITY_EDITOR
+                _model?.SetLevel(_model.CurrentLevel + 1);
+                #else
                 int level = GameDatabase.GetLastRecord()?.Level ?? 1;
                 _model?.SetLevel(level + 1);
+                #endif
             }
         );
         IncreaseDifficulty    = new RelayCommand(

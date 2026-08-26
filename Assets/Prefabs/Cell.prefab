@@ -1346,6 +1346,7 @@ GameObject:
   - component: {fileID: 4044713485086880472}
   - component: {fileID: 1243879476199080011}
   - component: {fileID: 2810559687891449903}
+  - component: {fileID: 3656479567274417595}
   m_Layer: 5
   m_Name: Cell
   m_TagString: Untagged
@@ -1517,6 +1518,20 @@ MonoBehaviour:
           m_StringArgument: 
           m_BoolArgument: 0
         m_CallState: 2
+--- !u!114 &3656479567274417595
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 4883455426743839933}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 3312d7739989d2b4e91e6319e9a96d76, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: UnityEngine.UI::UnityEngine.UI.RectMask2D
+  m_Padding: {x: 0, y: 0, z: 0, w: 0}
+  m_Softness: {x: 0, y: 0}
 --- !u!1 &4884389501217436909
 GameObject:
   m_ObjectHideFlags: 0

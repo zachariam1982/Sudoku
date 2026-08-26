@@ -4,6 +4,9 @@ using UnityEngine;
 public static class SaveSystem
 {
     private const string FileName = "save.json";
+    #if UNITY_WEBGL && !UNITY_EDITOR
+    private const string WebGLSaveKey = "sudoku_current_game";
+    #endif
 
     private static string FilePath =>
         Path.Combine(Application.persistentDataPath, FileName);
@@ -13,7 +16,12 @@ public static class SaveSystem
         try
         {
             string json = JsonUtility.ToJson(data, prettyPrint: false);
-            File.WriteAllText(FilePath, json);
+            #if UNITY_WEBGL && !UNITY_EDITOR
+                PlayerPrefs.SetString(WebGLSaveKey, json);
+                PlayerPrefs.Save();
+            #else
+                File.WriteAllText(FilePath, json);
+            #endif
         }
         catch (System.Exception ex)
         {
@@ -23,12 +31,20 @@ public static class SaveSystem
 
     public static SaveGameData Load()
     {
-        if (!File.Exists(FilePath))
-            return null;
-
         try
         {
+            #if UNITY_WEBGL && !UNITY_EDITOR
+            if (!PlayerPrefs.HasKey(WebGLSaveKey)) return null;
+
+            string json = PlayerPrefs.GetString(WebGLSaveKey);
+            #else
+            if (!File.Exists(FilePath)) return null;
+
             string json = File.ReadAllText(FilePath);
+            #endif
+
+            if(string.IsNullOrEmpty(json)) return null;
+
             return JsonUtility.FromJson<SaveGameData>(json);
         }
         catch (System.Exception ex)
@@ -37,10 +53,26 @@ public static class SaveSystem
             return null;
         }
     }
-    public static bool HasSave() => File.Exists(FilePath);
+    public static bool HasSave()
+    {
+        #if UNITY_WEBGL && !UNITY_EDITOR
+        return PlayerPrefs.HasKey(WebGLSaveKey);
+        #else
+        return File.Exists(FilePath);
+        #endif
+    }
     public static void Delete()
     {
-        if (File.Exists(FilePath))
-            File.Delete(FilePath);
+        #if UNITY_WEBGL && !UNITY_EDITOR
+
+        if (PlayerPrefs.HasKey(WebGLSaveKey))
+        {
+            PlayerPrefs.DeleteKey(WebGLSaveKey);
+            PlayerPrefs.Save();
+        }
+
+        #else
+        if (File.Exists(FilePath)) File.Delete(FilePath);
+        #endif
     }
 }

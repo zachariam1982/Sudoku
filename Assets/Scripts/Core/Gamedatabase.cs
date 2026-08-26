@@ -1,3 +1,96 @@
+#if UNITY_WEBGL && !UNITY_EDITOR
+
+using System.Collections.Generic;
+using UnityEngine;
+
+public static class GameDatabase
+{
+    public static void Init()
+    {
+        Debug.Log("[GameDatabase] SQLite disabled for WebGL.");
+    }
+
+    public static void RebuildGameStats()
+    {
+    }
+
+    public static void Insert(GameRecord record)
+    {
+        Debug.Log("[GameDatabase] WebGL history storage not implemented yet.");
+    }
+
+    public static void Update(GameRecord record)
+    {
+    }
+
+    public static GameStats GetGameStats()
+    {
+        return new GameStats
+        {
+            Id = 1,
+            AggregateVersion = 1
+        };
+    }
+
+    public static int GetTotalPossiblePoints(GameStats stats)
+    {
+        return 0;
+    }
+
+    public static List<GameRecord> GetAll()
+    {
+        return new List<GameRecord>();
+    }
+
+    public static List<GameRecord> GetNextSet(int offset)
+    {
+        return new List<GameRecord>();
+    }
+
+    public static List<GameRecord> GetLastNRecordByDate(int number)
+    {
+        return new List<GameRecord>();
+    }
+
+    public static GameRecord GetLastRecord()
+    {
+        return null;
+    }
+
+    public static GameRecord GetFastestWin()
+    {
+        return null;
+    }
+
+    public static int GetTotalPoints()
+    {
+        return 0;
+    }
+
+    public static int GetTotalWins()
+    {
+        return 0;
+    }
+
+    public static int GetTotalGamesPlayed()
+    {
+        return 0;
+    }
+
+    public static void LogGameStats()
+    {
+    }
+
+    public static void FlushToDisk()
+    {
+    }
+
+    public static void Close()
+    {
+    }
+}
+
+#else
 using System;
 using System.Collections.Generic;
 using System.IO;
@@ -1190,3 +1283,5 @@ public static class GameDatabase
         _db = null;
     }
 }
+
+#endif

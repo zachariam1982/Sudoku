@@ -35,12 +35,26 @@ public class GameContext : MonoBehaviour
 
         User.Instance.ViewModel = ViewModel;
         GameStateMachine.Instance.Initialise(ViewModel);
-        User.Instance.TryLoadSave();
 
         #if UNITY_WEBGL && !UNITY_EDITOR
 
-        if (YouTubePlatformManager.Instance != null) YouTubePlatformManager.Instance.SendGameReady();
+        if (YouTubePlatformManager.Instance != null) YouTubePlatformManager.Instance.SendFirstFrameReady();
+
+        #else
+
+        User.Instance.TryLoadSave();
 
         #endif
     }
+
+    #if UNITY_WEBGL && !UNITY_EDITOR
+
+    private System.Collections.IEnumerator Start()
+    {
+        yield return null;
+
+        User.Instance.TryLoadSaveFromCloud( () => {if(YouTubePlatformManager.Instance != null) YouTubePlatformManager.Instance.SendGameReady();});
+    }
+
+    #endif
 }

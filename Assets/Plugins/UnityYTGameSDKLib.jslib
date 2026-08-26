@@ -46,7 +46,26 @@ mergeInto(LibraryManager.library, {
 	},
 	LoadGameData: function () {
 		ytgame.game.loadData().then((data) => {
-			unityGameInstance.SendMessage("YTGameWrapper", "ReceiveOnLoadSaveEvent", data.toString());
+
+			var saveData = data || "";
+
+			unityGameInstance.SendMessage(
+				"YTGameWrapper",
+				"ReceiveOnLoadSaveEvent",
+				saveData.toString()
+			);
+
+		}).catch((e) => {
+
+			// Cloud load failed. Tell Unity to use
+			// its local/new-game fallback instead.
+			ytgame.health.logError();
+
+			unityGameInstance.SendMessage(
+				"YTGameWrapper",
+				"ReceiveOnLoadSaveEvent",
+				""
+			);
 		});
 	},
 	SendGameError: function (errorMessage) {

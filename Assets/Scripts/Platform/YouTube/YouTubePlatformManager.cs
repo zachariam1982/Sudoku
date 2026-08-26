@@ -77,6 +77,8 @@ public class YouTubePlatformManager : MonoBehaviour
 
         if (User.Instance?.ViewModel == null) return;
 
+        if (!User.Instance.InitialCloudLoadComplete) return;
+        
         SudokuViewModel vm = User.Instance.ViewModel;
 
         // Save immediately before YouTube may evict us.
@@ -91,6 +93,33 @@ public class YouTubePlatformManager : MonoBehaviour
         }
     }
 
+    public void LoadCloudData(System.Action<string> onLoaded)
+    {
+        if (ytGameWrapper == null) ytGameWrapper = FindFirstObjectByType<YTGameWrapper>();
+
+        if (ytGameWrapper == null)
+        {
+            onLoaded?.Invoke(null);
+            return;
+        }
+
+        // When running directly in a normal browser,
+        // fall back to the existing local save.
+        if (!ytGameWrapper.InPlayablesEnv())
+        {   
+            onLoaded?.Invoke(null);
+            return;
+        }
+
+        ytGameWrapper.LoadGameSaveData(
+            data =>
+            {
+                int byteCount = System.Text.Encoding.UTF8.GetByteCount(data ?? string.Empty);
+
+                onLoaded?.Invoke(data);
+            }
+        );
+    }
     public void SaveCloudData(SaveGameData data)
     {
         if (data == null || ytGameWrapper == null)

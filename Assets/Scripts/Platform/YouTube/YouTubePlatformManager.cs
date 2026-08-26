@@ -80,12 +80,59 @@ public class YouTubePlatformManager : MonoBehaviour
         SudokuViewModel vm = User.Instance.ViewModel;
 
         // Save immediately before YouTube may evict us.
-        SaveSystem.Save(vm.GetSaveData());
+        SaveGameData data = vm.GetSaveData();
+
+        SaveSystem.Save(data);
+        SaveCloudData(data);
 
         if (GameStateMachine.Instance != null && GameStateMachine.Instance.CurrentState is PlayingState)
         {
             vm.PauseCommand.Execute();
         }
+    }
+
+    public void SaveCloudData(SaveGameData data)
+    {
+        if (data == null || ytGameWrapper == null)
+            return;
+
+        string json = JsonUtility.ToJson(
+            data,
+            prettyPrint: false
+        );
+
+        int byteCount =
+            System.Text.Encoding.UTF8.GetByteCount(json);
+
+        const int MaxSaveBytes =
+            3 * 1024 * 1024;
+
+        if (byteCount >= MaxSaveBytes)
+        {
+            Debug.LogError(
+                $"[YouTube] Save data too large: {byteCount} bytes"
+            );
+
+            return;
+        }
+
+        ytGameWrapper.SendGameSaveData(json);
+
+        Debug.Log(
+            $"[YouTube] Cloud save sent: {byteCount} bytes"
+        );
+    }
+
+    public void SendScore(int score)
+    {
+        if (ytGameWrapper == null)
+            return;
+
+        ytGameWrapper.SendGameScore(score);
+
+        Debug.Log(
+            $"[YouTube] Score sent: {score}"
+        );
     }
 }
 

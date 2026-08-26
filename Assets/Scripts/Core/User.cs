@@ -57,5 +57,9 @@ public class User : MonoBehaviour
  
         SaveGameData data = ViewModel.GetSaveData();
         SaveSystem.Save(data);
+
+        #if UNITY_WEBGL && !UNITY_EDITOR
+        YouTubePlatformManager.Instance?.SaveCloudData(data);
+        #endif        
     }
 }

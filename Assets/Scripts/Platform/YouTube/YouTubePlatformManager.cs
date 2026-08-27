@@ -24,6 +24,26 @@ public class YouTubePlatformManager : MonoBehaviour
     private bool _firstFrameSent;
     private bool _gameReadySent;
 
+    // YouTube lifecycle state
+    private bool _youtubeSystemPaused = false;
+
+    // True only when YouTube itself moved Playing -> Paused.
+    // Prevents onResume from resuming a game that the player
+    // manually paused.
+    private bool _pausedGameplayForYouTube = false;
+
+    // Preserve Unity runtime state while YouTube owns the screen.
+    private float _timeScaleBeforeYouTubePause = 1f;
+    private bool _stateMachineWasEnabled = true;
+
+    // YouTube audio state
+    private bool _youtubeAudioEnabled = true;
+    private float _normalAudioVolume = 1f;
+
+    // Used when an SDK result arrives while the game is paused.
+    // In particular this protects the rewarded-SOS flow.
+    private System.Action _pendingAfterResume;
+
     private void Awake()
     {
         if (Instance != null)
@@ -43,8 +63,18 @@ public class YouTubePlatformManager : MonoBehaviour
 
         if (ytGameWrapper != null)
         {
+            // Pause / resume
             ytGameWrapper.SetOnPauseCallback(OnYouTubePause);
             ytGameWrapper.SetOnResumeCallback(OnYouTubeResume);
+
+            _normalAudioVolume = AudioListener.volume;
+
+            ytGameWrapper.SetOnAudioEnabledChangeCallback(OnYouTubeAudioEnabledChanged);
+            ApplyYouTubeAudioState(ytGameWrapper.IsYTGameAudioEnabled());
+        }
+        else
+        {
+            Debug.LogError("[YouTube] YTGameWrapper not found.");
         }
 
         SendFirstFrameReady();
@@ -76,44 +106,85 @@ public class YouTubePlatformManager : MonoBehaviour
 
     private void OnYouTubePause()
     {
-        Debug.Log("[YouTube] Pause requested.");
+        if (_youtubeSystemPaused) return;
 
-        if (User.Instance?.ViewModel == null) return;
+        _youtubeSystemPaused = true;
+        SudokuViewModel vm = User.Instance?.ViewModel;
 
-        if (!User.Instance.InitialCloudLoadComplete) return;
-
-        SudokuViewModel vm = User.Instance.ViewModel;
-
-        // Save immediately before YouTube may evict us.
-        SaveGameData data = vm.GetSaveData();
-
-        SaveSystem.Save(data);
-        SaveCloudData(data);
-
-        if (GameStateMachine.Instance != null && GameStateMachine.Instance.CurrentState is PlayingState)
+        //
+        // 1. Save before YouTube may evict the game.
+        //
+        if (vm != null && User.Instance.InitialCloudLoadComplete)
         {
-            vm.PauseCommand.Execute();
+            SaveGameData data = vm.GetSaveData();
+
+            SaveSystem.Save(data);
+            SaveCloudData(data);
         }
+
+        //
+        // 2. Remember whether WE caused the gameplay pause.
+        //
+        _pausedGameplayForYouTube = vm != null && GameStateMachine.Instance != null && GameStateMachine.Instance.CurrentState is PlayingState;
+
+        if (_pausedGameplayForYouTube) vm.PauseCommand.Execute();
+
+        //
+        // 3. Stop normal Unity game execution.
+        //
+        _timeScaleBeforeYouTubePause = Time.timeScale;
+        Time.timeScale = 0f;
+
+        if (GameStateMachine.Instance != null)
+        {
+            _stateMachineWasEnabled = GameStateMachine.Instance.enabled;
+            GameStateMachine.Instance.enabled = false;
+        }
+
+        //
+        // 4. Stop audio execution as well.
+        //
+        AudioListener.pause = true;
+        Debug.Log("[YouTube] Game execution paused.");
     }
 
     private void OnYouTubeResume()
     {
-        Debug.Log("[YouTube] Resume requested.");
+        if (!_youtubeSystemPaused) return;
 
-        if (User.Instance?.ViewModel == null)
-            return;
+        Time.timeScale = _timeScaleBeforeYouTubePause;
 
-        SudokuViewModel vm =
-            User.Instance.ViewModel;
+        if (GameStateMachine.Instance != null) GameStateMachine.Instance.enabled = _stateMachineWasEnabled;
 
-        if (
-            GameStateMachine.Instance != null &&
-            GameStateMachine.Instance.CurrentState
-                is PausedState
-        )
-        {
+        AudioListener.pause = false;
+        _youtubeSystemPaused = false;
+
+        SudokuViewModel vm = User.Instance?.ViewModel;
+
+        if (_pausedGameplayForYouTube && vm != null && GameStateMachine.Instance != null && GameStateMachine.Instance.CurrentState is PausedState)
             vm.ResumeCommand.Execute();
-        }
+
+        _pausedGameplayForYouTube = false;
+
+        System.Action pending = _pendingAfterResume;
+        _pendingAfterResume = null;
+        pending?.Invoke();
+
+        Debug.Log("[YouTube] Game execution resumed.");
+    }
+
+    private void OnYouTubeAudioEnabledChanged(bool isAudioEnabled)
+    {
+        Debug.Log($"[YouTube] Audio enabled changed: {isAudioEnabled}");
+
+        ApplyYouTubeAudioState(isAudioEnabled);
+    }
+
+    private void ApplyYouTubeAudioState(bool isAudioEnabled)
+    {
+        _youtubeAudioEnabled = isAudioEnabled;
+
+        AudioListener.volume = isAudioEnabled ? _normalAudioVolume : 0f;
     }
 
     public void LoadCloudData(System.Action<string> onLoaded)
@@ -186,37 +257,25 @@ public class YouTubePlatformManager : MonoBehaviour
             $"[YouTube] Score sent: {score}"
         );
     }
-    public void RequestSOSRewardedAd(
-        System.Action<bool> onCompleted
-    )
+    public void RequestSOSRewardedAd(System.Action<bool> onCompleted)
     {
         if (ytGameWrapper == null)
-        {
-            ytGameWrapper =
-                FindFirstObjectByType<YTGameWrapper>();
-        }
+            ytGameWrapper = FindFirstObjectByType<YTGameWrapper>();
 
         if (ytGameWrapper == null)
         {
-            Debug.LogWarning(
-                "[YouTube] Cannot request rewarded ad - wrapper unavailable."
-            );
-
             onCompleted?.Invoke(false);
             return;
         }
 
-        ytGameWrapper.RequestRewardedAd(
-            "sudoku-sos-hint",
-            rewardEarned =>
+        ytGameWrapper.RequestRewardedAd("sudoku-sos-hint", rewardEarned =>
             {
-                Debug.Log(
-                    $"[YouTube] SOS rewarded ad completed. Earned: {rewardEarned}"
-                );
+                System.Action deliverResult = () => { onCompleted?.Invoke( rewardEarned ); };
 
-                onCompleted?.Invoke(
-                    rewardEarned
-                );
+                if (_youtubeSystemPaused)
+                    _pendingAfterResume += deliverResult;
+                else
+                    deliverResult();
             }
         );
     }

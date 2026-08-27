@@ -37,6 +37,9 @@ public class SOSAdDialog : MonoBehaviour
     }
     public void Show(bool arg)
     {
+        if (!arg)
+            return;
+
         if (_vm == null || _isSOSRunning) return;
 
         _isSOSRunning = true;
@@ -61,23 +64,64 @@ public class SOSAdDialog : MonoBehaviour
             return;
         }
 
+        #if UNITY_WEBGL && !UNITY_EDITOR
+
         AdManager.Instance.PlayAd(
             onCompleted: OnAdCompleted,
-            onFailed:    OnAdCompleted
+            onFailed: OnAdFailed
         );
+
+        #else
+
+        // Preserve existing Android behavior for now.
+        AdManager.Instance.PlayAd(
+            onCompleted: OnAdCompleted,
+            onFailed: OnAdCompleted
+        );
+
+        #endif
     }
     
-    private void OnAdCompleted()
+    private void OnAdFailed()
     {
+        Debug.Log(
+            "[SOS] Reward was not earned."
+        );
+
+        _isSOSRunning = false;
+
         if (_vm != null)
         {
-            _vm.ApplySOSCommand.Execute();
-            MakeChangesProvidedBySOS(_vm);
+            _vm.IsSOSMode.Value = false;
+        }
+    }
+    private void OnAdCompleted()
+    {
+        if (_vm == null)
+        {
             _isSOSRunning = false;
+            return;
+        }
+
+        _vm.ApplySOSCommand.Execute();
+
+        // Run the sequence from User, which is a persistent
+        // active MonoBehaviour and is not part of the HUD.
+        if (User.Instance != null)
+        {
+            User.Instance.StartCoroutine(
+                MakeChangesProvidedBySOS(_vm)
+            );
+        }
+        else
+        {
+            StartCoroutine(
+                MakeChangesProvidedBySOS(_vm)
+            );
         }
     }
 
-    public async void MakeChangesProvidedBySOS(SudokuViewModel vm)
+    private IEnumerator MakeChangesProvidedBySOS(SudokuViewModel vm)
     {
         vm.SetDemoMode();
         vm.HideHUD.Value = false;
@@ -92,13 +136,13 @@ public class SOSAdDialog : MonoBehaviour
                     _vm.SelectedCol.Value = entry.col;
                     _vm.EnterValueCommand.Execute(0);
                     Debug.Log($"SOS: Deleting row {entry.row} and column {entry.col} entry");
-                    await Task.Delay(1000);
+                    yield return new WaitForSecondsRealtime(1f);
                 }
                 _vm.SelectedRow.Value = entry.row;
                 _vm.SelectedCol.Value = entry.col;
                 _vm.EnterValueCommand.Execute(entry.number);
                 Debug.Log($"SOS: Entering row {entry.row} and column {entry.col} entry to {entry.number}");
-                await Task.Delay(1000);
+                yield return new WaitForSecondsRealtime(1f);
             }
         }
         finally
@@ -106,6 +150,8 @@ public class SOSAdDialog : MonoBehaviour
             vm.ResetDemoMode();
             vm.HideHUD.Value = true;
             vm.SOSChangedCells.Value.Clear();
+            vm.IsSOSMode.Value = false;
+            _isSOSRunning = false;
         }
     }
 

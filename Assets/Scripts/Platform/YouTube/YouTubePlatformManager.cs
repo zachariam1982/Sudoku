@@ -41,8 +41,11 @@ public class YouTubePlatformManager : MonoBehaviour
     {
         if (ytGameWrapper == null) ytGameWrapper = FindFirstObjectByType<YTGameWrapper>();
 
-        if (ytGameWrapper != null) ytGameWrapper.SetOnPauseCallback( OnYouTubePause );
-        else Debug.LogError("[YouTube] YTGameWrapper not found.");
+        if (ytGameWrapper != null)
+        {
+            ytGameWrapper.SetOnPauseCallback(OnYouTubePause);
+            ytGameWrapper.SetOnResumeCallback(OnYouTubeResume);
+        }
 
         SendFirstFrameReady();
     }
@@ -78,7 +81,7 @@ public class YouTubePlatformManager : MonoBehaviour
         if (User.Instance?.ViewModel == null) return;
 
         if (!User.Instance.InitialCloudLoadComplete) return;
-        
+
         SudokuViewModel vm = User.Instance.ViewModel;
 
         // Save immediately before YouTube may evict us.
@@ -90,6 +93,26 @@ public class YouTubePlatformManager : MonoBehaviour
         if (GameStateMachine.Instance != null && GameStateMachine.Instance.CurrentState is PlayingState)
         {
             vm.PauseCommand.Execute();
+        }
+    }
+
+    private void OnYouTubeResume()
+    {
+        Debug.Log("[YouTube] Resume requested.");
+
+        if (User.Instance?.ViewModel == null)
+            return;
+
+        SudokuViewModel vm =
+            User.Instance.ViewModel;
+
+        if (
+            GameStateMachine.Instance != null &&
+            GameStateMachine.Instance.CurrentState
+                is PausedState
+        )
+        {
+            vm.ResumeCommand.Execute();
         }
     }
 
@@ -161,6 +184,40 @@ public class YouTubePlatformManager : MonoBehaviour
 
         Debug.Log(
             $"[YouTube] Score sent: {score}"
+        );
+    }
+    public void RequestSOSRewardedAd(
+        System.Action<bool> onCompleted
+    )
+    {
+        if (ytGameWrapper == null)
+        {
+            ytGameWrapper =
+                FindFirstObjectByType<YTGameWrapper>();
+        }
+
+        if (ytGameWrapper == null)
+        {
+            Debug.LogWarning(
+                "[YouTube] Cannot request rewarded ad - wrapper unavailable."
+            );
+
+            onCompleted?.Invoke(false);
+            return;
+        }
+
+        ytGameWrapper.RequestRewardedAd(
+            "sudoku-sos-hint",
+            rewardEarned =>
+            {
+                Debug.Log(
+                    $"[YouTube] SOS rewarded ad completed. Earned: {rewardEarned}"
+                );
+
+                onCompleted?.Invoke(
+                    rewardEarned
+                );
+            }
         );
     }
 }

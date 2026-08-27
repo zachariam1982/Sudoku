@@ -1,92 +1,349 @@
 #if UNITY_WEBGL && !UNITY_EDITOR
 
+using System;
 using System.Collections.Generic;
+using System.Linq;
 using UnityEngine;
 
 public static class GameDatabase
 {
+    private const string HistoryKey = "sudoku_game_history";
+
+    [Serializable]
+    private class StoredGameRecord
+    {
+        public int Id;
+        public int Level;
+        public int Difficulty;
+        public float ElapsedSeconds;
+        public int LivesRemaining;
+        public int Points;
+        public bool IsWon;
+        public string CompletedAt;
+    }
+
+    [Serializable]
+    private class HistoryStore
+    {
+        public int NextId = 1;
+
+        public List<StoredGameRecord> Records = new List<StoredGameRecord>();
+    }
+
+    private static HistoryStore _store;
+
+    // ============================================================
+    // INITIALIZATION
+    // ============================================================
+
     public static void Init()
     {
-        Debug.Log("[GameDatabase] SQLite disabled for WebGL.");
+        LoadStore();
     }
 
-    public static void RebuildGameStats()
+    private static void LoadStore()
     {
-    }
+        if (_store != null) return;
 
-    public static void Insert(GameRecord record)
-    {
-        Debug.Log("[GameDatabase] WebGL history storage not implemented yet.");
-    }
+        string json = PlayerPrefs.GetString( HistoryKey, string.Empty );
 
-    public static void Update(GameRecord record)
-    {
-    }
-
-    public static GameStats GetGameStats()
-    {
-        return new GameStats
+        if (!string.IsNullOrEmpty(json))
         {
-            Id = 1,
-            AggregateVersion = 1
+            try
+            {
+                _store = JsonUtility.FromJson<HistoryStore>( json );
+            }
+            catch (Exception ex)
+            {
+                Debug.LogWarning( $"[GameDatabase] Could not load WebGL history: {ex.Message}" );
+            }
+        }
+
+        if (_store == null) _store = new HistoryStore();
+        if (_store.Records == null) _store.Records = new List<StoredGameRecord>();
+
+        int highestId = 0;
+
+        foreach (StoredGameRecord record in _store.Records)
+            if (record.Id > highestId) highestId = record.Id;
+
+        if (_store.NextId <= highestId) _store.NextId = highestId + 1;
+    }
+
+    private static void SaveStore()
+    {
+        LoadStore();
+
+        string json = JsonUtility.ToJson(_store);
+
+        PlayerPrefs.SetString( HistoryKey, json );
+        PlayerPrefs.Save();
+    }
+
+    // ============================================================
+    // RECORD CONVERSION
+    // ============================================================
+
+    private static StoredGameRecord ToStored( GameRecord record )
+    {
+        return new StoredGameRecord
+        {
+            Id = record.Id,
+            Level = record.Level,
+            Difficulty = record.Difficulty,
+            ElapsedSeconds = record.ElapsedSeconds,
+            LivesRemaining = record.LivesRemaining,
+            Points = record.Points,
+            IsWon = record.IsWon,
+            CompletedAt = record.CompletedAt
         };
     }
 
-    public static int GetTotalPossiblePoints(GameStats stats)
+    private static GameRecord ToGameRecord( StoredGameRecord record )
     {
-        return 0;
+        return new GameRecord
+        {
+            Id = record.Id,
+            Level = record.Level,
+            Difficulty = record.Difficulty,
+            ElapsedSeconds = record.ElapsedSeconds,
+            LivesRemaining = record.LivesRemaining,
+            Points = record.Points,
+            IsWon = record.IsWon,
+            CompletedAt = record.CompletedAt
+        };
     }
+
+    // ============================================================
+    // WRITE
+    // ============================================================
+
+    public static void Insert( GameRecord record )
+    {
+        if (record == null) return;
+
+        LoadStore();
+        record.Id = _store.NextId++;
+        _store.Records.Add( ToStored(record) );
+        SaveStore();
+    }
+
+    public static void Update( GameRecord record )
+    {
+        if (record == null) return;
+
+        LoadStore();
+
+        int index = _store.Records.FindIndex( r => r.Id == record.Id );
+
+        if (index < 0)
+            return;
+
+        _store.Records[index] = ToStored(record);
+
+        SaveStore();
+    }
+
+    // ============================================================
+    // HISTORY READS
+    // ============================================================
 
     public static List<GameRecord> GetAll()
     {
-        return new List<GameRecord>();
+        LoadStore();
+
+        return _store.Records
+            .OrderBy(r => r.Id)
+            .Select(ToGameRecord)
+            .ToList();
     }
 
-    public static List<GameRecord> GetNextSet(int offset)
+    public static List<GameRecord> GetNextSet( int offset )
     {
-        return new List<GameRecord>();
+        LoadStore();
+
+        return _store.Records
+            .OrderByDescending(r => r.Id)
+            .Skip(offset)
+            .Take(10)
+            .Select(ToGameRecord)
+            .ToList();
     }
 
-    public static List<GameRecord> GetLastNRecordByDate(int number)
+    public static List<GameRecord> GetLastNRecordByDate( int number )
     {
-        return new List<GameRecord>();
+        LoadStore();
+
+        return _store.Records
+            .OrderByDescending(r => r.Id)
+            .Take(number)
+            .Select(ToGameRecord)
+            .ToList();
     }
 
     public static GameRecord GetLastRecord()
     {
-        return null;
+        LoadStore();
+
+        StoredGameRecord record = _store.Records
+                .OrderByDescending(r => r.Id)
+                .FirstOrDefault();
+
+        return record == null ? null : ToGameRecord(record);
     }
 
     public static GameRecord GetFastestWin()
     {
-        return null;
+        LoadStore();
+
+        StoredGameRecord record = _store.Records
+                .Where(r => r.IsWon)
+                .OrderBy(r => r.ElapsedSeconds)
+                .FirstOrDefault();
+
+        return record == null ? null : ToGameRecord(record);
+    }
+
+    // ============================================================
+    // STATS
+    // ============================================================
+
+    public static GameStats GetGameStats()
+    {
+        LoadStore();
+
+        GameStats stats = new GameStats
+                            {
+                                Id = 1,
+                                AggregateVersion = 1
+                            };
+
+        foreach ( StoredGameRecord record in _store.Records )
+        {
+            stats.TotalGames++;
+            stats.TotalPoints += record.Points;
+
+            if (record.IsWon)
+            {
+                stats.TotalWins++;
+
+                if ( stats.FastestWinSeconds == null || record.ElapsedSeconds < stats.FastestWinSeconds.Value )
+                {
+                    stats.FastestWinSeconds = record.ElapsedSeconds;
+                }
+            }
+
+            switch ( (SudokuDifficulty) record.Difficulty )
+            {
+                case SudokuDifficulty.Simple:
+                    stats.SimpleCount++;
+                    break;
+
+                case SudokuDifficulty.Beginner:
+                    stats.BeginnerCount++;
+                    break;
+
+                case SudokuDifficulty.Easy:
+                    stats.EasyCount++;
+                    break;
+
+                case SudokuDifficulty.Novice:
+                    stats.NoviceCount++;
+                    break;
+
+                case SudokuDifficulty.Moderate:
+                    stats.ModerateCount++;
+                    break;
+
+                case SudokuDifficulty.Advanced:
+                    stats.AdvancedCount++;
+                    break;
+
+                case SudokuDifficulty.Hard:
+                    stats.HardCount++;
+                    break;
+
+                case SudokuDifficulty.Expert:
+                    stats.ExpertCount++;
+                    break;
+
+                case SudokuDifficulty.Hardest:
+                    stats.HardestCount++;
+                    break;
+            }
+        }
+
+        foreach ( StoredGameRecord record in _store.Records.OrderByDescending(r => r.Id))
+        {
+            if (!record.IsWon)
+                break;
+
+            stats.CurrentStreak++;
+        }
+
+        return stats;
+    }
+
+    public static int GetTotalPossiblePoints( GameStats stats )
+    {
+        if (stats == null) return 0;
+
+        return stats.SimpleCount * ScoringSystem .GetAbsoluteMaximumScore( SudokuDifficulty.Simple ) + 
+               stats.BeginnerCount * ScoringSystem.GetAbsoluteMaximumScore( SudokuDifficulty.Beginner ) +
+               stats.EasyCount * ScoringSystem.GetAbsoluteMaximumScore( SudokuDifficulty.Easy ) + 
+               stats.NoviceCount * ScoringSystem.GetAbsoluteMaximumScore( SudokuDifficulty.Novice ) + 
+               stats.ModerateCount * ScoringSystem.GetAbsoluteMaximumScore( SudokuDifficulty.Moderate ) + 
+               stats.AdvancedCount * ScoringSystem.GetAbsoluteMaximumScore( SudokuDifficulty.Advanced ) + 
+               stats.HardCount * ScoringSystem.GetAbsoluteMaximumScore( SudokuDifficulty.Hard ) + 
+               stats.ExpertCount * ScoringSystem.GetAbsoluteMaximumScore( SudokuDifficulty.Expert ) + 
+               stats.HardestCount * ScoringSystem.GetAbsoluteMaximumScore( SudokuDifficulty.Hardest );
     }
 
     public static int GetTotalPoints()
     {
-        return 0;
+        return GetGameStats().TotalPoints;
     }
 
     public static int GetTotalWins()
     {
-        return 0;
+        return GetGameStats().TotalWins;
     }
 
     public static int GetTotalGamesPlayed()
     {
-        return 0;
+        return GetGameStats().TotalGames;
+    }
+
+    public static void RebuildGameStats()
+    {
+        //
+        // No aggregate database exists on WebGL.
+        // Stats are calculated from history on demand.
+        //
     }
 
     public static void LogGameStats()
     {
+        GameStats stats = GetGameStats();
+
+        Debug.Log(
+            "GAME STATS\n" +
+            $"Games={stats.TotalGames}\n" +
+            $"Wins={stats.TotalWins}\n" +
+            $"Points={stats.TotalPoints}\n" +
+            $"Fastest={stats.FastestWinSeconds}\n" +
+            $"Streak={stats.CurrentStreak}"
+        );
     }
 
     public static void FlushToDisk()
     {
+        PlayerPrefs.Save();
     }
 
     public static void Close()
     {
+        PlayerPrefs.Save();
     }
 }
 

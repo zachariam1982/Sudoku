@@ -371,8 +371,15 @@ public class StatsPanel : MonoBehaviour
 
             totalPoints += record.Points;
         }
-
-
+        if (gamesPlayed == 0)
+        {
+            return
+                $"Current: {difficulty}\n" +
+                $"You have reached {difficulty}! " +
+                $"Complete your first {difficulty} game " +
+                $"to begin progress toward " +
+                $"{nextDifficulty}.";
+        }
         if (gamesPlayed < WindowSize)
         {
             int gamesRemaining = WindowSize - gamesPlayed;

@@ -335,7 +335,81 @@ public static class GameDatabase
             $"Streak={stats.CurrentStreak}"
         );
     }
+    // ============================================================
+    // CLOUD HISTORY
+    // ============================================================
 
+    public static List<SaveGameRecord> ExportHistory()
+    {
+        LoadStore();
+
+        return _store.Records
+            .OrderBy(r => r.Id)
+            .Select(
+                r => new SaveGameRecord
+                {
+                    Id = r.Id,
+                    Level = r.Level,
+                    Difficulty = r.Difficulty,
+                    ElapsedSeconds = r.ElapsedSeconds,
+                    LivesRemaining = r.LivesRemaining,
+                    Points = r.Points,
+                    IsWon = r.IsWon,
+                    CompletedAt = r.CompletedAt
+                }
+            )
+            .ToList();
+    }
+
+    public static void ImportHistory( List<SaveGameRecord> history )
+    {
+        LoadStore();
+
+        //
+        // YouTube cloud is the source of truth.
+        //
+        _store.Records.Clear();
+
+        int highestId = 0;
+
+        if (history != null)
+        {
+            foreach ( SaveGameRecord record in history )
+            {
+                if (record == null) continue;
+
+                _store.Records.Add(
+                    new StoredGameRecord
+                    {
+                        Id = record.Id,
+                        Level = record.Level,
+                        Difficulty = record.Difficulty,
+                        ElapsedSeconds = record.ElapsedSeconds,
+                        LivesRemaining = record.LivesRemaining,
+                        Points = record.Points,
+                        IsWon = record.IsWon,
+                        CompletedAt = record.CompletedAt
+                    }
+                );
+
+                if (record.Id > highestId)
+                {
+                    highestId = record.Id;
+                }
+            }
+        }
+
+        //
+        // Restore our SQLite-like AutoIncrement counter.
+        //
+        _store.NextId = Mathf.Max( 1, highestId + 1 );
+
+        //
+        // Cache the cloud state locally too.
+        //
+        SaveStore();
+    }
+    
     public static void FlushToDisk()
     {
         PlayerPrefs.Save();

@@ -1,6 +1,18 @@
 using System;
 using System.Collections.Generic;
 
+[Serializable]
+public class SaveGameRecord
+{
+    public int Id;
+    public int Level;
+    public int Difficulty;
+    public float ElapsedSeconds;
+    public int LivesRemaining;
+    public int Points;
+    public bool IsWon;
+    public string CompletedAt;
+}
 /// <summary>
 /// Plain serializable snapshot of everything needed to restore a game session.
 /// No Unity or model dependencies — safe to JSON-serialize.
@@ -39,5 +51,5 @@ public class SaveGameData
     public int Mistakes      = 0;
     public int SOSEmptyCells = 0; // empty cells SOS filled
     public int SOSWrongCells = 0; // wrong cells SOS fixed
-
+    public List<SaveGameRecord> GameHistory = new List<SaveGameRecord>();
 }

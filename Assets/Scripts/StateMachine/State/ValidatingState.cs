@@ -65,6 +65,10 @@ public class ValidatingState : IGameState
                 #endif
 
                 _machine.TransitionTo(_machine.Win);
+
+                #if UNITY_WEBGL && !UNITY_EDITOR
+                User.Instance?.SaveNow();
+                #endif
             }
             else
             {

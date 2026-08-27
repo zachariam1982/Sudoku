@@ -221,8 +221,12 @@ public class SudokuViewModel
         NextLevel             = new RelayCommand(
             execute: _ => 
             {
+                #if UNITY_WEBGL && !UNITY_EDITOR
+                _model?.SetLevel(_model.CurrentLevel + 1);
+                #else
                 int level = GameDatabase.GetLastRecord()?.Level ?? 1;
                 _model?.SetLevel(level + 1);
+                #endif
             }
         );
         IncreaseDifficulty    = new RelayCommand(
@@ -486,10 +490,17 @@ public class SudokuViewModel
             data.UndoStack.Add($"{r},{c},{v}");
         }
 
+#if UNITY_WEBGL && !UNITY_EDITOR
+        data.GameHistory = GameDatabase.ExportHistory();
+#endif
+
         return data;
     }
     public void LoadSaveData(SaveGameData data)
     {
+#if UNITY_WEBGL && !UNITY_EDITOR
+        GameDatabase.ImportHistory( data.GameHistory );
+#endif
         // 1. Restore level & difficulty on the model, then regenerate the
         //    original puzzle so GivenMask is rebuilt correctly.
         _model.SetLevel(data.Level); // bring level to saved value

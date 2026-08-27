@@ -52,6 +52,7 @@ public class LoseState : IGameState
                 _vm.RetryGameData = (-1,-1,-1,-1);
             }
             _machine.TransitionTo(_machine.Idle);
+            User.Instance?.SaveNow();
         }
     }
 
@@ -62,6 +63,7 @@ public class LoseState : IGameState
             // Retry restarts the same puzzle from scratch
             _vm?.DecreaseDifficulty.Execute();
             _machine.TransitionTo(_machine.Idle);
+            User.Instance?.SaveNow();
         }
     }
 }

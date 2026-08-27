@@ -57,6 +57,7 @@ public class WinState : IGameState
                 _vm.RetryGameData = (-1,-1,-1,-1);
             }
             _machine.TransitionTo(_machine.Idle);
+            User.Instance?.SaveNow();
         }
     }
 }

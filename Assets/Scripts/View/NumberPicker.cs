@@ -17,6 +17,7 @@ public class NumberPicker : MonoBehaviour
     [Header("Positioning")]
     [SerializeField] private float yGap          = 10f;
     [SerializeField] private float pickerPadding = 8f;
+    [SerializeField] private float screenSidePadding = 16f;
 
     [Header("Animation")]
     [SerializeField] private float slideOffset = 50f;
@@ -117,27 +118,49 @@ public class NumberPicker : MonoBehaviour
 
     private void ResizePickerButtons()
     {
-        if (pickerPanel == null || numberButtons == null) return;
+        if (pickerPanel == null || numberButtons == null || numberButtons.Length == 0) return;
 
-        float buttonSize  = cellSize;
-        float buttonGap   = 6f;
-        float totalWidth  = 9f * buttonSize + 8f * buttonGap + 2f * pickerPadding;
+        float buttonSize = cellSize * 0.82f;
+        float buttonGap  = cellSize * 0.40f;
+
+        Canvas canvas = pickerPanel.GetComponentInParent<Canvas>();
+        RectTransform canvasRT = canvas.GetComponent<RectTransform>();
+
+        float maxPickerWidth = canvasRT.rect.width - (2f * screenSidePadding);
+        float desiredContentWidth = numberButtons.Length * buttonSize + (numberButtons.Length - 1) * buttonGap;
+        float availableContentWidth = maxPickerWidth - (2f * pickerPadding);
+
+        // If needed, shrink buttons AND gaps proportionally.
+        if (desiredContentWidth > availableContentWidth)
+        {
+            float scale = availableContentWidth / desiredContentWidth;
+
+            buttonSize *= scale;
+            buttonGap  *= scale;
+        }
+
+        float totalWidth = numberButtons.Length * buttonSize + (numberButtons.Length - 1) * buttonGap + 2f * pickerPadding;
         float totalHeight = buttonSize + 2f * pickerPadding;
 
         pickerPanel.sizeDelta = new Vector2(totalWidth, totalHeight);
 
-        float startX = -(totalWidth / 2f) + pickerPadding + buttonSize / 2f;
+        // Let HorizontalLayoutGroup own child positioning.
+        HorizontalLayoutGroup layout = pickerPanel.GetComponent<HorizontalLayoutGroup>();
+
+        if (layout != null) layout.spacing = buttonGap;
 
         for (int i = 0; i < numberButtons.Length; i++)
         {
             RectTransform rt = numberButtons[i].GetComponent<RectTransform>();
-            rt.sizeDelta        = new Vector2(buttonSize, buttonSize);
-            rt.anchoredPosition = new Vector2(startX + i * (buttonSize + buttonGap), 0f);
+
+            rt.sizeDelta = new Vector2(buttonSize, buttonSize);
 
             TextMeshProUGUI lbl = numberButtons[i].GetComponentInChildren<TextMeshProUGUI>();
-            if (lbl != null)
-                lbl.fontSize = Mathf.Round(buttonSize * 0.52f);
+
+            if (lbl != null) lbl.fontSize = Mathf.Round(buttonSize * 0.52f);
         }
+
+        LayoutRebuilder.ForceRebuildLayoutImmediate( pickerPanel );
     }
 
     // ── Show / Hide ───────────────────────────────────────────────────────────

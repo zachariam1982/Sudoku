@@ -120,8 +120,8 @@ public class NumberPicker : MonoBehaviour
     {
         if (pickerPanel == null || numberButtons == null || numberButtons.Length == 0) return;
 
-        float buttonSize = cellSize * 0.82f;
-        float buttonGap  = cellSize * 0.40f;
+        float buttonSize = cellSize;
+        float buttonGap  = cellSize * 0.20f;
 
         Canvas canvas = pickerPanel.GetComponentInParent<Canvas>();
         RectTransform canvasRT = canvas.GetComponent<RectTransform>();

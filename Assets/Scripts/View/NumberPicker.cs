@@ -1,7 +1,9 @@
 using UnityEngine;
 using UnityEngine.UI;
 using TMPro;
-
+using System.Collections.Generic;
+using UnityEngine.EventSystems;
+using UnityEngine.InputSystem;
 /// <summary>
 /// Number picker.
 ///
@@ -61,8 +63,8 @@ public class NumberPicker : MonoBehaviour
     private Vector2 lastPickerPos;
     private Coroutine activeAnimation;
 
-    private readonly Vector3[] gridCorners =
-        new Vector3[4];
+    private readonly Vector3[] gridCorners = new Vector3[4];
+    private readonly List<RaycastResult> pointerHits = new List<RaycastResult>();
 
     // ---------------------------------------------------------------------
     // INITIALIZATION
@@ -126,6 +128,60 @@ public class NumberPicker : MonoBehaviour
         if (pickerPanel != null) pickerPanel.gameObject.SetActive(false);
     }
 
+    private void Update()
+    {
+        if (!IsOpen || viewModel == null) return;
+        if (!TryGetPointerDownPosition(out Vector2 screenPosition)) return;
+
+        Canvas canvas = pickerPanel.GetComponentInParent<Canvas>();
+        Camera uiCamera = canvas.renderMode == RenderMode.ScreenSpaceOverlay ? null : canvas.worldCamera;
+
+        if (RectTransformUtility.RectangleContainsScreenPoint( pickerPanel, screenPosition, uiCamera)) return;
+        if (EventSystem.current != null)
+        {
+            PointerEventData pointerData = new PointerEventData(EventSystem.current) { position = screenPosition };
+
+            pointerHits.Clear();
+            EventSystem.current.RaycastAll( pointerData, pointerHits);
+
+            if (pointerHits.Count > 0)
+            {
+                GameObject topHit = pointerHits[0].gameObject;
+                SudokuCell cell = topHit.GetComponentInParent<SudokuCell>();
+
+                if (cell != null && !cell.IsGiven && cell.Value == 0) return;
+            }
+        }
+
+        viewModel.CancelPickerCommand.Execute();
+    }
+
+    private bool TryGetPointerDownPosition( out Vector2 screenPosition)
+    {
+        // Android / mobile touch
+        if (Touchscreen.current != null)
+        {
+            var touch = Touchscreen.current.primaryTouch;
+
+            if (touch.press.wasPressedThisFrame)
+            {
+                screenPosition = touch.position.ReadValue();
+
+                return true;
+            }
+        }
+
+        // Editor / WebGL / Google Play Games PC
+        if (Mouse.current != null && Mouse.current.leftButton.wasPressedThisFrame)
+        {
+            screenPosition = Mouse.current.position.ReadValue();
+
+            return true;
+        }
+
+        screenPosition = Vector2.zero;
+        return false;
+    }
 
     public void Bind(SudokuViewModel vm)
     {

@@ -26,7 +26,6 @@ public class GridBuilder : MonoBehaviour
     [SerializeField] private float cellGap    = 3f;
     [SerializeField] private float boxGap     = 10f;
     [SerializeField] private float boxPadding = 8f;
-
     
     private readonly RectTransform[] _boxRects  = new RectTransform[9];
     private readonly RectTransform[] _cellRects = new RectTransform[81];  // cached to avoid repeated transform bridge calls

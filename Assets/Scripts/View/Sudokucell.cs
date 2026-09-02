@@ -420,11 +420,28 @@ public class SudokuCell : MonoBehaviour
 
     public void OnClick()
     {
-        if (viewModel == null || viewModel.IsEraseMode.Value) return;
+        if (viewModel == null) return;
+
+        bool pickerAlreadyOpen = NumberPicker.Instance != null && NumberPicker.Instance.IsOpen;
+
+        if (viewModel.IsEraseMode.Value)
+        {
+            if (pickerAlreadyOpen) viewModel.CancelPickerCommand.Execute();
+
+            return;
+        }
 
         if (IsGiven)
         {
+            if (pickerAlreadyOpen) viewModel.CancelPickerCommand.Execute();
+
             PlayLockedAnimation();
+            return;
+        }
+
+        if (pickerAlreadyOpen && Value != 0)
+        {
+            viewModel.CancelPickerCommand.Execute();
             return;
         }
 

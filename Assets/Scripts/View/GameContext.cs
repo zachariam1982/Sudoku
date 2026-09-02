@@ -35,6 +35,40 @@ public class GameContext : MonoBehaviour
 
         User.Instance.ViewModel = ViewModel;
         GameStateMachine.Instance.Initialise(ViewModel);
+
+        #if UNITY_WEBGL && !UNITY_EDITOR
+
+        // Restore the local mirrored save immediately.
+        // This keeps startup behavior identical to Milestone 3A.
         User.Instance.TryLoadSave();
+
+        if (YouTubePlatformManager.Instance != null)
+        {
+            YouTubePlatformManager.Instance.SendGameReady();
+        }
+
+        #else
+
+        User.Instance.TryLoadSave();
+
+        #endif
     }
+
+    #if UNITY_WEBGL && !UNITY_EDITOR
+
+    private System.Collections.IEnumerator Start()
+    {
+        yield return null;
+
+        User.Instance.TryLoadSaveFromCloud(
+            () =>
+            {
+                Debug.Log(
+                    "[YouTube] Initial cloud synchronization completed."
+                );
+            }
+        );
+    }
+
+    #endif
 }

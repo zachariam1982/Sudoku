@@ -113,7 +113,7 @@ public class SudokuViewModel
             canExecute: _ => IsPencilMode.Value == false && replacedValueStack.Count != 0,
             getMessage: new (Func<bool> fn, System.Action showMessage)[]
             {
-                (() => IsPencilMode.Value == true, () => ShowMessage.Value = ("", "Pencil mode is set. Click on Pencil again to enable Erase.", "")),
+                (() => IsPencilMode.Value == true, () => ShowMessage.Value = ("", "Pencil mode is set. Tap on Pencil again to enable Erase.", "")),
                 (() => replacedValueStack.Count == 0, () => ShowMessage.Value = ("", "No number is selected before which can be brought back.", ""))
             }
         );
@@ -129,7 +129,7 @@ public class SudokuViewModel
             canExecute: _ => IsEraseMode.Value == false,
             getMessage: new (Func<bool> fn, System.Action showMessage)[]
             {
-                (() => IsEraseMode.Value == true, () => ShowMessage.Value = ("", "Erase mode is set. Click on Erase again to enable Pencil mode.", ""))
+                (() => IsEraseMode.Value == true, () => ShowMessage.Value = ("", "Erase mode is set. Tap on Erase again to enable Pencil mode.", ""))
             }            
         );
         UndoCommand           = new RelayCommand(
@@ -142,8 +142,8 @@ public class SudokuViewModel
             canExecute: _ => IsPencilMode.Value == false && IsEraseMode.Value == false,
             getMessage: new (Func<bool> fn, System.Action showMessage)[]
                         {
-                            (() => IsPencilMode.Value == true, () => this.ShowMessage.Value = ("", "Pencil mode is set. Click on Pencil again to enable undo.", "")),
-                            (() => IsEraseMode.Value == true, () => this.ShowMessage.Value = ("", "Erase mode is set. Click on Erase again to enable undo.", ""))
+                            (() => IsPencilMode.Value == true, () => this.ShowMessage.Value = ("", "Pencil mode is set. Tap on Pencil again to enable undo.", "")),
+                            (() => IsEraseMode.Value == true, () => this.ShowMessage.Value = ("", "Erase mode is set. Tap on Erase again to enable undo.", ""))
                         }
         );
         SOSCommand            = new RelayCommand(
@@ -154,8 +154,8 @@ public class SudokuViewModel
             canExecute: _ => IsPencilMode.Value == false && IsEraseMode.Value == false,
             getMessage: new (Func<bool> fn, System.Action showMessage)[]
             {
-                (() => IsPencilMode.Value == true, () => ShowMessage.Value = ("", "Pencil mode is set. Click on Pencil again to enable SOS.", "")),
-                (() => IsEraseMode.Value == true, () => ShowMessage.Value = ("", "Erase mode is set. Click on Erase again to enable SOS.", ""))
+                (() => IsPencilMode.Value == true, () => ShowMessage.Value = ("", "Pencil mode is set. Tap on Pencil again to enable SOS.", "")),
+                (() => IsEraseMode.Value == true, () => ShowMessage.Value = ("", "Erase mode is set. Tap on Erase again to enable SOS.", ""))
             }
         );
         AutoFillCandidatesCommand = new RelayCommand(
@@ -184,8 +184,8 @@ public class SudokuViewModel
             canExecute: _ => IsPencilMode.Value == false && IsEraseMode.Value == false,
             getMessage: new (Func<bool> fn, System.Action showMessage)[]
             {
-                (() => IsPencilMode.Value == true, () => ShowMessage.Value = ("", "Pencil mode is set. Click on Pencil again to enable SOS.", "")),
-                (() => IsEraseMode.Value == true, () => ShowMessage.Value = ("", "Erase mode is set. Click on Erase again to enable SOS.", ""))
+                (() => IsPencilMode.Value == true, () => ShowMessage.Value = ("", "Pencil mode is set. Tap on Pencil again to enable SOS.", "")),
+                (() => IsEraseMode.Value == true, () => ShowMessage.Value = ("", "Erase mode is set. Tap on Erase again to enable SOS.", ""))
             }
         );
         PauseCommand          = new RelayCommand(
@@ -193,8 +193,8 @@ public class SudokuViewModel
             canExecute: _ => GameStateMachine.Instance?.CurrentState is PlayingState && IsEraseMode.Value == false && IsPencilMode.Value == false,
             getMessage: new (Func<bool> fn, System.Action showMessage)[]
             {
-                (() => IsEraseMode.Value == true, () => ShowMessage.Value = ("", "Erase mode is set. Click on Erase again to enable Pause.", "")),
-                (() => IsPencilMode.Value == true, () => ShowMessage.Value = ("", "Pencil mode is set. Click on Pencil again to enable Pause.", "")),
+                (() => IsEraseMode.Value == true, () => ShowMessage.Value = ("", "Erase mode is set. Tap on Erase again to enable Pause.", "")),
+                (() => IsPencilMode.Value == true, () => ShowMessage.Value = ("", "Pencil mode is set. Tap on Pencil again to enable Pause.", "")),
                 (() => GameStateMachine.Instance?.CurrentState is IdleState, () => ShowMessage.Value = ("", "Game play is not started. Press an empty box to start the game.", ""))
             }
         );
@@ -221,8 +221,12 @@ public class SudokuViewModel
         NextLevel             = new RelayCommand(
             execute: _ => 
             {
+                #if UNITY_WEBGL && !UNITY_EDITOR
+                _model?.SetLevel(_model.CurrentLevel + 1);
+                #else
                 int level = GameDatabase.GetLastRecord()?.Level ?? 1;
                 _model?.SetLevel(level + 1);
+                #endif
             }
         );
         IncreaseDifficulty    = new RelayCommand(
@@ -486,10 +490,17 @@ public class SudokuViewModel
             data.UndoStack.Add($"{r},{c},{v}");
         }
 
+#if UNITY_WEBGL && !UNITY_EDITOR
+        data.GameHistory = GameDatabase.ExportHistory();
+#endif
+
         return data;
     }
     public void LoadSaveData(SaveGameData data)
     {
+#if UNITY_WEBGL && !UNITY_EDITOR
+        GameDatabase.ImportHistory( data.GameHistory );
+#endif
         // 1. Restore level & difficulty on the model, then regenerate the
         //    original puzzle so GivenMask is rebuilt correctly.
         _model.SetLevel(data.Level); // bring level to saved value

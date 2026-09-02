@@ -15655,14 +15655,20 @@ MonoBehaviour:
   - {fileID: 448498285}
   - {fileID: 65424628}
   overlayPanel: {fileID: 516984522}
-  yGap: 100
+  gridPanel: {fileID: 1905441636}
   pickerPadding: 8
   screenSidePadding: 16
+  portraitGapBelowGrid: 18
+  portraitButtonScale: 0.82
+  portraitGapScale: 0.32
+  landscapeGapBesideGrid: 24
+  landscapeButtonScale: 0.9
+  landscapeGapScale: 0.24
+  borderColor: {r: 0.29803923, g: 0.7882353, b: 1, a: 1}
+  borderThickness: 3
   slideOffset: 50
   slideInDuration: 0.25
   slideOutDuration: 0.15
-  overlayAlpha: 0.2
-  overlayColor: {r: 0, g: 0, b: 0, a: 0}
 --- !u!1 &1767156272
 GameObject:
   m_ObjectHideFlags: 0

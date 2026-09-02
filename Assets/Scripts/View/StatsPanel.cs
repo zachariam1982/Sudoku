@@ -62,6 +62,10 @@ public class StatsPanel : MonoBehaviour
     [SerializeField] private GameObject recordScroll;
     [Header("Responsive Layout")]
     [SerializeField] private RectTransform contentRT;
+    [Header("Gameplay UI")]
+    [SerializeField] private GameObject gameplayTools;
+
+    private bool _gameplayToolsWasActive;
 
     private const float StatsDesignWidth = 972f;
     private const float StatsDesignHeight = 1920f;
@@ -163,6 +167,13 @@ public class StatsPanel : MonoBehaviour
     private void OpenPanel()
     {
         _open = true;
+
+        if (gameplayTools != null)
+        {
+            _gameplayToolsWasActive = gameplayTools.activeSelf;
+            gameplayTools.SetActive(false);
+        }
+
         if (backdropButton != null) backdropButton.gameObject.SetActive(true);
         _vm.FetchHistoricalData.Execute();
 
@@ -179,6 +190,8 @@ public class StatsPanel : MonoBehaviour
     private void ClosePanel()
     {
         _open = false;
+
+        if (gameplayTools != null) gameplayTools.SetActive( _gameplayToolsWasActive );
         if (backdropButton != null) backdropButton.gameObject.SetActive(false);
         if (_slideAnim != null) StopCoroutine(_slideAnim);
         _slideAnim = StartCoroutine(SlideOut());

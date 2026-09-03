@@ -3,6 +3,7 @@ using UnityEngine;
 using UnityEngine.UI;
 using TMPro;
 using System.Collections.Generic;
+using UnityEngine.InputSystem;
 
 public class StatsPanel : MonoBehaviour
 {
@@ -96,6 +97,47 @@ public class StatsPanel : MonoBehaviour
         if (closeButton    != null) closeButton.onClick.AddListener(ClosePanel);
         if (backdropButton != null) backdropButton.onClick.AddListener(ClosePanel);
         if (scrollRect     != null) scrollRect.onValueChanged.AddListener(OnScroll);
+    }
+
+    private void Update()
+    {
+        if (!_open || panelRT == null) return;
+
+        if (!TryGetPointerDownPosition(out Vector2 screenPosition)) return;
+
+        Canvas parentCanvas = panelRT.GetComponentInParent<Canvas>();
+
+        Camera uiCamera = parentCanvas != null && parentCanvas.renderMode != RenderMode.ScreenSpaceOverlay ? parentCanvas.worldCamera : null;
+
+        bool clickedInsidePanel = RectTransformUtility.RectangleContainsScreenPoint( panelRT, screenPosition, uiCamera);
+
+        if (!clickedInsidePanel) ClosePanel();
+    }
+    private bool TryGetPointerDownPosition(out Vector2 screenPosition)
+    {
+        // Touch / Android
+        if (Touchscreen.current != null)
+        {
+            var touch = Touchscreen.current.primaryTouch;
+
+            if (touch.press.wasPressedThisFrame)
+            {
+                screenPosition = touch.position.ReadValue();
+
+                return true;
+            }
+        }
+
+        // Mouse / Editor / WebGL / PC
+        if (Mouse.current != null && Mouse.current.leftButton.wasPressedThisFrame)
+        {
+            screenPosition = Mouse.current.position.ReadValue();
+
+            return true;
+        }
+
+        screenPosition = Vector2.zero;
+        return false;
     }
     void OnRectTransformDimensionsChange()
     {

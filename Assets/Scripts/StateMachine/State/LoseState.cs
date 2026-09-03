@@ -58,12 +58,12 @@ public class LoseState : IGameState
 
     private void OnRetryRequested(bool requested)
     {
-        if (requested)
-        {
-            // Retry restarts the same puzzle from scratch
-            _vm?.DecreaseDifficulty.Execute();
-            _machine.TransitionTo(_machine.Idle);
-            User.Instance?.SaveNow();
-        }
+        if (!requested) return;
+
+        // Retry restarts the same puzzle from scratch
+        if(_vm != null && _vm.RetryGameData.id == -1) _vm?.DecreaseDifficulty.Execute();
+        
+        _machine.TransitionTo(_machine.Idle);
+        User.Instance?.SaveNow();
     }
 }

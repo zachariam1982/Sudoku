@@ -35,12 +35,12 @@ public class NumberPicker : MonoBehaviour
 
     [Header("Portrait")]
     [SerializeField] private float portraitGapBelowGrid = 18f;
-    [SerializeField] private float portraitButtonScale = 0.82f;
+    [SerializeField] private float portraitButtonScale = 2.1f;
     [SerializeField] private float portraitGapScale = 0.32f;
 
     [Header("Landscape")]
     [SerializeField] private float landscapeGapBesideGrid = 24f;
-    [SerializeField] private float landscapeButtonScale = 0.90f;
+    [SerializeField] private float landscapeButtonScale = 2.5f;
     [SerializeField] private float landscapeGapScale = 0.24f;
 
     [Header("Number border")]
@@ -294,7 +294,6 @@ public class NumberPicker : MonoBehaviour
             rt.pivot = new Vector2(0.5f, 0.5f);
             rt.sizeDelta = new Vector2( buttonSize, buttonSize);
             rt.anchoredPosition = new Vector2( startX + i * (buttonSize + buttonGap), 0f);
-            ResizeLabel(numberButtons[i], buttonSize);
         }
     }
 
@@ -351,16 +350,9 @@ public class NumberPicker : MonoBehaviour
             float y = (1 - row) * (buttonSize + buttonGap);
 
             rt.anchoredPosition = new Vector2(x, y);
-            ResizeLabel(numberButtons[i], buttonSize);
         }
     }
 
-    private void ResizeLabel( Button button, float buttonSize)
-    {
-        TextMeshProUGUI label = button.GetComponentInChildren<TextMeshProUGUI>();
-
-        if (label != null) label.fontSize = Mathf.Round( buttonSize * 0.52f);
-    }
 
     // ---------------------------------------------------------------------
     // POSITION

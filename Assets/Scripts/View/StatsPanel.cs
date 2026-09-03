@@ -132,11 +132,39 @@ public class StatsPanel : MonoBehaviour
     public void Bind(SudokuViewModel vm)
     {
         _vm = vm;
-        vm.ElapsedSeconds.OnChanged += _ => { if (_open) RefreshSession(); };
-        vm.LivesRemaining.OnChanged += _ => { if (_open) RefreshSession(); };
-        vm.PastHistory.OnChanged    += param => { StartCoroutine(AddRecords(param)); };
+        vm.ElapsedSeconds.OnChanged += OnElapsedSecondsChanged;
+        vm.LivesRemaining.OnChanged += OnLivesRemainingChanged;
+        vm.PastHistory.OnChanged += OnPastHistoryChanged;
+        vm.RetryOlderGameRequested.OnChanged += OnRetryOlderGameRequested;
+    }
+    private void OnElapsedSecondsChanged(float seconds)
+    {
+        if (_open) RefreshSession();
     }
 
+    private void OnLivesRemainingChanged(int lives)
+    {
+        if (_open) RefreshSession();
+    }
+
+    private void OnPastHistoryChanged(List<GameRecord> records)
+    {
+        StartCoroutine(AddRecords(records));
+    }
+    private void OnRetryOlderGameRequested(bool requested)
+    {
+        if (!requested) return;
+        if (_open) ClosePanel();
+    }
+    private void OnDestroy()
+    {
+        if (_vm == null) return;
+
+        _vm.ElapsedSeconds.OnChanged -= OnElapsedSecondsChanged;
+        _vm.LivesRemaining.OnChanged -= OnLivesRemainingChanged;
+        _vm.PastHistory.OnChanged -= OnPastHistoryChanged;
+        _vm.RetryOlderGameRequested.OnChanged -= OnRetryOlderGameRequested;
+    }
     private IEnumerator AddRecords(List<GameRecord> arg)
     {
         _loading = true;

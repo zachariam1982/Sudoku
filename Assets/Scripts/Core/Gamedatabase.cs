@@ -465,6 +465,7 @@ public static class GameDatabase
      * the aggregate once.
      */
     private const int CurrentAggregateVersion = 1;
+    private const int CurrentDbVersion = 1;
 
     private static string DbPath =>
         Path.Combine(
@@ -479,88 +480,111 @@ public static class GameDatabase
     {
         try
         {
-            Debug.Log(
-                $"DB stored at {DbPath}");
+            Debug.Log($"DB stored at {DbPath}");
 
-            _db =
-                new SQLiteConnection(DbPath);
+            bool isNewDatabase = !File.Exists(DbPath);
 
-            EnsureGameRecordSchema();
+            _db = new SQLiteConnection(DbPath);
 
-            /*
-             * New single-row aggregate table.
-             *
-             * sqlite-net will create it if missing.
-             */
+            if (isNewDatabase)
+            {
+                _db.CreateTable<GameRecord>();
+
+                SetDatabaseVersion(CurrentDbVersion);
+
+                Debug.Log($"[GameDatabase] Created new database at version {CurrentDbVersion}.");
+            }
+            else
+            {
+                MigrateDatabase();
+            }
+
             _db.CreateTable<GameStats>();
 
             CreateIndexes();
 
-            /*
-             * On the first app run after introducing
-             * game_stats, build it from completed_games.
-             *
-             * Future launches do not scan completed_games
-             * unless AggregateVersion changes.
-             */
             InitializeGameStats();
 
-            /*
-             * Recreate triggers so the latest trigger
-             * definitions are always installed.
-             */
             RecreateGameStatsTriggers();
-
-            Debug.Log(
-                $"[GameDatabase] Initialised at {DbPath}");
         }
         catch (Exception ex)
         {
-            Debug.LogError(
-                $"[GameDatabase] Init failed: " +
-                $"{ex.GetType().Name}: {ex}");
+            Debug.LogError($"[GameDatabase] Init failed: {ex.GetType().Name}: {ex}");
         }
     }
-    private static void EnsureGameRecordSchema()
+
+    // ============================================================
+    // DATABASE MIGRATION
+    // ============================================================
+
+    private static void MigrateDatabase()
     {
-        int tableExists = _db.ExecuteScalar<int>( @"SELECT COUNT(*) FROM sqlite_master WHERE type = 'table' AND name = 'completed_games';");
-
-        if (tableExists == 0)
-        {
-            _db.CreateTable<GameRecord>();
-            return;
-        }
-
-        var columns = _db.GetTableInfo("completed_games");
-        var names = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
-
-        foreach (var column in columns)
-        {
-            names.Add(column.Name);
-        }
-
-        AddColumnIfMissing(names,"UndoUses");
-        AddColumnIfMissing(names,"PencilUses");
-        AddColumnIfMissing(names,"EraseUses");
-        AddColumnIfMissing(names,"SOSUses");
-        AddColumnIfMissing(names,"AutoFillUses");
-    }
-
-    private static void AddColumnIfMissing(HashSet<string> existingColumns,string columnName)
-    {
-        if (existingColumns.Contains(columnName))
-            return;
-
-        _db.Execute(
-            $"ALTER TABLE completed_games " +
-            $"ADD COLUMN {columnName} " +
-            $"INTEGER NOT NULL DEFAULT 0;");
-
-        existingColumns.Add(columnName);
+        int version =
+            GetDatabaseVersion();
 
         Debug.Log(
-            $"[GameDatabase] Added column " +
-            $"{columnName} to completed_games.");
+            $"[GameDatabase] Current DB version: {version}");
+
+        if (version > CurrentDbVersion)
+        {
+            throw new InvalidOperationException(
+                $"Database version {version} is newer than " +
+                $"supported version {CurrentDbVersion}.");
+        }
+
+        //
+        // Legacy schema -> usage-stat schema.
+        //
+        if (version < 1)
+        {
+            MigrateToVersion1();
+
+            version = 1;
+        }
+
+        Debug.Log(
+            $"[GameDatabase] Database ready at version " +
+            $"{version}.");
+    }
+
+    private static void MigrateToVersion1()
+    {
+        Debug.Log("[GameDatabase] Migrating DB v0 -> v1.");
+
+        _db.BeginTransaction();
+
+        try
+        {
+            _db.Execute(@"ALTER TABLE completed_games ADD COLUMN UndoUses INTEGER NOT NULL DEFAULT 0;");
+            _db.Execute(@"ALTER TABLE completed_games ADD COLUMN PencilUses INTEGER NOT NULL DEFAULT 0;");
+            _db.Execute(@"ALTER TABLE completed_games ADD COLUMN EraseUses INTEGER NOT NULL DEFAULT 0;");
+            _db.Execute(@"ALTER TABLE completed_games ADD COLUMN SOSUses INTEGER NOT NULL DEFAULT 0;");
+            _db.Execute(@"ALTER TABLE completed_games ADD COLUMN AutoFillUses INTEGER NOT NULL DEFAULT 0;");
+
+            SetDatabaseVersion(1);
+
+            _db.Commit();
+
+            Debug.Log("[GameDatabase] Migration v0 -> v1 complete.");
+        }
+        catch (Exception)
+        {
+            _db.Rollback();
+
+            Debug.LogError("[GameDatabase] Migration v0 -> v1 failed.");
+
+            throw;
+        }
+    }
+    
+    private static int GetDatabaseVersion()
+    {
+        return _db.ExecuteScalar<int>("PRAGMA user_version;");
+    }
+
+    private static void SetDatabaseVersion(int version)
+    {
+        _db.Execute($"PRAGMA user_version = {version};");
     }
     // ============================================================
     // INDEXES

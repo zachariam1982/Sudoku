@@ -12,6 +12,11 @@ public class SaveGameRecord
     public int Points;
     public bool IsWon;
     public string CompletedAt;
+    public int UndoUses;
+    public int PencilUses;
+    public int EraseUses;
+    public int SOSUses;
+    public int AutoFillUses;
 }
 /// <summary>
 /// Plain serializable snapshot of everything needed to restore a game session.
@@ -52,4 +57,9 @@ public class SaveGameData
     public int SOSEmptyCells = 0; // empty cells SOS filled
     public int SOSWrongCells = 0; // wrong cells SOS fixed
     public List<SaveGameRecord> GameHistory = new List<SaveGameRecord>();
+    public int UndoUses     = 0;
+    public int PencilUses   = 0;
+    public int EraseUses    = 0;
+    public int SOSUses      = 0;
+    public int AutoFillUses = 0;
 }

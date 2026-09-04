@@ -457,12 +457,12 @@ public class SudokuCell : MonoBehaviour
     public void OnClickFromErase()
     {
         if(viewModel == null) return;
-
         if(IsGiven) return;
+        if(Value == 0) return;
 
-        viewModel.SelectCellCommand.Execute(
-            new ValueTuple<int, int, object>(row, col, GetComponent<RectTransform>()));
-        viewModel.EnterValueCommand.Execute( 0);
+        viewModel.RecordEraseUse();
+        viewModel.SelectCellCommand.Execute(new ValueTuple<int, int, object>(row, col, GetComponent<RectTransform>()));
+        viewModel.EnterValueCommand.Execute(0);
         viewModel.SetEraseModeCommand.Execute();
     }
 

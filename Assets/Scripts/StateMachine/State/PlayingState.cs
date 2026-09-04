@@ -68,6 +68,11 @@ public class PlayingState : IGameState
                 IsWon          = false,
                 Points         = 0,
                 CompletedAt    = DateTime.Now.ToString("o"),
+                UndoUses       = _vm.UsageStats.UndoUses,
+                PencilUses     = _vm.UsageStats.PencilUses,
+                EraseUses      = _vm.UsageStats.EraseUses,
+                SOSUses        = _vm.UsageStats.SOSUses,
+                AutoFillUses   = _vm.UsageStats.AutoFillUses
             };
             
             if(_vm.RetryGameData.id == -1) GameDatabase.Insert(val); //Add into DB the record if it is a new game and not a retry

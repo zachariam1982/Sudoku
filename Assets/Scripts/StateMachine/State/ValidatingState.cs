@@ -45,6 +45,11 @@ public class ValidatingState : IGameState
                     IsWon          = true,
                     Points         = ScoringSystem.Calculate( (SudokuDifficulty)_vm.GetDifficulty, _vm.ElapsedSeconds.Value, _vm.Penalties),
                     CompletedAt    = System.DateTime.Now.ToString("o"),
+                    UndoUses       = _vm.UsageStats.UndoUses,
+                    PencilUses     = _vm.UsageStats.PencilUses,
+                    EraseUses      = _vm.UsageStats.EraseUses,
+                    SOSUses        = _vm.UsageStats.SOSUses,
+                    AutoFillUses   = _vm.UsageStats.AutoFillUses
                 };
 
                 if(_vm != null && _vm.RetryGameData.id != -1 && _vm.RetryGameData.difficulty != -1 && _vm.RetryGameData.level != -1)
@@ -54,6 +59,7 @@ public class ValidatingState : IGameState
                     val.Level      = _vm.RetryGameData.level;
                     
                     GameDatabase.Update(val);
+                    GameDatabase.RebuildGameStats();
                 }
                 else
                 {

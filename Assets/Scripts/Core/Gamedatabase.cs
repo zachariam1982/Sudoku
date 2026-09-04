@@ -20,6 +20,11 @@ public static class GameDatabase
         public int Points;
         public bool IsWon;
         public string CompletedAt;
+        public int UndoUses;
+        public int PencilUses;
+        public int EraseUses;
+        public int SOSUses;
+        public int AutoFillUses;
     }
 
     [Serializable]
@@ -95,7 +100,12 @@ public static class GameDatabase
             LivesRemaining = record.LivesRemaining,
             Points = record.Points,
             IsWon = record.IsWon,
-            CompletedAt = record.CompletedAt
+            CompletedAt = record.CompletedAt,
+            UndoUses = record.UndoUses,
+            PencilUses = record.PencilUses,
+            EraseUses = record.EraseUses,
+            SOSUses = record.SOSUses,
+            AutoFillUses = record.AutoFillUses
         };
     }
 
@@ -110,7 +120,12 @@ public static class GameDatabase
             LivesRemaining = record.LivesRemaining,
             Points = record.Points,
             IsWon = record.IsWon,
-            CompletedAt = record.CompletedAt
+            CompletedAt = record.CompletedAt,
+            UndoUses = record.UndoUses,
+            PencilUses = record.PencilUses,
+            EraseUses = record.EraseUses,
+            SOSUses = record.SOSUses,
+            AutoFillUses = record.AutoFillUses
         };
     }
 
@@ -355,7 +370,13 @@ public static class GameDatabase
                     LivesRemaining = r.LivesRemaining,
                     Points = r.Points,
                     IsWon = r.IsWon,
-                    CompletedAt = r.CompletedAt
+                    CompletedAt = r.CompletedAt,
+
+                    UndoUses = r.UndoUses,
+                    PencilUses = r.PencilUses,
+                    EraseUses = r.EraseUses,
+                    SOSUses = r.SOSUses,
+                    AutoFillUses = r.AutoFillUses
                 }
             )
             .ToList();
@@ -388,7 +409,13 @@ public static class GameDatabase
                         LivesRemaining = record.LivesRemaining,
                         Points = record.Points,
                         IsWon = record.IsWon,
-                        CompletedAt = record.CompletedAt
+                        CompletedAt = record.CompletedAt,
+
+                        UndoUses = record.UndoUses,
+                        PencilUses = record.PencilUses,
+                        EraseUses = record.EraseUses,
+                        SOSUses = record.SOSUses,
+                        AutoFillUses = record.AutoFillUses
                     }
                 );
 
@@ -458,10 +485,7 @@ public static class GameDatabase
             _db =
                 new SQLiteConnection(DbPath);
 
-            /*
-             * Existing source-of-truth table.
-             */
-            _db.CreateTable<GameRecord>();
+            EnsureGameRecordSchema();
 
             /*
              * New single-row aggregate table.
@@ -497,7 +521,47 @@ public static class GameDatabase
                 $"{ex.GetType().Name}: {ex}");
         }
     }
+    private static void EnsureGameRecordSchema()
+    {
+        int tableExists = _db.ExecuteScalar<int>( @"SELECT COUNT(*) FROM sqlite_master WHERE type = 'table' AND name = 'completed_games';");
 
+        if (tableExists == 0)
+        {
+            _db.CreateTable<GameRecord>();
+            return;
+        }
+
+        var columns = _db.GetTableInfo("completed_games");
+        var names = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+
+        foreach (var column in columns)
+        {
+            names.Add(column.Name);
+        }
+
+        AddColumnIfMissing(names,"UndoUses");
+        AddColumnIfMissing(names,"PencilUses");
+        AddColumnIfMissing(names,"EraseUses");
+        AddColumnIfMissing(names,"SOSUses");
+        AddColumnIfMissing(names,"AutoFillUses");
+    }
+
+    private static void AddColumnIfMissing(HashSet<string> existingColumns,string columnName)
+    {
+        if (existingColumns.Contains(columnName))
+            return;
+
+        _db.Execute(
+            $"ALTER TABLE completed_games " +
+            $"ADD COLUMN {columnName} " +
+            $"INTEGER NOT NULL DEFAULT 0;");
+
+        existingColumns.Add(columnName);
+
+        Debug.Log(
+            $"[GameDatabase] Added column " +
+            $"{columnName} to completed_games.");
+    }
     // ============================================================
     // INDEXES
     // ============================================================

@@ -19103,7 +19103,6 @@ GameObject:
   - component: {fileID: 2027544912}
   - component: {fileID: 2027544911}
   - component: {fileID: 2027544910}
-  - component: {fileID: 2027544924}
   - component: {fileID: 2027544915}
   - component: {fileID: 2027544914}
   - component: {fileID: 2027544916}
@@ -19366,18 +19365,6 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 9db6a989f3d7b0145acd8addb4f15399, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::PlayerSettings
---- !u!114 &2027544924
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 2027544907}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 16a0004df96b4d144ae392bbc69282ff, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: Assembly-CSharp::InGameConsole
 --- !u!114 &2027544925
 MonoBehaviour:
   m_ObjectHideFlags: 0

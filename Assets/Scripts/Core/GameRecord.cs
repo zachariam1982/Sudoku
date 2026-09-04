@@ -31,4 +31,19 @@ public class GameRecord
     /// <summary>ISO-8601 timestamp e.g. "2025-06-04T14:32:00"</summary>
     [NotNull]
     public string CompletedAt    { get; set; }
+    
+    [NotNull]
+    public int UndoUses { get; set; }
+
+    [NotNull]
+    public int PencilUses { get; set; }
+
+    [NotNull]
+    public int EraseUses { get; set; }
+
+    [NotNull]
+    public int SOSUses { get; set; }
+
+    [NotNull]
+    public int AutoFillUses { get; set; }
 }

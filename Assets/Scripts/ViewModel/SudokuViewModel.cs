@@ -18,6 +18,7 @@ public class SudokuViewModel
     public int GetLevel { get{ return _model.CurrentLevel;}}
     public int GetDifficulty { get{ return (int)_model.CurrentDifficulty;}}
     public ScorePenalties Penalties { get; } = new ScorePenalties(0,0,0);
+    public GameUsageStats UsageStats { get; } = new GameUsageStats();
     public (int id, int level, int difficulty, int points) RetryGameData {get; set;} = (-1, -1, -1, -1);
     public BindableProperty<bool>    HideHUD      { get; }    = new BindableProperty<bool>(false);
     public BindableProperty<int[,]>  BoardValues  { get; }    = new BindableProperty<int[,]>();
@@ -124,6 +125,10 @@ public class SudokuViewModel
                 if (!IsPencilMode.Value)
                 {
                     HighlightedCandidateNumber.Value = 0;
+                }
+                else
+                {
+                    UsageStats.AddPencil();
                 }                
             },
             canExecute: _ => IsEraseMode.Value == false,
@@ -137,6 +142,7 @@ public class SudokuViewModel
             {
                 var t = getPreviousValues();
                 if(t.Item1 == -1 || t.Item2 == -1 || t.Item3 == -1) return;
+                UsageStats.AddUndo();
                 OnEnterValueForUndoOperation(t.Item1, t.Item2, t.Item3);
             },
             canExecute: _ => IsPencilMode.Value == false && IsEraseMode.Value == false,
@@ -161,7 +167,7 @@ public class SudokuViewModel
         AutoFillCandidatesCommand = new RelayCommand(
             execute: _ =>
             {
-
+                UsageStats.AddAutoFill();
                 if (!IsPencilMode.Value) IsPencilMode.Value = true;
 
                 ClosePicker();
@@ -363,6 +369,8 @@ public class SudokuViewModel
  
         if (changedCells.Count == 0) return;
  
+        UsageStats.AddSOS();
+
         SOSChangedCells.Value = changedCells;
     }
     private void FetchData()
@@ -392,6 +400,10 @@ public class SudokuViewModel
 
         ConflictingCells.Value = conflicts;
     }
+    public void RecordEraseUse()
+    {
+        UsageStats.AddErase();
+    }
     public void SetGameLevelAndDifficulty(int level, SudokuDifficulty difficulty)
     {
         Debug.Log($"RETRY FEATURE: Set Game  Level and Difficulty");
@@ -407,6 +419,7 @@ public class SudokuViewModel
         HighlightedCandidateNumber.Value = 0;
         this.offset            = 0;
         this.PastHistory.Value.Clear();
+        UsageStats.Reset();
         replacedValueStack.Clear();
         ConflictingCells.Value.Clear();
         _model.LoadCurrentLevelPuzzle();
@@ -474,6 +487,11 @@ public class SudokuViewModel
             RetryOlderGame_Id         = RetryGameData.id,
             RetryOlderGame_Level      = RetryGameData.level,
             RetryOlderGame_Difficulty = RetryGameData.difficulty,
+            UndoUses                  = UsageStats.UndoUses,
+            PencilUses                = UsageStats.PencilUses,
+            EraseUses                 = UsageStats.EraseUses,
+            SOSUses                   = UsageStats.SOSUses,
+            AutoFillUses              = UsageStats.AutoFillUses,
             RetryOlderGame_Points     = RetryGameData.points
         };
 
@@ -544,6 +562,12 @@ public class SudokuViewModel
         Penalties.SOSWrongCells       = data.SOSWrongCells;
         RetryOlderGameRequested.Value = data.RetryOlderGame;
         RetryGameData                 = (data.RetryOlderGame_Id, data.RetryOlderGame_Level, data.RetryOlderGame_Difficulty, data.RetryOlderGame_Points);
+        UsageStats.Load(
+                    data.UndoUses,
+                    data.PencilUses,
+                    data.EraseUses,
+                    data.SOSUses,
+                    data.AutoFillUses);
         
         switch (data.statename)
         {

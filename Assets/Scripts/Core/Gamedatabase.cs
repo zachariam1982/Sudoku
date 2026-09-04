@@ -20,6 +20,11 @@ public static class GameDatabase
         public int Points;
         public bool IsWon;
         public string CompletedAt;
+        public int UndoUses;
+        public int PencilUses;
+        public int EraseUses;
+        public int SOSUses;
+        public int AutoFillUses;
     }
 
     [Serializable]
@@ -95,7 +100,12 @@ public static class GameDatabase
             LivesRemaining = record.LivesRemaining,
             Points = record.Points,
             IsWon = record.IsWon,
-            CompletedAt = record.CompletedAt
+            CompletedAt = record.CompletedAt,
+            UndoUses = record.UndoUses,
+            PencilUses = record.PencilUses,
+            EraseUses = record.EraseUses,
+            SOSUses = record.SOSUses,
+            AutoFillUses = record.AutoFillUses
         };
     }
 
@@ -110,7 +120,12 @@ public static class GameDatabase
             LivesRemaining = record.LivesRemaining,
             Points = record.Points,
             IsWon = record.IsWon,
-            CompletedAt = record.CompletedAt
+            CompletedAt = record.CompletedAt,
+            UndoUses = record.UndoUses,
+            PencilUses = record.PencilUses,
+            EraseUses = record.EraseUses,
+            SOSUses = record.SOSUses,
+            AutoFillUses = record.AutoFillUses
         };
     }
 
@@ -355,7 +370,13 @@ public static class GameDatabase
                     LivesRemaining = r.LivesRemaining,
                     Points = r.Points,
                     IsWon = r.IsWon,
-                    CompletedAt = r.CompletedAt
+                    CompletedAt = r.CompletedAt,
+
+                    UndoUses = r.UndoUses,
+                    PencilUses = r.PencilUses,
+                    EraseUses = r.EraseUses,
+                    SOSUses = r.SOSUses,
+                    AutoFillUses = r.AutoFillUses
                 }
             )
             .ToList();
@@ -388,7 +409,13 @@ public static class GameDatabase
                         LivesRemaining = record.LivesRemaining,
                         Points = record.Points,
                         IsWon = record.IsWon,
-                        CompletedAt = record.CompletedAt
+                        CompletedAt = record.CompletedAt,
+
+                        UndoUses = record.UndoUses,
+                        PencilUses = record.PencilUses,
+                        EraseUses = record.EraseUses,
+                        SOSUses = record.SOSUses,
+                        AutoFillUses = record.AutoFillUses
                     }
                 );
 
@@ -438,6 +465,7 @@ public static class GameDatabase
      * the aggregate once.
      */
     private const int CurrentAggregateVersion = 1;
+    private const int CurrentDbVersion = 1;
 
     private static string DbPath =>
         Path.Combine(
@@ -452,52 +480,112 @@ public static class GameDatabase
     {
         try
         {
-            Debug.Log(
-                $"DB stored at {DbPath}");
+            Debug.Log($"DB stored at {DbPath}");
 
-            _db =
-                new SQLiteConnection(DbPath);
+            bool isNewDatabase = !File.Exists(DbPath);
 
-            /*
-             * Existing source-of-truth table.
-             */
-            _db.CreateTable<GameRecord>();
+            _db = new SQLiteConnection(DbPath);
 
-            /*
-             * New single-row aggregate table.
-             *
-             * sqlite-net will create it if missing.
-             */
+            if (isNewDatabase)
+            {
+                _db.CreateTable<GameRecord>();
+
+                SetDatabaseVersion(CurrentDbVersion);
+
+                Debug.Log($"[GameDatabase] Created new database at version {CurrentDbVersion}.");
+            }
+            else
+            {
+                MigrateDatabase();
+            }
+
             _db.CreateTable<GameStats>();
 
             CreateIndexes();
 
-            /*
-             * On the first app run after introducing
-             * game_stats, build it from completed_games.
-             *
-             * Future launches do not scan completed_games
-             * unless AggregateVersion changes.
-             */
             InitializeGameStats();
 
-            /*
-             * Recreate triggers so the latest trigger
-             * definitions are always installed.
-             */
             RecreateGameStatsTriggers();
-
-            Debug.Log(
-                $"[GameDatabase] Initialised at {DbPath}");
         }
         catch (Exception ex)
         {
-            Debug.LogError(
-                $"[GameDatabase] Init failed: " +
-                $"{ex.GetType().Name}: {ex}");
+            Debug.LogError($"[GameDatabase] Init failed: {ex.GetType().Name}: {ex}");
         }
     }
 
+    // ============================================================
+    // DATABASE MIGRATION
+    // ============================================================
+
+    private static void MigrateDatabase()
+    {
+        int version =
+            GetDatabaseVersion();
+
+        Debug.Log(
+            $"[GameDatabase] Current DB version: {version}");
+
+        if (version > CurrentDbVersion)
+        {
+            throw new InvalidOperationException(
+                $"Database version {version} is newer than " +
+                $"supported version {CurrentDbVersion}.");
+        }
+
+        //
+        // Legacy schema -> usage-stat schema.
+        //
+        if (version < 1)
+        {
+            MigrateToVersion1();
+
+            version = 1;
+        }
+
+        Debug.Log(
+            $"[GameDatabase] Database ready at version " +
+            $"{version}.");
+    }
+
+    private static void MigrateToVersion1()
+    {
+        Debug.Log("[GameDatabase] Migrating DB v0 -> v1.");
+
+        _db.BeginTransaction();
+
+        try
+        {
+            _db.Execute(@"ALTER TABLE completed_games ADD COLUMN UndoUses INTEGER NOT NULL DEFAULT 0;");
+            _db.Execute(@"ALTER TABLE completed_games ADD COLUMN PencilUses INTEGER NOT NULL DEFAULT 0;");
+            _db.Execute(@"ALTER TABLE completed_games ADD COLUMN EraseUses INTEGER NOT NULL DEFAULT 0;");
+            _db.Execute(@"ALTER TABLE completed_games ADD COLUMN SOSUses INTEGER NOT NULL DEFAULT 0;");
+            _db.Execute(@"ALTER TABLE completed_games ADD COLUMN AutoFillUses INTEGER NOT NULL DEFAULT 0;");
+
+            SetDatabaseVersion(1);
+
+            _db.Commit();
+
+            Debug.Log("[GameDatabase] Migration v0 -> v1 complete.");
+        }
+        catch (Exception)
+        {
+            _db.Rollback();
+
+            Debug.LogError("[GameDatabase] Migration v0 -> v1 failed.");
+
+            throw;
+        }
+    }
+    
+    private static int GetDatabaseVersion()
+    {
+        return _db.ExecuteScalar<int>("PRAGMA user_version;");
+    }
+
+    private static void SetDatabaseVersion(int version)
+    {
+        _db.Execute($"PRAGMA user_version = {version};");
+    }
     // ============================================================
     // INDEXES
     // ============================================================

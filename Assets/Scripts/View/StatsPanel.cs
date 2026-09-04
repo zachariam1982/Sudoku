@@ -3,6 +3,7 @@ using UnityEngine;
 using UnityEngine.UI;
 using TMPro;
 using System.Collections.Generic;
+using UnityEngine.InputSystem;
 
 public class StatsPanel : MonoBehaviour
 {
@@ -97,6 +98,47 @@ public class StatsPanel : MonoBehaviour
         if (backdropButton != null) backdropButton.onClick.AddListener(ClosePanel);
         if (scrollRect     != null) scrollRect.onValueChanged.AddListener(OnScroll);
     }
+
+    private void Update()
+    {
+        if (!_open || panelRT == null) return;
+
+        if (!TryGetPointerDownPosition(out Vector2 screenPosition)) return;
+
+        Canvas parentCanvas = panelRT.GetComponentInParent<Canvas>();
+
+        Camera uiCamera = parentCanvas != null && parentCanvas.renderMode != RenderMode.ScreenSpaceOverlay ? parentCanvas.worldCamera : null;
+
+        bool clickedInsidePanel = RectTransformUtility.RectangleContainsScreenPoint( panelRT, screenPosition, uiCamera);
+
+        if (!clickedInsidePanel) ClosePanel();
+    }
+    private bool TryGetPointerDownPosition(out Vector2 screenPosition)
+    {
+        // Touch / Android
+        if (Touchscreen.current != null)
+        {
+            var touch = Touchscreen.current.primaryTouch;
+
+            if (touch.press.wasPressedThisFrame)
+            {
+                screenPosition = touch.position.ReadValue();
+
+                return true;
+            }
+        }
+
+        // Mouse / Editor / WebGL / PC
+        if (Mouse.current != null && Mouse.current.leftButton.wasPressedThisFrame)
+        {
+            screenPosition = Mouse.current.position.ReadValue();
+
+            return true;
+        }
+
+        screenPosition = Vector2.zero;
+        return false;
+    }
     void OnRectTransformDimensionsChange()
     {
         if (canvas == null || panelRT == null) return;
@@ -132,11 +174,39 @@ public class StatsPanel : MonoBehaviour
     public void Bind(SudokuViewModel vm)
     {
         _vm = vm;
-        vm.ElapsedSeconds.OnChanged += _ => { if (_open) RefreshSession(); };
-        vm.LivesRemaining.OnChanged += _ => { if (_open) RefreshSession(); };
-        vm.PastHistory.OnChanged    += param => { StartCoroutine(AddRecords(param)); };
+        vm.ElapsedSeconds.OnChanged += OnElapsedSecondsChanged;
+        vm.LivesRemaining.OnChanged += OnLivesRemainingChanged;
+        vm.PastHistory.OnChanged += OnPastHistoryChanged;
+        vm.RetryOlderGameRequested.OnChanged += OnRetryOlderGameRequested;
+    }
+    private void OnElapsedSecondsChanged(float seconds)
+    {
+        if (_open) RefreshSession();
     }
 
+    private void OnLivesRemainingChanged(int lives)
+    {
+        if (_open) RefreshSession();
+    }
+
+    private void OnPastHistoryChanged(List<GameRecord> records)
+    {
+        StartCoroutine(AddRecords(records));
+    }
+    private void OnRetryOlderGameRequested(bool requested)
+    {
+        if (!requested) return;
+        if (_open) ClosePanel();
+    }
+    private void OnDestroy()
+    {
+        if (_vm == null) return;
+
+        _vm.ElapsedSeconds.OnChanged -= OnElapsedSecondsChanged;
+        _vm.LivesRemaining.OnChanged -= OnLivesRemainingChanged;
+        _vm.PastHistory.OnChanged -= OnPastHistoryChanged;
+        _vm.RetryOlderGameRequested.OnChanged -= OnRetryOlderGameRequested;
+    }
     private IEnumerator AddRecords(List<GameRecord> arg)
     {
         _loading = true;

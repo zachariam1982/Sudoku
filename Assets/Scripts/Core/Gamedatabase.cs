@@ -1421,64 +1421,20 @@ public static class GameDatabase
      * The number of games at each difficulty is already
      * stored in game_stats.
      */
-    public static int GetTotalPossiblePoints(
-        GameStats stats)
+    public static int GetTotalPossiblePoints(GameStats stats)
     {
-        if (stats == null)
-            return 0;
+        if (stats == null) return 0;
 
         return
-            stats.SimpleCount *
-            ScoringSystem.GetAbsoluteMaximumScore(
-                SudokuDifficulty.Simple)
-
-            +
-
-            stats.BeginnerCount *
-            ScoringSystem.GetAbsoluteMaximumScore(
-                SudokuDifficulty.Beginner)
-
-            +
-
-            stats.EasyCount *
-            ScoringSystem.GetAbsoluteMaximumScore(
-                SudokuDifficulty.Easy)
-
-            +
-
-            stats.NoviceCount *
-            ScoringSystem.GetAbsoluteMaximumScore(
-                SudokuDifficulty.Novice)
-
-            +
-
-            stats.ModerateCount *
-            ScoringSystem.GetAbsoluteMaximumScore(
-                SudokuDifficulty.Moderate)
-
-            +
-
-            stats.AdvancedCount *
-            ScoringSystem.GetAbsoluteMaximumScore(
-                SudokuDifficulty.Advanced)
-
-            +
-
-            stats.HardCount *
-            ScoringSystem.GetAbsoluteMaximumScore(
-                SudokuDifficulty.Hard)
-
-            +
-
-            stats.ExpertCount *
-            ScoringSystem.GetAbsoluteMaximumScore(
-                SudokuDifficulty.Expert)
-
-            +
-
-            stats.HardestCount *
-            ScoringSystem.GetAbsoluteMaximumScore(
-                SudokuDifficulty.Hardest);
+            stats.SimpleCount   * ScoringSystem.GetAbsoluteMaximumScore(SudokuDifficulty.Simple) +
+            stats.BeginnerCount * ScoringSystem.GetAbsoluteMaximumScore(SudokuDifficulty.Beginner) +
+            stats.EasyCount     * ScoringSystem.GetAbsoluteMaximumScore(SudokuDifficulty.Easy) +
+            stats.NoviceCount   * ScoringSystem.GetAbsoluteMaximumScore(SudokuDifficulty.Novice) +
+            stats.ModerateCount * ScoringSystem.GetAbsoluteMaximumScore(SudokuDifficulty.Moderate) +
+            stats.AdvancedCount * ScoringSystem.GetAbsoluteMaximumScore(SudokuDifficulty.Advanced) +
+            stats.HardCount     * ScoringSystem.GetAbsoluteMaximumScore(SudokuDifficulty.Hard) +
+            stats.ExpertCount   * ScoringSystem.GetAbsoluteMaximumScore(SudokuDifficulty.Expert) +
+            stats.HardestCount  * ScoringSystem.GetAbsoluteMaximumScore(SudokuDifficulty.Hardest);
     }
 
     // ============================================================

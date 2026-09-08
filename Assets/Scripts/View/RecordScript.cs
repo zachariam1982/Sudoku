@@ -17,6 +17,9 @@ public class RecordScript : MonoBehaviour
     [SerializeField] private TextMeshProUGUI Difficulty;
     [SerializeField] private TextMeshProUGUI Points;
     [SerializeField] private TextMeshProUGUI Restart;
+    [Header("Expanded Details")]
+    [SerializeField] private GameObject DetailsPanel;
+    [SerializeField] private TextMeshProUGUI DetailsText;
     private static Dictionary<SudokuDifficulty, (string bg, string outline, string txtClr)> ColorMap_1 = new Dictionary<SudokuDifficulty, (string bg, string outline, string textClr)>()
     {
         { SudokuDifficulty.Simple,    ("#1D2438", "#2E6FA380", "#4682FF") },
@@ -54,15 +57,37 @@ public class RecordScript : MonoBehaviour
         { SudokuDifficulty.Hardest,   ("#3A1A20", "#E23B5C80", "#9B59B680") },
     };
 
-    public void Setup(SudokuViewModel viewModel, int Id, int arg1, int arg2, int arg3)
+    public void Setup(SudokuViewModel viewModel, GameRecord record)
     {
-        _Id = Id;
-        Level.text = arg1.ToString();
-        Difficulty.text = ((SudokuDifficulty)arg2).ToString();
-        Points.text = arg3.ToString();
+        _Id = record.Id;
         _vm = viewModel;
 
-        SudokuDifficulty difficulty = (SudokuDifficulty)arg2;
+        Level.text = record.Level.ToString();
+        Difficulty.text = ((SudokuDifficulty)record.Difficulty).ToString();
+        Points.text = record.Points.ToString();
+
+        int totalSeconds = Mathf.FloorToInt(record.ElapsedSeconds);
+        string completed = !string.IsNullOrEmpty(record.CompletedAt) && 
+                            record.CompletedAt.Length >= 10 ? record.CompletedAt.Substring(0, 10) : record.CompletedAt;
+
+        if (DetailsText != null)
+        {
+            DetailsText.text =
+                $"Result: {(record.IsWon ? "Win" : "Loss")}" +
+                $"      Time: {totalSeconds / 60:00}:{totalSeconds % 60:00}" +
+                $"      Lives: {record.LivesRemaining}\n" +
+
+                $"Undo: {record.UndoUses}" +
+                $"      Pencil: {record.PencilUses}" +
+                $"      Erase: {record.EraseUses}\n" +
+
+                $"SOS: {record.SOSUses}" +
+                $"      Auto Fill: {record.AutoFillUses}\n" +
+
+                $"Completed: {completed}";
+        }
+
+        SudokuDifficulty difficulty = (SudokuDifficulty)record.Difficulty;
 
         Color color_1, color_2, color_3;
         if( UnityEngine.ColorUtility.TryParseHtmlString( RecordScript.ColorMap_3[difficulty].bg, out color_1) && 
@@ -78,7 +103,7 @@ public class RecordScript : MonoBehaviour
             Difficulty.color = color_3;
         }
 
-        _retakeBtn = transform.Find("Restart/Value").GetComponent<Button>();
+        _retakeBtn = transform.Find("SummaryRow/Restart/Value").GetComponent<Button>();
 
         StateChange(_vm.CurrentStateName.Value);
 
@@ -86,11 +111,16 @@ public class RecordScript : MonoBehaviour
         _vm.CurrentStateName.OnChanged += StateChange;
         _retakeBtn.onClick.AddListener(() => 
         {
-            Debug.Log($"RETRY FEATURE: Button clicked for Id = {Id}");
-            _vm.RetryOlderGameCommand.Execute((Id, arg1, arg2, arg3));
+            Debug.Log($"RETRY FEATURE: Button clicked for Id = {record.Id}");
+            _vm.RetryOlderGameCommand.Execute((record.Id, record.Level, record.Difficulty, record.Points));
         });
     }
 
+    public void ToggleDetails()
+    {
+        if (DetailsPanel != null)
+            DetailsPanel.SetActive(!DetailsPanel.activeSelf);
+    }
     public void OnDestroy()
     {
         _vm.CurrentStateName.OnChanged -= StateChange;

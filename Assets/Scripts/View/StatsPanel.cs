@@ -215,7 +215,9 @@ public class StatsPanel : MonoBehaviour
             var newRow = Instantiate(this.recordScroll, this.parentScroll);
 
             var recordScript = newRow.GetComponent<RecordScript>();
-            if (recordScript != null) recordScript.Setup(_vm, arg[i].Id, (int)arg[i].Level, (int)arg[i].Difficulty, (int)arg[i].Points);
+            
+            if (recordScript != null) recordScript.Setup(_vm, arg[i]);
+
             lstOfRecords.Add(newRow);
             yield return new WaitForEndOfFrame();
         }

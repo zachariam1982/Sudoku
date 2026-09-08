@@ -157,11 +157,15 @@ public class SudokuViewModel
             {
                 IsSOSMode.Value = !IsSOSMode.Value;
             },
-            canExecute: _ => IsPencilMode.Value == false && IsEraseMode.Value == false,
+            canExecute: _ =>
+                IsPencilMode.Value == false &&
+                IsEraseMode.Value == false &&
+                IsSelectedCellEmpty(),
             getMessage: new (Func<bool> fn, System.Action showMessage)[]
             {
                 (() => IsPencilMode.Value == true, () => ShowMessage.Value = ("", "Pencil mode is set. Tap on Pencil again to enable SOS.", "")),
-                (() => IsEraseMode.Value == true, () => ShowMessage.Value = ("", "Erase mode is set. Tap on Erase again to enable SOS.", ""))
+                (() => IsEraseMode.Value == true, () => ShowMessage.Value = ("", "Erase mode is set. Tap on Erase again to enable SOS.", "")),
+                (() => !IsSelectedCellEmpty(), () => ShowMessage.Value = ("", "Select an empty cell before using SOS.", ""))
             }
         );
         AutoFillCandidatesCommand = new RelayCommand(
@@ -325,6 +329,16 @@ public class SudokuViewModel
         SelectedRow.Value           = -1;
         SelectedCol.Value           = -1;
         SelectedCellTransform.Value = null;
+    }
+    private bool IsSelectedCellEmpty()
+    {
+        int row = SelectedRow.Value;
+        int col = SelectedCol.Value;
+
+        return row >= 0 &&
+               col >= 0 &&
+               !_model.IsGiven(row, col) &&
+               _model.IsCellEmpty(row, col);
     }
     private void ApplySOSHint()
     {

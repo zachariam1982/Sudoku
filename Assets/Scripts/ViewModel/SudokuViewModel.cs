@@ -342,25 +342,43 @@ public class SudokuViewModel
     }
     private void ApplySOSHint()
     {
-        int row = SelectedRow.Value;
-        int col = SelectedCol.Value;
+        int selectedRow = SelectedRow.Value;
+        int selectedCol = SelectedCol.Value;
 
-        // SOS now applies only to the empty cell explicitly selected by the player.
-        if (row < 0 || col < 0 || _model.IsGiven(row, col) || !_model.IsCellEmpty(row, col))
+        if (!IsSelectedCellEmpty())
         {
             ShowMessage.Value = ("", "Select an empty cell before using SOS.", "");
             IsSOSMode.Value = false;
             return;
         }
 
-        int correct = _model.GetSolutionValue(row, col);
+        var changedCells = new List<(int row, int col, int number)>();
+
+        // Correct every wrong value entered by the player.
+        for (int row = 0; row < 9; row++)
+        {
+            for (int col = 0; col < 9; col++)
+            {
+                if (_model.IsGiven(row, col)) continue;
+
+                int current = _model.GetValue(row, col);
+                int correct = _model.GetSolutionValue(row, col);
+
+                if (current != 0 && current != correct)
+                {
+                    changedCells.Add((row, col, correct));
+                    Penalties.AddSOSWrongCell();
+                }
+            }
+        }
+
+        // Fill only the empty cell explicitly selected by the player.
+        int selectedCorrectValue = _model.GetSolutionValue(selectedRow, selectedCol);
+        changedCells.Add((selectedRow, selectedCol, selectedCorrectValue));
+        Penalties.AddSOSEmptyCell();
 
         UsageStats.AddSOS();
-        Penalties.AddSOSEmptyCell();
-        SOSChangedCells.Value = new List<(int row, int col, int number)>
-        {
-            (row, col, correct)
-        };
+        SOSChangedCells.Value = changedCells;
     }
     private void FetchData()
     {

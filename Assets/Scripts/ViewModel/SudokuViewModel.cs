@@ -328,50 +328,25 @@ public class SudokuViewModel
     }
     private void ApplySOSHint()
     {
-        var changedCells = new List<(int row, int col, int number)>();
- 
-        // ── Step 1: fix all wrong entries ─────────────────────────────────────
-        for (int row = 0; row < 9; row++)
+        int row = SelectedRow.Value;
+        int col = SelectedCol.Value;
+
+        // SOS now applies only to the empty cell explicitly selected by the player.
+        if (row < 0 || col < 0 || _model.IsGiven(row, col) || !_model.IsCellEmpty(row, col))
         {
-            for (int col = 0; col < 9; col++)
-            {
-                if (_model.IsGiven(row, col)) continue;
- 
-                int current = _model.GetValue(row, col);
-                int correct = _model.GetSolutionValue(row, col);
- 
-                if (current != 0 && current != correct)
-                { 
-                    changedCells.Add((row, col, correct));
-                    Penalties.AddSOSWrongCell();
-                }
-            }
+            ShowMessage.Value = ("", "Select an empty cell before using SOS.", "");
+            IsSOSMode.Value = false;
+            return;
         }
 
-        // ── Step 2: fix one empty entry ─────────────────────────────────────
-        bool fillEmpty = false;
-        for (int row = 0; row < 9 && !fillEmpty; row++)
-        {
-            for (int col = 0; col < 9 && !fillEmpty; col++)
-            {
-                if (_model.IsGiven(row, col)) continue;
- 
-                if (_model.IsCellEmpty(row, col))
-                {
-                    int correct = _model.GetSolutionValue(row, col);
+        int correct = _model.GetSolutionValue(row, col);
 
-                    changedCells.Add((row, col, correct));
-                    Penalties.AddSOSEmptyCell();
-                    fillEmpty = true;
-                }
-            }
-        }
- 
-        if (changedCells.Count == 0) return;
- 
         UsageStats.AddSOS();
-
-        SOSChangedCells.Value = changedCells;
+        Penalties.AddSOSEmptyCell();
+        SOSChangedCells.Value = new List<(int row, int col, int number)>
+        {
+            (row, col, correct)
+        };
     }
     private void FetchData()
     {

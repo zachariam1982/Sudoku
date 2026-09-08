@@ -345,13 +345,6 @@ public class SudokuViewModel
         int selectedRow = SelectedRow.Value;
         int selectedCol = SelectedCol.Value;
 
-        if (!IsSelectedCellEmpty())
-        {
-            ShowMessage.Value = ("", "Select an empty cell before using SOS.", "");
-            IsSOSMode.Value = false;
-            return;
-        }
-
         var changedCells = new List<(int row, int col, int number)>();
 
         // Correct every wrong value entered by the player.

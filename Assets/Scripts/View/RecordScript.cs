@@ -9,6 +9,8 @@ using UnityEngine.EventSystems;
 
 public class RecordScript : MonoBehaviour, IPointerClickHandler
 {
+    private static RecordScript _expandedRecord;
+
     private int _Id;
     private SudokuViewModel _vm;
     private Button _retakeBtn;
@@ -124,12 +126,39 @@ public class RecordScript : MonoBehaviour, IPointerClickHandler
 
     public void ToggleDetails()
     {
+        if (DetailsPanel == null) return;
+
+        bool shouldExpand = !DetailsPanel.activeSelf;
+
+        if (shouldExpand)
+        {
+            if (_expandedRecord != null && _expandedRecord != this)
+                _expandedRecord.CollapseDetails();
+
+            DetailsPanel.SetActive(true);
+            _expandedRecord = this;
+        }
+        else
+        {
+            CollapseDetails();
+        }
+    }
+
+    private void CollapseDetails()
+    {
         if (DetailsPanel != null)
-            DetailsPanel.SetActive(!DetailsPanel.activeSelf);
+            DetailsPanel.SetActive(false);
+
+        if (_expandedRecord == this)
+            _expandedRecord = null;
     }
     public void OnDestroy()
     {
-        _vm.CurrentStateName.OnChanged -= StateChange;
+        if (_expandedRecord == this)
+            _expandedRecord = null;
+
+        if (_vm != null)
+            _vm.CurrentStateName.OnChanged -= StateChange;
     }
 
     private void StateChange(string stateName)

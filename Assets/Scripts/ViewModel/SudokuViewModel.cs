@@ -110,12 +110,18 @@ public class SudokuViewModel
             execute: _ => ClosePicker()
         );
         SetEraseModeCommand   = new RelayCommand(
-            execute: _ => IsEraseMode.Value = !IsEraseMode.Value,
-            canExecute: _ => IsPencilMode.Value == false && replacedValueStack.Count != 0,
+            execute: _ =>
+            {
+                UsageStats.AddErase();
+                OnEnterValue(0);
+            },
+            canExecute: _ =>
+                IsPencilMode.Value == false &&
+                IsSelectedCellFilled(),
             getMessage: new (Func<bool> fn, System.Action showMessage)[]
             {
                 (() => IsPencilMode.Value == true, () => ShowMessage.Value = ("", "Pencil mode is set. Tap on Pencil again to enable Erase.", "")),
-                (() => replacedValueStack.Count == 0, () => ShowMessage.Value = ("", "No number is selected before which can be brought back.", ""))
+                (() => !IsSelectedCellFilled(), () => ShowMessage.Value = ("", "Select a filled cell before using Erase.", ""))
             }
         );
         SetPencilModeCommand  = new RelayCommand(
@@ -329,6 +335,16 @@ public class SudokuViewModel
         SelectedRow.Value           = -1;
         SelectedCol.Value           = -1;
         SelectedCellTransform.Value = null;
+    }
+    private bool IsSelectedCellFilled()
+    {
+        int row = SelectedRow.Value;
+        int col = SelectedCol.Value;
+
+        return row >= 0 &&
+               col >= 0 &&
+               !_model.IsGiven(row, col) &&
+               !_model.IsCellEmpty(row, col);
     }
     private bool IsSelectedCellEmpty()
     {

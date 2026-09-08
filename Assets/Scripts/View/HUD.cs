@@ -5,6 +5,7 @@ using UnityEngine.UI;
 public class HUD : MonoBehaviour
 {
     [SerializeField] private Button sosButton;
+    [SerializeField] private Button eraseButton;
 
     private SudokuViewModel viewModel;
     private Action<bool>    hideHudAction;
@@ -20,7 +21,7 @@ public class HUD : MonoBehaviour
         viewModel.BoardValues.OnChanged += OnBoardValuesChange;
         viewModel.HideHUD.OnChanged     += hideHudAction;
 
-        UpdateSOSButtonState();
+        UpdateActionButtonStates();
 
         if(SOSAdDialog.Instance != null) SOSAdDialog.Instance.Bind(viewModel);
     }
@@ -44,36 +45,50 @@ public class HUD : MonoBehaviour
 
     private void OnEraseModeChange(bool arg)
     {
-        UpdateSOSButtonState();
+        UpdateActionButtonStates();
     }
 
     private void OnPencilModeChange(bool arg)
     {
-        UpdateSOSButtonState();
+        UpdateActionButtonStates();
     }
 
     private void OnSelectedCellChange(int arg)
     {
-        UpdateSOSButtonState();
+        UpdateActionButtonStates();
     }
 
     private void OnBoardValuesChange(int[,] arg)
     {
-        UpdateSOSButtonState();
+        UpdateActionButtonStates();
     }
 
-    private void UpdateSOSButtonState()
+    private void UpdateActionButtonStates()
     {
-        if (sosButton == null || viewModel == null) return;
+        if (viewModel == null) return;
 
         int row = viewModel.SelectedRow.Value;
         int col = viewModel.SelectedCol.Value;
         int[,] board = viewModel.BoardValues.Value;
-
-        sosButton.interactable =
+        bool hasEditableSelection =
             row >= 0 && col >= 0 &&
-            board != null && board[row, col] == 0 &&
-            !viewModel.IsEraseMode.Value &&
-            !viewModel.IsPencilMode.Value;
+            board != null;
+
+        if (sosButton != null)
+        {
+            sosButton.interactable =
+                hasEditableSelection &&
+                board[row, col] == 0 &&
+                !viewModel.IsEraseMode.Value &&
+                !viewModel.IsPencilMode.Value;
+        }
+
+        if (eraseButton != null)
+        {
+            eraseButton.interactable =
+                hasEditableSelection &&
+                board[row, col] != 0 &&
+                !viewModel.IsPencilMode.Value;
+        }
     }
 }

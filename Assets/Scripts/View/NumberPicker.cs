@@ -29,6 +29,7 @@ public class NumberPicker : MonoBehaviour
     [SerializeField] private Image overlayPanel;
     [SerializeField] private RectTransform gridPanel;
     [SerializeField] private Button sosButton;
+    [SerializeField] private Button eraseButton;
 
     [Header("Outer spacing")]
     [SerializeField] private float pickerPadding = 8f;
@@ -152,11 +153,18 @@ public class NumberPicker : MonoBehaviour
 
                 if (cell != null && !cell.IsGiven && cell.Value == 0) return;
 
-                // Clicking SOS should dismiss only the picker UI. Keep the
-                // selected row and column so SOS can act on that empty cell.
-                if (sosButton != null &&
+                // SOS and Erase operate on the selected cell. Dismiss only
+                // the picker UI so their click handlers retain that selection.
+                bool isSOSButton =
+                    sosButton != null &&
                     (topHit == sosButton.gameObject ||
-                     topHit.transform.IsChildOf(sosButton.transform)))
+                     topHit.transform.IsChildOf(sosButton.transform));
+                bool isEraseButton =
+                    eraseButton != null &&
+                    (topHit == eraseButton.gameObject ||
+                     topHit.transform.IsChildOf(eraseButton.transform));
+
+                if (isSOSButton || isEraseButton)
                 {
                     viewModel.IsPickerOpen.Value = false;
                     return;

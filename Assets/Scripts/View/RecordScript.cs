@@ -4,9 +4,10 @@ using UnityEngine;
 using UnityEngine.UI;
 using TMPro;
 using System.Collections.Generic;
+using UnityEngine.EventSystems;
 //using Microsoft.Unity.VisualStudio.Editor;
 
-public class RecordScript : MonoBehaviour
+public class RecordScript : MonoBehaviour, IPointerClickHandler
 {
     private int _Id;
     private SudokuViewModel _vm;
@@ -56,6 +57,11 @@ public class RecordScript : MonoBehaviour
         { SudokuDifficulty.Expert,    ("#3B221D", "#FF624680", "#C0392B80") },
         { SudokuDifficulty.Hardest,   ("#3A1A20", "#E23B5C80", "#9B59B680") },
     };
+
+    public void OnPointerClick(PointerEventData eventData)
+    {
+        ToggleDetails();
+    }
 
     public void Setup(SudokuViewModel viewModel, GameRecord record)
     {

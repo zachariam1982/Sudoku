@@ -17,12 +17,12 @@ public class OrientationManager : MonoBehaviour
     [Header("References")]
     [SerializeField] private GridBuilder gridBuilder;
 
-    // Track last known orientation so we only rebuild when it actually changes
-    private ScreenOrientation lastOrientation;
-
-    // Canvas reference resolution (must match Canvas Scaler settings)
-    private const float RefW = 1080f;
-    private const float RefH = 1920f;
+    private RectTransform canvasRect;
+    private Canvas canvas;
+    private Vector2 lastScreenSize;
+    private Vector2 lastCanvasSize;
+    private Rect lastSafeArea;
+    private bool layoutReady;
 
     void Start()
     {
@@ -33,18 +33,22 @@ public class OrientationManager : MonoBehaviour
         Screen.autorotateToLandscapeRight     = true;
         Screen.orientation = ScreenOrientation.AutoRotation;
 
-        lastOrientation = Screen.orientation;
+        canvas = GetComponent<Canvas>();
+        canvasRect = GetComponent<RectTransform>();
 
         // Build for the current orientation immediately
         RebuildForCurrentOrientation();
     }
 
-    void Update()
+    void LateUpdate()
     {
-        // Detect orientation change
-        if (Screen.orientation != lastOrientation)
+        // AutoRotation and Editor window resizing need not change the orientation
+        // enum. Android may also deliver the new dimensions on a later frame.
+        if (!layoutReady ||
+            lastScreenSize != new Vector2(Screen.width, Screen.height) ||
+            lastCanvasSize != canvasRect.rect.size ||
+            lastSafeArea != Screen.safeArea)
         {
-            lastOrientation = Screen.orientation;
             RebuildForCurrentOrientation();
         }
     }
@@ -55,31 +59,47 @@ public class OrientationManager : MonoBehaviour
     /// </summary>
     public void RebuildForCurrentOrientation()
     {
-        float gridSize = CalculateGridSize(Screen.width, Screen.height);
+        if (gridBuilder == null || canvas == null || canvasRect == null ||
+            Screen.width <= 0 || Screen.height <= 0) return;
+
+        Canvas.ForceUpdateCanvases();
+        Vector2 size = canvasRect.rect.size;
+        if (size.x <= 0f || size.y <= 0f || canvas.scaleFactor <= 0f) return;
+
+        Rect safeArea = Screen.safeArea;
+        float unsafeWidth = Screen.width - safeArea.width;
+        float unsafeHeight = Screen.height - safeArea.height;
+        float gridSize = CalculateGridSize(
+            size.x - unsafeWidth / canvas.scaleFactor,
+            size.y - unsafeHeight / canvas.scaleFactor);
 
         using (new Benchmark("Grid rebuild")){
             gridBuilder.Rebuild(gridSize);
         }
+
+        lastScreenSize = new Vector2(Screen.width, Screen.height);
+        lastCanvasSize = size;
+        lastSafeArea = safeArea;
+        layoutReady = true;
+
+#if UNITY_EDITOR || DEVELOPMENT_BUILD
+        Debug.Log($"[M-01 Layout] screen={Screen.width}x{Screen.height}, " +
+                  $"canvas={size}, safeArea={safeArea}, grid={gridSize}, " +
+                  $"orientation={Screen.orientation}");
+#endif
     }
 
     /// <summary>
     /// Converts screen pixels to canvas units and returns the largest
     /// square grid that fits between the top and bottom bars.
     /// </summary>
-    private float CalculateGridSize(int screenW, int screenH)
+    private float CalculateGridSize(float canvasW, float canvasH)
     {
-        // Scale factor: how many canvas units per pixel
-        // Canvas Scaler uses "Match Width Or Height = 1" (match height)
-        float scale = RefH / screenH;
-
-        float canvasW = screenW * scale;
-        float canvasH = RefH;
-
         float available = Mathf.Min(
             canvasW  - 2f * screenPadding,
             canvasH  - topBarHeight - bottomBarHeight - 2f * screenPadding
         );
 
-        return Mathf.Max(available, 100f); // never go below 100 units
+        return Mathf.Max(available, 1f);
     }
 }

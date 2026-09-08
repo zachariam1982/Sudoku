@@ -8041,6 +8041,8 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 846c3f57088229e4da57a26d09a120fa, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::BottomBar
+  sosButton: {fileID: 1651740275}
+  eraseButton: {fileID: 381421563}
 --- !u!114 &1023807776
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -15656,6 +15658,8 @@ MonoBehaviour:
   - {fileID: 65424628}
   overlayPanel: {fileID: 516984522}
   gridPanel: {fileID: 1905441636}
+  sosButton: {fileID: 1651740275}
+  eraseButton: {fileID: 381421563}
   pickerPadding: 8
   screenSidePadding: 16
   portraitGapBelowGrid: 18

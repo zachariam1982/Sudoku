@@ -110,12 +110,18 @@ public class SudokuViewModel
             execute: _ => ClosePicker()
         );
         SetEraseModeCommand   = new RelayCommand(
-            execute: _ => IsEraseMode.Value = !IsEraseMode.Value,
-            canExecute: _ => IsPencilMode.Value == false && replacedValueStack.Count != 0,
+            execute: _ =>
+            {
+                UsageStats.AddErase();
+                OnEnterValue(0);
+            },
+            canExecute: _ =>
+                IsPencilMode.Value == false &&
+                IsSelectedCellFilled(),
             getMessage: new (Func<bool> fn, System.Action showMessage)[]
             {
                 (() => IsPencilMode.Value == true, () => ShowMessage.Value = ("", "Pencil mode is set. Tap on Pencil again to enable Erase.", "")),
-                (() => replacedValueStack.Count == 0, () => ShowMessage.Value = ("", "No number is selected before which can be brought back.", ""))
+                (() => !IsSelectedCellFilled(), () => ShowMessage.Value = ("", "Select a filled cell before using Erase.", ""))
             }
         );
         SetPencilModeCommand  = new RelayCommand(
@@ -157,11 +163,15 @@ public class SudokuViewModel
             {
                 IsSOSMode.Value = !IsSOSMode.Value;
             },
-            canExecute: _ => IsPencilMode.Value == false && IsEraseMode.Value == false,
+            canExecute: _ =>
+                IsPencilMode.Value == false &&
+                IsEraseMode.Value == false &&
+                IsSelectedCellEmpty(),
             getMessage: new (Func<bool> fn, System.Action showMessage)[]
             {
                 (() => IsPencilMode.Value == true, () => ShowMessage.Value = ("", "Pencil mode is set. Tap on Pencil again to enable SOS.", "")),
-                (() => IsEraseMode.Value == true, () => ShowMessage.Value = ("", "Erase mode is set. Tap on Erase again to enable SOS.", ""))
+                (() => IsEraseMode.Value == true, () => ShowMessage.Value = ("", "Erase mode is set. Tap on Erase again to enable SOS.", "")),
+                (() => !IsSelectedCellEmpty(), () => ShowMessage.Value = ("", "Select an empty cell before using SOS.", ""))
             }
         );
         AutoFillCandidatesCommand = new RelayCommand(
@@ -326,51 +336,57 @@ public class SudokuViewModel
         SelectedCol.Value           = -1;
         SelectedCellTransform.Value = null;
     }
+    private bool IsSelectedCellFilled()
+    {
+        int row = SelectedRow.Value;
+        int col = SelectedCol.Value;
+
+        return row >= 0 &&
+               col >= 0 &&
+               !_model.IsGiven(row, col) &&
+               !_model.IsCellEmpty(row, col);
+    }
+    private bool IsSelectedCellEmpty()
+    {
+        int row = SelectedRow.Value;
+        int col = SelectedCol.Value;
+
+        return row >= 0 &&
+               col >= 0 &&
+               !_model.IsGiven(row, col) &&
+               _model.IsCellEmpty(row, col);
+    }
     private void ApplySOSHint()
     {
+        int selectedRow = SelectedRow.Value;
+        int selectedCol = SelectedCol.Value;
+
         var changedCells = new List<(int row, int col, int number)>();
- 
-        // ── Step 1: fix all wrong entries ─────────────────────────────────────
+
+        // Correct every wrong value entered by the player.
         for (int row = 0; row < 9; row++)
         {
             for (int col = 0; col < 9; col++)
             {
                 if (_model.IsGiven(row, col)) continue;
- 
+
                 int current = _model.GetValue(row, col);
                 int correct = _model.GetSolutionValue(row, col);
- 
+
                 if (current != 0 && current != correct)
-                { 
+                {
                     changedCells.Add((row, col, correct));
                     Penalties.AddSOSWrongCell();
                 }
             }
         }
 
-        // ── Step 2: fix one empty entry ─────────────────────────────────────
-        bool fillEmpty = false;
-        for (int row = 0; row < 9 && !fillEmpty; row++)
-        {
-            for (int col = 0; col < 9 && !fillEmpty; col++)
-            {
-                if (_model.IsGiven(row, col)) continue;
- 
-                if (_model.IsCellEmpty(row, col))
-                {
-                    int correct = _model.GetSolutionValue(row, col);
+        // Fill only the empty cell explicitly selected by the player.
+        int selectedCorrectValue = _model.GetSolutionValue(selectedRow, selectedCol);
+        changedCells.Add((selectedRow, selectedCol, selectedCorrectValue));
+        Penalties.AddSOSEmptyCell();
 
-                    changedCells.Add((row, col, correct));
-                    Penalties.AddSOSEmptyCell();
-                    fillEmpty = true;
-                }
-            }
-        }
- 
-        if (changedCells.Count == 0) return;
- 
         UsageStats.AddSOS();
-
         SOSChangedCells.Value = changedCells;
     }
     private void FetchData()

@@ -15657,6 +15657,7 @@ MonoBehaviour:
   - {fileID: 65424628}
   overlayPanel: {fileID: 516984522}
   gridPanel: {fileID: 1905441636}
+  sosButton: {fileID: 1651740275}
   pickerPadding: 8
   screenSidePadding: 16
   portraitGapBelowGrid: 18

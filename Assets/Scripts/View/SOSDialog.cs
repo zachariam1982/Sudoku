@@ -59,8 +59,21 @@ public class SOSAdDialog : MonoBehaviour
         if (AdManager.Instance == null || !AdManager.Instance.IsAdReady())
         {
             _vm.ApplySOSCommand.Execute();
-            MakeChangesProvidedBySOS(_vm);
-            _isSOSRunning = false;
+
+            // Creating the IEnumerator is not enough; it must be started.
+            if (User.Instance != null)
+            {
+                User.Instance.StartCoroutine(
+                    MakeChangesProvidedBySOS(_vm)
+                );
+            }
+            else
+            {
+                StartCoroutine(
+                    MakeChangesProvidedBySOS(_vm)
+                );
+            }
+
             return;
         }
 

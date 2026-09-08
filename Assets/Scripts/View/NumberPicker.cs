@@ -28,6 +28,7 @@ public class NumberPicker : MonoBehaviour
     [SerializeField] private Button[] numberButtons;
     [SerializeField] private Image overlayPanel;
     [SerializeField] private RectTransform gridPanel;
+    [SerializeField] private Button sosButton;
 
     [Header("Outer spacing")]
     [SerializeField] private float pickerPadding = 8f;
@@ -150,6 +151,16 @@ public class NumberPicker : MonoBehaviour
                 SudokuCell cell = topHit.GetComponentInParent<SudokuCell>();
 
                 if (cell != null && !cell.IsGiven && cell.Value == 0) return;
+
+                // Clicking SOS should dismiss only the picker UI. Keep the
+                // selected row and column so SOS can act on that empty cell.
+                if (sosButton != null &&
+                    (topHit == sosButton.gameObject ||
+                     topHit.transform.IsChildOf(sosButton.transform)))
+                {
+                    viewModel.IsPickerOpen.Value = false;
+                    return;
+                }
             }
         }
 

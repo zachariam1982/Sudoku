@@ -61,7 +61,7 @@ public class LoseState : IGameState
         if (!requested) return;
 
         // Retry restarts the same puzzle from scratch
-        if(_vm != null && _vm.RetryGameData.id == -1) _vm?.DecreaseDifficulty.Execute();
+        // Keep the level and difficulty unchanged for both normal and historical retries.
         
         _machine.TransitionTo(_machine.Idle);
         User.Instance?.SaveNow();

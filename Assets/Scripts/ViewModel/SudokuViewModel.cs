@@ -237,12 +237,9 @@ public class SudokuViewModel
         NextLevel             = new RelayCommand(
             execute: _ => 
             {
-                #if UNITY_WEBGL && !UNITY_EDITOR
-                _model?.SetLevel(_model.CurrentLevel + 1);
-                #else
-                int level = GameDatabase.GetLastRecord()?.Level ?? 1;
+                // RETAKE temporarily loads an older level on every platform.
+                int level = GameDatabase.GetLastRecord()?.Level ?? _model.CurrentLevel;
                 _model?.SetLevel(level + 1);
-                #endif
             }
         );
         IncreaseDifficulty    = new RelayCommand(
@@ -457,14 +454,7 @@ public class SudokuViewModel
         _model.SetLevel(last.Level + 1);
         _model.SetDifficulty((SudokuDifficulty)last.Difficulty);
 
-        if (last.IsWon)
-        {
-            _model.increaseDifficulty();
-        }
-        else
-        {
-            _model.decreaseDifficulty();
-        }
+        _model.UpdateDifficultyFromHistory();
 
         RetryGameData = (-1, -1, -1, -1);
         RetryOlderGameRequested.Value = false;

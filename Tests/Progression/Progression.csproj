@@ -1,0 +1,11 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup><OutputType>Exe</OutputType><TargetFramework>net8.0</TargetFramework><ImplicitUsings>enable</ImplicitUsings></PropertyGroup>
+  <ItemGroup>
+    <Compile Include="../../Assets/Scripts/Model/SudokuModel.cs" Link="SudokuModel.cs" />
+    <Compile Include="../../Assets/Scripts/Model/SudokuSolver.cs" Link="SudokuSolver.cs" />
+    <Compile Include="../../Assets/Scripts/Core/GameRecord.cs" Link="GameRecord.cs" />
+    <Compile Include="../../Assets/Scripts/StateMachine/IGameState.cs" Link="IGameState.cs" />
+    <Compile Include="../../Assets/Scripts/StateMachine/State/LoseState.cs" Link="LoseState.cs" />
+    <Compile Include="../../Assets/Scripts/StateMachine/State/WinState.cs" Link="WinState.cs" />
+  </ItemGroup>
+</Project>

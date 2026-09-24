@@ -4,6 +4,7 @@ using UnityEngine.UI;
 public class ResponsiveTopBar : MonoBehaviour
 {
     [Header("TopBar Items")]
+    [SerializeField] private RectTransform homeBlock;
     [SerializeField] private RectTransform livesContainer;
     [SerializeField] private RectTransform level;
     [SerializeField] private RectTransform timer;
@@ -15,7 +16,8 @@ public class ResponsiveTopBar : MonoBehaviour
     [SerializeField] [Range(1f, 2f)] private float landscapeScale = 1.4f;
     [SerializeField] private float portraitScale = 1f;
 
-    private bool? _lastLandscape;
+    private bool _layoutApplied;
+    private bool _lastLandscape;
     private RectTransform _topBar;
 
     private void Awake()
@@ -34,7 +36,7 @@ public class ResponsiveTopBar : MonoBehaviour
 
     private void OnEnable()
     {
-        _lastLandscape = null;
+        _layoutApplied = false;
 
         Refresh();
     }
@@ -49,9 +51,8 @@ public class ResponsiveTopBar : MonoBehaviour
         /*
          * Don't rebuild every frame.
          */
-        if (_lastLandscape.HasValue &&
-            _lastLandscape.Value ==
-            isLandscape)
+        if (_layoutApplied &&
+            _lastLandscape == isLandscape)
         {
             return;
         }
@@ -68,6 +69,7 @@ public class ResponsiveTopBar : MonoBehaviour
 
         _lastLandscape =
             isLandscape;
+        _layoutApplied = true;
 
         float scale =
             isLandscape
@@ -79,6 +81,10 @@ public class ResponsiveTopBar : MonoBehaviour
                 scale,
                 scale,
                 1f);
+
+        ApplyScale(
+            homeBlock,
+            targetScale);
 
         ApplyScale(
             livesContainer,

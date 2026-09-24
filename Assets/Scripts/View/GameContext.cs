@@ -12,6 +12,7 @@ public class GameContext : MonoBehaviour
     /// <summary>Shared ViewModel — accessible by GridBuilder after Awake.</summary>
     public SudokuViewModel ViewModel { get; private set; }
     public static int cnt = 0;
+    [SerializeField] private HomeScreenController _homeScreen;
 
     void Awake()
     {
@@ -52,6 +53,8 @@ public class GameContext : MonoBehaviour
         User.Instance.TryLoadSave();
 
         #endif
+
+        _homeScreen.Initialize(ViewModel);
     }
 
     #if UNITY_WEBGL && !UNITY_EDITOR
@@ -66,6 +69,7 @@ public class GameContext : MonoBehaviour
                 Debug.Log(
                     "[YouTube] Initial cloud synchronization completed."
                 );
+                _homeScreen?.RefreshJourneyStatus();
             }
         );
     }

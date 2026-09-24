@@ -23,6 +23,7 @@ public class GameStateMachine : MonoBehaviour
     // ── Current state ─────────────────────────────────────────────────────────
     private IGameState _currentState;
     public  IGameState CurrentState => _currentState;
+    private bool _isSuspended;
 
     // ── Dependencies ──────────────────────────────────────────────────────────
     private SudokuViewModel _viewModel;
@@ -72,8 +73,15 @@ public class GameStateMachine : MonoBehaviour
         _viewModel.CurrentStateName.Value = _currentState.GetType().Name;
     }
 
+    public void SetSuspended(bool isSuspended)
+    {
+        _isSuspended = isSuspended;
+    }
+
     void Update()
     {
+        if (_isSuspended) return;
+
         _currentState?.Update(Time.deltaTime);
     }
 }

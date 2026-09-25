@@ -49,6 +49,22 @@ public class SudokuCell : MonoBehaviour
             255,
             255,
             255);
+
+    // Keep the board digits in the same bright, playful palette as the
+    // variant-selection artwork. The sprite sheet supplies the shading;
+    // these colors provide the consistent variant accent for each digit.
+    private static readonly Color32[] MockupDigitColors =
+    {
+        new Color32(39, 196, 238, 255),  // 1 cyan
+        new Color32(240, 75, 86, 255),   // 2 coral
+        new Color32(255, 197, 61, 255),  // 3 gold
+        new Color32(131, 201, 74, 255),  // 4 lime
+        new Color32(66, 207, 239, 255),  // 5 cyan
+        new Color32(255, 138, 61, 255),  // 6 orange
+        new Color32(244, 66, 138, 255),  // 7 pink
+        new Color32(169, 103, 208, 255), // 8 purple
+        new Color32(132, 201, 74, 255)   // 9 green
+    };
     public int  Value   { get; private set; }
     public bool IsGiven { get; private set; }
     private Vector3 _originalScale;
@@ -182,6 +198,7 @@ public class SudokuCell : MonoBehaviour
             numberImage.gameObject.SetActive(value != 0);
             if (value > 0 && value <= numberSprites.Length && numberSprites[value - 1] != null)
                 numberImage.sprite = numberSprites[value - 1];
+            numberImage.color = GetDigitColor(value);
         }
 
         if (value == 0) isConflict = false;
@@ -210,7 +227,9 @@ public class SudokuCell : MonoBehaviour
 
         // Keep error tint on numberImage visible even while dimmed
         if (numberImage != null && !isConflict)
-            numberImage.color = dimmed ? new Color(0.6f, 0.6f, 0.6f, 1f) : Color.white;
+            numberImage.color = dimmed
+                ? Color.Lerp(GetDigitColor(Value), Color.gray, 0.45f)
+                : GetDigitColor(Value);
     }
 
     public void SetPickerHighlight(bool active)
@@ -241,12 +260,20 @@ public class SudokuCell : MonoBehaviour
         }
         else
         {
-            // Restore numberImage to white so sprite shows true colors
+            // Restore the mockup palette after the conflict is cleared.
             if (numberImage != null)
-                numberImage.color = Color.white;
+                numberImage.color = GetDigitColor(Value);
             if (background != null)
                 background.color = isDimmed ? dimmedColor : (IsGiven ? givenColor : normalColor);
         }
+    }
+
+    private static Color GetDigitColor(int value)
+    {
+        if (value < 1 || value > MockupDigitColors.Length)
+            return Color.white;
+
+        return MockupDigitColors[value - 1];
     }
 
     void OnDisable()

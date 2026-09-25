@@ -155,13 +155,13 @@ TextureImporter:
     serializedVersion: 2
     sprites:
     - serializedVersion: 2
-      name: Home_Ico_0
+      name: Home_Ico_
       rect:
         serializedVersion: 2
         x: 85
-        y: 73
+        y: 58
         width: 318
-        height: 309
+        height: 324
       alignment: 0
       pivot: {x: 0.5, y: 0.5}
       border: {x: 0, y: 0, z: 0, w: 0}
@@ -180,10 +180,10 @@ TextureImporter:
       name: Home_Ico_1
       rect:
         serializedVersion: 2
-        x: 125
-        y: 73
-        width: 238
-        height: 253
+        x: 85
+        y: 59
+        width: 318
+        height: 323
       alignment: 0
       pivot: {x: 0.5, y: 0.5}
       border: {x: 0, y: 0, z: 0, w: 0}
@@ -202,7 +202,7 @@ TextureImporter:
     customData: 
     physicsShape: []
     bones: []
-    spriteID: d110487370a2f314fbe91a7cf20bc482
+    spriteID: 41efe65845baaa94cbfdff1d6bcdc497
     internalID: 0
     vertices: []
     indices: 
@@ -212,7 +212,7 @@ TextureImporter:
     spriteCustomMetadata:
       entries: []
     nameFileIdTable:
-      Home_Ico_0: -7016109135253889820
+      Home_Ico_: -7016109135253889820
       Home_Ico_1: -1917245543414589735
   mipmapLimitGroupName: 
   pSDRemoveMatte: 0

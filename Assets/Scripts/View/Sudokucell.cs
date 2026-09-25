@@ -30,14 +30,12 @@ public class SudokuCell : MonoBehaviour
     // ── Internal state ────────────────────────────────────────────────────────
     private int             row;
     private int             col;
-    private SudokuViewModel viewModel;
+    private BaseViewModel viewModel;
     private bool            isDimmed   = false;
     private bool            isConflict = false;
     private Color           baseColor;
-    private HashSet<TMP_Text> btnTextInPencilMode = new HashSet<TMP_Text>();
-
-
     private Button[] _pencilButtons;
+    private int _pencilCandidateMask;
     private static readonly Color32 PencilInactiveColor =
         new Color32(
             80,
@@ -93,65 +91,21 @@ public class SudokuCell : MonoBehaviour
 
     private void OnPencilModeButtonClick(Button arg)
     {
-        if (viewModel != null && viewModel.IsPencilMode.Value)
-        {
-            if (NumberPicker.Instance != null)
-                NumberPicker.Instance.SetSelectedCellTransform(GetComponent<RectTransform>());
- 
-            viewModel.SelectCellCommand.Execute(
-                new ValueTuple<int, int, object>(row, col, GetComponent<RectTransform>()));
-            return;
-        }
+        if (viewModel == null || !viewModel.IsPencilMode.Value) return;
 
-        TMP_Text text = arg.GetComponentInChildren<TMP_Text>();
+        if (NumberPicker.Instance != null)
+            NumberPicker.Instance.SetSelectedCellTransform(GetComponent<RectTransform>());
 
-        if (text == null) return;
-
-        bool isActive = btnTextInPencilMode.Contains(text);
-
-        if (isActive)
-        {
-            btnTextInPencilMode.Remove(text);
-            text.color = PencilInactiveColor;
-        }
-        else
-        {
-            btnTextInPencilMode.Add(text);
-            text.color = PencilActiveColor;
-        }
-
-        SetCandidateHighlight(viewModel != null ? viewModel.HighlightedCandidateNumber.Value : 0);
-    }
-
-    private void OnStateChanged(string stateName)
-    {
-        if (stateName != "IdleState") return;
-
-        foreach (TMP_Text text in btnTextInPencilMode)
-        {
-            if (text != null)
-            {
-                text.color = PencilInactiveColor;
-            }
-        }
-
-        btnTextInPencilMode.Clear();
-
-        SetCandidateHighlight(0);
+        viewModel.SelectCellCommand.Execute(
+            new ValueTuple<int, int, object>(row, col, GetComponent<RectTransform>()));
     }
     // ── Binding ───────────────────────────────────────────────────────────────
 
-    public void Bind(int cellRow, int cellCol, SudokuViewModel vm)
+    public void Bind(int cellRow, int cellCol, BaseViewModel vm)
     {
         row       = cellRow;
         col       = cellCol;
         viewModel = vm;
-        if( viewModel != null) viewModel.CurrentStateName.OnChanged += OnStateChanged;
-    }
-
-    private void OnDestroy()
-    {
-        if( viewModel != null) viewModel.CurrentStateName.OnChanged -= OnStateChanged;
     }
 
     public void SetCandidateHighlight(int number)
@@ -169,7 +123,7 @@ public class SudokuCell : MonoBehaviour
             if (text == null) continue;
 
 
-            bool isActive = btnTextInPencilMode.Contains(text);
+            bool isActive = (_pencilCandidateMask & (1 << (i + 1))) != 0;
 
             if (!isActive)
             {
@@ -191,83 +145,11 @@ public class SudokuCell : MonoBehaviour
             }
         }
     }
-    public void TogglePencilNumber(int number)
-    {
-        if (_pencilButtons == null || number < 1 || number > 9) return;
-        
-        int idx = number - 1;
-
-        if (idx >= _pencilButtons.Length) return;
-
-        TMP_Text text = _pencilButtons[idx].GetComponentInChildren<TMP_Text>();
-
-        if (text == null) return;
-
-        bool isActive = btnTextInPencilMode.Contains(text);
-
-        if (isActive)
-        {
-            btnTextInPencilMode.Remove(text);
-            text.color = PencilInactiveColor;
-        }
-        else
-        {
-            btnTextInPencilMode.Add(text);
-            text.color = PencilActiveColor;
-        }
-
-        if (viewModel != null)
-        {
-            viewModel.HighlightedCandidateNumber.Value = number;
-        }
-    }
-    public bool RemovePencilCandidate(int number)
-    {
-        if (_pencilButtons == null || number < 1 || number > 9) return false;
-
-        int index = number - 1;
-
-        if (index >= _pencilButtons.Length) return false;
-
-        Button button = _pencilButtons[index];
-
-        if (button == null) return false;
-
-        TMP_Text text = button.GetComponentInChildren<TMP_Text>();
-
-        if (text == null) return false;
-
-        if (!btnTextInPencilMode.Contains(text)) return false;
-
-        btnTextInPencilMode.Remove(text);
-
-        text.color = PencilInactiveColor;
-
-        return true;
-    }
-
-    public void ClearAllPencilCandidates()
+    public void SetPencilCandidates(int candidateMask)
     {
         if (_pencilButtons == null) return;
 
-        foreach (TMP_Text text in btnTextInPencilMode)
-        {
-            if (text != null)
-            {
-                text.color = PencilInactiveColor;
-            }
-        }
-
-        btnTextInPencilMode.Clear();
-    }
-
-    public void SetPencilCandidates(IEnumerable<int> candidates)
-    {
-        if (_pencilButtons == null) return;
-
-        HashSet<int> candidateSet = new HashSet<int>(candidates);
-        btnTextInPencilMode.Clear();
-        Color32 inactiveColor = new Color32(80,80,80,255);
+        _pencilCandidateMask = candidateMask;
 
         for (int i = 0;i < _pencilButtons.Length && i < 9;i++)
         {
@@ -279,17 +161,8 @@ public class SudokuCell : MonoBehaviour
 
             if (text == null) continue;
 
-            int number = i + 1;
-
-            if (candidateSet.Contains(number))
-            {
-                btnTextInPencilMode.Add(text);
-                text.color = Color.white;
-            }
-            else
-            {
-                text.color = inactiveColor;
-            }
+            bool isActive = (candidateMask & (1 << (i + 1))) != 0;
+            text.color = isActive ? PencilActiveColor : PencilInactiveColor;
         }
 
         if (viewModel != null)

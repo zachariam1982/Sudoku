@@ -1,6 +1,6 @@
 /// <summary>
 /// Interface every game state must implement.
-/// The GameStateMachine calls these at the right time.
+/// A Sudoku state machine calls these at the right time.
 /// </summary>
 public interface IGameState
 {

@@ -58,9 +58,8 @@ public class NumberPicker : MonoBehaviour
 
     private float cellSize = 56f;
 
-    private SudokuViewModel viewModel;
+    private BaseViewModel viewModel;
     private RectTransform selectedCellRT;
-    private SudokuCell _selectedCell;
 
     private Vector2 lastPickerPos;
     private Coroutine activeAnimation;
@@ -120,7 +119,8 @@ public class NumberPicker : MonoBehaviour
 
             button.onClick.AddListener(() =>
             {
-                if (viewModel?.IsPencilMode.Value == true) _selectedCell?.TogglePencilNumber(number); 
+                if (viewModel?.IsPencilMode.Value == true)
+                    viewModel.TogglePencilCandidateCommand.Execute(number);
                 else viewModel?.EnterValueCommand.Execute(number); 
             });
 
@@ -202,8 +202,15 @@ public class NumberPicker : MonoBehaviour
         return false;
     }
 
-    public void Bind(SudokuViewModel vm)
+    public void Bind(BaseViewModel vm)
     {
+        if (ReferenceEquals(viewModel, vm)) return;
+        if (viewModel != null)
+        {
+            viewModel.IsPickerOpen.OnChanged -= OnPickerOpenChanged;
+            viewModel.SelectedCellTransform.OnChanged -= OnSelectedCellTransformChanged;
+        }
+
         viewModel = vm;
 
         vm.IsPickerOpen.OnChanged += OnPickerOpenChanged;
@@ -221,13 +228,11 @@ public class NumberPicker : MonoBehaviour
     private void OnSelectedCellTransformChanged( object cellTransform)
     {
         selectedCellRT = cellTransform as RectTransform;
-        _selectedCell = selectedCellRT != null ? selectedCellRT.GetComponent<SudokuCell>() : null;
     }
 
     public void SetSelectedCellTransform( RectTransform cellRT)
     {
         selectedCellRT = cellRT;
-        _selectedCell = cellRT != null ? cellRT.GetComponent<SudokuCell>() : null;
     }
 
     private void OnPickerOpenChanged(bool isOpen)

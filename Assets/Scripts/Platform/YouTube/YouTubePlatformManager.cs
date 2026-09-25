@@ -109,7 +109,7 @@ public class YouTubePlatformManager : MonoBehaviour
         if (_youtubeSystemPaused) return;
 
         _youtubeSystemPaused = true;
-        SudokuViewModel vm = User.Instance?.ViewModel;
+        JourneyViewModel vm = User.Instance?.ViewModel;
 
         //
         // 1. Save before YouTube may evict the game.
@@ -125,7 +125,7 @@ public class YouTubePlatformManager : MonoBehaviour
         //
         // 2. Remember whether WE caused the gameplay pause.
         //
-        _pausedGameplayForYouTube = vm != null && GameStateMachine.Instance != null && GameStateMachine.Instance.CurrentState is PlayingState;
+        _pausedGameplayForYouTube = vm != null && JourneyStateMachine.Instance != null && JourneyStateMachine.Instance.CurrentState is JourneyPlayingState;
 
         if (_pausedGameplayForYouTube) vm.PauseCommand.Execute();
 
@@ -135,10 +135,10 @@ public class YouTubePlatformManager : MonoBehaviour
         _timeScaleBeforeYouTubePause = Time.timeScale;
         Time.timeScale = 0f;
 
-        if (GameStateMachine.Instance != null)
+        if (JourneyStateMachine.Instance != null)
         {
-            _stateMachineWasEnabled = GameStateMachine.Instance.enabled;
-            GameStateMachine.Instance.enabled = false;
+            _stateMachineWasEnabled = JourneyStateMachine.Instance.enabled;
+            JourneyStateMachine.Instance.enabled = false;
         }
 
         //
@@ -154,14 +154,14 @@ public class YouTubePlatformManager : MonoBehaviour
 
         Time.timeScale = _timeScaleBeforeYouTubePause;
 
-        if (GameStateMachine.Instance != null) GameStateMachine.Instance.enabled = _stateMachineWasEnabled;
+        if (JourneyStateMachine.Instance != null) JourneyStateMachine.Instance.enabled = _stateMachineWasEnabled;
 
         AudioListener.pause = false;
         _youtubeSystemPaused = false;
 
-        SudokuViewModel vm = User.Instance?.ViewModel;
+        JourneyViewModel vm = User.Instance?.ViewModel;
 
-        if (_pausedGameplayForYouTube && vm != null && GameStateMachine.Instance != null && GameStateMachine.Instance.CurrentState is PausedState)
+        if (_pausedGameplayForYouTube && vm != null && JourneyStateMachine.Instance != null && JourneyStateMachine.Instance.CurrentState is JourneyPausedState)
             vm.ResumeCommand.Execute();
 
         _pausedGameplayForYouTube = false;

@@ -28,10 +28,15 @@ public class SaveGameData
     // ── Puzzle identity ───────────────────────────────────────────────────────
     public int    Level      = 1;
     public int    Difficulty = 2; // maps to SudokuDifficulty enum ordinal
+    public int    PuzzleSeed = 0; // 0 means a legacy save; use Level as its seed
 
     // ── Board state ───────────────────────────────────────────────────────────
     /// <summary>Flat row-major array of 81 cell values (0 = empty).</summary>
     public int[]  BoardFlat  = new int[81];
+    /// <summary>Bit mask of pencil candidates for each cell.</summary>
+    public int[] PencilCandidateMasksFlat = new int[81];
+    public bool IsPencilMode = false;
+    public int HighlightedCandidateNumber = 0;
 
     // ── Session stats ─────────────────────────────────────────────────────────
     public float  ElapsedSeconds  = 0f;

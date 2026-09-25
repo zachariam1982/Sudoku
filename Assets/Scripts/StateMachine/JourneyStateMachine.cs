@@ -7,26 +7,28 @@ using UnityEngine;
 /// The ViewModel is the single source of truth for state data.
 /// The StateMachine is the single source of truth for state transitions.
 /// </summary>
-public class GameStateMachine : MonoBehaviour
+public class JourneyStateMachine : MonoBehaviour, ISudokuStateMachine
 {
     // ── Singleton ─────────────────────────────────────────────────────────────
-    public static GameStateMachine Instance { get; private set; }
+    public static JourneyStateMachine Instance { get; private set; }
 
     // ── State instances ───────────────────────────────────────────────────────
-    public IdleState       Idle       { get; private set; }
-    public PlayingState    Playing    { get; private set; }
-    public PausedState     Paused     { get; private set; }
-    public ValidatingState Validating { get; private set; }
-    public WinState        Win        { get; private set; }
-    public LoseState       Lose       { get; private set; }
+    public JourneyIdleState       Idle       { get; private set; }
+    public JourneyPlayingState    Playing    { get; private set; }
+    public JourneyPausedState     Paused     { get; private set; }
+    public JourneyValidatingState Validating { get; private set; }
+    public JourneyWinState        Win        { get; private set; }
+    public JourneyLoseState       Lose       { get; private set; }
 
     // ── Current state ─────────────────────────────────────────────────────────
     private IGameState _currentState;
     public  IGameState CurrentState => _currentState;
+    public bool IsPlaying => _currentState is JourneyPlayingState;
+    public bool IsIdle => _currentState is JourneyIdleState;
     private bool _isSuspended;
 
     // ── Dependencies ──────────────────────────────────────────────────────────
-    private SudokuViewModel _viewModel;
+    private JourneyViewModel _viewModel;
 
     // ── Initialise ────────────────────────────────────────────────────────────
 
@@ -39,19 +41,19 @@ public class GameStateMachine : MonoBehaviour
     /// Called by GameContext after ViewModel is created.
     /// Creates all states and starts in Idle.
     /// </summary>
-    public void Initialise(SudokuViewModel viewModel)
+    public void Initialise(JourneyViewModel viewModel)
     {
         _viewModel = viewModel;
+        viewModel.AttachStateMachine(this);
 
         // Create all state instances, passing ViewModel and machine reference
-        Idle       = new IdleState(viewModel, this);
-        Playing    = new PlayingState(viewModel, this);
-        Paused     = new PausedState(viewModel, this);
-        Validating = new ValidatingState(viewModel, this);
-        Win        = new WinState(viewModel, this);
-        Lose       = new LoseState(viewModel, this);
+        Idle       = new JourneyIdleState(viewModel, this);
+        Playing    = new JourneyPlayingState(viewModel, this);
+        Paused     = new JourneyPausedState(viewModel, this);
+        Validating = new JourneyValidatingState(viewModel, this);
+        Win        = new JourneyWinState(viewModel, this);
+        Lose       = new JourneyLoseState(viewModel, this);
 
-        // Start in Idle
         TransitionTo(Idle);
     }
 
@@ -77,6 +79,8 @@ public class GameStateMachine : MonoBehaviour
     {
         _isSuspended = isSuspended;
     }
+
+    public void StartPlaying() => TransitionTo(Playing);
 
     void Update()
     {

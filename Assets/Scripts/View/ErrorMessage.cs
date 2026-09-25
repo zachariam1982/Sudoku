@@ -6,7 +6,7 @@ using UnityEngine.UI;
 public class ErrorMessage : MonoBehaviour
 {
     private static ErrorMessage Instance;
-    private SudokuViewModel viewModel;
+    private BaseViewModel viewModel;
     [Header("Error Dialog")]
     [SerializeField] private GameObject errorDialog;
 
@@ -17,6 +17,7 @@ public class ErrorMessage : MonoBehaviour
 
     [Header("Close Button")]
     [SerializeField] private Button closeButton;
+    private Action<(string title, string message, string status)> _showMessageHandler;
     // Start is called once before the first execution of Update after the MonoBehaviour is created
     public void Awake()
     {
@@ -29,14 +30,25 @@ public class ErrorMessage : MonoBehaviour
         closeButton.onClick.AddListener(() => errorDialog.SetActive(false)); 
     }
 
-    public void Bind(SudokuViewModel arg)
+    public void Bind(BaseViewModel arg)
     {
+        if (ReferenceEquals(viewModel, arg)) return;
+        if (viewModel != null && _showMessageHandler != null)
+            viewModel.ShowMessage.OnChanged -= _showMessageHandler;
+
         viewModel = arg;
-        arg.ShowMessage.OnChanged += (arg) => {
-                Title.text = arg.title;
-                Message.text = arg.message;
-                Status.text = arg.status;
+        _showMessageHandler = value => {
+                Title.text = value.title;
+                Message.text = value.message;
+                Status.text = value.status;
                 errorDialog.SetActive(true);
             };
+        arg.ShowMessage.OnChanged += _showMessageHandler;
+    }
+
+    private void OnDestroy()
+    {
+        if (viewModel != null && _showMessageHandler != null)
+            viewModel.ShowMessage.OnChanged -= _showMessageHandler;
     }
 }

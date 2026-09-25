@@ -28,8 +28,12 @@ public sealed class HomeScreenController : MonoBehaviour
 
     [Header("Journey Status")]
     [SerializeField] private TextMeshProUGUI journeyLabel;
+
+    [Header("Screens")]
+    [SerializeField] private GameObject newGameScreen;
     
-    private SudokuViewModel _viewModel;
+    private JourneyViewModel _viewModel;
+    private GameContext _gameContext;
     private bool _layoutApplied;
     private bool _lastLandscape;
 
@@ -44,9 +48,14 @@ public sealed class HomeScreenController : MonoBehaviour
         if (isActiveAndEnabled) ApplyResponsiveLayout();
     }
 
-    public void Initialize(SudokuViewModel viewModel)
+    public void Initialize(JourneyViewModel viewModel, GameContext gameContext)
     {
         _viewModel = viewModel;
+        _gameContext = gameContext != null
+            ? gameContext
+            : GetComponentInParent<GameContext>();
+        if (_gameContext == null)
+            _gameContext = FindObjectOfType<GameContext>();
         ApplyResponsiveLayout();
         RefreshJourneyStatus();
     }
@@ -64,22 +73,41 @@ public sealed class HomeScreenController : MonoBehaviour
 
     public void OpenJourney()
     {
+        if (_gameContext == null)
+        {
+            Debug.LogError("HomeScreenController could not resolve a GameContext.", this);
+            return;
+        }
+
+        if (_viewModel == null)
+        {
+            Debug.LogError("HomeScreenController could not resolve a JourneyViewModel.", this);
+            return;
+        }
+
         gameObject.SetActive(false);
+        _gameContext.ActivateJourney();
 
         bool isSavedGameInProgress =
             _viewModel.ElapsedSeconds.Value > 0f &&
             !_viewModel.IsWon.Value &&
             !_viewModel.IsLost.Value;
 
-        if (isSavedGameInProgress && GameStateMachine.Instance.CurrentState is IdleState)
+        if (isSavedGameInProgress && JourneyStateMachine.Instance != null &&
+            JourneyStateMachine.Instance.CurrentState is JourneyIdleState)
             _viewModel.FirstCellTapped.Value = true;
 
-        GameStateMachine.Instance.SetSuspended(false);
+    }
+
+    public void OpenNewGame()
+    {
+        newGameScreen.SetActive(true);
+        gameObject.SetActive(false);
     }
 
     public void OpenHome()
     {
-        GameStateMachine.Instance.SetSuspended(true);
+        _gameContext.SuspendActiveGame();
         RefreshJourneyStatus();
         gameObject.SetActive(true);
     }

@@ -71,7 +71,7 @@ public class StatsPanel : MonoBehaviour
     private const float StatsDesignWidth = 972f;
     private const float StatsDesignHeight = 1920f;
 
-    private SudokuViewModel _vm;
+    private JourneyViewModel _vm;
     private bool            _open;
     private Coroutine       _slideAnim;
     private Coroutine       _barAnim;
@@ -171,7 +171,7 @@ public class StatsPanel : MonoBehaviour
         if (!_open) panelRT.anchoredPosition = new Vector2( _hiddenX, panelRT.anchoredPosition.y);
     }
 
-    public void Bind(SudokuViewModel vm)
+    public void Bind(JourneyViewModel vm)
     {
         _vm = vm;
         vm.ElapsedSeconds.OnChanged += OnElapsedSecondsChanged;

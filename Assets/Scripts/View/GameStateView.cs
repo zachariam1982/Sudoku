@@ -33,6 +33,7 @@ public class GameStateView : MonoBehaviour
     [Header("TopBar Items")]
     [SerializeField] private GameObject Lives;
     [SerializeField] private GameObject Timer;
+    [SerializeField] private GameObject Settings;
     [SerializeField] private TextMeshProUGUI Level;
     [Header("HUD — always visible during play")]
     [SerializeField] private TextMeshProUGUI timerLabel;
@@ -55,21 +56,30 @@ public class GameStateView : MonoBehaviour
     [Header("Pause Panel")]
     [SerializeField] private GameObject      pausePanel;
 
-    private SudokuViewModel _vm;
+    [Header("New Game Win Panel")]
+    [SerializeField] private GameObject      newGameWinPanel;
+
+    private BaseViewModel _vm;
     private HUD _hud;
 
 
     // ── Binding ───────────────────────────────────────────────────────────────
 
-    public void Bind(SudokuViewModel vm)
+    public void Bind(BaseViewModel vm)
     {
+        if (ReferenceEquals(_vm, vm)) return;
+        Unbind();
         _vm = vm;
 
         vm.CurrentStateName.OnChanged += OnStateChanged;
-        vm.ElapsedSeconds.OnChanged   += OnTimerChanged;
-        vm.LivesRemaining.OnChanged   += OnLivesChanged;
         vm.IsWon.OnChanged            += OnWonChanged;
-        vm.IsLost.OnChanged           += OnLostChanged;
+        JourneyViewModel journey = vm as JourneyViewModel;
+        if (journey != null)
+        {
+            journey.ElapsedSeconds.OnChanged += OnTimerChanged;
+            journey.LivesRemaining.OnChanged += OnLivesChanged;
+            journey.IsLost.OnChanged += OnLostChanged;
+        }
         _hud = hudPanel != null
             ? hudPanel.GetComponent<HUD>()
             : null;
@@ -77,17 +87,28 @@ public class GameStateView : MonoBehaviour
         _hud?.Bind(vm);
 
         SetAllPanelsHidden();
+        OnStateChanged(vm.CurrentStateName.Value);
     }
 
     private void OnDestroy()
     {
+        Unbind();
+    }
+
+    private void Unbind()
+    {
         if (_vm == null) return;
 
         _vm.CurrentStateName.OnChanged -= OnStateChanged;
-        _vm.ElapsedSeconds.OnChanged   -= OnTimerChanged;
-        _vm.LivesRemaining.OnChanged   -= OnLivesChanged;
         _vm.IsWon.OnChanged            -= OnWonChanged;
-        _vm.IsLost.OnChanged           -= OnLostChanged;
+        JourneyViewModel journey = _vm as JourneyViewModel;
+        if (journey != null)
+        {
+            journey.ElapsedSeconds.OnChanged -= OnTimerChanged;
+            journey.LivesRemaining.OnChanged -= OnLivesChanged;
+            journey.IsLost.OnChanged -= OnLostChanged;
+        }
+        _vm = null;
     }
 
     // ── State Change Handlers ─────────────────────────────────────────────────
@@ -98,44 +119,50 @@ public class GameStateView : MonoBehaviour
 
         switch (stateName)
         {
-            case "IdleState":
+            case "JourneyIdleState":
                 if (hudPanel != null) hudPanel.SetActive(false);
-                if (Lives != null) Lives.SetActive(true);
-                if (Timer != null) Timer.SetActive(true);
                 if(_vm != null) Level.text = "        ";
                 break;
 
-            case "PlayingState":
+            case "JourneyPlayingState":
+            case "NewGamePlayingState":
                 if (hudPanel != null) hudPanel.SetActive(true);
                 if(_vm != null) Level.text = ((SudokuDifficulty)_vm.GetDifficulty).ToString();
                 break;
 
-            case "PausedState":
+            case "JourneyPausedState":
+            case "NewGamePausedState":
                 if(pausePanel != null)pausePanel.SetActive(true);                
                 Button btn = this.pausePanel.GetComponentInChildren<Button>();
                 btn.onClick.AddListener(OnPlayPressed);
                 break;
 
-            case "ValidatingState":
+            case "JourneyValidatingState":
+            case "NewGameValidatingState":
                 if(hudPanel != null ) hudPanel.SetActive(false);
-                if (Lives != null) Lives.SetActive(false);
-                if (Timer != null) Timer.SetActive(false);
                 break;
 
-            case "WinState":
+            case "JourneyWinState":
                 if (winPanel != null)
                 {
+                    if (overlay != null) overlay.SetActive(true);
                     winPanel.SetActive(true);
                     UpdateWinPanel();
                 }
                 break;
 
-            case "LoseState":
-                if (Lives != null) Lives.SetActive(false);
-                if (Timer != null) Timer.SetActive(false);
+            case "JourneyLoseState":
+                if (overlay != null) overlay.SetActive(true);
                 if (losePanel != null) losePanel.SetActive(true);
                 break;
+
+            case "NewGameWinState":
+                if (overlay != null) overlay.SetActive(true);
+                if (newGameWinPanel != null) newGameWinPanel.SetActive(true);
+                break;
         }
+
+        ApplyModeVisibility(stateName);
     }
 
     // ── Timer ─────────────────────────────────────────────────────────────────
@@ -173,18 +200,24 @@ public class GameStateView : MonoBehaviour
 
     private void OnWonChanged(bool isWon)
     {
+        if (!(_vm is JourneyViewModel)) return;
         if (overlay != null) overlay.SetActive(isWon);
         if (winPanel != null) winPanel.SetActive(isWon);
         if(isWon == false) return;
+        JourneyViewModel journey = _vm as JourneyViewModel;
+        if (journey == null) return;
         if (winTimeLabel != null)
         {
-            int minutes = (int)(_vm.ElapsedSeconds.Value / 60f);
-            int secs    = (int)(_vm.ElapsedSeconds.Value % 60f);
+            int minutes = (int)(journey.ElapsedSeconds.Value / 60f);
+            int secs    = (int)(journey.ElapsedSeconds.Value % 60f);
             winTimeLabel.text = $"{minutes:00}:{secs:00}";
         }
         if (winPointsLabel != null)
         {
-            var total = ScoringSystem.Calculate( (SudokuDifficulty)_vm.GetDifficulty, _vm.ElapsedSeconds.Value, _vm.Penalties);
+            var total = ScoringSystem.Calculate(
+                (SudokuDifficulty)_vm.GetDifficulty,
+                journey.ElapsedSeconds.Value,
+                journey.Penalties);
             winPointsLabel.text = $"Points: {total}/200";
         }
     }
@@ -205,14 +238,14 @@ public class GameStateView : MonoBehaviour
         if (winPanel != null) winPanel.SetActive(false);
         if (losePanel != null) losePanel.SetActive(false);
         if (overlay != null) overlay.SetActive(false);
-        _vm?.NewGameCommand.Execute();
+        (_vm as JourneyViewModel)?.NewGameCommand.Execute();
     }
     public void OnRetryPressed()    
     {
         if (winPanel != null) winPanel.SetActive(false);
         if (losePanel != null) losePanel.SetActive(false);
         if (overlay != null) overlay.SetActive(false);
-        _vm?.RetryCommand.Execute();
+        (_vm as JourneyViewModel)?.RetryCommand.Execute();
     }
     public void OnPlayPressed()
     {
@@ -220,6 +253,13 @@ public class GameStateView : MonoBehaviour
         _vm?.ResumeCommand.Execute();
     }
     public void OnResumePressed()   => _vm?.ResumeCommand.Execute();
+
+    public void OnNewGameWinAcknowledged()
+    {
+        if (newGameWinPanel != null) newGameWinPanel.SetActive(false);
+        if (overlay != null) overlay.SetActive(false);
+        _vm?.NotifyGameCompleted();
+    }
 
     // ── Helper ────────────────────────────────────────────────────────────────
 
@@ -229,5 +269,23 @@ public class GameStateView : MonoBehaviour
         if (winPanel   != null) winPanel.SetActive(false);
         if (losePanel  != null) losePanel.SetActive(false);
         if (pausePanel != null) pausePanel.SetActive(false);
+        if (newGameWinPanel != null) newGameWinPanel.SetActive(false);
+        if (overlay    != null) overlay.SetActive(false);
+    }
+
+    private void ApplyModeVisibility(string stateName)
+    {
+        bool journeyMode = _vm is JourneyViewModel;
+        bool hideStatus = stateName == "JourneyValidatingState" ||
+                          stateName == "NewGameValidatingState" ||
+                          stateName == "JourneyWinState" ||
+                          stateName == "NewGameWinState" ||
+                          stateName == "JourneyLoseState";
+
+        if (Lives != null) Lives.SetActive(journeyMode && !hideStatus);
+        if (Timer != null) Timer.SetActive(journeyMode && !hideStatus);
+        if (Settings != null) Settings.SetActive(journeyMode);
+        if (winTimeLabel != null) winTimeLabel.gameObject.SetActive(journeyMode);
+        if (winPointsLabel != null) winPointsLabel.gameObject.SetActive(journeyMode);
     }
 }

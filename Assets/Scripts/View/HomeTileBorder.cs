@@ -8,7 +8,7 @@ using UnityEngine.UI;
 /// </summary>
 public sealed class HomeTileBorder : Graphic
 {
-    [SerializeField] private float thickness = 3f;
+    [SerializeField] private float thickness = 5f;
 
     private static readonly string[] EdgeNames =
     {

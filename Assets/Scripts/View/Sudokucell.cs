@@ -379,8 +379,20 @@ public class SudokuCell : MonoBehaviour
         viewModel.SetEraseModeCommand.Execute();
     }
 
-    public void ResizePencilGrid(float newCellSize)
+    [Header("Responsive Number Size")]
+    [SerializeField, Range(0.5f, 1.25f)]
+    private float numberFontSizeCellRatio = 0.86f;
+
+    public void ResizeCellContent(float newCellSize)
     {
+        if (numberText != null)
+        {
+            numberText.enableAutoSizing = false;
+            numberText.fontSize = Mathf.Max(1f, newCellSize * numberFontSizeCellRatio);
+        }
+
+        if (pencilGrid == null) return;
+
         float padding = pencilGrid.padding.left + pencilGrid.padding.right;
         float spacing = pencilGrid.spacing.x * 2;
         float bSize = (newCellSize - padding - spacing) / 3f;

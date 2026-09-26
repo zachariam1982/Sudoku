@@ -3848,7 +3848,7 @@ MonoBehaviour:
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: a79441f348de89743a2939f4d699eac1, type: 3}
   m_Name: 
-  m_EditorClassIdentifier: 
+  m_EditorClassIdentifier:
   m_RenderShadows: 1
   m_RequiresDepthTextureOption: 2
   m_RequiresOpaqueTextureOption: 2
@@ -4740,7 +4740,7 @@ MonoBehaviour:
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 073797afb82c5a1438f328866b10b3f0, type: 3}
   m_Name: 
-  m_EditorClassIdentifier: 
+  m_EditorClassIdentifier:
   m_ComponentVersion: 2
   m_LightType: 4
   m_BlendStyleIndex: 0
@@ -20470,7 +20470,7 @@ GameObject:
   - component: {fileID: 2147000022}
   - component: {fileID: 2147000023}
   - component: {fileID: 2147000024}
-  - component: {fileID: 2147001001}
+  - component: {fileID: 2147001101}
   m_Layer: 5
   m_Name: DailyChallengeButton
   m_TagString: Untagged
@@ -20730,7 +20730,7 @@ GameObject:
   - component: {fileID: 2147000032}
   - component: {fileID: 2147000033}
   - component: {fileID: 2147000034}
-  - component: {fileID: 2147001002}
+  - component: {fileID: 2147001102}
   m_Layer: 5
   m_Name: NewGameButton
   m_TagString: Untagged
@@ -21002,7 +21002,7 @@ GameObject:
   - component: {fileID: 2147000042}
   - component: {fileID: 2147000043}
   - component: {fileID: 2147000044}
-  - component: {fileID: 2147001003}
+  - component: {fileID: 2147001103}
   m_Layer: 5
   m_Name: SudokuJourneyButton
   m_TagString: Untagged
@@ -25630,7 +25630,7 @@ CanvasRenderer:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 2147300030}
   m_CullTransparentMesh: 1
---- !u!114 &2147001001
+--- !u!114 &2147001101
 MonoBehaviour:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
@@ -25639,13 +25639,19 @@ MonoBehaviour:
   m_GameObject: {fileID: 2147000020}
   m_Enabled: 1
   m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: e19747de3f5aca642ab2be37e372fb86, type: 3}
+  m_Script: {fileID: 11500000, guid: a7e8d0f4a1d7445b9b1a2f5c0d8e6f31, type: 3}
   m_Name: 
-  m_EditorClassIdentifier: UnityEngine.UI::UnityEngine.UI.Outline
-  m_EffectColor: {r: 1, g: 0.74509805, b: 0.29803923, a: 1}
-  m_EffectDistance: {x: 2, y: -2}
-  m_UseGraphicAlpha: 0
---- !u!114 &2147001002
+  m_EditorClassIdentifier:
+  m_Material: {fileID: 0}
+  m_Color: {r: 1, g: 0.74509805, b: 0.29803923, a: 1}
+  m_RaycastTarget: 0
+  m_RaycastPadding: {x: 0, y: 0, z: 0, w: 0}
+  m_Maskable: 1
+  m_OnCullStateChanged:
+    m_PersistentCalls:
+      m_Calls: []
+  thickness: 3
+--- !u!114 &2147001102
 MonoBehaviour:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
@@ -25654,13 +25660,19 @@ MonoBehaviour:
   m_GameObject: {fileID: 2147000030}
   m_Enabled: 1
   m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: e19747de3f5aca642ab2be37e372fb86, type: 3}
+  m_Script: {fileID: 11500000, guid: a7e8d0f4a1d7445b9b1a2f5c0d8e6f31, type: 3}
   m_Name: 
-  m_EditorClassIdentifier: UnityEngine.UI::UnityEngine.UI.Outline
-  m_EffectColor: {r: 1, g: 0.74509805, b: 0.29803923, a: 1}
-  m_EffectDistance: {x: 2, y: -2}
-  m_UseGraphicAlpha: 0
---- !u!114 &2147001003
+  m_EditorClassIdentifier:
+  m_Material: {fileID: 0}
+  m_Color: {r: 1, g: 0.74509805, b: 0.29803923, a: 1}
+  m_RaycastTarget: 0
+  m_RaycastPadding: {x: 0, y: 0, z: 0, w: 0}
+  m_Maskable: 1
+  m_OnCullStateChanged:
+    m_PersistentCalls:
+      m_Calls: []
+  thickness: 3
+--- !u!114 &2147001103
 MonoBehaviour:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
@@ -25669,12 +25681,18 @@ MonoBehaviour:
   m_GameObject: {fileID: 2147000040}
   m_Enabled: 1
   m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: e19747de3f5aca642ab2be37e372fb86, type: 3}
+  m_Script: {fileID: 11500000, guid: a7e8d0f4a1d7445b9b1a2f5c0d8e6f31, type: 3}
   m_Name: 
-  m_EditorClassIdentifier: UnityEngine.UI::UnityEngine.UI.Outline
-  m_EffectColor: {r: 1, g: 0.74509805, b: 0.29803923, a: 1}
-  m_EffectDistance: {x: 2, y: -2}
-  m_UseGraphicAlpha: 0
+  m_EditorClassIdentifier:
+  m_Material: {fileID: 0}
+  m_Color: {r: 1, g: 0.74509805, b: 0.29803923, a: 1}
+  m_RaycastTarget: 0
+  m_RaycastPadding: {x: 0, y: 0, z: 0, w: 0}
+  m_Maskable: 1
+  m_OnCullStateChanged:
+    m_PersistentCalls:
+      m_Calls: []
+  thickness: 3
 --- !u!1660057539 &9223372036854775807
 SceneRoots:
   m_ObjectHideFlags: 0

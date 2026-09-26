@@ -125,7 +125,7 @@ public class NumberPicker : MonoBehaviour
                 if (buttonBackground == null)
                     buttonBackground = button.GetComponent<Image>();
                 if (buttonBackground != null)
-                    buttonBackground.color = new Color32(245, 245, 245, 255);
+                    buttonBackground.color = new Color32(120, 83, 29, 255);
 
                 TMP_Text label = button.GetComponentInChildren<TMP_Text>(true);
                 if (label != null)

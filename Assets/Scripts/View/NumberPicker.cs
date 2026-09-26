@@ -105,26 +105,42 @@ public class NumberPicker : MonoBehaviour
             if (overlayButton != null) overlayButton.enabled = false;
         }
 
-        for (int i = 0; i < numberButtons.Length; i++)
+        if (numberButtons != null)
         {
-            int number = i + 1;
-
-            Button button = numberButtons[i];
-
-            if (button == null) continue;
-
-            TextMeshProUGUI label = button.GetComponentInChildren<TextMeshProUGUI>();
-
-            if (label != null) label.text = number.ToString();
-
-            button.onClick.AddListener(() =>
+            for (int i = 0; i < numberButtons.Length; i++)
             {
-                if (viewModel?.IsPencilMode.Value == true)
-                    viewModel.TogglePencilCandidateCommand.Execute(number);
-                else viewModel?.EnterValueCommand.Execute(number); 
-            });
+                int number = i + 1;
 
-            CreateSkyBlueBorder(button);
+                Button button = numberButtons[i];
+
+                if (button == null) continue;
+
+                // Keep the button face white and use the same per-number
+                // accent color as digits on the Sudoku board.
+                Image buttonBackground = button.targetGraphic as Image;
+                if (buttonBackground == null)
+                    buttonBackground = button.GetComponent<Image>();
+                if (buttonBackground != null)
+                    buttonBackground.color = Color.white;
+
+                TMP_Text label = button.GetComponentInChildren<TMP_Text>(true);
+                if (label != null)
+                {
+                    label.gameObject.SetActive(true);
+                    label.enabled = true;
+                    label.text = number.ToString();
+                    label.color = GetDigitColor(number);
+                }
+
+                button.onClick.AddListener(() =>
+                {
+                    if (viewModel?.IsPencilMode.Value == true)
+                        viewModel.TogglePencilCandidateCommand.Execute(number);
+                    else viewModel?.EnterValueCommand.Execute(number);
+                });
+
+                CreateSkyBlueBorder(button);
+            }
         }
 
         if (pickerPanel != null) pickerPanel.gameObject.SetActive(false);
@@ -486,6 +502,23 @@ public class NumberPicker : MonoBehaviour
         return new Vector2( 
                         Mathf.Lerp( r.xMin, r.xMax, pickerPanel.anchorMin.x),
                         Mathf.Lerp( r.yMin, r.yMax, pickerPanel.anchorMin.y));
+    }
+
+    private static Color GetDigitColor(int number)
+    {
+        switch (number)
+        {
+            case 1: return new Color32(39, 196, 238, 255);
+            case 2: return new Color32(240, 75, 86, 255);
+            case 3: return new Color32(255, 197, 61, 255);
+            case 4: return new Color32(131, 201, 74, 255);
+            case 5: return new Color32(66, 207, 239, 255);
+            case 6: return new Color32(255, 138, 61, 255);
+            case 7: return new Color32(244, 66, 138, 255);
+            case 8: return new Color32(169, 103, 208, 255);
+            case 9: return new Color32(132, 201, 74, 255);
+            default: return Color.white;
+        }
     }
 
     private void CreateSkyBlueBorder( Button button)

@@ -13,7 +13,6 @@ public class SudokuCell : MonoBehaviour
     [SerializeField] private Image           background;
     [SerializeField] private Image        numberImage;
     [SerializeField] private TMP_Text     numberText;
-    [SerializeField] private Sprite[]     numberSprites; // drag Number_1 to Number_9 in Inspector
     [SerializeField] private GridLayoutGroup pencilGrid; 
     [SerializeField] public GameObject pencilCell;
 
@@ -205,8 +204,6 @@ public class SudokuCell : MonoBehaviour
                 numberText.text = value == 0 ? string.Empty : value.ToString();
                 numberText.color = GetDigitColor(value);
             }
-            else if (value > 0 && numberSprites != null && value <= numberSprites.Length && numberSprites[value - 1] != null)
-                numberImage.sprite = numberSprites[value - 1];
             if (numberText == null)
                 numberImage.color = GetDigitColor(value);
         }

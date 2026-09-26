@@ -1444,16 +1444,6 @@ MonoBehaviour:
   background: {fileID: 0}
   numberImage: {fileID: 6189946746341001043}
   numberText: {fileID: 9996189946741001043}
-  numberSprites:
-  - {fileID: 734381914722965486, guid: a99bb9ea327624d42be651a0b751e17b, type: 3}
-  - {fileID: 1179054847, guid: a99bb9ea327624d42be651a0b751e17b, type: 3}
-  - {fileID: -1982761011, guid: a99bb9ea327624d42be651a0b751e17b, type: 3}
-  - {fileID: -906985152, guid: a99bb9ea327624d42be651a0b751e17b, type: 3}
-  - {fileID: 790142924, guid: a99bb9ea327624d42be651a0b751e17b, type: 3}
-  - {fileID: -198999778, guid: a99bb9ea327624d42be651a0b751e17b, type: 3}
-  - {fileID: 40640172, guid: a99bb9ea327624d42be651a0b751e17b, type: 3}
-  - {fileID: -1307127474, guid: a99bb9ea327624d42be651a0b751e17b, type: 3}
-  - {fileID: -684427219, guid: a99bb9ea327624d42be651a0b751e17b, type: 3}
   pencilGrid: {fileID: 4431507934144657428}
   pencilCell: {fileID: 7678346645169589158}
   normalColor: {r: 0.07058824, g: 0.07450981, b: 0.18039216, a: 1}

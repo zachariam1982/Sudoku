@@ -24,9 +24,6 @@ public class SudokuCell : MonoBehaviour
     public Color highlightColor;
     public Color errorColor;
 
-    [Header("Conflict Cell Background")]
-    [SerializeField] private Color conflictCellColor = new Color32(255, 180, 180, 255);
-    
     [Header("Pencil Candidate Highlight")]
     [SerializeField] private Color candidateHighlightColor = new Color32(255,200,50,255);
 
@@ -217,7 +214,7 @@ public class SudokuCell : MonoBehaviour
 
         // Keep conflict feedback on the cell background, not the digit.
         if (background != null && !isDimmed)
-            background.color = isConflict ? conflictCellColor : baseColor;
+            background.color = isConflict ? errorColor : baseColor;
     }
 
     public void SetHighlight(bool highlighted)
@@ -233,7 +230,7 @@ public class SudokuCell : MonoBehaviour
         isDimmed  = dimmed;
         baseColor = dimmed ? dimmedColor : (IsGiven ? givenColor : normalColor);
         if (background != null)
-            background.color = isConflict ? conflictCellColor : baseColor;
+            background.color = isConflict ? errorColor : baseColor;
 
         // Keep the digit palette unchanged while the cell is in conflict.
         if (!isConflict)
@@ -250,7 +247,7 @@ public class SudokuCell : MonoBehaviour
     {
         if (isConflict)
         {
-            if (background != null) background.color = conflictCellColor;
+            if (background != null) background.color = errorColor;
             return;
         }
 
@@ -271,7 +268,7 @@ public class SudokuCell : MonoBehaviour
         if (conflict)
         {
             if (background != null)
-                background.color = conflictCellColor;
+                background.color = errorColor;
         }
         else
         {
@@ -320,10 +317,10 @@ public class SudokuCell : MonoBehaviour
         Image pulseTarget = background != null ? background : numberImage;
         if (pulseTarget == null) yield break;
 
-        yield return UIAnimator.Pulse(pulseTarget, Color.white, conflictCellColor, 3, 0.15f);
+        yield return UIAnimator.Pulse(pulseTarget, Color.white, errorColor, 3, 0.15f);
 
         if (isConflict)
-            pulseTarget.color = conflictCellColor;
+            pulseTarget.color = errorColor;
         else
             pulseTarget.color = isDimmed ? dimmedColor : baseColor;
     }

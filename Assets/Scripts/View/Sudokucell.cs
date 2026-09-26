@@ -12,6 +12,7 @@ public class SudokuCell : MonoBehaviour
     [Header("References (auto-found if left empty)")]
     [SerializeField] private Image           background;
     [SerializeField] private Image        numberImage;
+    [SerializeField] private TMP_Text     numberText;
     [SerializeField] private Sprite[]     numberSprites; // drag Number_1 to Number_9 in Inspector
     [SerializeField] private GridLayoutGroup pencilGrid; 
     [SerializeField] public GameObject pencilCell;
@@ -85,6 +86,8 @@ public class SudokuCell : MonoBehaviour
                 }
             }
         }
+        if (numberText == null && numberImage != null)
+            numberText = numberImage.GetComponent<TMP_Text>();
         
         Button[] btns = GetComponentsInChildren<Button>(true);
         var pencilBtnList = new List<Button>();
@@ -196,9 +199,16 @@ public class SudokuCell : MonoBehaviour
         if (numberImage != null)
         {
             numberImage.gameObject.SetActive(value != 0);
-            if (value > 0 && value <= numberSprites.Length && numberSprites[value - 1] != null)
+            numberImage.enabled = numberText == null;
+            if (numberText != null)
+            {
+                numberText.text = value == 0 ? string.Empty : value.ToString();
+                numberText.color = GetDigitColor(value);
+            }
+            else if (value > 0 && numberSprites != null && value <= numberSprites.Length && numberSprites[value - 1] != null)
                 numberImage.sprite = numberSprites[value - 1];
-            numberImage.color = GetDigitColor(value);
+            if (numberText == null)
+                numberImage.color = GetDigitColor(value);
         }
 
         if (value == 0) isConflict = false;
@@ -226,10 +236,14 @@ public class SudokuCell : MonoBehaviour
             background.color = baseColor;
 
         // Keep error tint on numberImage visible even while dimmed
-        if (numberImage != null && !isConflict)
-            numberImage.color = dimmed
+        if (!isConflict)
+        {
+            Color color = dimmed
                 ? Color.Lerp(GetDigitColor(Value), Color.gray, 0.45f)
                 : GetDigitColor(Value);
+            if (numberText != null) numberText.color = color;
+            else if (numberImage != null) numberImage.color = color;
+        }
     }
 
     public void SetPickerHighlight(bool active)
@@ -253,7 +267,9 @@ public class SudokuCell : MonoBehaviour
         if (conflict)
         {
             // Tint numberImage red so error is visible over the full-size sprite
-            if (numberImage != null && numberImage.gameObject.activeSelf)
+            if (numberText != null && numberText.gameObject.activeSelf)
+                numberText.color = errorColor;
+            else if (numberImage != null && numberImage.gameObject.activeSelf)
                 numberImage.color = errorColor;
             else
                 background.color = errorColor; // fallback for empty cells
@@ -261,8 +277,8 @@ public class SudokuCell : MonoBehaviour
         else
         {
             // Restore the mockup palette after the conflict is cleared.
-            if (numberImage != null)
-                numberImage.color = GetDigitColor(Value);
+            if (numberText != null) numberText.color = GetDigitColor(Value);
+            else if (numberImage != null) numberImage.color = GetDigitColor(Value);
             if (background != null)
                 background.color = isDimmed ? dimmedColor : (IsGiven ? givenColor : normalColor);
         }

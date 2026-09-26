@@ -125,7 +125,7 @@ public class NumberPicker : MonoBehaviour
                 if (buttonBackground == null)
                     buttonBackground = button.GetComponent<Image>();
                 if (buttonBackground != null)
-                    buttonBackground.color = Color.white;
+                    buttonBackground.color = new Color32(245, 245, 245, 255);
 
                 TMP_Text label = button.GetComponentInChildren<TMP_Text>(true);
                 if (label != null)
@@ -415,7 +415,7 @@ public class NumberPicker : MonoBehaviour
 
             label.enableAutoSizing = false;
             label.fontSize = fontSize;
-            label.fontWeight = FontWeight.Regular;
+            label.fontWeight = FontWeight.Medium;
             label.fontStyle = FontStyles.Normal;
         }
     }

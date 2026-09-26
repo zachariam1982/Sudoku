@@ -45,6 +45,10 @@ public class NumberPicker : MonoBehaviour
     [SerializeField] private float landscapeButtonScale = 2.5f;
     [SerializeField] private float landscapeGapScale = 0.24f;
 
+    [Header("Number label appearance")]
+    [SerializeField, Range(0.5f, 1.25f)]
+    private float numberFontSizeCellRatio = 0.86f;
+
     [Header("Number border")]
     [SerializeField] private Color borderColor =
         new Color32(76, 201, 255, 255);
@@ -322,6 +326,7 @@ public class NumberPicker : MonoBehaviour
         float totalHeight = buttonSize + 2f * pickerPadding;
 
         pickerPanel.sizeDelta = new Vector2( totalWidth, totalHeight);
+        ResizeNumberLabels();
 
         float startX = -finalContentWidth / 2f + buttonSize / 2f;
 
@@ -374,6 +379,7 @@ public class NumberPicker : MonoBehaviour
         float totalSize = finalContentSize + 2f * pickerPadding;
 
         pickerPanel.sizeDelta = new Vector2( totalSize, totalSize);
+        ResizeNumberLabels();
 
         for (int i = 0; i < numberButtons.Length; i++)
         {
@@ -393,6 +399,26 @@ public class NumberPicker : MonoBehaviour
         }
     }
 
+
+    private void ResizeNumberLabels()
+    {
+        if (numberButtons == null) return;
+
+        float fontSize = Mathf.Max(1f, cellSize * numberFontSizeCellRatio);
+
+        foreach (Button button in numberButtons)
+        {
+            if (button == null) continue;
+
+            TMP_Text label = button.GetComponentInChildren<TMP_Text>(true);
+            if (label == null) continue;
+
+            label.enableAutoSizing = false;
+            label.fontSize = fontSize;
+            label.fontWeight = FontWeight.Regular;
+            label.fontStyle = FontStyles.Normal;
+        }
+    }
 
     // ---------------------------------------------------------------------
     // POSITION

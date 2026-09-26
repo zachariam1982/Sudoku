@@ -1443,7 +1443,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::SudokuCell
   background: {fileID: 0}
   numberImage: {fileID: 6189946746341001043}
-  numberText: {fileID: 9996189946741001043}
+  numberText: {fileID: 9006189946741001043}
   pencilGrid: {fileID: 4431507934144657428}
   pencilCell: {fileID: 7678346645169589158}
   normalColor: {r: 0.07058824, g: 0.07450981, b: 0.18039216, a: 1}
@@ -2066,7 +2066,7 @@ GameObject:
   - component: {fileID: 5356851898461823873}
   - component: {fileID: 6083592902198669086}
   - component: {fileID: 6189946746341001043}
-  - component: {fileID: 9996189946741001043}
+  - component: {fileID: 9006189946741001043}
   m_Layer: 5
   m_Name: NumberImage
   m_TagString: Untagged
@@ -2131,7 +2131,7 @@ MonoBehaviour:
   m_FillOrigin: 0
   m_UseSpriteMesh: 0
   m_PixelsPerUnitMultiplier: 1
---- !u!114 &9996189946741001043
+--- !u!114 &9006189946741001043
 MonoBehaviour:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}

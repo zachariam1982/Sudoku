@@ -415,7 +415,7 @@ public class NumberPicker : MonoBehaviour
 
             label.enableAutoSizing = false;
             label.fontSize = fontSize;
-            label.fontWeight = FontWeight.Medium;
+            label.fontWeight = FontWeight.Bold;
             label.fontStyle = FontStyles.Normal;
         }
     }

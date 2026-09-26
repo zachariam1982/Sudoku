@@ -23,6 +23,9 @@ public class SudokuCell : MonoBehaviour
     public Color pickerHighlight;
     public Color highlightColor;
     public Color errorColor;
+
+    [Header("Conflict Cell Background")]
+    [SerializeField] private Color conflictCellColor = new Color32(255, 180, 180, 255);
     
     [Header("Pencil Candidate Highlight")]
     [SerializeField] private Color candidateHighlightColor = new Color32(255,200,50,255);
@@ -212,9 +215,9 @@ public class SudokuCell : MonoBehaviour
 
         baseColor = isGiven ? givenColor : normalColor;
 
-        // background is always the cell root Image — never reassigned
+        // Keep conflict feedback on the cell background, not the digit.
         if (background != null && !isDimmed)
-            background.color = isConflict ? errorColor : baseColor;
+            background.color = isConflict ? conflictCellColor : baseColor;
     }
 
     public void SetHighlight(bool highlighted)
@@ -230,9 +233,9 @@ public class SudokuCell : MonoBehaviour
         isDimmed  = dimmed;
         baseColor = dimmed ? dimmedColor : (IsGiven ? givenColor : normalColor);
         if (background != null)
-            background.color = baseColor;
+            background.color = isConflict ? conflictCellColor : baseColor;
 
-        // Keep error tint on numberImage visible even while dimmed
+        // Keep the digit palette unchanged while the cell is in conflict.
         if (!isConflict)
         {
             Color color = dimmed
@@ -245,17 +248,21 @@ public class SudokuCell : MonoBehaviour
 
     public void SetPickerHighlight(bool active)
     {
-        if (isConflict && !active) return; // keep error color visible behind picker highlight
-        baseColor = active ? pickerHighlight : 
+        if (isConflict)
+        {
+            if (background != null) background.color = conflictCellColor;
+            return;
+        }
+
+        baseColor = active ? pickerHighlight :
                              (isDimmed ? dimmedColor : (IsGiven ? givenColor : normalColor));
         if (background != null)
             background.color = baseColor;
     }
 
     /// <summary>
-    /// Persistently marks or clears the conflict error color.
-    /// Called by SudokuGrid every time ConflictingCells changes.
-    /// Stays red until the conflict is resolved — survives dim/undim cycles.
+    /// Marks or clears a conflict using the cell background while preserving
+    /// the digit's current color.
     /// </summary>
     public void SetConflict(bool conflict)
     {
@@ -263,19 +270,18 @@ public class SudokuCell : MonoBehaviour
 
         if (conflict)
         {
-            // Tint numberImage red so error is visible over the full-size sprite
-            if (numberText != null && numberText.gameObject.activeSelf)
-                numberText.color = errorColor;
-            else if (numberImage != null && numberImage.gameObject.activeSelf)
-                numberImage.color = errorColor;
-            else
-                background.color = errorColor; // fallback for empty cells
+            if (background != null)
+                background.color = conflictCellColor;
         }
         else
         {
-            // Restore the mockup palette after the conflict is cleared.
-            if (numberText != null) numberText.color = GetDigitColor(Value);
-            else if (numberImage != null) numberImage.color = GetDigitColor(Value);
+            Color digitColor = GetDigitColor(Value);
+            if (isDimmed)
+                digitColor = Color.Lerp(digitColor, Color.gray, 0.45f);
+
+            if (numberText != null) numberText.color = digitColor;
+            else if (numberImage != null) numberImage.color = digitColor;
+
             if (background != null)
                 background.color = isDimmed ? dimmedColor : (IsGiven ? givenColor : normalColor);
         }
@@ -310,18 +316,16 @@ public class SudokuCell : MonoBehaviour
 
     private System.Collections.IEnumerator PlayErrorSequence()
     {
-        // Pulse numberImage between white and errorColor — this is what the player sees
-        Image pulseTarget = (numberImage != null && numberImage.gameObject.activeSelf)
-                            ? numberImage
-                            : background;
+        // Pulse the cell background so the digit keeps its normal color.
+        Image pulseTarget = background != null ? background : numberImage;
+        if (pulseTarget == null) yield break;
 
-        yield return UIAnimator.Pulse(pulseTarget, Color.white, errorColor, 3, 0.15f);
+        yield return UIAnimator.Pulse(pulseTarget, Color.white, conflictCellColor, 3, 0.15f);
 
-        // After pulse finishes, enforce final conflict state
         if (isConflict)
-            pulseTarget.color = errorColor;
+            pulseTarget.color = conflictCellColor;
         else
-            pulseTarget.color = Color.white;
+            pulseTarget.color = isDimmed ? dimmedColor : baseColor;
     }
 
     public void PlayLockedAnimation()

@@ -146,9 +146,13 @@ public class StatsPanel : MonoBehaviour
         float availableWidth = canvas.rect.width;
         float availableHeight = canvas.rect.height;
 
-        // Sidebar itself fills the available height,
-        // but never grows wider than its 972-unit design width.
-        float panelWidth = Mathf.Min(availableWidth, StatsDesignWidth);
+        // In landscape, reserve roughly the rightmost 28.5% for the
+        // stats sidebar, matching the supplied 16:9 reference. In portrait,
+        // let the panel use the available width up to its design width.
+        bool landscape = availableWidth > availableHeight;
+        float panelWidth = landscape
+            ? Mathf.Min(availableWidth * 0.285f, StatsDesignWidth)
+            : Mathf.Min(availableWidth, StatsDesignWidth);
 
         panelRT.sizeDelta =  new Vector2( panelWidth, availableHeight);
 

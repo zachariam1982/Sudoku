@@ -140,6 +140,11 @@ public class NumberPicker : MonoBehaviour
             }
         }
 
+        if (sosButton != null)
+            sosButton.onClick.AddListener(ClosePickerAfterUtilityAction);
+        if (eraseButton != null)
+            eraseButton.onClick.AddListener(ClosePickerAfterUtilityAction);
+
         if (pickerPanel != null) pickerPanel.gameObject.SetActive(false);
     }
 
@@ -232,10 +237,21 @@ public class NumberPicker : MonoBehaviour
 
     private void OnDestroy()
     {
+        if (sosButton != null)
+            sosButton.onClick.RemoveListener(ClosePickerAfterUtilityAction);
+        if (eraseButton != null)
+            eraseButton.onClick.RemoveListener(ClosePickerAfterUtilityAction);
+
         if (viewModel == null) return;
 
         viewModel.IsPickerOpen.OnChanged -= OnPickerOpenChanged;
         viewModel.SelectedCellTransform.OnChanged -= OnSelectedCellTransformChanged;
+    }
+
+    private void ClosePickerAfterUtilityAction()
+    {
+        if (viewModel != null)
+            viewModel.IsPickerOpen.Value = false;
     }
 
     private void OnSelectedCellTransformChanged( object cellTransform)
@@ -282,18 +298,16 @@ public class NumberPicker : MonoBehaviour
 
     private void ConfigurePortraitLayout()
     {
-        // Match the button row to the Sudoku grid width. Keep each button
-        // close to one cell; distribute any remaining width across the gaps.
         float buttonSize = cellSize * portraitButtonScale;
         float buttonGap = cellSize * portraitGapScale;
+        float rowGap = cellSize * portraitGapScale;
         Rect parentBounds = GetParentBounds();
         float rowWidth = parentBounds.width - 2f * screenSidePadding;
         float availableHeight = parentBounds.height - 2f * screenSidePadding;
-        float gridBottom = 0f;
 
         if (gridPanel != null)
         {
-            GetGridBounds(out float gridLeft, out float gridRight, out gridBottom, out _);
+            GetGridBounds(out float gridLeft, out float gridRight, out float gridBottom, out _);
             rowWidth = gridRight - gridLeft;
             availableHeight = Mathf.Min(
                 availableHeight,
@@ -302,25 +316,23 @@ public class NumberPicker : MonoBehaviour
 
         float contentWidth = numberButtons.Length * buttonSize +
                              (numberButtons.Length - 1) * buttonGap;
+        float contentHeight = 2f * buttonSize + rowGap;
         float scale = 1f;
 
         if (contentWidth > rowWidth && rowWidth > 0f)
             scale = Mathf.Min(scale, rowWidth / contentWidth);
 
-        if (gridPanel != null)
-        {
-            float maxButtonHeight = availableHeight - 2f * pickerPadding;
-            if (maxButtonHeight > 0f && buttonSize > maxButtonHeight)
-                scale = Mathf.Min(scale, maxButtonHeight / buttonSize);
-        }
+        float maxContentHeight = availableHeight - 2f * pickerPadding;
+        if (contentHeight > maxContentHeight && maxContentHeight > 0f)
+            scale = Mathf.Min(scale, maxContentHeight / contentHeight);
 
         scale = Mathf.Clamp(scale, 0.05f, 1f);
         buttonSize *= scale;
         buttonGap *= scale;
+        rowGap *= scale;
 
         float finalContentWidth = numberButtons.Length * buttonSize +
                                   (numberButtons.Length - 1) * buttonGap;
-
         if (numberButtons.Length > 1 && finalContentWidth < rowWidth)
         {
             buttonGap += (rowWidth - finalContentWidth) / (numberButtons.Length - 1);
@@ -329,80 +341,75 @@ public class NumberPicker : MonoBehaviour
 
         pickerPanel.sizeDelta = new Vector2(
             finalContentWidth,
-            buttonSize + 2f * pickerPadding);
+            2f * buttonSize + rowGap + 2f * pickerPadding);
         ResizeNumberLabels();
 
+        float rowOffset = (buttonSize + rowGap) / 2f;
         float startX = -finalContentWidth / 2f + buttonSize / 2f;
         for (int i = 0; i < numberButtons.Length; i++)
         {
-            RectTransform rt = numberButtons[i].GetComponent<RectTransform>();
-            rt.anchorMin = new Vector2(0.5f, 0.5f);
-            rt.anchorMax = new Vector2(0.5f, 0.5f);
-            rt.pivot = new Vector2(0.5f, 0.5f);
-            rt.sizeDelta = new Vector2(buttonSize, buttonSize);
-            rt.anchoredPosition = new Vector2(
-                startX + i * (buttonSize + buttonGap),
-                0f);
+            PositionPickerButton(
+                numberButtons[i], buttonSize,
+                startX + i * (buttonSize + buttonGap), rowOffset);
         }
+
+        float utilityOffset = (buttonSize + buttonGap) / 2f;
+        PositionPickerButton(eraseButton, buttonSize, -utilityOffset, -rowOffset);
+        PositionPickerButton(sosButton, buttonSize, utilityOffset, -rowOffset);
     }
 
     private void ConfigureLandscapeLayout()
     {
         float buttonSize = cellSize * landscapeButtonScale;
         float buttonGap = cellSize * landscapeGapScale;
-
         Rect parentBounds = GetParentBounds();
-
         float maxPanelWidth = parentBounds.width * 0.35f;
         float maxPanelHeight = parentBounds.height - 2f * screenSidePadding;
 
         if (gridPanel != null)
         {
-            GetGridBounds( out float gridLeft, out float gridRight, out float gridBottom, out float gridTop);
-
+            GetGridBounds(out float gridLeft, out float gridRight, out float gridBottom, out float gridTop);
             float rightSpace = parentBounds.xMax - screenSidePadding - gridRight - landscapeGapBesideGrid;
             float leftSpace = gridLeft - landscapeGapBesideGrid - (parentBounds.xMin + screenSidePadding);
-
-            maxPanelWidth = Mathf.Max( rightSpace, leftSpace);
-            maxPanelHeight = Mathf.Min( maxPanelHeight, gridTop - gridBottom);
+            maxPanelWidth = Mathf.Max(rightSpace, leftSpace);
+            maxPanelHeight = Mathf.Min(maxPanelHeight, gridTop - gridBottom);
         }
 
-        float contentSize = 3f * buttonSize + 2f * buttonGap;
+        float contentWidth = 3f * buttonSize + 2f * buttonGap;
+        float contentHeight = 4f * buttonSize + 3f * buttonGap;
         float maxContentWidth = maxPanelWidth - 2f * pickerPadding;
         float maxContentHeight = maxPanelHeight - 2f * pickerPadding;
         float scale = 1f;
 
-        if (maxContentWidth > 0f && contentSize > maxContentWidth) scale = Mathf.Min( scale, maxContentWidth / contentSize);
-        if (maxContentHeight > 0f && contentSize > maxContentHeight) scale = Mathf.Min( scale, maxContentHeight / contentSize);
+        if (maxContentWidth > 0f && contentWidth > maxContentWidth)
+            scale = Mathf.Min(scale, maxContentWidth / contentWidth);
+        if (maxContentHeight > 0f && contentHeight > maxContentHeight)
+            scale = Mathf.Min(scale, maxContentHeight / contentHeight);
 
         scale = Mathf.Clamp(scale, 0.05f, 1f);
         buttonSize *= scale;
         buttonGap *= scale;
-
-        float finalContentSize = 3f * buttonSize + 2f * buttonGap;
-        float totalSize = finalContentSize + 2f * pickerPadding;
-
-        pickerPanel.sizeDelta = new Vector2( totalSize, totalSize);
+        float finalContentWidth = 3f * buttonSize + 2f * buttonGap;
+        float finalContentHeight = 4f * buttonSize + 3f * buttonGap;
+        pickerPanel.sizeDelta = new Vector2(
+            finalContentWidth + 2f * pickerPadding,
+            finalContentHeight + 2f * pickerPadding);
         ResizeNumberLabels();
 
         for (int i = 0; i < numberButtons.Length; i++)
         {
             int row = i / 3;
             int col = i % 3;
-
-            RectTransform rt = numberButtons[i].GetComponent<RectTransform>();
-            rt.anchorMin = new Vector2(0.5f, 0.5f);
-            rt.anchorMax = new Vector2(0.5f, 0.5f);
-            rt.pivot = new Vector2(0.5f, 0.5f);
-            rt.sizeDelta = new Vector2( buttonSize, buttonSize);
-
             float x = (col - 1) * (buttonSize + buttonGap);
             float y = (1 - row) * (buttonSize + buttonGap);
-
-            rt.anchoredPosition = new Vector2(x, y);
+            PositionPickerButton(numberButtons[i], buttonSize, x, y);
         }
-    }
 
+        float utilityY = -2f * (buttonSize + buttonGap);
+        float sideX = buttonSize + buttonGap;
+        PositionPickerButton(eraseButton, buttonSize, -sideX, utilityY);
+        PositionPickerButton(sosButton, buttonSize, sideX, utilityY);
+    }
 
     private void ResizeNumberLabels()
     {
@@ -422,6 +429,20 @@ public class NumberPicker : MonoBehaviour
             label.fontWeight = FontWeight.Bold;
             label.fontStyle = FontStyles.Normal;
         }
+    }
+
+    private static void PositionPickerButton(Button button, float size, float x, float y)
+    {
+        if (button == null) return;
+
+        RectTransform rt = button.GetComponent<RectTransform>();
+        if (rt == null) return;
+
+        rt.anchorMin = new Vector2(0.5f, 0.5f);
+        rt.anchorMax = new Vector2(0.5f, 0.5f);
+        rt.pivot = new Vector2(0.5f, 0.5f);
+        rt.sizeDelta = new Vector2(size, size);
+        rt.anchoredPosition = new Vector2(x, y);
     }
 
     // ---------------------------------------------------------------------

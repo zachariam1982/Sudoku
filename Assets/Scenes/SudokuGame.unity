@@ -16111,7 +16111,7 @@ MonoBehaviour:
   portraitGapBelowGrid: 18
   portraitButtonScale: 1
   portraitGapScale: 0.06
-  portraitUtilityGapScale: 0.2
+  portraitUtilityGapScale: 2
   landscapeGapBesideGrid: 24
   landscapeButtonScale: 0.9
   landscapeGapScale: 0.24

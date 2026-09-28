@@ -282,53 +282,55 @@ public class NumberPicker : MonoBehaviour
 
     private void ConfigurePortraitLayout()
     {
+        // Keep each digit close to one Sudoku cell in size. The row scales
+        // down only when the available screen width or space below the grid
+        // requires it.
         float buttonSize = cellSize * portraitButtonScale;
         float buttonGap = cellSize * portraitGapScale;
-        const int columns = 3;
-
         Rect parentBounds = GetParentBounds();
-        float availableWidth = parentBounds.width - 2f * screenSidePadding;
-        float availableHeight = parentBounds.height - 2f * screenSidePadding;
+
+        float maxPanelWidth = parentBounds.width - 2f * screenSidePadding;
+        float contentWidth = numberButtons.Length * buttonSize +
+                             (numberButtons.Length - 1) * buttonGap;
+        float maxContentWidth = maxPanelWidth - 2f * pickerPadding;
+        float scale = 1f;
+
+        if (contentWidth > maxContentWidth && maxContentWidth > 0f)
+            scale = Mathf.Min(scale, maxContentWidth / contentWidth);
 
         if (gridPanel != null)
         {
             GetGridBounds(out _, out _, out float gridBottom, out _);
-            availableHeight = Mathf.Min(
-                availableHeight,
-                gridBottom - portraitGapBelowGrid - (parentBounds.yMin + screenSidePadding));
+            float availableBelow = gridBottom - portraitGapBelowGrid -
+                                   (parentBounds.yMin + screenSidePadding);
+            float maxButtonHeight = availableBelow - 2f * pickerPadding;
+
+            if (maxButtonHeight > 0f && buttonSize > maxButtonHeight)
+                scale = Mathf.Min(scale, maxButtonHeight / buttonSize);
         }
-
-        float contentSize = columns * buttonSize + (columns - 1) * buttonGap;
-        float maxContentWidth = availableWidth - 2f * pickerPadding;
-        float maxContentHeight = availableHeight - 2f * pickerPadding;
-        float scale = 1f;
-
-        if (contentSize > 0f && maxContentWidth > 0f)
-            scale = Mathf.Min(scale, maxContentWidth / contentSize);
-        if (contentSize > 0f && maxContentHeight > 0f)
-            scale = Mathf.Min(scale, maxContentHeight / contentSize);
 
         scale = Mathf.Clamp(scale, 0.05f, 1f);
         buttonSize *= scale;
         buttonGap *= scale;
 
-        float finalContentSize = columns * buttonSize + (columns - 1) * buttonGap;
-        float totalSize = finalContentSize + 2f * pickerPadding;
-        pickerPanel.sizeDelta = new Vector2(totalSize, totalSize);
+        float finalContentWidth = numberButtons.Length * buttonSize +
+                                  (numberButtons.Length - 1) * buttonGap;
+        pickerPanel.sizeDelta = new Vector2(
+            finalContentWidth + 2f * pickerPadding,
+            buttonSize + 2f * pickerPadding);
         ResizeNumberLabels();
 
+        float startX = -finalContentWidth / 2f + buttonSize / 2f;
         for (int i = 0; i < numberButtons.Length; i++)
         {
-            int row = i / columns;
-            int col = i % columns;
             RectTransform rt = numberButtons[i].GetComponent<RectTransform>();
             rt.anchorMin = new Vector2(0.5f, 0.5f);
             rt.anchorMax = new Vector2(0.5f, 0.5f);
             rt.pivot = new Vector2(0.5f, 0.5f);
             rt.sizeDelta = new Vector2(buttonSize, buttonSize);
-            float x = (col - 1) * (buttonSize + buttonGap);
-            float y = (1 - row) * (buttonSize + buttonGap);
-            rt.anchoredPosition = new Vector2(x, y);
+            rt.anchoredPosition = new Vector2(
+                startX + i * (buttonSize + buttonGap),
+                0f);
         }
     }
 

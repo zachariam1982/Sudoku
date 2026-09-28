@@ -39,6 +39,7 @@ public class NumberPicker : MonoBehaviour
     [SerializeField] private float portraitGapBelowGrid = 18f;
     [SerializeField] private float portraitButtonScale = 2.1f;
     [SerializeField] private float portraitGapScale = 0.32f;
+    [SerializeField, Min(0f)] private float portraitUtilityGapScale = 0.2f;
 
     [Header("Landscape")]
     [SerializeField] private float landscapeGapBesideGrid = 24f;
@@ -353,7 +354,8 @@ public class NumberPicker : MonoBehaviour
                 startX + i * (buttonSize + buttonGap), rowOffset);
         }
 
-        float utilityOffset = (buttonSize + buttonGap) / 2f;
+        float utilityGap = buttonSize * portraitUtilityGapScale;
+        float utilityOffset = (buttonSize + utilityGap) / 2f;
         PositionPickerButton(eraseButton, buttonSize, -utilityOffset, -rowOffset);
         PositionPickerButton(sosButton, buttonSize, utilityOffset, -rowOffset);
     }

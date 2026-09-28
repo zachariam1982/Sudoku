@@ -282,29 +282,34 @@ public class NumberPicker : MonoBehaviour
 
     private void ConfigurePortraitLayout()
     {
-        // Keep each digit close to one Sudoku cell in size. The row scales
-        // down only when the available screen width or space below the grid
-        // requires it.
+        // Match the button row to the Sudoku grid width. Keep each button
+        // close to one cell; distribute any remaining width across the gaps.
         float buttonSize = cellSize * portraitButtonScale;
         float buttonGap = cellSize * portraitGapScale;
         Rect parentBounds = GetParentBounds();
-
-        float maxPanelWidth = parentBounds.width - 2f * screenSidePadding;
-        float contentWidth = numberButtons.Length * buttonSize +
-                             (numberButtons.Length - 1) * buttonGap;
-        float maxContentWidth = maxPanelWidth - 2f * pickerPadding;
-        float scale = 1f;
-
-        if (contentWidth > maxContentWidth && maxContentWidth > 0f)
-            scale = Mathf.Min(scale, maxContentWidth / contentWidth);
+        float rowWidth = parentBounds.width - 2f * screenSidePadding;
+        float availableHeight = parentBounds.height - 2f * screenSidePadding;
+        float gridBottom = 0f;
 
         if (gridPanel != null)
         {
-            GetGridBounds(out _, out _, out float gridBottom, out _);
-            float availableBelow = gridBottom - portraitGapBelowGrid -
-                                   (parentBounds.yMin + screenSidePadding);
-            float maxButtonHeight = availableBelow - 2f * pickerPadding;
+            GetGridBounds(out float gridLeft, out float gridRight, out gridBottom, out _);
+            rowWidth = gridRight - gridLeft;
+            availableHeight = Mathf.Min(
+                availableHeight,
+                gridBottom - portraitGapBelowGrid - (parentBounds.yMin + screenSidePadding));
+        }
 
+        float contentWidth = numberButtons.Length * buttonSize +
+                             (numberButtons.Length - 1) * buttonGap;
+        float scale = 1f;
+
+        if (contentWidth > rowWidth && rowWidth > 0f)
+            scale = Mathf.Min(scale, rowWidth / contentWidth);
+
+        if (gridPanel != null)
+        {
+            float maxButtonHeight = availableHeight - 2f * pickerPadding;
             if (maxButtonHeight > 0f && buttonSize > maxButtonHeight)
                 scale = Mathf.Min(scale, maxButtonHeight / buttonSize);
         }
@@ -315,8 +320,15 @@ public class NumberPicker : MonoBehaviour
 
         float finalContentWidth = numberButtons.Length * buttonSize +
                                   (numberButtons.Length - 1) * buttonGap;
+
+        if (numberButtons.Length > 1 && finalContentWidth < rowWidth)
+        {
+            buttonGap += (rowWidth - finalContentWidth) / (numberButtons.Length - 1);
+            finalContentWidth = rowWidth;
+        }
+
         pickerPanel.sizeDelta = new Vector2(
-            finalContentWidth + 2f * pickerPadding,
+            finalContentWidth,
             buttonSize + 2f * pickerPadding);
         ResizeNumberLabels();
 

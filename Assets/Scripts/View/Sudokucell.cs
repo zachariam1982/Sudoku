@@ -12,7 +12,7 @@ public class SudokuCell : MonoBehaviour
     [Header("References (auto-found if left empty)")]
     [SerializeField] private Image           background;
     [SerializeField] private Image        numberImage;
-    [SerializeField] private Sprite[]     numberSprites; // drag Number_1 to Number_9 in Inspector
+    [SerializeField] private TMP_Text     numberText;
     [SerializeField] private GridLayoutGroup pencilGrid; 
     [SerializeField] public GameObject pencilCell;
 
@@ -23,7 +23,7 @@ public class SudokuCell : MonoBehaviour
     public Color pickerHighlight;
     public Color highlightColor;
     public Color errorColor;
-    
+
     [Header("Pencil Candidate Highlight")]
     [SerializeField] private Color candidateHighlightColor = new Color32(255,200,50,255);
 
@@ -49,6 +49,22 @@ public class SudokuCell : MonoBehaviour
             255,
             255,
             255);
+
+    // Keep the board digits in the same bright, playful palette as the
+    // variant-selection artwork. The sprite sheet supplies the shading;
+    // these colors provide the consistent variant accent for each digit.
+    private static readonly Color32[] MockupDigitColors =
+    {
+        new Color32(39, 196, 238, 255),  // 1 cyan
+        new Color32(240, 75, 86, 255),   // 2 coral
+        new Color32(255, 197, 61, 255),  // 3 gold
+        new Color32(131, 201, 74, 255),  // 4 lime
+        new Color32(66, 207, 239, 255),  // 5 cyan
+        new Color32(255, 138, 61, 255),  // 6 orange
+        new Color32(244, 66, 138, 255),  // 7 pink
+        new Color32(169, 103, 208, 255), // 8 purple
+        new Color32(132, 201, 74, 255)   // 9 green
+    };
     public int  Value   { get; private set; }
     public bool IsGiven { get; private set; }
     private Vector3 _originalScale;
@@ -69,6 +85,8 @@ public class SudokuCell : MonoBehaviour
                 }
             }
         }
+        if (numberText == null && numberImage != null)
+            numberText = numberImage.GetComponent<TMP_Text>();
         
         Button[] btns = GetComponentsInChildren<Button>(true);
         var pencilBtnList = new List<Button>();
@@ -180,15 +198,21 @@ public class SudokuCell : MonoBehaviour
         if (numberImage != null)
         {
             numberImage.gameObject.SetActive(value != 0);
-            if (value > 0 && value <= numberSprites.Length && numberSprites[value - 1] != null)
-                numberImage.sprite = numberSprites[value - 1];
+            numberImage.enabled = numberText == null;
+            if (numberText != null)
+            {
+                numberText.text = value == 0 ? string.Empty : value.ToString();
+                numberText.color = GetDigitColor(value);
+            }
+            if (numberText == null)
+                numberImage.color = GetDigitColor(value);
         }
 
         if (value == 0) isConflict = false;
 
         baseColor = isGiven ? givenColor : normalColor;
 
-        // background is always the cell root Image — never reassigned
+        // Keep conflict feedback on the cell background, not the digit.
         if (background != null && !isDimmed)
             background.color = isConflict ? errorColor : baseColor;
     }
@@ -206,26 +230,36 @@ public class SudokuCell : MonoBehaviour
         isDimmed  = dimmed;
         baseColor = dimmed ? dimmedColor : (IsGiven ? givenColor : normalColor);
         if (background != null)
-            background.color = baseColor;
+            background.color = isConflict ? errorColor : baseColor;
 
-        // Keep error tint on numberImage visible even while dimmed
-        if (numberImage != null && !isConflict)
-            numberImage.color = dimmed ? new Color(0.6f, 0.6f, 0.6f, 1f) : Color.white;
+        // Keep the digit palette unchanged while the cell is in conflict.
+        if (!isConflict)
+        {
+            Color color = dimmed
+                ? Color.Lerp(GetDigitColor(Value), Color.gray, 0.45f)
+                : GetDigitColor(Value);
+            if (numberText != null) numberText.color = color;
+            else if (numberImage != null) numberImage.color = color;
+        }
     }
 
     public void SetPickerHighlight(bool active)
     {
-        if (isConflict && !active) return; // keep error color visible behind picker highlight
-        baseColor = active ? pickerHighlight : 
+        if (isConflict)
+        {
+            if (background != null) background.color = errorColor;
+            return;
+        }
+
+        baseColor = active ? pickerHighlight :
                              (isDimmed ? dimmedColor : (IsGiven ? givenColor : normalColor));
         if (background != null)
             background.color = baseColor;
     }
 
     /// <summary>
-    /// Persistently marks or clears the conflict error color.
-    /// Called by SudokuGrid every time ConflictingCells changes.
-    /// Stays red until the conflict is resolved — survives dim/undim cycles.
+    /// Marks or clears a conflict using the cell background while preserving
+    /// the digit's current color.
     /// </summary>
     public void SetConflict(bool conflict)
     {
@@ -233,20 +267,29 @@ public class SudokuCell : MonoBehaviour
 
         if (conflict)
         {
-            // Tint numberImage red so error is visible over the full-size sprite
-            if (numberImage != null && numberImage.gameObject.activeSelf)
-                numberImage.color = errorColor;
-            else
-                background.color = errorColor; // fallback for empty cells
+            if (background != null)
+                background.color = errorColor;
         }
         else
         {
-            // Restore numberImage to white so sprite shows true colors
-            if (numberImage != null)
-                numberImage.color = Color.white;
+            Color digitColor = GetDigitColor(Value);
+            if (isDimmed)
+                digitColor = Color.Lerp(digitColor, Color.gray, 0.45f);
+
+            if (numberText != null) numberText.color = digitColor;
+            else if (numberImage != null) numberImage.color = digitColor;
+
             if (background != null)
                 background.color = isDimmed ? dimmedColor : (IsGiven ? givenColor : normalColor);
         }
+    }
+
+    private static Color GetDigitColor(int value)
+    {
+        if (value < 1 || value > MockupDigitColors.Length)
+            return Color.white;
+
+        return MockupDigitColors[value - 1];
     }
 
     void OnDisable()
@@ -270,18 +313,16 @@ public class SudokuCell : MonoBehaviour
 
     private System.Collections.IEnumerator PlayErrorSequence()
     {
-        // Pulse numberImage between white and errorColor — this is what the player sees
-        Image pulseTarget = (numberImage != null && numberImage.gameObject.activeSelf)
-                            ? numberImage
-                            : background;
+        // Pulse the cell background so the digit keeps its normal color.
+        Image pulseTarget = background != null ? background : numberImage;
+        if (pulseTarget == null) yield break;
 
         yield return UIAnimator.Pulse(pulseTarget, Color.white, errorColor, 3, 0.15f);
 
-        // After pulse finishes, enforce final conflict state
         if (isConflict)
             pulseTarget.color = errorColor;
         else
-            pulseTarget.color = Color.white;
+            pulseTarget.color = isDimmed ? dimmedColor : baseColor;
     }
 
     public void PlayLockedAnimation()
@@ -339,8 +380,20 @@ public class SudokuCell : MonoBehaviour
         viewModel.SetEraseModeCommand.Execute();
     }
 
-    public void ResizePencilGrid(float newCellSize)
+    [Header("Responsive Number Size")]
+    [SerializeField, Range(0.5f, 1.25f)]
+    private float numberFontSizeCellRatio = 0.86f;
+
+    public void ResizeCellContent(float newCellSize)
     {
+        if (numberText != null)
+        {
+            numberText.enableAutoSizing = false;
+            numberText.fontSize = Mathf.Max(1f, newCellSize * numberFontSizeCellRatio);
+        }
+
+        if (pencilGrid == null) return;
+
         float padding = pencilGrid.padding.left + pencilGrid.padding.right;
         float spacing = pencilGrid.spacing.x * 2;
         float bSize = (newCellSize - padding - spacing) / 3f;

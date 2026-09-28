@@ -71,7 +71,7 @@ public class GridBuilder : MonoBehaviour
                     (cellCol - 1) * (cellSize + cellGap),
                     (1 - cellRow) * (cellSize + cellGap)
                 );
-                _allCells[globalIndex].ResizePencilGrid(cellSize);
+                _allCells[globalIndex].ResizeCellContent(cellSize);
             }
         }
  

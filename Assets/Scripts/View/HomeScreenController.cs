@@ -31,9 +31,10 @@ public sealed class HomeScreenController : MonoBehaviour
 
     [Header("Screens")]
     [SerializeField] private GameObject newGameScreen;
+    [SerializeField] private GameContext _gameContext;
+
     
     private JourneyViewModel _viewModel;
-    private GameContext _gameContext;
     private bool _layoutApplied;
     private bool _lastLandscape;
 
@@ -51,11 +52,7 @@ public sealed class HomeScreenController : MonoBehaviour
     public void Initialize(JourneyViewModel viewModel, GameContext gameContext)
     {
         _viewModel = viewModel;
-        _gameContext = gameContext != null
-            ? gameContext
-            : GetComponentInParent<GameContext>();
-        if (_gameContext == null)
-            _gameContext = FindObjectOfType<GameContext>();
+
         ApplyResponsiveLayout();
         RefreshJourneyStatus();
     }

@@ -22,6 +22,7 @@ public sealed class VerseTicker : MonoBehaviour
     [SerializeField] private float textPadding = 10f;
 
     private bool _gameActive;
+    public bool IsGameActive => _gameActive;
     private bool _isLandscape;
     private float _start;
     private float _end;

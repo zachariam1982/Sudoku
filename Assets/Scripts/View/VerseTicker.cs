@@ -88,7 +88,7 @@ public sealed class VerseTicker : MonoBehaviour
         if (portraitViewport == null || portraitTextRect == null || portraitLabel == null) return;
 
         portraitLabel.text = verseText;
-        portraitLabel.enableWordWrapping = false;
+        portraitLabel.textWrappingMode = TextWrappingModes.NoWrap;
         portraitLabel.alignment = TextAlignmentOptions.MidlineLeft;
         portraitLabel.ForceMeshUpdate();
 
@@ -105,7 +105,7 @@ public sealed class VerseTicker : MonoBehaviour
         if (landscapeViewport == null || landscapeTextRect == null || landscapeLabel == null) return;
 
         landscapeLabel.text = verseText;
-        landscapeLabel.enableWordWrapping = true;
+        landscapeLabel.textWrappingMode = TextWrappingModes.Normal;
         landscapeLabel.alignment = TextAlignmentOptions.Center;
         landscapeTextRect.sizeDelta = new Vector2(landscapeViewport.rect.width - 2f * textPadding, 1000f);
         landscapeLabel.ForceMeshUpdate();

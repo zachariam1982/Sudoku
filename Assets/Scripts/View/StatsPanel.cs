@@ -67,6 +67,8 @@ public class StatsPanel : MonoBehaviour
     [SerializeField] private GameObject gameplayTools;
 
     private bool _gameplayToolsWasActive;
+    private bool _tickerWasActive;
+    private VerseTicker _verseTicker;
 
     private const float StatsDesignWidth = 972f;
     private const float StatsDesignHeight = 1920f;
@@ -239,6 +241,11 @@ public class StatsPanel : MonoBehaviour
     private void OpenPanel()
     {
         _open = true;
+
+        if (_verseTicker == null && canvas != null)
+            _verseTicker = canvas.GetComponent<VerseTicker>();
+        _tickerWasActive = _verseTicker != null && _verseTicker.IsGameActive;
+        if (_verseTicker != null) _verseTicker.SetGameActive(false);
 
         if (gameplayTools != null)
         {
@@ -629,6 +636,19 @@ public class StatsPanel : MonoBehaviour
             Destroy(lstOfRecords[i]);
         
         lstOfRecords.Clear();
+
+        HomeScreenController home = canvas != null
+            ? canvas.GetComponentInChildren<HomeScreenController>(true)
+            : null;
+        NewGameScreenController newGame = canvas != null
+            ? canvas.GetComponentInChildren<NewGameScreenController>(true)
+            : null;
+        bool anotherScreenIsOpen =
+            (home != null && home.gameObject.activeInHierarchy) ||
+            (newGame != null && newGame.gameObject.activeInHierarchy);
+
+        if (_verseTicker != null)
+            _verseTicker.SetGameActive(_tickerWasActive && !anotherScreenIsOpen);
     }
 
     private IEnumerator AnimateBar(float targetRate)

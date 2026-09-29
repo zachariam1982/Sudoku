@@ -63,6 +63,12 @@ public class GameStateView : MonoBehaviour
     private HUD _hud;
     private Button _pauseResumeButton;
 
+    private void Start()
+    {
+        Canvas canvas = GetComponentInParent<Canvas>();
+        VerseTicker.EnsureCreated(canvas);
+    }
+
 
     // ── Binding ───────────────────────────────────────────────────────────────
 

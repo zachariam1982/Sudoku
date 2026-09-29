@@ -161,7 +161,7 @@ public sealed class VerseTicker : MonoBehaviour
                 ? Mathf.Min(landscapeWidth, gridBounds.min.x - canvasBounds.xMin - 2f * edgePadding)
                 : canvasBounds.width - 2f * edgePadding) &&
             Mathf.Approximately(_viewportRect.sizeDelta.y, landscape
-                ? Mathf.Min(gridBounds.size.y, canvasBounds.height - 2f * edgePadding)
+                ? topBarBounds.min.y - canvasBounds.yMin - 2f * edgePadding
                 : Mathf.Min(portraitHeight, topBarBounds.min.y - gridBounds.max.y - 2f * edgePadding)))
         {
             return;
@@ -175,7 +175,7 @@ public sealed class VerseTicker : MonoBehaviour
         {
             float availableWidth = gridBounds.min.x - canvasBounds.xMin - 2f * edgePadding;
             float width = Mathf.Min(landscapeWidth, availableWidth);
-            float height = Mathf.Min(gridBounds.size.y, canvasBounds.height - 2f * edgePadding);
+            float height = topBarBounds.min.y - canvasBounds.yMin - 2f * edgePadding;
 
             if (width < 32f || height < 48f)
             {
@@ -187,7 +187,7 @@ public sealed class VerseTicker : MonoBehaviour
             _viewportRect.sizeDelta = new Vector2(width, height);
             _viewportRect.anchoredPosition = new Vector2(
                 canvasBounds.xMin + edgePadding + width * 0.5f,
-                gridBounds.center.y);
+                canvasBounds.yMin + edgePadding + height * 0.5f);
 
             _textRect.anchorMin = new Vector2(0.5f, 0.5f);
             _textRect.anchorMax = new Vector2(0.5f, 0.5f);

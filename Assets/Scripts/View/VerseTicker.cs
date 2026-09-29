@@ -14,6 +14,7 @@ public sealed class VerseTicker : MonoBehaviour
     [SerializeField] private RectTransform landscapeViewport;
     [SerializeField] private RectTransform landscapeTextRect;
     [SerializeField] private TextMeshProUGUI landscapeLabel;
+    [SerializeField] private GameObject hudRoot;
 
     [Header("Ticker")]
     [SerializeField] private string verseText =
@@ -41,13 +42,20 @@ public sealed class VerseTicker : MonoBehaviour
     private void Update()
     {
         bool landscape = Screen.width > Screen.height;
-        if (landscape != _isLandscape)
-            ConfigureLayout(true);
+        RectTransform viewport = landscape ? landscapeViewport : portraitViewport;
+        bool hudVisible = hudRoot != null && hudRoot.activeInHierarchy;
+        bool shouldBeVisible = _gameActive && hudVisible;
 
-        if (!_gameActive) return;
+        if (landscape != _isLandscape ||
+            (viewport != null && viewport.gameObject.activeSelf != shouldBeVisible))
+        {
+            ConfigureLayout(true);
+        }
+
+        if (!_gameActive || !hudVisible) return;
 
         RectTransform textRect = _isLandscape ? landscapeTextRect : portraitTextRect;
-        RectTransform viewport = _isLandscape ? landscapeViewport : portraitViewport;
+        viewport = _isLandscape ? landscapeViewport : portraitViewport;
         if (textRect == null || viewport == null || !viewport.gameObject.activeSelf) return;
 
         Vector2 position = textRect.anchoredPosition;
@@ -69,10 +77,13 @@ public sealed class VerseTicker : MonoBehaviour
     {
         _isLandscape = Screen.width > Screen.height;
 
+        bool hudVisible = hudRoot != null && hudRoot.activeInHierarchy;
+        bool shouldBeVisible = _gameActive && hudVisible;
+
         if (portraitViewport != null)
-            portraitViewport.gameObject.SetActive(_gameActive && !_isLandscape);
+            portraitViewport.gameObject.SetActive(shouldBeVisible && !_isLandscape);
         if (landscapeViewport != null)
-            landscapeViewport.gameObject.SetActive(_gameActive && _isLandscape);
+            landscapeViewport.gameObject.SetActive(shouldBeVisible && _isLandscape);
 
         if (_isLandscape)
         {

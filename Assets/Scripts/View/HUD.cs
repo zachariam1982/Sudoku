@@ -3,10 +3,14 @@ using UnityEngine;
 
 public class HUD : MonoBehaviour
 {
-    private SudokuViewModel viewModel;
+    private BaseViewModel viewModel;
     private Action<bool>    hideHudAction;
-    public void Bind(SudokuViewModel arg)
+    public void Bind(BaseViewModel arg)
     {
+        if (ReferenceEquals(viewModel, arg)) return;
+        if (viewModel != null && hideHudAction != null)
+            viewModel.HideHUD.OnChanged -= hideHudAction;
+
         viewModel = arg;
         hideHudAction = (arg) => this.gameObject.SetActive(arg);
  

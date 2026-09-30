@@ -9,15 +9,15 @@ using UnityEngine;
 ///   Paused     — when player taps pause
 ///   Lose       — when lives reach 0
 /// </summary>
-public class PlayingState : IGameState
+public class JourneyPlayingState : IGameState
 {
-    private readonly SudokuViewModel  _vm;
-    private readonly GameStateMachine _machine;
+    private readonly JourneyViewModel  _vm;
+    private readonly JourneyStateMachine _machine;
     private bool prevIsComplete;
     private bool prevPauseRequested;
     private (int, int, bool) prevLastEnteredCell;
 
-    public PlayingState(SudokuViewModel vm, GameStateMachine machine)
+    public JourneyPlayingState(JourneyViewModel vm, JourneyStateMachine machine)
     {
         _vm      = vm;
         _machine = machine;
@@ -38,7 +38,6 @@ public class PlayingState : IGameState
 
     public void Update(float deltaTime)
     {
-        // Tick the timer every frame
         _vm.ElapsedSeconds.Value += deltaTime;
     }
 
@@ -75,7 +74,7 @@ public class PlayingState : IGameState
                 AutoFillUses   = _vm.UsageStats.AutoFillUses
             };
             
-            if(_vm.RetryGameData.id == -1) GameDatabase.Insert(val); //Add into DB the record if it is a new game and not a retry
+            if(_vm.RetryGameData.id == -1) GameDatabase.Insert(val);
 
             _machine.TransitionTo(_machine.Lose);
 

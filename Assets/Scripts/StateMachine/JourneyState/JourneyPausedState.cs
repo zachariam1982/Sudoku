@@ -2,12 +2,12 @@
 /// Paused state — timer is frozen, board is dimmed.
 /// Transitions to Playing when player resumes.
 /// </summary>
-public class PausedState : IGameState
+public class JourneyPausedState : IGameState
 {
-    private readonly SudokuViewModel  _vm;
-    private readonly GameStateMachine _machine;
+    private readonly JourneyViewModel  _vm;
+    private readonly JourneyStateMachine _machine;
 
-    public PausedState(SudokuViewModel vm, GameStateMachine machine)
+    public JourneyPausedState(JourneyViewModel vm, JourneyStateMachine machine)
     {
         _vm      = vm;
         _machine = machine;

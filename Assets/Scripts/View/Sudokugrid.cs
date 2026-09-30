@@ -14,7 +14,7 @@ public class SudokuGrid : MonoBehaviour
 
     private SudokuCell[,]  cells      = new SudokuCell[9, 9];
     private bool           cellsReady = false;
-    private SudokuViewModel viewModel;
+    private BaseViewModel viewModel;
 
     // ── Unity Lifecycle ───────────────────────────────────────────────────────
 
@@ -27,8 +27,10 @@ public class SudokuGrid : MonoBehaviour
 
     // ── Binding ───────────────────────────────────────────────────────────────
 
-    public void Bind(SudokuViewModel vm)
+    public void Bind(BaseViewModel vm)
     {
+        if (ReferenceEquals(viewModel, vm)) return;
+        Unbind();
         viewModel = vm;
 
         vm.BoardValues.OnChanged      += OnBoardChanged;
@@ -41,11 +43,29 @@ public class SudokuGrid : MonoBehaviour
         vm.IsEraseMode.OnChanged      += OnEraseModeChanged;
         vm.IsPencilMode.OnChanged     += OnPencilModeChanged;
         vm.HighlightedCandidateNumber.OnChanged += OnCandidateHighlightChanged;
-        vm.AutoFillCandidatesRequested.OnChanged += OnAutoFillCandidatesRequested;
+        vm.PencilCandidateMasks.OnChanged += OnPencilCandidatesChanged;
+
+        if (cellsReady)
+        {
+            for (int row = 0; row < 9; row++)
+                for (int col = 0; col < 9; col++)
+                    cells[row, col].Bind(row, col, viewModel);
+
+            OnBoardChanged<int[,]>(null);
+            OnConflictsChanged(viewModel.ConflictingCells.Value);
+            OnPencilCandidatesChanged(viewModel.PencilCandidateMasks.Value);
+            OnPencilModeChanged(viewModel.IsPencilMode.Value);
+            OnCandidateHighlightChanged(viewModel.HighlightedCandidateNumber.Value);
+        }
     }
 
 
     private void OnDestroy()
+    {
+        Unbind();
+    }
+
+    private void Unbind()
     {
         if (viewModel == null) return;
 
@@ -59,8 +79,8 @@ public class SudokuGrid : MonoBehaviour
         viewModel.IsEraseMode.OnChanged      -= OnEraseModeChanged;
         viewModel.IsPencilMode.OnChanged     -= OnPencilModeChanged;
         viewModel.HighlightedCandidateNumber.OnChanged -= OnCandidateHighlightChanged;
-        viewModel.AutoFillCandidatesRequested.OnChanged -= OnAutoFillCandidatesRequested;
-
+        viewModel.PencilCandidateMasks.OnChanged -= OnPencilCandidatesChanged;
+        viewModel = null;
     }
 
     // ── Binding Handlers ──────────────────────────────────────────────────────
@@ -68,72 +88,13 @@ public class SudokuGrid : MonoBehaviour
     {
         RefreshHighlights();
     }
-    private void OnAutoFillCandidatesRequested(int requestNumber)
+    private void OnPencilCandidatesChanged(int[,] candidateMasks)
     {
         if (!cellsReady || viewModel == null) return;
 
-        int[,] board = viewModel.BoardValues.Value;
-
-        if (board == null) return;
-
         for (int row = 0;row < 9;row++)
-        {
             for (int col = 0;col < 9;col++)
-            {
-                if (board[row, col] != 0)
-                {
-                    cells[row, col].ClearAllPencilCandidates();
-                    continue;
-                }
-
-                List<int> candidates = CalculateCandidates(board,row,col);
-                cells[row, col].SetPencilCandidates(candidates);
-            }
-        }
-    }
-
-    private static List<int> CalculateCandidates(int[,] board,int targetRow,int targetCol)
-    {
-        List<int> result = new List<int>();
-
-        if (board == null) return result;
-        if (board[targetRow,targetCol] != 0) return result; 
-
-        bool[] used = new bool[10];
-
-        for (int col = 0;col < 9;col++)
-        {
-            int number = board[targetRow,col];
-
-            if (number >= 1 && number <= 9) used[number] = true;
-        }
-
-        for (int row = 0;row < 9;row++)
-        {
-            int number = board[row,targetCol];
-
-            if (number >= 1 && number <= 9) used[number] = true;
-        }
-        int boxStartRow = (targetRow / 3) * 3;
-
-        int boxStartCol = (targetCol / 3) * 3;
-
-        for (int row = boxStartRow; row < boxStartRow + 3; row++)
-        {
-            for (int col = boxStartCol; col < boxStartCol + 3; col++)
-            {
-                int number = board[row,col];
-
-                if (number >= 1 && number <= 9)  used[number] = true;
-            }
-        }
-
-        for (int number = 1; number <= 9; number++)
-        {
-            if (!used[number]) result.Add(number);
-        }
-
-        return result;
+                cells[row, col].SetPencilCandidates(candidateMasks == null ? 0 : candidateMasks[row, col]);
     }
     private void OnCandidateHighlightChanged(
         int number)
@@ -156,10 +117,13 @@ public class SudokuGrid : MonoBehaviour
         {
             for (int col = 0;col < 9;col++)
             {
-                if (cells[row, col].Value == 0)
-                {
-                    cells[row, col].pencilCell.SetActive(isPencilMode);
-                }
+                SudokuCell cell = cells[row, col];
+                if (cell == null || cell.pencilCell == null) continue;
+
+                // Always write the active state. Otherwise a pencil panel
+                // left visible by the previous game mode can leak into the
+                // newly bound Journey board when that cell is filled.
+                cell.pencilCell.SetActive(isPencilMode && cell.Value == 0);
             }
         }
 
@@ -170,11 +134,16 @@ public class SudokuGrid : MonoBehaviour
     }
     private void OnEraseModeChanged(bool arg)
     {
+        if (!cellsReady) return;
+
         for(int row = 0; row < 9; row++)
             for( int col = 0; col < 9; col++)
-                if(cells[row, col].IsGiven == false)
+                if(cells[row, col] != null && cells[row, col].IsGiven == false)
                 {
-                    GameObject obj = cells[row,col].transform.Find("Erase").gameObject;
+                    Transform eraseTransform = cells[row, col].transform.Find("Erase");
+                    if (eraseTransform == null) continue;
+
+                    GameObject obj = eraseTransform.gameObject;
                     if(arg == false)
                         obj.SetActive(arg); 
                     else if(arg == true && cells[row,col].Value != 0)
@@ -249,54 +218,6 @@ public class SudokuGrid : MonoBehaviour
 
         enteredCell.PlayEntryAnimation();
 
-        int value = enteredCell.Value;
-
-        if (value <= 0) return;
-
-        RemoveCandidateFromPeers(entry.row,entry.col,value);
-    }
-    private void RemoveCandidateFromPeers(int enteredRow,int enteredCol,int number)
-    {
-        if (!cellsReady) return;
-
-        for (int col = 0;col < 9;col++)
-        {
-            if (col == enteredCol) continue;
-
-            SudokuCell cell = cells[enteredRow,col];
-
-            if (cell.Value != 0) continue;
-
-            cell.RemovePencilCandidate(number);
-        }
-
-        for (int row = 0;row < 9;row++)
-        {
-            if (row == enteredRow) continue;
-
-            SudokuCell cell = cells[row,enteredCol];
-
-            if (cell.Value != 0) continue;
-
-            cell.RemovePencilCandidate(number);
-        }
-
-        int boxStartRow = (enteredRow / 3) * 3;
-        int boxStartCol = (enteredCol / 3) * 3;
-
-        for (int row = boxStartRow;row < boxStartRow + 3;row++)
-        {
-            for (int col = boxStartCol;col < boxStartCol + 3;col++)
-            {
-                if (row == enteredRow && col == enteredCol) continue;
-
-                SudokuCell cell = cells[row,col];
-
-                if (cell.Value != 0) continue;
-
-                cell.RemovePencilCandidate(number);
-            }
-        }
     }
     /// <summary>
     /// Fires every time the conflict set changes.
@@ -331,6 +252,9 @@ public class SudokuGrid : MonoBehaviour
         {
             OnBoardChanged<int[,]>(null);
             OnConflictsChanged(viewModel.ConflictingCells.Value);
+            OnPencilCandidatesChanged(viewModel.PencilCandidateMasks.Value);
+            OnPencilModeChanged(viewModel.IsPencilMode.Value);
+            OnCandidateHighlightChanged(viewModel.HighlightedCandidateNumber.Value);
         }
     }
 

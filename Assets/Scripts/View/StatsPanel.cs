@@ -67,11 +67,13 @@ public class StatsPanel : MonoBehaviour
     [SerializeField] private GameObject gameplayTools;
 
     private bool _gameplayToolsWasActive;
+    private bool _tickerWasActive;
+    private VerseTicker _verseTicker;
 
     private const float StatsDesignWidth = 972f;
     private const float StatsDesignHeight = 1920f;
 
-    private SudokuViewModel _vm;
+    private JourneyViewModel _vm;
     private bool            _open;
     private Coroutine       _slideAnim;
     private Coroutine       _barAnim;
@@ -171,7 +173,7 @@ public class StatsPanel : MonoBehaviour
         if (!_open) panelRT.anchoredPosition = new Vector2( _hiddenX, panelRT.anchoredPosition.y);
     }
 
-    public void Bind(SudokuViewModel vm)
+    public void Bind(JourneyViewModel vm)
     {
         _vm = vm;
         vm.ElapsedSeconds.OnChanged += OnElapsedSecondsChanged;
@@ -239,6 +241,11 @@ public class StatsPanel : MonoBehaviour
     private void OpenPanel()
     {
         _open = true;
+
+        if (_verseTicker == null && canvas != null)
+            _verseTicker = canvas.GetComponent<VerseTicker>();
+        _tickerWasActive = _verseTicker != null && _verseTicker.IsGameActive;
+        if (_verseTicker != null) _verseTicker.SetGameActive(false);
 
         if (gameplayTools != null)
         {
@@ -629,6 +636,19 @@ public class StatsPanel : MonoBehaviour
             Destroy(lstOfRecords[i]);
         
         lstOfRecords.Clear();
+
+        HomeScreenController home = canvas != null
+            ? canvas.GetComponentInChildren<HomeScreenController>(true)
+            : null;
+        NewGameScreenController newGame = canvas != null
+            ? canvas.GetComponentInChildren<NewGameScreenController>(true)
+            : null;
+        bool anotherScreenIsOpen =
+            (home != null && home.gameObject.activeInHierarchy) ||
+            (newGame != null && newGame.gameObject.activeInHierarchy);
+
+        if (_verseTicker != null)
+            _verseTicker.SetGameActive(_tickerWasActive && !anotherScreenIsOpen);
     }
 
     private IEnumerator AnimateBar(float targetRate)

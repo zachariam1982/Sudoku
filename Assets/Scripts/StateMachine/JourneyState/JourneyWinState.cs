@@ -8,15 +8,15 @@ using System;
 ///   2 stars — 2 mistakes OR over target time
 ///   1 star  — 3 mistakes (barely survived with last life)
 /// </summary>
-public class WinState : IGameState
+public class JourneyWinState : IGameState
 {
-    private readonly SudokuViewModel  _vm;
-    private readonly GameStateMachine _machine;
+    private readonly JourneyViewModel  _vm;
+    private readonly JourneyStateMachine _machine;
 
     // Target time in seconds for 3 stars (treated as Medium difficulty)
     private const float TargetTimeSeconds = 600f; // 10 minutes
 
-    public WinState(SudokuViewModel vm, GameStateMachine machine)
+    public JourneyWinState(JourneyViewModel vm, JourneyStateMachine machine)
     {
         _vm      = vm;
         _machine = machine;

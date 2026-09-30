@@ -3,12 +3,12 @@ using System;
 /// Lose state — player ran out of lives.
 /// Shows the lose screen with options to retry or new game.
 /// </summary>
-public class LoseState : IGameState
+public class JourneyLoseState : IGameState
 {
-    private readonly SudokuViewModel  _vm;
-    private readonly GameStateMachine _machine;
+    private readonly JourneyViewModel  _vm;
+    private readonly JourneyStateMachine _machine;
 
-    public LoseState(SudokuViewModel vm, GameStateMachine machine)
+    public JourneyLoseState(JourneyViewModel vm, JourneyStateMachine machine)
     {
         _vm      = vm;
         _machine = machine;

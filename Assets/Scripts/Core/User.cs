@@ -5,7 +5,7 @@ using UnityEngine;
 public class User : MonoBehaviour
 {
     public static User Instance { get; private set;}
-    public SudokuViewModel ViewModel { get; set; }
+    public JourneyViewModel ViewModel { get; set; }
     // Start is called once before the first execution of Update after the MonoBehaviour is created
     #if UNITY_WEBGL && !UNITY_EDITOR
 
@@ -157,5 +157,15 @@ public class User : MonoBehaviour
         #if UNITY_WEBGL && !UNITY_EDITOR
         YouTubePlatformManager.Instance?.SaveCloudData(data);
         #endif        
+    }
+
+    private void OnApplicationPause(bool paused)
+    {
+        if (paused) SaveNow();
+    }
+
+    private void OnApplicationQuit()
+    {
+        SaveNow();
     }
 }

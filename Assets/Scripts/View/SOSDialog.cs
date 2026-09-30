@@ -9,7 +9,7 @@ public class SOSAdDialog : MonoBehaviour
 {
     public static SOSAdDialog Instance { get; private set; }
 
-    private SudokuViewModel _vm;
+    private BaseViewModel _vm;
     private bool _isSOSRunning;
 
     void Awake()
@@ -18,7 +18,7 @@ public class SOSAdDialog : MonoBehaviour
         _isSOSRunning = false;
     }
 
-    public void Bind(SudokuViewModel vm)
+    public void Bind(BaseViewModel vm)
     {
         if (ReferenceEquals(_vm, vm)) return;
         if (_vm != null) _vm.IsSOSMode.OnChanged -= Show;
@@ -121,7 +121,7 @@ public class SOSAdDialog : MonoBehaviour
         }
     }
 
-    private IEnumerator MakeChangesProvidedBySOS(SudokuViewModel vm)
+    private IEnumerator MakeChangesProvidedBySOS(BaseViewModel vm)
     {
         vm.SetDemoMode();
         vm.HideHUD.Value = false;

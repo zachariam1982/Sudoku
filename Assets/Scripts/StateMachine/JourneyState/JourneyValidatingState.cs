@@ -6,15 +6,15 @@ using System.Globalization;
 /// This is a brief intermediary state that gives the game a moment to
 /// check the solution and play a validation animation before showing the win screen.
 /// </summary>
-public class ValidatingState : IGameState
+public class JourneyValidatingState : IGameState
 {
-    private readonly SudokuViewModel  _vm;
-    private readonly GameStateMachine _machine;
+    private readonly JourneyViewModel  _vm;
+    private readonly JourneyStateMachine _machine;
 
     private float _elapsed;
     private const float ValidationDuration = 0.8f; // seconds to show validation animation
 
-    public ValidatingState(SudokuViewModel vm, GameStateMachine machine)
+    public JourneyValidatingState(JourneyViewModel vm, JourneyStateMachine machine)
     {
         _vm      = vm;
         _machine = machine;
@@ -52,7 +52,7 @@ public class ValidatingState : IGameState
                     AutoFillUses   = _vm.UsageStats.AutoFillUses
                 };
 
-                if(_vm != null && _vm.RetryGameData.id != -1 && _vm.RetryGameData.difficulty != -1 && _vm.RetryGameData.level != -1)
+                if(_vm.RetryGameData.id != -1 && _vm.RetryGameData.difficulty != -1 && _vm.RetryGameData.level != -1)
                 {
                     val.Id         = _vm.RetryGameData.id;
                     val.Difficulty = _vm.RetryGameData.difficulty;

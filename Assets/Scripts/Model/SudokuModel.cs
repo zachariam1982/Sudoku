@@ -66,7 +66,7 @@ public static class ScoringSystem
     public static int Calculate(
         SudokuDifficulty difficulty,
         float            elapsedSeconds,
-        ScorePenalties   penalties)
+        IScorePenalties  penalties)
     {
         var (total, _, _, _) = CalculateDetailed(difficulty, elapsedSeconds, penalties);
         return total;
@@ -79,7 +79,7 @@ public static class ScoringSystem
     public static (int total, int diffScore, int timeScore, int penalty) CalculateDetailed(
         SudokuDifficulty difficulty,
         float            elapsedSeconds,
-        ScorePenalties   penalties)
+        IScorePenalties  penalties)
     {
         int diff    = DifficultyScore(difficulty);
         int time    = TimeScore(difficulty, elapsedSeconds);
@@ -87,33 +87,6 @@ public static class ScoringSystem
         int total   = Mathf.Max(0, diff + time - pen);
  
         return (total, diff, time, pen);
-    }
-}
-
-public class ScorePenalties
-{
-    public int Mistakes      { get; set; } // wrong manual entries
-    public int SOSEmptyCells { get; set; } // empty cells SOS filled
-    public int SOSWrongCells { get; set; } // wrong cells SOS fixed
-
-    public ScorePenalties(int arg1, int arg2, int arg3)
-    {
-        Mistakes = arg1;
-        SOSEmptyCells = arg2;
-        SOSWrongCells = arg3;
-    }
-    public void AddMistake()       => Mistakes++;
-    public void AddSOSEmptyCell()  => SOSEmptyCells++;
-    public void AddSOSWrongCell()  => SOSWrongCells++;
- 
-    public int TotalPenalty() =>
-        Mistakes      * ScoringSystem.PenaltyPerMistake    +
-        SOSEmptyCells * ScoringSystem.PenaltySOSFillsEmpty +
-        SOSWrongCells * ScoringSystem.PenaltySOSFixesWrong;
- 
-    public void Reset()
-    {
-        Mistakes = SOSEmptyCells = SOSWrongCells = 0;
     }
 }
 public static class SudokuGenerator
@@ -233,14 +206,22 @@ public class SudokuModel
 {
     public int[,]  Board     { get; private set; } = new int[9, 9];
     public bool[,] GivenMask { get; private set; } = new bool[9, 9];
+    public int[,] PencilCandidateMasks { get; private set; } = new int[9, 9];
     private int _currentLevel = 1;
+    private int _puzzleSeed = 1;
     private SudokuDifficulty _currentDifficulty = SudokuDifficulty.Easy;
     private SudokuResult ret;
     private const int _NoOfLastGames = 5;
 
     public SudokuDifficulty CurrentDifficulty { get { return _currentDifficulty; }}
     public int CurrentLevel { get {return _currentLevel;}}
-    public void SetLevel(int level) => _currentLevel = level;
+    public int PuzzleSeed { get { return _puzzleSeed; } }
+    public void SetLevel(int level)
+    {
+        _currentLevel = level;
+        _puzzleSeed = level;
+    }
+    public void SetPuzzleSeed(int puzzleSeed) => _puzzleSeed = puzzleSeed;
     public void SetDifficulty(SudokuDifficulty difficulty) => _currentDifficulty = difficulty;
     // Both result paths use the same rules, including when the fifth result is a loss.
     public void increaseDifficulty() => UpdateDifficultyFromHistory();
@@ -298,7 +279,7 @@ public class SudokuModel
     }
     public void LoadCurrentLevelPuzzle()
     {
-        this.ret = SudokuGenerator.GenerateSudoku(_currentLevel, _currentDifficulty);
+        this.ret = SudokuGenerator.GenerateSudoku(_puzzleSeed, _currentDifficulty);
 
         for (int row = 0; row < 9; row++)
             for (int col = 0; col < 9; col++)
@@ -306,12 +287,91 @@ public class SudokuModel
                 int value       = ret.Puzzle[row, col];
                 Board[row, col]     = value;
                 GivenMask[row, col] = value != 0;
+                PencilCandidateMasks[row, col] = 0;
             }
     }
     public bool SetValue(int row, int col, int value)
     {
         if (GivenMask[row, col]) return false;
         Board[row, col] = value;
+        if (value != 0) PencilCandidateMasks[row, col] = 0;
+        return true;
+    }
+
+    public void TogglePencilCandidate(int row, int col, int number)
+    {
+        if (row < 0 || row >= 9 || col < 0 || col >= 9 ||
+            number < 1 || number > 9 || Board[row, col] != 0)
+        {
+            return;
+        }
+
+        PencilCandidateMasks[row, col] ^= 1 << number;
+    }
+
+    public void AutoFillPencilCandidates()
+    {
+        for (int row = 0; row < 9; row++)
+        {
+            for (int col = 0; col < 9; col++)
+            {
+                if (Board[row, col] != 0)
+                {
+                    PencilCandidateMasks[row, col] = 0;
+                    continue;
+                }
+
+                int mask = 0;
+                for (int number = 1; number <= 9; number++)
+                    if (CanPlaceNumber(row, col, number)) mask |= 1 << number;
+
+                PencilCandidateMasks[row, col] = mask;
+            }
+        }
+    }
+
+    public void RemovePencilCandidateFromPeers(int enteredRow, int enteredCol, int number)
+    {
+        int bit = ~(1 << number);
+
+        for (int col = 0; col < 9; col++)
+            if (col != enteredCol) PencilCandidateMasks[enteredRow, col] &= bit;
+
+        for (int row = 0; row < 9; row++)
+            if (row != enteredRow) PencilCandidateMasks[row, enteredCol] &= bit;
+
+        int boxStartRow = (enteredRow / 3) * 3;
+        int boxStartCol = (enteredCol / 3) * 3;
+        for (int row = boxStartRow; row < boxStartRow + 3; row++)
+            for (int col = boxStartCol; col < boxStartCol + 3; col++)
+                if (row != enteredRow || col != enteredCol)
+                    PencilCandidateMasks[row, col] &= bit;
+    }
+
+    public void LoadPencilCandidateMasks(int[] masks)
+    {
+        for (int row = 0; row < 9; row++)
+            for (int col = 0; col < 9; col++)
+                PencilCandidateMasks[row, col] =
+                    masks != null && masks.Length == 81 && Board[row, col] == 0
+                        ? masks[row * 9 + col]
+                        : 0;
+    }
+
+    private bool CanPlaceNumber(int targetRow, int targetCol, int number)
+    {
+        for (int col = 0; col < 9; col++)
+            if (Board[targetRow, col] == number) return false;
+
+        for (int row = 0; row < 9; row++)
+            if (Board[row, targetCol] == number) return false;
+
+        int boxStartRow = (targetRow / 3) * 3;
+        int boxStartCol = (targetCol / 3) * 3;
+        for (int row = boxStartRow; row < boxStartRow + 3; row++)
+            for (int col = boxStartCol; col < boxStartCol + 3; col++)
+                if (Board[row, col] == number) return false;
+
         return true;
     }
     public bool IsGiven(int row, int col) => GivenMask[row, col];

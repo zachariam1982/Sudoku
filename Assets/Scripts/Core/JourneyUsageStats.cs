@@ -1,4 +1,4 @@
-public class GameUsageStats
+public sealed class JourneyUsageStats : IGameUsageStats
 {
     public int UndoUses     { get; private set; }
     public int PencilUses   { get; private set; }

@@ -7,15 +7,13 @@ dotnet run --project Tests/Progression/Progression.csproj
 ```
 
 This dependency-free console harness compiles the production SudokuModel,
-SudokuSolver, SudokuDifficultyAnalyzer, ScoringSystem, GameRecord, WinState and
-LoseState. Unity, database, view model, state machine and persistence
-infrastructure are substitutes. It does not test Unity lifecycle, SQLite,
-WebGL persistence or actual save recovery.
+SudokuSolver, SudokuDifficultyAnalyzer, ScoringSystem, and GameRecord. Unity, database, view model, state machine and persistence
+infrastructure are substitutes. It does not test Unity lifecycle, state transitions, SQLite, WebGL persistence
+or actual save recovery.
 The project stays outside Assets and adds nothing to game builds.
 
 Coverage: generator tries the requested tier first and falls back to lower tiers, each puzzle has a valid solution and unique puzzle completion consistent with its clues, and invalid difficulty values are rejected; fallback order and actual-tier recording are checked; progression tests cover all nine tiers, all win counts and attainable total-score values,
-80% promotion and 45% demotion boundaries, tier caps, idempotence, mixed/short/
-empty history, historical replay exit, and normal/historical Retry handlers.
+80% promotion and 45% demotion boundaries, tier caps, idempotence, mixed/short/empty history, and historical replay exit.
 
 ## Manual Unity/device checks still required
 

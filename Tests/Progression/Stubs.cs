@@ -13,10 +13,6 @@ namespace SQLite {
  public class AutoIncrementAttribute : Attribute {}
  public class NotNullAttribute : Attribute {}
 }
-public class SudokuDifficultyResult { public SudokuDifficulty Difficulty; }
-public static class SudokuDifficultyAnalyzer {
- public static SudokuDifficultyResult Analyze(int[,] board) => throw new NotSupportedException("Puzzle generation is not exercised by these tests.");
-}
 public static class GameDatabase {
  public static List<GameRecord> Records = new();
  public static List<GameRecord> GetLastNRecordByDate(int n) => Records.Take(n).ToList();

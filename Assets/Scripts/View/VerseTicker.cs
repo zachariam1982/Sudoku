@@ -27,7 +27,7 @@ public sealed class VerseTicker : MonoBehaviour
         "18 He that believeth on him is not condemned: but he that believeth not is condemned already, because he hath not believed in the name of the only begotten Son of God. " +
         "19 And this is the condemnation, that light is come into the world, and men loved darkness rather than light, because their deeds were evil. " +
         "20 For every one that doeth evil hateth the light, neither cometh to the light, lest his deeds should be reproved. " +
-        "21 But he that doeth truth cometh to the light, that they are wrought in God.";
+        "21 But he that doeth truth cometh to the light, that his deeds may be made manifest, that they are wrought in God.";
 
     private bool _gameActive;
     private float _start;

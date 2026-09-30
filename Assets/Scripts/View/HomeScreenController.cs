@@ -31,9 +31,10 @@ public sealed class HomeScreenController : MonoBehaviour
 
     [Header("Screens")]
     [SerializeField] private GameObject newGameScreen;
+    [SerializeField] private GameContext _gameContext;
+
     
     private JourneyViewModel _viewModel;
-    private GameContext _gameContext;
     private bool _layoutApplied;
     private bool _lastLandscape;
 
@@ -51,11 +52,7 @@ public sealed class HomeScreenController : MonoBehaviour
     public void Initialize(JourneyViewModel viewModel, GameContext gameContext)
     {
         _viewModel = viewModel;
-        _gameContext = gameContext != null
-            ? gameContext
-            : GetComponentInParent<GameContext>();
-        if (_gameContext == null)
-            _gameContext = FindObjectOfType<GameContext>();
+
         ApplyResponsiveLayout();
         RefreshJourneyStatus();
     }
@@ -85,6 +82,7 @@ public sealed class HomeScreenController : MonoBehaviour
             return;
         }
 
+        SetVerseTickerVisible(false);
         gameObject.SetActive(false);
         _gameContext.ActivateJourney();
 
@@ -97,19 +95,31 @@ public sealed class HomeScreenController : MonoBehaviour
             JourneyStateMachine.Instance.CurrentState is JourneyIdleState)
             _viewModel.FirstCellTapped.Value = true;
 
+        string stateName = _viewModel.CurrentStateName.Value;
+        SetVerseTickerVisible(stateName == "JourneyPlayingState" ||
+                              stateName == "JourneyPausedState");
     }
 
     public void OpenNewGame()
     {
+        SetVerseTickerVisible(false);
         newGameScreen.SetActive(true);
         gameObject.SetActive(false);
     }
 
     public void OpenHome()
     {
+        SetVerseTickerVisible(false);
         _gameContext.SuspendActiveGame();
         RefreshJourneyStatus();
         gameObject.SetActive(true);
+    }
+
+    private void SetVerseTickerVisible(bool visible)
+    {
+        Canvas canvas = GetComponentInParent<Canvas>();
+        VerseTicker ticker = canvas != null ? canvas.GetComponent<VerseTicker>() : null;
+        if (ticker != null) ticker.SetGameActive(visible);
     }
 
     private void ApplyResponsiveLayout()

@@ -61,7 +61,8 @@ public class GameStateView : MonoBehaviour
 
     private BaseViewModel _vm;
     private HUD _hud;
-
+    private VerseTicker _verseTicker;
+    private Button _pauseResumeButton;
 
     // ── Binding ───────────────────────────────────────────────────────────────
 
@@ -70,6 +71,12 @@ public class GameStateView : MonoBehaviour
         if (ReferenceEquals(_vm, vm)) return;
         Unbind();
         _vm = vm;
+
+        _pauseResumeButton = pausePanel != null
+            ? pausePanel.GetComponentInChildren<Button>(true)
+            : null;
+        if (_pauseResumeButton != null)
+            _pauseResumeButton.onClick.AddListener(OnPlayPressed);
 
         vm.CurrentStateName.OnChanged += OnStateChanged;
         vm.IsWon.OnChanged            += OnWonChanged;
@@ -98,6 +105,12 @@ public class GameStateView : MonoBehaviour
     private void Unbind()
     {
         if (_vm == null) return;
+
+        if (_pauseResumeButton != null)
+        {
+            _pauseResumeButton.onClick.RemoveListener(OnPlayPressed);
+            _pauseResumeButton = null;
+        }
 
         _vm.CurrentStateName.OnChanged -= OnStateChanged;
         _vm.IsWon.OnChanged            -= OnWonChanged;
@@ -133,8 +146,6 @@ public class GameStateView : MonoBehaviour
             case "JourneyPausedState":
             case "NewGamePausedState":
                 if(pausePanel != null)pausePanel.SetActive(true);                
-                Button btn = this.pausePanel.GetComponentInChildren<Button>();
-                btn.onClick.AddListener(OnPlayPressed);
                 break;
 
             case "JourneyValidatingState":
@@ -163,6 +174,25 @@ public class GameStateView : MonoBehaviour
         }
 
         ApplyModeVisibility(stateName);
+        UpdateVerseTicker(stateName);
+    }
+
+    private void UpdateVerseTicker(string stateName)
+    {
+        if (_verseTicker == null)
+        {
+            Canvas canvas = GetComponentInParent<Canvas>();
+            if (canvas != null)
+                _verseTicker = canvas.GetComponent<VerseTicker>();
+        }
+
+        bool gameActive = stateName == "JourneyPlayingState" ||
+                          stateName == "NewGamePlayingState" ||
+                          stateName == "JourneyPausedState" ||
+                          stateName == "NewGamePausedState";
+
+        if (_verseTicker != null)
+            _verseTicker.SetGameActive(gameActive);
     }
 
     // ── Timer ─────────────────────────────────────────────────────────────────

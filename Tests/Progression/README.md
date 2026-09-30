@@ -12,7 +12,7 @@ infrastructure are substitutes. It does not test Unity lifecycle, state transiti
 or actual save recovery.
 The project stays outside Assets and adds nothing to game builds.
 
-Coverage: generator tries the requested tier first and falls back to lower tiers, each puzzle has a valid solution and unique puzzle completion consistent with its clues, and invalid difficulty values are rejected; fallback order and actual-tier recording are checked; progression tests cover all nine tiers, all win counts and attainable total-score values,
+Coverage: the bit-mask solver is checked against a known unique puzzle, a multiple-solution board, contradictory row/column/box givens, solution limits, and input preservation; generator fallback is checked for all nine tiers, puzzle validity, uniqueness and clue consistency; fallback order and actual-tier recording are checked; progression tests cover all nine tiers, all win counts and attainable total-score values,
 80% promotion and 45% demotion boundaries, tier caps, idempotence, mixed/short/empty history, and historical replay exit.
 
 ## Manual Unity/device checks still required

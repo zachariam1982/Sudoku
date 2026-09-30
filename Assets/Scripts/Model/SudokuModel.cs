@@ -109,6 +109,9 @@ public static class SudokuGenerator
     }
     public static SudokuResult GenerateSudoku( int level, SudokuDifficulty requestedDifficulty)
     {
+        if (!Enum.IsDefined(typeof(SudokuDifficulty), requestedDifficulty))
+            throw new ArgumentOutOfRangeException(nameof(requestedDifficulty), requestedDifficulty, "Unknown Sudoku difficulty.");
+
         const int MaxAttempts = 100;
         var (minClues, maxClues) = GetSearchRange(requestedDifficulty);
 
@@ -145,10 +148,9 @@ public static class SudokuGenerator
 
                 SudokuDifficultyResult rating = SudokuDifficultyAnalyzer.Analyze(puzzle);
 
-                if (requestedDifficulty == SudokuDifficulty.Simple || 
-                    requestedDifficulty == SudokuDifficulty.Beginner ||
-                    (int)rating.Difficulty >= (int)requestedDifficulty || 
-                    (int)rating.Difficulty - 1 == (int)requestedDifficulty)
+                // The analyzer is the source of truth for every displayed tier.
+                // Never return a puzzle harder or easier than the requested difficulty.
+                if (rating.Difficulty == requestedDifficulty)
                 {
                     return new SudokuResult
                     {

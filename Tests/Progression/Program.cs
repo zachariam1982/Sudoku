@@ -54,4 +54,35 @@ foreach(bool win in new[]{false,true}) {
  model.decreaseDifficulty(); Equal(win?SudokuDifficulty.Hard:SudokuDifficulty.Moderate,model.CurrentDifficulty,"repeat loss evaluator");
  model.increaseDifficulty(); Equal(win?SudokuDifficulty.Hard:SudokuDifficulty.Moderate,model.CurrentDifficulty,"repeat win evaluator");
 }
-Console.WriteLine($"PASS: {checks} assertions (production model and win/lose state handlers).");
+// Exercise the production generator and difficulty analyzer for every advertised tier.
+bool IsSolvedBoard(int[,] board) {
+ for (int row=0;row<9;row++) {
+  var rowValues=new HashSet<int>(); var colValues=new HashSet<int>();
+  for (int col=0;col<9;col++) {
+   if(board[row,col]<1 || board[row,col]>9 || board[col,row]<1 || board[col,row]>9) return false;
+   rowValues.Add(board[row,col]); colValues.Add(board[col,row]);
+  }
+  if(rowValues.Count!=9 || colValues.Count!=9 || rowValues.Contains(0) || colValues.Contains(0)) return false;
+ }
+ for(int boxRow=0;boxRow<3;boxRow++) for(int boxCol=0;boxCol<3;boxCol++) {
+  var values=new HashSet<int>();
+  for(int row=0;row<3;row++) for(int col=0;col<3;col++)
+   values.Add(board[boxRow*3+row,boxCol*3+col]);
+  if(values.Count!=9 || values.Contains(0)) return false;
+ }
+ return true;
+}
+foreach(SudokuDifficulty tier in Enum.GetValues<SudokuDifficulty>()) {
+ var generated=SudokuGenerator.GenerateSudoku(1,tier);
+ Equal(tier,SudokuDifficultyAnalyzer.Analyze(generated.Puzzle).Difficulty,$"generated rating matches requested {tier}");
+ Equal(true,SudokuSolver.HasUniqueSolution(generated.Puzzle),$"unique solution {tier}");
+ Equal(true,IsSolvedBoard(generated.Solution),$"valid complete solution {tier}");
+ for(int row=0;row<9;row++) for(int col=0;col<9;col++)
+  if(generated.Puzzle[row,col]!=0)
+   Equal(generated.Solution[row,col],generated.Puzzle[row,col],$"given agrees with solution {tier}");
+}
+bool rejectedInvalidDifficulty=false;
+try { SudokuGenerator.GenerateSudoku(1,(SudokuDifficulty)99); }
+catch(ArgumentOutOfRangeException) { rejectedInvalidDifficulty=true; }
+Equal(true,rejectedInvalidDifficulty,"reject invalid difficulty enum");
+Console.WriteLine($"PASS: {checks} assertions (production model, generator, analyzer, and win/lose state handlers).");

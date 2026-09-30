@@ -113,11 +113,19 @@ public static class SudokuGenerator
         if (!Enum.IsDefined(typeof(SudokuDifficulty), requestedDifficulty))
             throw new ArgumentOutOfRangeException(nameof(requestedDifficulty), requestedDifficulty, "Unknown Sudoku difficulty.");
 
+        long generationStartedAt = System.Diagnostics.Stopwatch.GetTimestamp();
+
         // Try the requested tier first. If this seed cannot produce one, step down
         // one tier at a time so players never receive a harder puzzle than selected.
-        return GenerateWithDifficultyFallback(
+        SudokuResult result = GenerateWithDifficultyFallback(
             requestedDifficulty,
             tier => TryGenerateAtDifficulty(level, tier));
+
+        UnityEngine.Debug.Log(
+            $"[SudokuGenerator] level={level} requested={requestedDifficulty} actual={result.Difficulty} " +
+            $"total={ElapsedMilliseconds(generationStartedAt):F2}ms");
+
+        return result;
     }
 
     internal static SudokuResult GenerateWithDifficultyFallback(
@@ -138,20 +146,64 @@ public static class SudokuGenerator
             $"Could not generate a {requestedDifficulty} Sudoku or any lower difficulty.");
     }
 
+    private static double ElapsedMilliseconds(long startedAt) =>
+        (System.Diagnostics.Stopwatch.GetTimestamp() - startedAt) *
+        1000d / System.Diagnostics.Stopwatch.Frequency;
+
+    private static void LogTierDiagnostics(
+        int level,
+        SudokuDifficulty difficulty,
+        string outcome,
+        int attempts,
+        long tierStartedAt,
+        double fillBoardMs,
+        double uniquenessMs,
+        int uniquenessChecks,
+        double analyzerMs,
+        int analyzerCalls,
+        int acceptedRemovals,
+        int slowestAttempt,
+        int slowestSeed,
+        double slowestAttemptMs)
+    {
+        double totalMs = ElapsedMilliseconds(tierStartedAt);
+        double otherMs = Math.Max(0d, totalMs - fillBoardMs - uniquenessMs - analyzerMs);
+
+        UnityEngine.Debug.Log(
+            $"[SudokuGenerator] level={level} tier={difficulty} outcome={outcome} " +
+            $"attempts={attempts}/100 total={totalMs:F2}ms " +
+            $"fill={fillBoardMs:F2}ms uniqueness={uniquenessMs:F2}ms/{uniquenessChecks} checks " +
+            $"analyzer={analyzerMs:F2}ms/{analyzerCalls} calls other={otherMs:F2}ms " +
+            $"acceptedRemovals={acceptedRemovals} slowestAttempt={slowestAttempt} " +
+            $"slowestSeed={slowestSeed} slowestMs={slowestAttemptMs:F2}");
+    }
+
     private static SudokuResult TryGenerateAtDifficulty(int level, SudokuDifficulty difficulty)
     {
         const int MaxAttempts = 100;
         var (minClues, maxClues) = GetSearchRange(difficulty);
 
+        long tierStartedAt = System.Diagnostics.Stopwatch.GetTimestamp();
+        double fillBoardMs = 0d;
+        double uniquenessMs = 0d;
+        double analyzerMs = 0d;
+        int uniquenessChecks = 0;
+        int analyzerCalls = 0;
+        int acceptedRemovals = 0;
+        int slowestAttempt = 0;
+        int slowestSeed = 0;
+        double slowestAttemptMs = 0d;
+
         for (int attempt = 0; attempt < MaxAttempts; attempt++)
         {
-            // Each tier has its own deterministic seed. If a lower tier is selected,
-            // saving that actual tier reproduces the same puzzle on recovery.
+            long attemptStartedAt = System.Diagnostics.Stopwatch.GetTimestamp();
             int seed = unchecked(level * 397 ^ ((int)difficulty + 1) * 7919 ^ attempt * 104729);
             System.Random rng = new System.Random(seed);
             int[,] solution = new int[9, 9];
 
+            long stageStartedAt = System.Diagnostics.Stopwatch.GetTimestamp();
             FillBoard(solution, rng);
+            fillBoardMs += ElapsedMilliseconds(stageStartedAt);
 
             int[,] puzzle = (int[,])solution.Clone();
             List<int> cells = Enumerable.Range(0, 81).OrderBy(_ => rng.Next()).ToList();
@@ -165,21 +217,44 @@ public static class SudokuGenerator
 
                 puzzle[row, col] = 0;
 
-                if (!SudokuSolver.HasUniqueSolution(puzzle))
+                uniquenessChecks++;
+                stageStartedAt = System.Diagnostics.Stopwatch.GetTimestamp();
+                bool hasUniqueSolution = SudokuSolver.HasUniqueSolution(puzzle);
+                uniquenessMs += ElapsedMilliseconds(stageStartedAt);
+
+                if (!hasUniqueSolution)
                 {
                     puzzle[row, col] = previous;
                     continue;
                 }
 
                 clueCount--;
+                acceptedRemovals++;
 
                 if (clueCount > maxClues) continue;
                 if (clueCount < minClues) break;
 
+                analyzerCalls++;
+                stageStartedAt = System.Diagnostics.Stopwatch.GetTimestamp();
                 SudokuDifficultyResult rating = SudokuDifficultyAnalyzer.Analyze(puzzle);
+                analyzerMs += ElapsedMilliseconds(stageStartedAt);
 
                 if (rating.Difficulty == difficulty)
                 {
+                    double attemptMs = ElapsedMilliseconds(attemptStartedAt);
+                    if (attemptMs > slowestAttemptMs)
+                    {
+                        slowestAttempt = attempt + 1;
+                        slowestSeed = seed;
+                        slowestAttemptMs = attemptMs;
+                    }
+
+                    LogTierDiagnostics(
+                        level, difficulty, "matched", attempt + 1, tierStartedAt,
+                        fillBoardMs, uniquenessMs, uniquenessChecks,
+                        analyzerMs, analyzerCalls, acceptedRemovals,
+                        slowestAttempt, slowestSeed, slowestAttemptMs);
+
                     return new SudokuResult
                     {
                         Puzzle = (int[,])puzzle.Clone(),
@@ -188,7 +263,21 @@ public static class SudokuGenerator
                     };
                 }
             }
+
+            double completedAttemptMs = ElapsedMilliseconds(attemptStartedAt);
+            if (completedAttemptMs > slowestAttemptMs)
+            {
+                slowestAttempt = attempt + 1;
+                slowestSeed = seed;
+                slowestAttemptMs = completedAttemptMs;
+            }
         }
+
+        LogTierDiagnostics(
+            level, difficulty, "no-match", MaxAttempts, tierStartedAt,
+            fillBoardMs, uniquenessMs, uniquenessChecks,
+            analyzerMs, analyzerCalls, acceptedRemovals,
+            slowestAttempt, slowestSeed, slowestAttemptMs);
 
         return null;
     }

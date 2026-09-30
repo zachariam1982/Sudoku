@@ -1,10 +1,8 @@
-using System.Collections;
 using TMPro;
 using UnityEngine;
-using UnityEngine.Networking;
 
 /// <summary>
-/// Scrolls a randomly selected Gospel verse while the gameplay HUD is visible.
+/// Scrolls the fixed John 3:13-21 passage while the gameplay HUD is visible.
 /// </summary>
 [DisallowMultipleComponent]
 public sealed class VerseTicker : MonoBehaviour
@@ -16,54 +14,24 @@ public sealed class VerseTicker : MonoBehaviour
     [SerializeField] private GameObject hudRoot;
 
     [Header("Ticker")]
-    [SerializeField] private string verseText =
-        "John 3:16 (KJV) — For God so loved the world, that he gave his only begotten Son, that whosoever believeth in him should not perish, but have everlasting life.";
     [SerializeField] private float scrollSpeed = 28f;
     [SerializeField] private float textPadding = 10f;
 
-    private const string BibleApiBaseUrl =
-        "https://cdn.jsdelivr.net/gh/wldeh/bible-api@main/bibles/en-kjv/books";
-
-    private static readonly Gospel[] Gospels =
-    {
-        new Gospel("Matthew", "matthew", 28),
-        new Gospel("Mark", "mark", 16),
-        new Gospel("Luke", "luke", 24),
-        new Gospel("John", "john", 21)
-    };
+    private const string VerseText =
+        "John 3:13–21 (KJV) — " +
+        "13 And no man hath ascended up to heaven, but he that came down from heaven, even the Son of man which is in heaven. " +
+        "14 And as Moses lifted up the serpent in the wilderness, even so must the Son of man be lifted up: " +
+        "15 That whosoever believeth in him should not perish, but have eternal life. " +
+        "16 For God so loved the world, that he gave his only begotten Son, that whosoever believeth in him should not perish, but have everlasting life. " +
+        "17 For God sent not his Son into the world to condemn the world; but that the world through him might be saved. " +
+        "18 He that believeth on him is not condemned: but he that believeth not is condemned already, because he hath not believed in the name of the only begotten Son of God. " +
+        "19 And this is the condemnation, that light is come into the world, and men loved darkness rather than light, because their deeds were evil. " +
+        "20 For every one that doeth evil hateth the light, neither cometh to the light, lest his deeds should be reproved. " +
+        "21 But he that doeth truth cometh to the light, that they are wrought in God.";
 
     private bool _gameActive;
-    private bool _hasLoadedVerse;
-    private bool _isLoadingVerse;
     private float _start;
     private float _end;
-
-    [System.Serializable]
-    private sealed class ChapterResponse
-    {
-        public VerseData[] data;
-    }
-
-    [System.Serializable]
-    private sealed class VerseData
-    {
-        public string verse;
-        public string text;
-    }
-
-    private struct Gospel
-    {
-        public readonly string displayName;
-        public readonly string apiName;
-        public readonly int chapterCount;
-
-        public Gospel(string displayName, string apiName, int chapterCount)
-        {
-            this.displayName = displayName;
-            this.apiName = apiName;
-            this.chapterCount = chapterCount;
-        }
-    }
 
     private void Awake()
     {
@@ -76,9 +44,6 @@ public sealed class VerseTicker : MonoBehaviour
     {
         _gameActive = active;
         RefreshVisibility(true);
-
-        if (active && !_hasLoadedVerse && !_isLoadingVerse)
-            StartCoroutine(LoadRandomGospelVerse());
     }
 
     private void Update()
@@ -97,47 +62,6 @@ public sealed class VerseTicker : MonoBehaviour
         textRect.anchoredPosition = position;
     }
 
-    private IEnumerator LoadRandomGospelVerse()
-    {
-        _isLoadingVerse = true;
-
-        // Retry with a fresh random chapter if the API request fails.
-        for (int attempt = 0; attempt < 3 && !_hasLoadedVerse; attempt++)
-        {
-            Gospel gospel = Gospels[Random.Range(0, Gospels.Length)];
-            int chapter = Random.Range(1, gospel.chapterCount + 1);
-            string url = $"{BibleApiBaseUrl}/{gospel.apiName}/chapters/{chapter}.json";
-
-            using (UnityWebRequest request = UnityWebRequest.Get(url))
-            {
-                request.timeout = 12;
-                yield return request.SendWebRequest();
-
-                if (request.result == UnityWebRequest.Result.Success)
-                {
-                    ChapterResponse response =
-                        JsonUtility.FromJson<ChapterResponse>(request.downloadHandler.text);
-
-                    if (response != null && response.data != null && response.data.Length > 0)
-                    {
-                        VerseData verse = response.data[Random.Range(0, response.data.Length)];
-                        if (verse != null && !string.IsNullOrWhiteSpace(verse.text))
-                        {
-                            verseText = $"{gospel.displayName} {chapter}:{verse.verse} (KJV) — {verse.text.Trim()}";
-                            _hasLoadedVerse = true;
-                            RefreshVisibility(true);
-                            break;
-                        }
-                    }
-                }
-
-                Debug.LogWarning($"VerseTicker: Bible API request failed ({request.error}).");
-            }
-        }
-
-        _isLoadingVerse = false;
-    }
-
     private void RefreshVisibility(bool resetPosition)
     {
         bool visible = _gameActive && hudRoot != null && hudRoot.activeInHierarchy;
@@ -146,7 +70,7 @@ public sealed class VerseTicker : MonoBehaviour
 
         if (viewport == null || textRect == null || label == null) return;
 
-        label.text = verseText;
+        label.text = VerseText;
         label.textWrappingMode = TextWrappingModes.NoWrap;
         label.alignment = TextAlignmentOptions.MidlineLeft;
         label.ForceMeshUpdate();

@@ -62,6 +62,33 @@ Equal(0,SudokuSolver.CountSolutions(duplicateColumn),"duplicate column givens ar
 var duplicateBox=new int[9,9];
 duplicateBox[0,0]=4; duplicateBox[1,1]=4;
 Equal(0,SudokuSolver.CountSolutions(duplicateBox),"duplicate box givens are contradictory");
+// Analyzer representation regression checks on completed and single-hole grids.
+int[,] solvedReference = {
+ {5,3,4,6,7,8,9,1,2},
+ {6,7,2,1,9,5,3,4,8},
+ {1,9,8,3,4,2,5,6,7},
+ {8,5,9,7,6,1,4,2,3},
+ {4,2,6,8,5,3,7,9,1},
+ {7,1,3,9,2,4,8,5,6},
+ {9,6,1,5,3,7,2,8,4},
+ {2,8,7,4,1,9,6,3,5},
+ {3,4,5,2,8,6,1,7,9}
+};
+var solvedRating=SudokuDifficultyAnalyzer.Analyze(solvedReference);
+Equal(SudokuDifficulty.Simple,solvedRating.Difficulty,"solved board analyzer tier");
+Equal(SudokuTechnique.NakedSingle,solvedRating.HardestTechnique,"solved board analyzer technique");
+Equal(0,solvedRating.SolveSteps,"solved board analyzer steps");
+Equal(true,solvedRating.SolvedLogically,"solved board analyzer completion");
+var oneHole=(int[,])solvedReference.Clone();
+oneHole[0,0]=0;
+var oneHoleBefore=(int[,])oneHole.Clone();
+var oneHoleRating=SudokuDifficultyAnalyzer.Analyze(oneHole);
+Equal(SudokuDifficulty.Simple,oneHoleRating.Difficulty,"single-hole analyzer tier");
+Equal(SudokuTechnique.NakedSingle,oneHoleRating.HardestTechnique,"single-hole analyzer technique");
+Equal(1,oneHoleRating.SolveSteps,"single-hole analyzer steps");
+Equal(true,oneHoleRating.SolvedLogically,"single-hole analyzer completion");
+for(int r=0;r<9;r++) for(int c=0;c<9;c++)
+ Equal(oneHoleBefore[r,c],oneHole[r,c],"analyzer preserves input board");
 // Exercise the production generator and difficulty analyzer for every advertised tier.
 bool IsSolvedBoard(int[,] board) {
  for (int row=0;row<9;row++) {

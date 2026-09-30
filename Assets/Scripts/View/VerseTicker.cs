@@ -18,16 +18,12 @@ public sealed class VerseTicker : MonoBehaviour
     [SerializeField] private float textPadding = 10f;
 
     private const string VerseText =
-        "John 3:13–21 (KJV) — " +
-        "13 And no man hath ascended up to heaven, but he that came down from heaven, even the Son of man which is in heaven. " +
-        "14 And as Moses lifted up the serpent in the wilderness, even so must the Son of man be lifted up: " +
-        "15 That whosoever believeth in him should not perish, but have eternal life. " +
-        "16 For God so loved the world, that he gave his only begotten Son, that whosoever believeth in him should not perish, but have everlasting life. " +
-        "17 For God sent not his Son into the world to condemn the world; but that the world through him might be saved. " +
-        "18 He that believeth on him is not condemned: but he that believeth not is condemned already, because he hath not believed in the name of the only begotten Son of God. " +
-        "19 And this is the condemnation, that light is come into the world, and men loved darkness rather than light, because their deeds were evil. " +
-        "20 For every one that doeth evil hateth the light, neither cometh to the light, lest his deeds should be reproved. " +
-        "21 But he that doeth truth cometh to the light, that his deeds may be made manifest, that they are wrought in God.";
+        "John 3:13–17 (NCB) — " +
+        "13 No one has gone up to heaven except the one who descended from heaven, the Son of Man. " +
+        "14 And just as Moses lifted up the serpent in the desert, so must the Son of Man be lifted up, " +
+        "15 in order that everyone who believes in him may have eternal life. " +
+        "16 For God so loved the world that he gave his only Son, so that everyone who believes in him may not perish but may attain eternal life. " +
+        "17 For God did not send his Son into the world to condemn the world but in order that the world might be saved through him. ";
 
     private bool _gameActive;
     private float _start;

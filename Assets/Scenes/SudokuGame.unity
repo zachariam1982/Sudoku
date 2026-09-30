@@ -3099,9 +3099,21 @@ MonoBehaviour:
   m_OnCullStateChanged:
     m_PersistentCalls:
       m_Calls: []
-  m_text: "John 3:16 (WEB) \u2014 For God so loved the world, that he gave his one
-    and only Son, that whoever believes in him should not perish, but have eternal
-    life."
+  m_text: "John 3:13-21  \u2014 No one has gone up to heaven\r\nexcept the one who
+    descended from heaven,\r\nthe Son of Man.\r\n14 And just as Moses lifted up the
+    serpent in the desert,\r\nso must the Son of Man be lifted up,[e]\r\n15 in order
+    that everyone who believes in him\r\nmay have eternal life.\r\n16 \u201CFor God
+    so loved the world\r\nthat he gave his only Son,\r\nso that everyone who believes
+    in him\r\nmay not perish\r\nbut may attain eternal life.\r\n17 \u201CFor God
+    did not send his Son into the world\r\nto condemn the world\r\nbut in order that
+    the world might be saved through him.\r\n18 Whoever believes in him is not condemned,\r\nbut
+    whoever does not believe in him\r\nalready stands condemned,\r\nbecause he has
+    not believed in the name\r\nof the only-begotten Son of God.\r\n19 \u201CAnd
+    the judgment is this:\r\nthe light has come into the world,\r\nbut people preferred
+    darkness to light\r\nbecause their deeds were evil.\r\n20 Everyone who does evil
+    hates the light\r\nand avoids coming near the light\r\nso that his misdeeds may
+    not be exposed.\r\n21 However, whoever lives by the truth\r\ncomes to the light\r\nso
+    that it may be clearly seen\r\nthat his deeds have been done\r\nin God."
   m_isRightToLeft: 0
   m_fontAsset: {fileID: 11400000, guid: 8f586378b4e144a9851e7b34d9b748ee, type: 2}
   m_sharedMaterial: {fileID: 2180264, guid: 8f586378b4e144a9851e7b34d9b748ee, type: 2}

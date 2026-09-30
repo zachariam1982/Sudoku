@@ -30,6 +30,38 @@ var extra=Window(SudokuDifficulty.Advanced,0,0); extra.Add(new GameRecord {Diffi
 Equal(SudokuDifficulty.Moderate,Next(extra),"only latest five");
 var invalid=Window(SudokuDifficulty.Advanced,0,0); invalid[0].Difficulty=99;
 Equal(SudokuDifficulty.Moderate,Next(invalid),"invalid latest tier");
+// Solver regression checks: one solution, multiple solutions, invalid givens,
+// solution-count limits, and preservation of the caller's input board.
+int[,] knownUniquePuzzle = {
+ {5,3,0,0,7,0,0,0,0},
+ {6,0,0,1,9,5,0,0,0},
+ {0,9,8,0,0,0,0,6,0},
+ {8,0,0,0,6,0,0,0,3},
+ {4,0,0,8,0,3,0,0,1},
+ {7,0,0,0,2,0,0,0,6},
+ {0,6,0,0,0,0,2,8,0},
+ {0,0,0,4,1,9,0,0,5},
+ {0,0,0,0,8,0,0,7,9}
+};
+var knownPuzzleBeforeSolve=(int[,])knownUniquePuzzle.Clone();
+Equal(1,SudokuSolver.CountSolutions(knownUniquePuzzle),"known puzzle has one solution");
+Equal(true,SudokuSolver.HasUniqueSolution(knownUniquePuzzle),"known puzzle uniqueness");
+for(int r=0;r<9;r++) for(int c=0;c<9;c++)
+ Equal(knownPuzzleBeforeSolve[r,c],knownUniquePuzzle[r,c],"solver preserves input board");
+var emptyPuzzle=new int[9,9];
+Equal(2,SudokuSolver.CountSolutions(emptyPuzzle,2),"empty board count capped at two");
+Equal(1,SudokuSolver.CountSolutions(emptyPuzzle,1),"solution count respects limit one");
+Equal(0,SudokuSolver.CountSolutions(emptyPuzzle,0),"zero solution limit");
+Equal(false,SudokuSolver.HasUniqueSolution(emptyPuzzle),"empty board is not unique");
+var duplicateRow=new int[9,9];
+duplicateRow[0,0]=4; duplicateRow[0,1]=4;
+Equal(0,SudokuSolver.CountSolutions(duplicateRow),"duplicate row givens are contradictory");
+var duplicateColumn=new int[9,9];
+duplicateColumn[0,0]=4; duplicateColumn[1,0]=4;
+Equal(0,SudokuSolver.CountSolutions(duplicateColumn),"duplicate column givens are contradictory");
+var duplicateBox=new int[9,9];
+duplicateBox[0,0]=4; duplicateBox[1,1]=4;
+Equal(0,SudokuSolver.CountSolutions(duplicateBox),"duplicate box givens are contradictory");
 // Exercise the production generator and difficulty analyzer for every advertised tier.
 bool IsSolvedBoard(int[,] board) {
  for (int row=0;row<9;row++) {

@@ -18,12 +18,16 @@ public sealed class VerseTicker : MonoBehaviour
     [SerializeField] private float textPadding = 10f;
 
     private const string VerseText =
-        "John 3:13–17 (NCB) — " +
-        "13 No one has gone up to heaven except the one who descended from heaven, the Son of Man. " +
-        "14 And just as Moses lifted up the serpent in the desert, so must the Son of Man be lifted up, " +
-        "15 in order that everyone who believes in him may have eternal life. " +
-        "16 For God so loved the world that he gave his only Son, so that everyone who believes in him may not perish but may attain eternal life. " +
-        "17 For God did not send his Son into the world to condemn the world but in order that the world might be saved through him. ";
+        "John 3:13–21 (NCB) — " +
+        "No one has gone up to heaven except the one who descended from heaven, the Son of Man. " +
+        "And just as Moses lifted up the serpent in the desert, so must the Son of Man be lifted up, " +
+        "in order that everyone who believes in him may have eternal life. " +
+        "For God so loved the world that he gave his only Son, so that everyone who believes in him may not perish but may attain eternal life. " +
+        "For God did not send his Son into the world to condemn the world but in order that the world might be saved through him. " +
+        "Whoever believes in him is not condemned, but whoever does not believe in him already stands condemned, because he has not believed in the name of the only-begotten Son of God. " +
+        "And the judgment is this: the light has come into the world, but people preferred darkness to light because their deeds were evil. " +
+        "Everyone who does evil hates the light and avoids coming near the light so that his misdeeds may not be exposed. " +
+        "However, whoever lives by the truth comes to the light so that it may be clearly seen that his deeds have been done in God.";
 
     private bool _gameActive;
     private float _start;

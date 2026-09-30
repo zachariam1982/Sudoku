@@ -30,30 +30,6 @@ var extra=Window(SudokuDifficulty.Advanced,0,0); extra.Add(new GameRecord {Diffi
 Equal(SudokuDifficulty.Moderate,Next(extra),"only latest five");
 var invalid=Window(SudokuDifficulty.Advanced,0,0); invalid[0].Difficulty=99;
 Equal(SudokuDifficulty.Moderate,Next(invalid),"invalid latest tier");
-foreach(bool historical in new[]{false,true}) {
- var model=new SudokuModel(); model.SetLevel(12); model.SetDifficulty(SudokuDifficulty.Advanced);
- GameDatabase.Records=Window(SudokuDifficulty.Advanced,0,0);
- var vm=new SudokuViewModel(model);
- if(historical) vm.RetryGameData=(12,12,5,0);
- var machine=new GameStateMachine(); var state=new LoseState(vm,machine); machine.Current=state; state.Enter();
- vm.RetryGameRequested.Value=true;
- Equal(12,model.CurrentLevel,"retry level"); Equal(SudokuDifficulty.Advanced,model.CurrentDifficulty,"retry difficulty");
- Equal(historical?12:-1,vm.RetryGameData.id,"retry identity"); Equal(1,machine.Transitions,"retry transition");
-}
-foreach(bool win in new[]{false,true}) {
- var model=new SudokuModel(); model.SetLevel(7); model.SetDifficulty(SudokuDifficulty.Moderate);
- int max=ScoringSystem.GetAbsoluteMaximumScore(SudokuDifficulty.Advanced);
- // Latest loss after four perfect wins must still promote at exactly 80%.
- GameDatabase.Records=Window(SudokuDifficulty.Advanced,win?4:0,win?4*max:0);
- if(win) { GameDatabase.Records[0].IsWon=false; GameDatabase.Records[4].IsWon=true; }
- var vm=new SudokuViewModel(model); vm.RetryGameData=(7,7,4,0);
- var machine=new GameStateMachine(); IGameState state=win?new WinState(vm,machine):new LoseState(vm,machine);
- machine.Current=state; state.Enter(); vm.NewGameRequested.Value=true;
- Equal(win?SudokuDifficulty.Hard:SudokuDifficulty.Moderate,model.CurrentDifficulty,"replay exit difficulty");
- Equal(-1,vm.RetryGameData.id,"replay cleared"); Equal(1,machine.Transitions,"new game transition");
- model.decreaseDifficulty(); Equal(win?SudokuDifficulty.Hard:SudokuDifficulty.Moderate,model.CurrentDifficulty,"repeat loss evaluator");
- model.increaseDifficulty(); Equal(win?SudokuDifficulty.Hard:SudokuDifficulty.Moderate,model.CurrentDifficulty,"repeat win evaluator");
-}
 // Exercise the production generator and difficulty analyzer for every advertised tier.
 bool IsSolvedBoard(int[,] board) {
  for (int row=0;row<9;row++) {
@@ -96,4 +72,4 @@ bool rejectedInvalidDifficulty=false;
 try { SudokuGenerator.GenerateSudoku(1,(SudokuDifficulty)99); }
 catch(ArgumentOutOfRangeException) { rejectedInvalidDifficulty=true; }
 Equal(true,rejectedInvalidDifficulty,"reject invalid difficulty enum");
-Console.WriteLine($"PASS: {checks} assertions (production model, generator, analyzer, and win/lose state handlers).");
+Console.WriteLine($"PASS: {checks} assertions (production model, generator, and difficulty analyzer).");

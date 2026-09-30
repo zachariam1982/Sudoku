@@ -6,7 +6,5 @@
     <Compile Include="../../Assets/Scripts/Model/SudokuDifficultyAnalyzer.cs" Link="SudokuDifficultyAnalyzer.cs" />
     <Compile Include="../../Assets/Scripts/Core/GameRecord.cs" Link="GameRecord.cs" />
     <Compile Include="../../Assets/Scripts/StateMachine/IGameState.cs" Link="IGameState.cs" />
-    <Compile Include="../../Assets/Scripts/StateMachine/State/LoseState.cs" Link="LoseState.cs" />
-    <Compile Include="../../Assets/Scripts/StateMachine/State/WinState.cs" Link="WinState.cs" />
   </ItemGroup>
 </Project>

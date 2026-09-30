@@ -61,8 +61,8 @@ public class GameStateView : MonoBehaviour
 
     private BaseViewModel _vm;
     private HUD _hud;
+    private VerseTicker _verseTicker;
     private Button _pauseResumeButton;
-
 
     // ── Binding ───────────────────────────────────────────────────────────────
 
@@ -174,6 +174,25 @@ public class GameStateView : MonoBehaviour
         }
 
         ApplyModeVisibility(stateName);
+        UpdateVerseTicker(stateName);
+    }
+
+    private void UpdateVerseTicker(string stateName)
+    {
+        if (_verseTicker == null)
+        {
+            Canvas canvas = GetComponentInParent<Canvas>();
+            if (canvas != null)
+                _verseTicker = canvas.GetComponent<VerseTicker>();
+        }
+
+        bool gameActive = stateName == "JourneyPlayingState" ||
+                          stateName == "NewGamePlayingState" ||
+                          stateName == "JourneyPausedState" ||
+                          stateName == "NewGamePausedState";
+
+        if (_verseTicker != null)
+            _verseTicker.SetGameActive(gameActive);
     }
 
     // ── Timer ─────────────────────────────────────────────────────────────────

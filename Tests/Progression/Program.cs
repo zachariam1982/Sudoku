@@ -62,6 +62,13 @@ Equal(0,SudokuSolver.CountSolutions(duplicateColumn),"duplicate column givens ar
 var duplicateBox=new int[9,9];
 duplicateBox[0,0]=4; duplicateBox[1,1]=4;
 Equal(0,SudokuSolver.CountSolutions(duplicateBox),"duplicate box givens are contradictory");
+// Candidate removals must be written back to the analyzer's candidate grid.
+var analyzerState=new SudokuDifficultyAnalyzer.SolverState(new int[9,9]);
+Equal(9,analyzerState.Candidates[0,0].Count,"empty analyzer cell has all candidates");
+Equal(true,analyzerState.RemoveCandidate(0,0,5),"first candidate removal changes state");
+Equal(false,analyzerState.Candidates[0,0].Contains(5),"candidate removal persists in state");
+Equal(8,analyzerState.Candidates[0,0].Count,"candidate removal updates candidate count");
+Equal(false,analyzerState.RemoveCandidate(0,0,5),"repeated candidate removal reports no change");
 // Analyzer representation regression checks on completed and single-hole grids.
 int[,] solvedReference = {
  {5,3,4,6,7,8,9,1,2},

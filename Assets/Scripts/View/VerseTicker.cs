@@ -151,7 +151,7 @@ public sealed class VerseTicker : MonoBehaviour
         label.alignment = TextAlignmentOptions.MidlineLeft;
         label.ForceMeshUpdate();
 
-        float width = Mathf.Max(label.preferredWidth, viewport.rect.width);
+        float width = label.preferredWidth;
         textRect.sizeDelta = new Vector2(width, viewport.rect.height - 2f * textPadding);
         _start = viewport.rect.width * 0.5f + width * 0.5f;
         _end = -viewport.rect.width * 0.5f - width * 0.5f;

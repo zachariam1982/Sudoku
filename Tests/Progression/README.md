@@ -13,7 +13,7 @@ infrastructure are substitutes. It does not test Unity lifecycle, SQLite,
 WebGL persistence or actual save recovery.
 The project stays outside Assets and adds nothing to game builds.
 
-Coverage: generator returns analyzer-exact puzzles for all nine tiers, each puzzle has a valid solution and unique puzzle completion consistent with its clues, and invalid difficulty values are rejected; progression tests cover all nine tiers, all win counts and attainable total-score values,
+Coverage: generator tries the requested tier first and falls back to lower tiers, each puzzle has a valid solution and unique puzzle completion consistent with its clues, and invalid difficulty values are rejected; fallback order and actual-tier recording are checked; progression tests cover all nine tiers, all win counts and attainable total-score values,
 80% promotion and 45% demotion boundaries, tier caps, idempotence, mixed/short/
 empty history, historical replay exit, and normal/historical Retry handlers.
 
@@ -38,4 +38,4 @@ empty history, historical replay exit, and normal/historical Retry handlers.
    Records outside the latest five must not affect progression; improvements
    inside that window remain eligible under the existing product behavior.
 
-The generator now returns only puzzles whose analyzer rating exactly matches the selected tier. Generation is still bounded to 100 deterministic attempts per puzzle request, so the tier smoke test is important when changing the generator or analyzer.
+The generator tries the selected tier for up to 100 deterministic attempts, then tries each easier tier in descending order. It records the analyzer-rated tier actually generated, never exceeds the selected tier, and throws only if all tiers fail.

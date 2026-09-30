@@ -19,6 +19,7 @@ public class SudokuResult
 {
     public int[,] Puzzle;   // The grid with holes (0 represents empty)
     public int[,] Solution; // The completed grid
+    public SudokuDifficulty Difficulty; // The analyzer-rated tier actually generated
 }
 public static class ScoringSystem
 {
@@ -112,16 +113,45 @@ public static class SudokuGenerator
         if (!Enum.IsDefined(typeof(SudokuDifficulty), requestedDifficulty))
             throw new ArgumentOutOfRangeException(nameof(requestedDifficulty), requestedDifficulty, "Unknown Sudoku difficulty.");
 
-        const int MaxAttempts = 100;
-        var (minClues, maxClues) = GetSearchRange(requestedDifficulty);
+        // Try the requested tier first. If this seed cannot produce one, step down
+        // one tier at a time so players never receive a harder puzzle than selected.
+        return GenerateWithDifficultyFallback(
+            requestedDifficulty,
+            tier => TryGenerateAtDifficulty(level, tier));
+    }
 
-        for (int attempt = 0;attempt < MaxAttempts;attempt++)
+    internal static SudokuResult GenerateWithDifficultyFallback(
+        SudokuDifficulty requestedDifficulty,
+        Func<SudokuDifficulty, SudokuResult> generateAtDifficulty)
+    {
+        for (int tier = (int)requestedDifficulty; tier >= (int)SudokuDifficulty.Simple; tier--)
         {
-            int seed = unchecked(level * 397 ^ ((int)requestedDifficulty + 1) * 7919 ^ attempt * 104729);
+            SudokuDifficulty actualDifficulty = (SudokuDifficulty)tier;
+            SudokuResult result = generateAtDifficulty(actualDifficulty);
+            if (result == null) continue;
+
+            result.Difficulty = actualDifficulty;
+            return result;
+        }
+
+        throw new InvalidOperationException(
+            $"Could not generate a {requestedDifficulty} Sudoku or any lower difficulty.");
+    }
+
+    private static SudokuResult TryGenerateAtDifficulty(int level, SudokuDifficulty difficulty)
+    {
+        const int MaxAttempts = 100;
+        var (minClues, maxClues) = GetSearchRange(difficulty);
+
+        for (int attempt = 0; attempt < MaxAttempts; attempt++)
+        {
+            // Each tier has its own deterministic seed. If a lower tier is selected,
+            // saving that actual tier reproduces the same puzzle on recovery.
+            int seed = unchecked(level * 397 ^ ((int)difficulty + 1) * 7919 ^ attempt * 104729);
             System.Random rng = new System.Random(seed);
             int[,] solution = new int[9, 9];
 
-            FillBoard( solution, rng);
+            FillBoard(solution, rng);
 
             int[,] puzzle = (int[,])solution.Clone();
             List<int> cells = Enumerable.Range(0, 81).OrderBy(_ => rng.Next()).ToList();
@@ -148,20 +178,19 @@ public static class SudokuGenerator
 
                 SudokuDifficultyResult rating = SudokuDifficultyAnalyzer.Analyze(puzzle);
 
-                // The analyzer is the source of truth for every displayed tier.
-                // Never return a puzzle harder or easier than the requested difficulty.
-                if (rating.Difficulty == requestedDifficulty)
+                if (rating.Difficulty == difficulty)
                 {
                     return new SudokuResult
                     {
                         Puzzle = (int[,])puzzle.Clone(),
-                        Solution = (int[,])solution.Clone()
+                        Solution = (int[,])solution.Clone(),
+                        Difficulty = difficulty
                     };
                 }
             }
         }
 
-        throw new InvalidOperationException( $"Could not generate a " + $"{requestedDifficulty} Sudoku " + $"after {MaxAttempts} generation paths.");
+        return null;
     }
     private static bool FillBoard(int[,] board, System.Random rng)
     {
@@ -282,6 +311,7 @@ public class SudokuModel
     public void LoadCurrentLevelPuzzle()
     {
         this.ret = SudokuGenerator.GenerateSudoku(_puzzleSeed, _currentDifficulty);
+        _currentDifficulty = ret.Difficulty;
 
         for (int row = 0; row < 9; row++)
             for (int col = 0; col < 9; col++)

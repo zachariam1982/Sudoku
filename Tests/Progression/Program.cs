@@ -74,13 +74,24 @@ bool IsSolvedBoard(int[,] board) {
 }
 foreach(SudokuDifficulty tier in Enum.GetValues<SudokuDifficulty>()) {
  var generated=SudokuGenerator.GenerateSudoku(1,tier);
- Equal(tier,SudokuDifficultyAnalyzer.Analyze(generated.Puzzle).Difficulty,$"generated rating matches requested {tier}");
+ Equal(true,(int)generated.Difficulty<=(int)tier,$"generated difficulty does not exceed requested {tier}");
+ Equal(generated.Difficulty,SudokuDifficultyAnalyzer.Analyze(generated.Puzzle).Difficulty,$"generated rating matches recorded tier {tier}");
  Equal(true,SudokuSolver.HasUniqueSolution(generated.Puzzle),$"unique solution {tier}");
  Equal(true,IsSolvedBoard(generated.Solution),$"valid complete solution {tier}");
  for(int row=0;row<9;row++) for(int col=0;col<9;col++)
   if(generated.Puzzle[row,col]!=0)
    Equal(generated.Solution[row,col],generated.Puzzle[row,col],$"given agrees with solution {tier}");
 }
+// Requested tiers are tried in descending order and stop at the first available tier.
+var fallbackOrder=new List<SudokuDifficulty>();
+var fallbackResult=SudokuGenerator.GenerateWithDifficultyFallback(
+ SudokuDifficulty.Expert,
+ tier => {
+  fallbackOrder.Add(tier);
+  return tier==SudokuDifficulty.Moderate ? new SudokuResult() : null;
+ });
+Equal("Expert,Hard,Advanced,Moderate",string.Join(",",fallbackOrder),"fallback tier order");
+Equal(SudokuDifficulty.Moderate,fallbackResult.Difficulty,"fallback records actual tier");
 bool rejectedInvalidDifficulty=false;
 try { SudokuGenerator.GenerateSudoku(1,(SudokuDifficulty)99); }
 catch(ArgumentOutOfRangeException) { rejectedInvalidDifficulty=true; }

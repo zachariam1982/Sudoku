@@ -9,8 +9,10 @@ using UnityEngine;
 public class BaseViewModel
 {
     protected readonly SudokuModel Model = new SudokuModel();
-    protected readonly Stack<ValueTuple<int, int, int>> ReplacedValueStack =
-        new Stack<ValueTuple<int, int, int>>();
+    protected readonly Stack<SaveGameHistoryEntry> UndoHistory =
+        new Stack<SaveGameHistoryEntry>();
+    protected readonly Stack<SaveGameHistoryEntry> RedoHistory =
+        new Stack<SaveGameHistoryEntry>();
 
     private bool _demoMode;
     protected ISudokuStateMachine StateMachine { get; private set; }
@@ -59,6 +61,7 @@ public class BaseViewModel
     public ICommand SetEraseModeCommand { get; }
     public ICommand SetPencilModeCommand { get; }
     public ICommand UndoCommand { get; }
+    public ICommand RedoCommand { get; }
     public ICommand SOSCommand { get; }
     public ICommand AutoFillCandidatesCommand { get; }
     public ICommand TogglePencilCandidateCommand { get; }
@@ -104,20 +107,8 @@ public class BaseViewModel
             {
                 (() => IsEraseMode.Value, () => ShowMessage.Value = ("", "Erase mode is set. Tap on Erase again to enable Pencil mode.", ""))
             });
-        UndoCommand = new RelayCommand(
-            _ =>
-            {
-                var previous = GetPreviousValue();
-                if (previous.Item1 < 0) return;
-                UsageStats.AddUndo();
-                EnterValueForUndo(previous.Item1, previous.Item2, previous.Item3);
-            },
-            _ => !IsPencilMode.Value && !IsEraseMode.Value,
-            new (Func<bool> fn, Action showMessage)[]
-            {
-                (() => IsPencilMode.Value, () => ShowMessage.Value = ("", "Pencil mode is set. Tap on Pencil again to enable undo.", "")),
-                (() => IsEraseMode.Value, () => ShowMessage.Value = ("", "Erase mode is set. Tap on Erase again to enable undo.", ""))
-            });
+        UndoCommand = new RelayCommand(_ => Undo());
+        RedoCommand = new RelayCommand(_ => Redo());
         SOSCommand = new RelayCommand(
             _ => IsSOSMode.Value = !IsSOSMode.Value,
             _ => !IsPencilMode.Value && !IsEraseMode.Value && IsSelectedCellEmpty(),
@@ -133,7 +124,9 @@ public class BaseViewModel
                 UsageStats.AddAutoFill();
                 if (!IsPencilMode.Value) IsPencilMode.Value = true;
                 ClosePicker();
+                int[] previousMasks = CopyPencilCandidateMasks();
                 Model.AutoFillPencilCandidates();
+                RecordHistory(-1, -1, 0, 0, previousMasks);
                 PublishPencilCandidates();
                 if (!FirstCellTapped.Value) FirstCellTapped.Value = true;
             },
@@ -152,7 +145,9 @@ public class BaseViewModel
             if (Model.IsGiven(row, col)) return;
 
             int number = (int)param;
+            int[] previousMasks = CopyPencilCandidateMasks();
             Model.TogglePencilCandidate(row, col, number);
+            RecordHistory(-1, -1, 0, 0, previousMasks);
             HighlightedCandidateNumber.Value = number;
             PublishPencilCandidates();
         });
@@ -200,7 +195,8 @@ public class BaseViewModel
         IsEraseMode.Value = false;
         HighlightedCandidateNumber.Value = 0;
         SelectedDigit.Value = 0;
-        ReplacedValueStack.Clear();
+        UndoHistory.Clear();
+        RedoHistory.Clear();
         ConflictingCells.Value.Clear();
         UsageStats.Reset();
         Penalties.Reset();
@@ -292,7 +288,8 @@ public class BaseViewModel
         int col = SelectedCol.Value;
         if (row < 0 || col < 0 || Model.IsGiven(row, col)) return;
 
-        ReplacedValueStack.Push((row, col, Model.GetValue(row, col)));
+        int previousValue = Model.GetValue(row, col);
+        int[] previousMasks = CopyPencilCandidateMasks();
         Model.SetValue(row, col, value);
         PublishBoard();
 
@@ -304,6 +301,7 @@ public class BaseViewModel
         }
         if (value > 0 && !hasConflict)
             Model.RemovePencilCandidateFromPeers(row, col, value);
+        RecordHistory(row, col, previousValue, value, previousMasks);
         PublishPencilCandidates();
         LastEnteredCell.Value = (row, col, hasConflict);
         UpdateConflictingCells();
@@ -313,25 +311,85 @@ public class BaseViewModel
         SelectedDigit.Value = value > 0 ? value : 0;
     }
 
-    private void EnterValueForUndo(int row, int col, int value)
+    private int[] CopyPencilCandidateMasks()
     {
-        Model.SetValue(row, col, value);
+        var masks = new int[81];
+        for (int row = 0; row < 9; row++)
+            for (int col = 0; col < 9; col++)
+                masks[row * 9 + col] = Model.PencilCandidateMasks[row, col];
+        return masks;
+    }
+
+    private void RecordHistory(int row, int col, int beforeValue, int afterValue, int[] beforeMasks)
+    {
+        var entry = new SaveGameHistoryEntry
+        {
+            Row = row,
+            Col = col,
+            BeforeValue = beforeValue,
+            AfterValue = afterValue
+        };
+
+        for (int cellRow = 0; cellRow < 9; cellRow++)
+            for (int cellCol = 0; cellCol < 9; cellCol++)
+            {
+                int index = cellRow * 9 + cellCol;
+                int afterMask = Model.PencilCandidateMasks[cellRow, cellCol];
+                if (beforeMasks[index] != afterMask)
+                {
+                    entry.CandidateChanges.Add(new SaveGameCandidateChange
+                    {
+                        Row = cellRow,
+                        Col = cellCol,
+                        BeforeMask = beforeMasks[index],
+                        AfterMask = afterMask
+                    });
+                }
+            }
+
+        if (beforeValue == afterValue && entry.CandidateChanges.Count == 0) return;
+        UndoHistory.Push(entry);
+        RedoHistory.Clear();
+    }
+
+    private void Undo()
+    {
+        if (UndoHistory.Count == 0) return;
+        SaveGameHistoryEntry entry = UndoHistory.Pop();
+        RedoHistory.Push(entry);
+        UsageStats.AddUndo();
+        ApplyHistory(entry, undo: true);
+    }
+
+    private void Redo()
+    {
+        if (RedoHistory.Count == 0) return;
+        SaveGameHistoryEntry entry = RedoHistory.Pop();
+        UndoHistory.Push(entry);
+        ApplyHistory(entry, undo: false);
+    }
+
+    private void ApplyHistory(SaveGameHistoryEntry entry, bool undo)
+    {
+        if (entry.Row >= 0 && entry.Row < 9 && entry.Col >= 0 && entry.Col < 9)
+            Model.SetValue(entry.Row, entry.Col, undo ? entry.BeforeValue : entry.AfterValue);
+
+        if (entry.CandidateChanges != null)
+            foreach (SaveGameCandidateChange change in entry.CandidateChanges)
+                if (change != null)
+                    Model.SetPencilCandidateMask(
+                        change.Row, change.Col, undo ? change.BeforeMask : change.AfterMask);
+
         PublishBoard();
-        bool hasConflict = Model.HasConflict(row, col);
-        if (value > 0 && !hasConflict)
-            Model.RemovePencilCandidateFromPeers(row, col, value);
         PublishPencilCandidates();
-        LastEnteredCell.Value = (row, col, hasConflict);
+        if (entry.Row >= 0 && entry.Row < 9 && entry.Col >= 0 && entry.Col < 9)
+        {
+            bool hasConflict = Model.HasConflict(entry.Row, entry.Col);
+            LastEnteredCell.Value = (entry.Row, entry.Col, hasConflict);
+        }
         UpdateConflictingCells();
         IsBoardValid.Value = Model.Validate();
         IsComplete.Value = Model.IsComplete() && IsBoardValid.Value;
-    }
-
-    private ValueTuple<int, int, int> GetPreviousValue()
-    {
-        return ReplacedValueStack.Count == 0
-            ? new ValueTuple<int, int, int>(-1, -1, -1)
-            : ReplacedValueStack.Pop();
     }
 
     private bool IsSelectedCellFilled()

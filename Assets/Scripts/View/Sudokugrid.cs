@@ -16,6 +16,18 @@ public class SudokuGrid : MonoBehaviour
     private bool           cellsReady = false;
     private BaseViewModel viewModel;
 
+    private const int LightDashesPerArm = 28;
+    private static readonly Vector2[] LightArmDirections =
+    {
+        Vector2.right, Vector2.left, Vector2.up, Vector2.down
+    };
+    private readonly Image[,] lightDashes = new Image[4, LightDashesPerArm];
+    private RectTransform lightOverlay;
+    private Vector2 lightOrigin;
+    private float lightElapsed;
+    private float lightDuration;
+    private bool lightEffectActive;
+
     // ── Unity Lifecycle ───────────────────────────────────────────────────────
 
     void Start()
@@ -23,6 +35,119 @@ public class SudokuGrid : MonoBehaviour
         if (gridBackground != null)
             gridBackground.color = new Color(0.1f, 0.1f, 0.18f, 1f);
 
+    }
+
+    private void LateUpdate()
+    {
+        if (!lightEffectActive || lightOverlay == null) return;
+
+        lightElapsed += Time.unscaledDeltaTime;
+        RenderSelectionLight();
+
+        if (lightElapsed >= lightDuration)
+            StopSelectionLight();
+    }
+
+    private void EnsureSelectionLightOverlay()
+    {
+        if (lightOverlay != null || cells[0, 0] == null) return;
+
+        Transform gridPanel = cells[0, 0].transform.parent.parent;
+        GameObject overlayObject = new GameObject("SelectionLightOverlay", typeof(RectTransform));
+        lightOverlay = overlayObject.GetComponent<RectTransform>();
+        lightOverlay.SetParent(gridPanel, false);
+        lightOverlay.anchorMin = Vector2.zero;
+        lightOverlay.anchorMax = Vector2.one;
+        lightOverlay.pivot = new Vector2(0.5f, 0.5f);
+        lightOverlay.offsetMin = Vector2.zero;
+        lightOverlay.offsetMax = Vector2.zero;
+        lightOverlay.SetAsLastSibling();
+
+        for (int arm = 0; arm < LightArmDirections.Length; arm++)
+        {
+            for (int i = 0; i < LightDashesPerArm; i++)
+            {
+                GameObject dashObject = new GameObject(
+                    "LightDash",
+                    typeof(RectTransform),
+                    typeof(Image));
+                dashObject.transform.SetParent(lightOverlay, false);
+
+                RectTransform dashRect = dashObject.GetComponent<RectTransform>();
+                dashRect.anchorMin = new Vector2(0.5f, 0.5f);
+                dashRect.anchorMax = new Vector2(0.5f, 0.5f);
+                dashRect.pivot = new Vector2(0.5f, 0.5f);
+
+                Image dashImage = dashObject.GetComponent<Image>();
+                dashImage.raycastTarget = false;
+                dashImage.enabled = false;
+                lightDashes[arm, i] = dashImage;
+            }
+        }
+    }
+
+    private void StartSelectionLight(SudokuCell cell)
+    {
+        if (cell == null) return;
+
+        EnsureSelectionLightOverlay();
+        if (lightOverlay == null) return;
+
+        lightOrigin = lightOverlay.InverseTransformPoint(cell.transform.position);
+        lightElapsed = 0f;
+        lightEffectActive = true;
+        RenderSelectionLight();
+    }
+
+    private void RenderSelectionLight()
+    {
+        Rect bounds = lightOverlay.rect;
+        float boardSize = Mathf.Min(bounds.width, bounds.height);
+        float dashLength = Mathf.Clamp(boardSize / 64f, 8f, 16f);
+        float dashThickness = Mathf.Clamp(dashLength * 0.25f, 2f, 4f);
+        float dashSpacing = dashLength * 1.8f;
+        float speed = Mathf.Max(boardSize * 0.9f, 1f);
+        float longestArm = 0f;
+
+        for (int arm = 0; arm < LightArmDirections.Length; arm++)
+        {
+            Vector2 direction = LightArmDirections[arm];
+            float maxDistance = direction.x > 0f ? bounds.xMax - lightOrigin.x :
+                               direction.x < 0f ? lightOrigin.x - bounds.xMin :
+                               direction.y > 0f ? bounds.yMax - lightOrigin.y :
+                                                  lightOrigin.y - bounds.yMin;
+            maxDistance = Mathf.Max(0f, maxDistance);
+            longestArm = Mathf.Max(longestArm, maxDistance);
+
+            for (int i = 0; i < LightDashesPerArm; i++)
+            {
+                Image dash = lightDashes[arm, i];
+                float distance = i * dashSpacing + lightElapsed * speed;
+                bool visible = distance <= maxDistance + dashLength;
+
+                dash.enabled = visible;
+                if (!visible) continue;
+
+                RectTransform dashRect = dash.rectTransform;
+                dashRect.anchoredPosition = lightOrigin + direction * distance;
+                dashRect.sizeDelta = direction.x != 0f
+                    ? new Vector2(dashLength, dashThickness)
+                    : new Vector2(dashThickness, dashLength);
+
+                float edgeFade = 1f - 0.3f * Mathf.Clamp01(distance / Mathf.Max(maxDistance, 1f));
+                dash.color = new Color(0.72f, 0.92f, 1f, 0.88f * edgeFade);
+            }
+        }
+
+        lightDuration = longestArm / speed + 0.08f;
+    }
+
+    private void StopSelectionLight()
+    {
+        lightEffectActive = false;
+        for (int arm = 0; arm < LightArmDirections.Length; arm++)
+            for (int i = 0; i < LightDashesPerArm; i++)
+                lightDashes[arm, i].enabled = false;
     }
 
     // ── Binding ───────────────────────────────────────────────────────────────
@@ -91,6 +216,11 @@ public class SudokuGrid : MonoBehaviour
     private void OnSelectedRowOrColumnChanged(int _)
     {
         RefreshHighlights();
+
+        int row = viewModel.SelectedRow.Value;
+        int col = viewModel.SelectedCol.Value;
+        if (row >= 0 && row < 9 && col >= 0 && col < 9)
+            StartSelectionLight(cells[row, col]);
     }
 
     private void OnSelectedDigitChanged(int _)
@@ -233,6 +363,7 @@ public class SudokuGrid : MonoBehaviour
         if (!cellsReady) return;
 
         SudokuCell enteredCell = cells[entry.row,entry.col];
+        StartSelectionLight(enteredCell);
 
         if (entry.hasConflict)
         {
@@ -271,6 +402,7 @@ public class SudokuGrid : MonoBehaviour
             }
 
         cellsReady = true;
+        EnsureSelectionLightOverlay();
 
         if (viewModel != null)
         {

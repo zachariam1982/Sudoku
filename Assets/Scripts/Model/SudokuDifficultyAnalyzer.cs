@@ -1,5 +1,6 @@
 using System;
 using System.Linq;
+using System.Collections;
 using System.Collections.Generic;
 
 public enum SudokuTechnique
@@ -25,27 +26,173 @@ public class SudokuDifficultyResult
 
 public static class SudokuDifficultyAnalyzer
 {
-    private sealed class SolverState
+    internal struct CandidateSet : IEnumerable<int>
+    {
+        public const int FullMask = 0x3FE; // Candidate digits 1 through 9.
+        private int _mask;
+
+        public CandidateSet(int mask) => _mask = mask;
+        public int Count => CountBits(_mask);
+
+        public void Clear() => _mask = 0;
+
+        public bool Add(int value)
+        {
+            int bit = 1 << value;
+            bool added = (_mask & bit) == 0;
+            _mask |= bit;
+            return added;
+        }
+
+        public bool Remove(int value)
+        {
+            int bit = 1 << value;
+            bool removed = (_mask & bit) != 0;
+            _mask &= ~bit;
+            return removed;
+        }
+
+        public bool Contains(int value) =>
+            value >= 1 && value <= 9 && (_mask & (1 << value)) != 0;
+
+        public bool SetEquals(CandidateSet other) => _mask == other._mask;
+
+        public void UnionWith(CandidateSet other) => _mask |= other._mask;
+
+        public int First()
+        {
+            if (_mask == 0)
+                throw new InvalidOperationException("The candidate set is empty.");
+
+            for (int value = 1; value <= 9; value++)
+                if ((_mask & (1 << value)) != 0)
+                    return value;
+
+            throw new InvalidOperationException("The candidate set is empty.");
+        }
+
+        public bool Any(Func<int, bool> predicate)
+        {
+            if (predicate == null) throw new ArgumentNullException(nameof(predicate));
+
+            for (int value = 1; value <= 9; value++)
+                if ((_mask & (1 << value)) != 0 && predicate(value))
+                    return true;
+
+            return false;
+        }
+
+        public int[] ToArray()
+        {
+            int[] values = new int[Count];
+            int index = 0;
+
+            for (int value = 1; value <= 9; value++)
+                if ((_mask & (1 << value)) != 0)
+                    values[index++] = value;
+
+            return values;
+        }
+
+        public Enumerator GetEnumerator() => new Enumerator(_mask);
+        IEnumerator<int> IEnumerable<int>.GetEnumerator() => new Enumerator(_mask);
+        IEnumerator IEnumerable.GetEnumerator() => new Enumerator(_mask);
+
+        public struct Enumerator : IEnumerator<int>
+        {
+            private readonly int _mask;
+            private int _nextValue;
+            private int _current;
+
+            public Enumerator(int mask)
+            {
+                _mask = mask;
+                _nextValue = 1;
+                _current = 0;
+            }
+
+            public int Current => _current;
+            object IEnumerator.Current => _current;
+
+            public bool MoveNext()
+            {
+                while (_nextValue <= 9)
+                {
+                    int value = _nextValue++;
+                    if ((_mask & (1 << value)) == 0) continue;
+
+                    _current = value;
+                    return true;
+                }
+
+                return false;
+            }
+
+            public void Reset()
+            {
+                _nextValue = 1;
+                _current = 0;
+            }
+
+            public void Dispose() { }
+        }
+
+        private static int CountBits(int mask)
+        {
+            int count = 0;
+            while (mask != 0)
+            {
+                mask &= mask - 1;
+                count++;
+            }
+
+            return count;
+        }
+    }
+
+    internal sealed class SolverState
     {
         public int[,] Board { get; }
-        public HashSet<int>[,] Candidates { get; }
+        public CandidateSet[,] Candidates { get; }
 
         public SolverState(int[,] puzzle)
         {
             Board = (int[,])puzzle.Clone();
 
-            Candidates = new HashSet<int>[9, 9];
+            Candidates = new CandidateSet[9, 9];
+
+            int[] rowUsed = new int[9];
+            int[] columnUsed = new int[9];
+            int[] boxUsed = new int[9];
 
             for (int row = 0; row < 9; row++)
             {
                 for (int col = 0; col < 9; col++)
                 {
-                    Candidates[row, col] = new HashSet<int>();
+                    int value = Board[row, col];
+                    if (value < 1 || value > 9) continue;
 
-                    if (Board[row, col] != 0) continue;
+                    int bit = 1 << value;
+                    rowUsed[row] |= bit;
+                    columnUsed[col] |= bit;
+                    boxUsed[(row / 3) * 3 + col / 3] |= bit;
+                }
+            }
 
-                    foreach (int candidate in SudokuSolver.GetCandidates(Board,row,col))
-                        Candidates[row, col].Add(candidate);
+            for (int row = 0; row < 9; row++)
+            {
+                for (int col = 0; col < 9; col++)
+                {
+                    if (Board[row, col] != 0)
+                    {
+                        Candidates[row, col] = new CandidateSet(0);
+                        continue;
+                    }
+
+                    int box = (row / 3) * 3 + col / 3;
+                    int candidates = CandidateSet.FullMask &
+                        ~(rowUsed[row] | columnUsed[col] | boxUsed[box]);
+                    Candidates[row, col] = new CandidateSet(candidates);
                 }
             }
         }
@@ -53,16 +200,16 @@ public static class SudokuDifficultyAnalyzer
         public void Place(int row,int col,int value)
         {
             Board[row, col] = value;
-            Candidates[row, col].Clear();
+            Candidates[row, col] = new CandidateSet(0);
 
             // Remove from row / column.
             for (int i = 0; i < 9; i++)
             {
                 if (Board[row, i] == 0)
-                    Candidates[row, i].Remove(value);
+                    RemoveCandidate(row, i, value);
 
                 if (Board[i, col] == 0)
-                    Candidates[i, col].Remove(value);
+                    RemoveCandidate(i, col, value);
             }
 
             // Remove from box.
@@ -76,10 +223,19 @@ public static class SudokuDifficultyAnalyzer
                 {
                     if (Board[r, c] == 0)
                     {
-                        Candidates[r, c].Remove(value);
+                        RemoveCandidate(r, c, value);
                     }
                 }
             }
+        }
+
+        public bool RemoveCandidate(int row, int col, int value)
+        {
+            CandidateSet candidates = Candidates[row, col];
+            if (!candidates.Remove(value)) return false;
+
+            Candidates[row, col] = candidates;
+            return true;
         }
     }
     public static SudokuDifficultyResult Analyze(int[,] puzzle)
@@ -508,13 +664,8 @@ public static class SudokuDifficultyAnalyzer
                                 continue;
                             }
 
-                            if (state.Candidates[
-                                    commonRow,
-                                    col]
-                                .Remove(number))
-                            {
+                            if (state.RemoveCandidate(commonRow, col, number))
                                 changed = true;
-                            }
                         }
 
                         if (changed)
@@ -556,13 +707,8 @@ public static class SudokuDifficultyAnalyzer
                                 continue;
                             }
 
-                            if (state.Candidates[
-                                    row,
-                                    commonCol]
-                                .Remove(number))
-                            {
+                            if (state.RemoveCandidate(row, commonCol, number))
                                 changed = true;
-                            }
                         }
 
                         if (changed)
@@ -693,7 +839,7 @@ public static class SudokuDifficultyAnalyzer
         {
             var first = cells[i];
 
-            HashSet<int> firstCandidates =
+            CandidateSet firstCandidates =
                 state.Candidates[
                     first.row,
                     first.col];
@@ -707,7 +853,7 @@ public static class SudokuDifficultyAnalyzer
             {
                 var second = cells[j];
 
-                HashSet<int> secondCandidates =
+                CandidateSet secondCandidates =
                     state.Candidates[
                         second.row,
                         second.col];
@@ -734,15 +880,10 @@ public static class SudokuDifficultyAnalyzer
                         continue;
                     }
 
-                    HashSet<int> candidates =
-                        state.Candidates[
-                            cell.row,
-                            cell.col];
-
-                    if (candidates.Remove(pair[0]))
+                    if (state.RemoveCandidate(cell.row, cell.col, pair[0]))
                         changed = true;
 
-                    if (candidates.Remove(pair[1]))
+                    if (state.RemoveCandidate(cell.row, cell.col, pair[1]))
                         changed = true;
                 }
 
@@ -930,7 +1071,7 @@ public static class SudokuDifficultyAnalyzer
                 foreach (var cell
                         in number1Cells)
                 {
-                    HashSet<int> candidates =
+                    CandidateSet candidates =
                         state.Candidates[
                             cell.row,
                             cell.col];
@@ -946,8 +1087,8 @@ public static class SudokuDifficultyAnalyzer
                             continue;
                         }
 
-                        candidates.Remove(value);
-                        changed = true;
+                        if (state.RemoveCandidate(cell.row, cell.col, value))
+                            changed = true;
                     }
                 }
 
@@ -1117,21 +1258,14 @@ public static class SudokuDifficultyAnalyzer
                     var third =
                         possibleCells[k];
 
-                    HashSet<int> triple =
-                        new HashSet<int>(
-                            state.Candidates[
-                                first.row,
-                                first.col]);
+                    CandidateSet triple =
+                        state.Candidates[first.row, first.col];
 
                     triple.UnionWith(
-                        state.Candidates[
-                            second.row,
-                            second.col]);
+                        state.Candidates[second.row, second.col]);
 
                     triple.UnionWith(
-                        state.Candidates[
-                            third.row,
-                            third.col]);
+                        state.Candidates[third.row, third.col]);
 
                     /*
                     * Three cells must collectively
@@ -1156,7 +1290,7 @@ public static class SudokuDifficultyAnalyzer
                             continue;
                         }
 
-                        HashSet<int> candidates =
+                        CandidateSet candidates =
                             state.Candidates[
                                 cell.row,
                                 cell.col];
@@ -1198,7 +1332,7 @@ public static class SudokuDifficultyAnalyzer
                             continue;
                         }
 
-                        HashSet<int> candidates =
+                        CandidateSet candidates =
                             state.Candidates[
                                 cell.row,
                                 cell.col];
@@ -1206,7 +1340,7 @@ public static class SudokuDifficultyAnalyzer
                         foreach (int value
                                 in triple)
                         {
-                            if (candidates.Remove(value))
+                            if (state.RemoveCandidate(cell.row, cell.col, value))
                                 changed = true;
                         }
                     }
@@ -1341,26 +1475,16 @@ private static bool TryXWingRows(
                         row,
                         col1] == 0)
                 {
-                    if (state.Candidates[
-                            row,
-                            col1]
-                        .Remove(number))
-                    {
+                    if (state.RemoveCandidate(row, col1, number))
                         changed = true;
-                    }
                 }
 
                 if (state.Board[
                         row,
                         col2] == 0)
                 {
-                    if (state.Candidates[
-                            row,
-                            col2]
-                        .Remove(number))
-                    {
+                    if (state.RemoveCandidate(row, col2, number))
                         changed = true;
-                    }
                 }
             }
 
@@ -1460,26 +1584,16 @@ private static bool TryXWingColumns(
                         row1,
                         col] == 0)
                 {
-                    if (state.Candidates[
-                            row1,
-                            col]
-                        .Remove(number))
-                    {
+                    if (state.RemoveCandidate(row1, col, number))
                         changed = true;
-                    }
                 }
 
                 if (state.Board[
                         row2,
                         col] == 0)
                 {
-                    if (state.Candidates[
-                            row2,
-                            col]
-                        .Remove(number))
-                    {
+                    if (state.RemoveCandidate(row2, col, number))
                         changed = true;
-                    }
                 }
             }
 

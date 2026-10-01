@@ -28,6 +28,7 @@ public class BaseViewModel
         new BindableProperty<int[,]>();
     public BindableProperty<int> SelectedRow { get; } = new BindableProperty<int>(-1);
     public BindableProperty<int> SelectedCol { get; } = new BindableProperty<int>(-1);
+    public BindableProperty<int> SelectedDigit { get; } = new BindableProperty<int>(0);
     public BindableProperty<bool> IsPickerOpen { get; } = new BindableProperty<bool>(false);
     public BindableProperty<bool> IsBoardValid { get; } = new BindableProperty<bool>(true);
     public BindableProperty<bool> IsComplete { get; } = new BindableProperty<bool>(false);
@@ -148,6 +149,8 @@ public class BaseViewModel
             int col = SelectedCol.Value;
             if (row < 0 || col < 0) return;
 
+            if (Model.IsGiven(row, col)) return;
+
             int number = (int)param;
             Model.TogglePencilCandidate(row, col, number);
             HighlightedCandidateNumber.Value = number;
@@ -196,11 +199,19 @@ public class BaseViewModel
         IsPencilMode.Value = false;
         IsEraseMode.Value = false;
         HighlightedCandidateNumber.Value = 0;
+        SelectedDigit.Value = 0;
         ReplacedValueStack.Clear();
         ConflictingCells.Value.Clear();
         UsageStats.Reset();
         Penalties.Reset();
-        Model.LoadCurrentLevelPuzzle();
+        if(Model.CurrentDifficulty == SudokuDifficulty.Hard || Model.CurrentDifficulty == SudokuDifficulty.Expert)
+        {
+            Model.LoadCurrentLevelPuzzle(100000);    
+        }
+        else
+        {
+            Model.LoadCurrentLevelPuzzle();
+        }
         PublishBoard();
         PublishPencilCandidates();
         ClosePicker();
@@ -244,6 +255,7 @@ public class BaseViewModel
     protected void ClosePicker()
     {
         IsPickerOpen.Value = false;
+        SelectedDigit.Value = 0;
         SelectedRow.Value = -1;
         SelectedCol.Value = -1;
         SelectedCellTransform.Value = null;
@@ -251,8 +263,19 @@ public class BaseViewModel
 
     private void SelectCell((int row, int col, object cellTransform) cell)
     {
-        if (Model.IsGiven(cell.row, cell.col)) return;
+        if (Model.IsGiven(cell.row, cell.col))
+        {
+            // A given clue is inspectable, but must never open the value picker.
+            if (IsPickerOpen.Value) ClosePicker();
+            SelectedRow.Value = cell.row;
+            SelectedCol.Value = cell.col;
+            SelectedCellTransform.Value = cell.cellTransform;
+            SelectedDigit.Value = Model.GetValue(cell.row, cell.col);
+            return;
+        }
+
         if (!FirstCellTapped.Value) FirstCellTapped.Value = true;
+        SelectedDigit.Value = 0;
         SelectedRow.Value = cell.row;
         SelectedCol.Value = cell.col;
         SelectedCellTransform.Value = cell.cellTransform;
@@ -267,7 +290,7 @@ public class BaseViewModel
     {
         int row = SelectedRow.Value;
         int col = SelectedCol.Value;
-        if (row < 0 || col < 0) return;
+        if (row < 0 || col < 0 || Model.IsGiven(row, col)) return;
 
         ReplacedValueStack.Push((row, col, Model.GetValue(row, col)));
         Model.SetValue(row, col, value);
@@ -287,6 +310,7 @@ public class BaseViewModel
         IsBoardValid.Value = Model.Validate();
         IsComplete.Value = Model.IsComplete() && IsBoardValid.Value;
         ClosePicker();
+        SelectedDigit.Value = value > 0 ? value : 0;
     }
 
     private void EnterValueForUndo(int row, int col, int value)

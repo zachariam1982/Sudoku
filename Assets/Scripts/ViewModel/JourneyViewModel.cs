@@ -88,9 +88,10 @@ public class JourneyViewModel : BaseViewModel
 
     public ValueTuple<int, int, int> getPreviousValues()
     {
-        return ReplacedValueStack.Count == 0
-            ? new ValueTuple<int, int, int>(-1, -1, -1)
-            : ReplacedValueStack.Pop();
+        if (UndoHistory.Count == 0)
+            return new ValueTuple<int, int, int>(-1, -1, -1);
+        SaveGameHistoryEntry entry = UndoHistory.Peek();
+        return new ValueTuple<int, int, int>(entry.Row, entry.Col, entry.BeforeValue);
     }
 
     public SaveGameData GetSaveData()
@@ -131,12 +132,8 @@ public class JourneyViewModel : BaseViewModel
                     Model.PencilCandidateMasks[row, col];
             }
 
-        var stackArray = ReplacedValueStack.ToArray();
-        for (int i = stackArray.Length - 1; i >= 0; i--)
-        {
-            var value = stackArray[i];
-            data.UndoStack.Add($"{value.Item1},{value.Item2},{value.Item3}");
-        }
+        AddHistoryToSave(UndoHistory, data.UndoHistory);
+        AddHistoryToSave(RedoHistory, data.RedoHistory);
 
 #if UNITY_WEBGL && !UNITY_EDITOR
         data.GameHistory = GameDatabase.ExportHistory();
@@ -163,18 +160,21 @@ public class JourneyViewModel : BaseViewModel
 
         ElapsedSeconds.Value = data.ElapsedSeconds;
         LivesRemaining.Value = data.LivesRemaining;
-        ReplacedValueStack.Clear();
-        foreach (string entry in data.UndoStack)
+        UndoHistory.Clear();
+        RedoHistory.Clear();
+        if (data.UndoHistory != null && data.UndoHistory.Count > 0)
         {
-            string[] parts = entry.Split(',');
-            if (parts.Length == 3 &&
-                int.TryParse(parts[0], out int row) &&
-                int.TryParse(parts[1], out int col) &&
-                int.TryParse(parts[2], out int value))
-            {
-                ReplacedValueStack.Push((row, col, value));
-            }
+            foreach (SaveGameHistoryEntry entry in data.UndoHistory)
+                if (entry != null) UndoHistory.Push(entry);
         }
+        else
+        {
+            LoadLegacyUndoHistory(data);
+        }
+
+        if (data.RedoHistory != null)
+            foreach (SaveGameHistoryEntry entry in data.RedoHistory)
+                if (entry != null) RedoHistory.Push(entry);
 
         PublishBoard();
         PublishPencilCandidates();
@@ -227,6 +227,54 @@ public class JourneyViewModel : BaseViewModel
                 JourneyMachine.TransitionTo(JourneyMachine.Lose);
                 break;
         }
+    }
+
+    private static void AddHistoryToSave(
+        Stack<SaveGameHistoryEntry> history,
+        List<SaveGameHistoryEntry> savedHistory)
+    {
+        SaveGameHistoryEntry[] entries = history.ToArray();
+        for (int i = entries.Length - 1; i >= 0; i--)
+            savedHistory.Add(entries[i]);
+    }
+
+    private void LoadLegacyUndoHistory(SaveGameData data)
+    {
+        if (data.UndoStack == null || data.UndoStack.Count == 0) return;
+
+        var parsed = new List<(int row, int col, int value)>();
+        foreach (string entry in data.UndoStack)
+        {
+            if (string.IsNullOrEmpty(entry)) continue;
+            string[] parts = entry.Split(',');
+            if (parts.Length == 3 &&
+                int.TryParse(parts[0], out int row) &&
+                int.TryParse(parts[1], out int col) &&
+                int.TryParse(parts[2], out int value) &&
+                row >= 0 && row < 9 && col >= 0 && col < 9)
+                parsed.Add((row, col, value));
+        }
+
+        // Older saves stored only the value replaced by each edit. Walk backward
+        // through a board copy to infer each edit's resulting value.
+        var virtualBoard = (int[,])Model.Board.Clone();
+        var newestFirst = new List<SaveGameHistoryEntry>();
+        for (int i = parsed.Count - 1; i >= 0; i--)
+        {
+            var old = parsed[i];
+            int afterValue = virtualBoard[old.row, old.col];
+            newestFirst.Add(new SaveGameHistoryEntry
+            {
+                Row = old.row,
+                Col = old.col,
+                BeforeValue = old.value,
+                AfterValue = afterValue
+            });
+            virtualBoard[old.row, old.col] = old.value;
+        }
+
+        for (int i = newestFirst.Count - 1; i >= 0; i--)
+            UndoHistory.Push(newestFirst[i]);
     }
 
     private void FetchData()

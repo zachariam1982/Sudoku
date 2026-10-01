@@ -177,10 +177,17 @@ public class SudokuGrid : MonoBehaviour
         RefreshHighlights();
     }
 
-    private readonly bool[,] relatedHighlights = new bool[9, 9];
-
     private void RefreshHighlights()
     {
+        if (!cellsReady || viewModel == null) return;
+
+        int selectedRow = viewModel.SelectedRow.Value;
+        int selectedCol = viewModel.SelectedCol.Value;
+
+        for (int row = 0; row < 9; row++)
+            for (int col = 0; col < 9; col++)
+                cells[row, col].SetHighlight(row == selectedRow && col == selectedCol);
+
         RefreshMatchingDigitHighlights();
     }
 
@@ -188,52 +195,11 @@ public class SudokuGrid : MonoBehaviour
     {
         if (!cellsReady || viewModel == null) return;
 
-        int selectedRow = viewModel.SelectedRow.Value;
-        int selectedCol = viewModel.SelectedCol.Value;
         int selectedDigit = viewModel.SelectedDigit.Value;
-
         for (int row = 0; row < 9; row++)
             for (int col = 0; col < 9; col++)
-                relatedHighlights[row, col] = false;
-
-        if (selectedRow >= 0 && selectedRow < 9 && selectedCol >= 0 && selectedCol < 9)
-        {
-            for (int index = 0; index < 9; index++)
-            {
-                relatedHighlights[selectedRow, index] = true;
-                relatedHighlights[index, selectedCol] = true;
-            }
-        }
-
-        if (selectedDigit > 0)
-        {
-            for (int row = 0; row < 9; row++)
-            {
-                for (int col = 0; col < 9; col++)
-                {
-                    if (cells[row, col].Value != selectedDigit) continue;
-
-                    for (int index = 0; index < 9; index++)
-                    {
-                        relatedHighlights[row, index] = true;
-                        relatedHighlights[index, col] = true;
-                    }
-                }
-            }
-        }
-
-        for (int row = 0; row < 9; row++)
-        {
-            for (int col = 0; col < 9; col++)
-            {
-                bool isSelectedCell = row == selectedRow && col == selectedCol;
-                bool isMatchingDigit = selectedDigit > 0 && cells[row, col].Value == selectedDigit;
-
-                cells[row, col].SetHighlight(isSelectedCell);
-                cells[row, col].SetDigitMatchHighlight(isMatchingDigit);
-                cells[row, col].SetRelatedHighlight(relatedHighlights[row, col]);
-            }
-        }
+                cells[row, col].SetDigitMatchHighlight(
+                    selectedDigit > 0 && cells[row, col].Value == selectedDigit);
     }
 
     private void OnPickerOpenChanged(bool isOpen)

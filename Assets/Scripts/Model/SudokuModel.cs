@@ -157,7 +157,6 @@ public static class SudokuGenerator
         SudokuDifficulty difficulty,
         string outcome,
         int attempts,
-        int maxAttempts,
         long tierStartedAt,
         double fillBoardMs,
         double uniquenessMs,
@@ -174,7 +173,7 @@ public static class SudokuGenerator
 
         UnityEngine.Debug.Log(
             $"[SudokuGenerator] level={level} tier={difficulty} outcome={outcome} " +
-            $"attempts={attempts}/{maxAttempts} total={totalMs:F2}ms " +
+            $"attempts={attempts}/100 total={totalMs:F2}ms " +
             $"fill={fillBoardMs:F2}ms uniqueness={uniquenessMs:F2}ms/{uniquenessChecks} checks " +
             $"analyzer={analyzerMs:F2}ms/{analyzerCalls} calls other={otherMs:F2}ms " +
             $"acceptedRemovals={acceptedRemovals} slowestAttempt={slowestAttempt} " +
@@ -183,11 +182,7 @@ public static class SudokuGenerator
 
     private static SudokuResult TryGenerateAtDifficulty(int level, SudokuDifficulty difficulty)
     {
-        const int MaxTierAttempts = 100;
-        const int MaxExpertDirectAttempts = 50;
-        int maxAttempts = difficulty == SudokuDifficulty.Expert
-            ? MaxExpertDirectAttempts
-            : MaxTierAttempts;
+        const int MaxAttempts = 100;
         var (minClues, maxClues) = GetSearchRange(difficulty);
         bool rotateSeed = difficulty == SudokuDifficulty.Hard ||
                           difficulty == SudokuDifficulty.Expert;
@@ -205,7 +200,7 @@ public static class SudokuGenerator
         int slowestSeed = 0;
         double slowestAttemptMs = 0d;
 
-        for (int attempt = 0; attempt < maxAttempts; attempt++)
+        for (int attempt = 0; attempt < MaxAttempts; attempt++)
         {
             long attemptStartedAt = System.Diagnostics.Stopwatch.GetTimestamp();
             // Give Hard and Expert 25 tries from the current deterministic seed
@@ -277,7 +272,7 @@ public static class SudokuGenerator
                     }
 
                     LogTierDiagnostics(
-                        level, difficulty, "matched", attempt + 1, maxAttempts, tierStartedAt,
+                        level, difficulty, "matched", attempt + 1, tierStartedAt,
                         fillBoardMs, uniquenessMs, uniquenessChecks,
                         analyzerMs, analyzerCalls, acceptedRemovals,
                         slowestAttempt, slowestSeed, slowestAttemptMs);
@@ -301,98 +296,12 @@ public static class SudokuGenerator
         }
 
         LogTierDiagnostics(
-            level, difficulty, "no-match", maxAttempts, maxAttempts, tierStartedAt,
+            level, difficulty, "no-match", MaxAttempts, tierStartedAt,
             fillBoardMs, uniquenessMs, uniquenessChecks,
             analyzerMs, analyzerCalls, acceptedRemovals,
             slowestAttempt, slowestSeed, slowestAttemptMs);
 
-        if (difficulty == SudokuDifficulty.Expert)
-            return TryGenerateExpertFromHardest(level);
-
         return null;
-    }
-
-    private static SudokuResult TryGenerateExpertFromHardest(int level)
-    {
-        const int MaxOrderTrials = 8;
-        var (minClues, maxClues) = GetSearchRange(SudokuDifficulty.Expert);
-        long restorationStartedAt = System.Diagnostics.Stopwatch.GetTimestamp();
-
-        SudokuResult hardest = TryGenerateAtDifficulty(level, SudokuDifficulty.Hardest);
-        if (hardest == null)
-        {
-            UnityEngine.Debug.Log(
-                $"[SudokuGenerator] level={level} tier=Expert strategy=hardest-clue-restoration " +
-                $"outcome=no-hardest-source total={ElapsedMilliseconds(restorationStartedAt):F2}ms");
-            return null;
-        }
-
-        int baseClues = CountClues(hardest.Puzzle);
-        List<int> emptyCells = Enumerable.Range(0, 81)
-            .Where(index => hardest.Puzzle[index / 9, index % 9] == 0)
-            .ToList();
-        int analyzerCalls = 0;
-
-        for (int orderTrial = 0; orderTrial < MaxOrderTrials; orderTrial++)
-        {
-            int orderSeed = unchecked(
-                level * 397 ^
-                ((int)SudokuDifficulty.Expert + 1) * 7919 ^
-                (orderTrial + 1) * 104729 ^
-                0x4C554654);
-            System.Random rng = new System.Random(orderSeed);
-            List<int> clueOrder = emptyCells.OrderBy(_ => rng.Next()).ToList();
-            int[,] puzzle = (int[,])hardest.Puzzle.Clone();
-            int clueCount = baseClues;
-            int restoredClues = 0;
-
-            foreach (int index in clueOrder)
-            {
-                if (clueCount >= maxClues) break;
-
-                int row = index / 9;
-                int col = index % 9;
-                puzzle[row, col] = hardest.Solution[row, col];
-                clueCount++;
-                restoredClues++;
-
-                if (clueCount < minClues) continue;
-
-                analyzerCalls++;
-                SudokuDifficultyResult rating = SudokuDifficultyAnalyzer.Analyze(puzzle);
-                if (rating.Difficulty != SudokuDifficulty.Expert) continue;
-
-                UnityEngine.Debug.Log(
-                    $"[SudokuGenerator] level={level} tier=Expert strategy=hardest-clue-restoration " +
-                    $"outcome=matched baseClues={baseClues} clues={clueCount} " +
-                    $"restoredClues={restoredClues} orderTrial={orderTrial + 1}/{MaxOrderTrials} " +
-                    $"analyzerCalls={analyzerCalls} total={ElapsedMilliseconds(restorationStartedAt):F2}ms");
-
-                return new SudokuResult
-                {
-                    Puzzle = (int[,])puzzle.Clone(),
-                    Solution = (int[,])hardest.Solution.Clone(),
-                    Difficulty = SudokuDifficulty.Expert
-                };
-            }
-        }
-
-        UnityEngine.Debug.Log(
-            $"[SudokuGenerator] level={level} tier=Expert strategy=hardest-clue-restoration " +
-            $"outcome=no-match baseClues={baseClues} orders={MaxOrderTrials} " +
-            $"analyzerCalls={analyzerCalls} total={ElapsedMilliseconds(restorationStartedAt):F2}ms");
-
-        return null;
-    }
-
-    private static int CountClues(int[,] puzzle)
-    {
-        int count = 0;
-        for (int row = 0; row < 9; row++)
-            for (int col = 0; col < 9; col++)
-                if (puzzle[row, col] != 0)
-                    count++;
-        return count;
     }
 
     private static int GetNextDeterministicSeed(int previousSeed)

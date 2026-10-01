@@ -1,5 +1,5 @@
 <dependencies>
-  <unityversion>5.29.0.0</unityversion>
+  <unityversion>5.30.0.0</unityversion>
   <androidPackages>
     <androidPackage spec="com.google.android.libraries.ads.mobile.sdk:ads-mobile-sdk:1.5.0">
       <repositories>
@@ -12,7 +12,7 @@
     </androidPackage>
   </androidPackages>
   <iosPods>
-    <iosPod name="IronSourceAdMobAdapter" version="5.15.0.0">
+    <iosPod name="IronSourceAdMobAdapter" version="5.16.0.0">
       <sources>
         <source>https://github.com/CocoaPods/Specs</source>
       </sources>

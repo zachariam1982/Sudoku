@@ -346,13 +346,6 @@ public class SudokuCell : MonoBehaviour
 
         bool pickerAlreadyOpen = NumberPicker.Instance != null && NumberPicker.Instance.IsOpen;
 
-        if (viewModel.IsEraseMode.Value)
-        {
-            if (pickerAlreadyOpen) viewModel.CancelPickerCommand.Execute();
-
-            return;
-        }
-
         if (IsGiven)
         {
             if (pickerAlreadyOpen) viewModel.CancelPickerCommand.Execute();
@@ -360,6 +353,13 @@ public class SudokuCell : MonoBehaviour
             PlayLockedAnimation();
             viewModel.SelectCellCommand.Execute(
                 new ValueTuple<int, int, object>(row, col, GetComponent<RectTransform>()));
+            return;
+        }
+
+        if (viewModel.IsEraseMode.Value)
+        {
+            if (pickerAlreadyOpen) viewModel.CancelPickerCommand.Execute();
+
             return;
         }
 

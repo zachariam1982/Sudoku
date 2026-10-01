@@ -6,6 +6,7 @@ using System.Text.RegularExpressions;
 using UnityEditor;
 using UnityEditor.Android;
 using UnityEditor.Build;
+using UnityEngine;
 
 public sealed class AndroidR8OptimizationPostprocessor : IPostGenerateGradleAndroidProject
 {

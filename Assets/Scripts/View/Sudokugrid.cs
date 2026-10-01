@@ -37,6 +37,7 @@ public class SudokuGrid : MonoBehaviour
         vm.GivenMask.OnChanged        += OnBoardChanged;
         vm.SelectedRow.OnChanged      += OnSelectedRowOrColumnChanged;
         vm.SelectedCol.OnChanged      += OnSelectedRowOrColumnChanged;
+        vm.SelectedDigit.OnChanged    += OnSelectedDigitChanged;
         vm.IsPickerOpen.OnChanged     += OnPickerOpenChanged;
         vm.LastEnteredCell.OnChanged  += OnCellValueEntered;
         vm.ConflictingCells.OnChanged += OnConflictsChanged;
@@ -52,6 +53,8 @@ public class SudokuGrid : MonoBehaviour
                     cells[row, col].Bind(row, col, viewModel);
 
             OnBoardChanged<int[,]>(null);
+            RefreshHighlights();
+            RefreshMatchingDigitHighlights();
             OnConflictsChanged(viewModel.ConflictingCells.Value);
             OnPencilCandidatesChanged(viewModel.PencilCandidateMasks.Value);
             OnPencilModeChanged(viewModel.IsPencilMode.Value);
@@ -73,6 +76,7 @@ public class SudokuGrid : MonoBehaviour
         viewModel.GivenMask.OnChanged        -= OnBoardChanged;
         viewModel.SelectedRow.OnChanged      -= OnSelectedRowOrColumnChanged;
         viewModel.SelectedCol.OnChanged      -= OnSelectedRowOrColumnChanged;
+        viewModel.SelectedDigit.OnChanged    -= OnSelectedDigitChanged;
         viewModel.IsPickerOpen.OnChanged     -= OnPickerOpenChanged;
         viewModel.LastEnteredCell.OnChanged  -= OnCellValueEntered;
         viewModel.ConflictingCells.OnChanged -= OnConflictsChanged;
@@ -87,6 +91,11 @@ public class SudokuGrid : MonoBehaviour
     private void OnSelectedRowOrColumnChanged(int _)
     {
         RefreshHighlights();
+    }
+
+    private void OnSelectedDigitChanged(int _)
+    {
+        RefreshMatchingDigitHighlights();
     }
     private void OnPencilCandidatesChanged(int[,] candidateMasks)
     {
@@ -163,6 +172,8 @@ public class SudokuGrid : MonoBehaviour
         for (int row = 0; row < 9; row++)
             for (int col = 0; col < 9; col++)
                 cells[row, col].SetValue(board[row, col], given[row, col]);
+
+        RefreshHighlights();
     }
 
     private void RefreshHighlights()
@@ -175,6 +186,19 @@ public class SudokuGrid : MonoBehaviour
         for (int row = 0; row < 9; row++)
             for (int col = 0; col < 9; col++)
                 cells[row, col].SetHighlight(row == selRow && col == selCol);
+
+        RefreshMatchingDigitHighlights();
+    }
+
+    private void RefreshMatchingDigitHighlights()
+    {
+        if (!cellsReady || viewModel == null) return;
+
+        int selectedDigit = viewModel.SelectedDigit.Value;
+        for (int row = 0; row < 9; row++)
+            for (int col = 0; col < 9; col++)
+                cells[row, col].SetDigitMatchHighlight(
+                    selectedDigit > 0 && cells[row, col].Value == selectedDigit);
     }
 
     private void OnPickerOpenChanged(bool isOpen)
@@ -251,6 +275,8 @@ public class SudokuGrid : MonoBehaviour
         if (viewModel != null)
         {
             OnBoardChanged<int[,]>(null);
+            RefreshHighlights();
+            RefreshMatchingDigitHighlights();
             OnConflictsChanged(viewModel.ConflictingCells.Value);
             OnPencilCandidatesChanged(viewModel.PencilCandidateMasks.Value);
             OnPencilModeChanged(viewModel.IsPencilMode.Value);

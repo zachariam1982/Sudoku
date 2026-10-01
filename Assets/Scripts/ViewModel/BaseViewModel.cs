@@ -200,7 +200,14 @@ public class BaseViewModel
         ConflictingCells.Value.Clear();
         UsageStats.Reset();
         Penalties.Reset();
-        Model.LoadCurrentLevelPuzzle();
+        if(Model.CurrentDifficulty == SudokuDifficulty.Hard || Model.CurrentDifficulty == SudokuDifficulty.Expert)
+        {
+            Model.LoadCurrentLevelPuzzle(100000);    
+        }
+        else
+        {
+            Model.LoadCurrentLevelPuzzle();
+        }
         PublishBoard();
         PublishPencilCandidates();
         ClosePicker();

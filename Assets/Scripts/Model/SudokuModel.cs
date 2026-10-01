@@ -108,7 +108,7 @@ public static class SudokuGenerator
             _ => (25, 55)
         };
     }
-    public static SudokuResult GenerateSudoku( int level, SudokuDifficulty requestedDifficulty)
+    public static SudokuResult GenerateSudoku( int level, SudokuDifficulty requestedDifficulty, int maxAttempts = 100)
     {
         if (!Enum.IsDefined(typeof(SudokuDifficulty), requestedDifficulty))
             throw new ArgumentOutOfRangeException(nameof(requestedDifficulty), requestedDifficulty, "Unknown Sudoku difficulty.");
@@ -119,7 +119,7 @@ public static class SudokuGenerator
         // one tier at a time so players never receive a harder puzzle than selected.
         SudokuResult result = GenerateWithDifficultyFallback(
             requestedDifficulty,
-            tier => TryGenerateAtDifficulty(level, tier));
+            tier => TryGenerateAtDifficulty(level, tier, maxAttempts));
 
         UnityEngine.Debug.Log(
             $"[SudokuGenerator] level={level} requested={requestedDifficulty} actual={result.Difficulty} " +
@@ -179,14 +179,8 @@ public static class SudokuGenerator
             $"slowestSeed={slowestSeed} slowestMs={slowestAttemptMs:F2}");
     }
 
-    private static SudokuResult TryGenerateAtDifficulty(int level, SudokuDifficulty difficulty)
+    private static SudokuResult TryGenerateAtDifficulty(int level, SudokuDifficulty difficulty, int maxAttempts = 100)
     {
-        const int DefaultMaxAttempts = 100;
-        const int DifficultTierMaxAttempts = 500;
-        int maxAttempts = difficulty == SudokuDifficulty.Hard ||
-                          difficulty == SudokuDifficulty.Expert
-            ? DifficultTierMaxAttempts
-            : DefaultMaxAttempts;
         var (minClues, maxClues) = GetSearchRange(difficulty);
 
         long tierStartedAt = System.Diagnostics.Stopwatch.GetTimestamp();
@@ -403,9 +397,9 @@ public class SudokuModel
 
         return baseline;
     }
-    public void LoadCurrentLevelPuzzle()
+    public void LoadCurrentLevelPuzzle(int maxAttempts = 100)
     {
-        this.ret = SudokuGenerator.GenerateSudoku(_puzzleSeed, _currentDifficulty);
+        this.ret = SudokuGenerator.GenerateSudoku(_puzzleSeed, _currentDifficulty, maxAttempts);
         _currentDifficulty = ret.Difficulty;
 
         for (int row = 0; row < 9; row++)

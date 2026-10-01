@@ -155,6 +155,7 @@ public static class SudokuGenerator
         SudokuDifficulty difficulty,
         string outcome,
         int attempts,
+        int maxAttempts,
         long tierStartedAt,
         double fillBoardMs,
         double uniquenessMs,
@@ -171,7 +172,7 @@ public static class SudokuGenerator
 
         UnityEngine.Debug.Log(
             $"[SudokuGenerator] level={level} tier={difficulty} outcome={outcome} " +
-            $"attempts={attempts}/100 total={totalMs:F2}ms " +
+            $"attempts={attempts}/{maxAttempts} total={totalMs:F2}ms " +
             $"fill={fillBoardMs:F2}ms uniqueness={uniquenessMs:F2}ms/{uniquenessChecks} checks " +
             $"analyzer={analyzerMs:F2}ms/{analyzerCalls} calls other={otherMs:F2}ms " +
             $"acceptedRemovals={acceptedRemovals} slowestAttempt={slowestAttempt} " +
@@ -180,7 +181,12 @@ public static class SudokuGenerator
 
     private static SudokuResult TryGenerateAtDifficulty(int level, SudokuDifficulty difficulty)
     {
-        const int MaxAttempts = 100;
+        const int DefaultMaxAttempts = 100;
+        const int DifficultTierMaxAttempts = 500;
+        int maxAttempts = difficulty == SudokuDifficulty.Hard ||
+                          difficulty == SudokuDifficulty.Expert
+            ? DifficultTierMaxAttempts
+            : DefaultMaxAttempts;
         var (minClues, maxClues) = GetSearchRange(difficulty);
 
         long tierStartedAt = System.Diagnostics.Stopwatch.GetTimestamp();
@@ -194,7 +200,7 @@ public static class SudokuGenerator
         int slowestSeed = 0;
         double slowestAttemptMs = 0d;
 
-        for (int attempt = 0; attempt < MaxAttempts; attempt++)
+        for (int attempt = 0; attempt < maxAttempts; attempt++)
         {
             long attemptStartedAt = System.Diagnostics.Stopwatch.GetTimestamp();
             int seed = unchecked(level * 397 ^ ((int)difficulty + 1) * 7919 ^ attempt * 104729);
@@ -250,7 +256,7 @@ public static class SudokuGenerator
                     }
 
                     LogTierDiagnostics(
-                        level, difficulty, "matched", attempt + 1, tierStartedAt,
+                        level, difficulty, "matched", attempt + 1, maxAttempts, tierStartedAt,
                         fillBoardMs, uniquenessMs, uniquenessChecks,
                         analyzerMs, analyzerCalls, acceptedRemovals,
                         slowestAttempt, slowestSeed, slowestAttemptMs);
@@ -274,7 +280,7 @@ public static class SudokuGenerator
         }
 
         LogTierDiagnostics(
-            level, difficulty, "no-match", MaxAttempts, tierStartedAt,
+            level, difficulty, "no-match", maxAttempts, maxAttempts, tierStartedAt,
             fillBoardMs, uniquenessMs, uniquenessChecks,
             analyzerMs, analyzerCalls, acceptedRemovals,
             slowestAttempt, slowestSeed, slowestAttemptMs);

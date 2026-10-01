@@ -2,6 +2,7 @@ using System;
 using TMPro;
 using UnityEngine;
 using UnityEngine.UI;
+using UnityEngine.Events;
 
 public class HUD : MonoBehaviour
 {
@@ -43,6 +44,8 @@ public class HUD : MonoBehaviour
         redoBlock.transform.SetSiblingIndex(undoBlock.GetSiblingIndex() + 1);
 
         Button redoButton = redoBlock.GetComponent<Button>();
+        for (int i = 0; i < redoButton.onClick.GetPersistentEventCount(); i++)
+            redoButton.onClick.SetPersistentListenerState(i, UnityEventCallState.Off);
         redoButton.onClick.RemoveAllListeners();
         redoButton.onClick.AddListener(RedoButtonPressed);
 

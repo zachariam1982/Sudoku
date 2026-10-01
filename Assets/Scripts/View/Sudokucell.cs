@@ -271,6 +271,8 @@ public class SudokuCell : MonoBehaviour
     {
         if (isPickerHighlighted)
             baseColor = pickerHighlight;
+        else if (isDimmed)
+            baseColor = dimmedColor;
         else if (isSelected || isDigitMatchHighlighted)
             baseColor = highlightColor;
         else if (isConflict)

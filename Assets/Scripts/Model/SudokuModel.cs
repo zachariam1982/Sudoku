@@ -92,6 +92,8 @@ public static class ScoringSystem
 }
 public static class SudokuGenerator
 {
+    private const int AttemptsPerSeedForDifficultTiers = 25;
+
     private static ( int minClues, int maxClues) GetSearchRange( SudokuDifficulty difficulty)
     {
         return difficulty switch
@@ -182,6 +184,10 @@ public static class SudokuGenerator
     {
         const int MaxAttempts = 100;
         var (minClues, maxClues) = GetSearchRange(difficulty);
+        bool rotateSeed = difficulty == SudokuDifficulty.Hard ||
+                          difficulty == SudokuDifficulty.Expert;
+        int currentSeedBase = unchecked(level * 397 ^ ((int)difficulty + 1) * 7919);
+        int previousSeed = currentSeedBase;
 
         long tierStartedAt = System.Diagnostics.Stopwatch.GetTimestamp();
         double fillBoardMs = 0d;
@@ -197,7 +203,23 @@ public static class SudokuGenerator
         for (int attempt = 0; attempt < MaxAttempts; attempt++)
         {
             long attemptStartedAt = System.Diagnostics.Stopwatch.GetTimestamp();
-            int seed = unchecked(level * 397 ^ ((int)difficulty + 1) * 7919 ^ attempt * 104729);
+            // Give Hard and Expert 25 tries from the current deterministic seed
+            // family. If none match, derive the next seed from the last attempted seed.
+            if (rotateSeed && attempt > 0 && attempt % AttemptsPerSeedForDifficultTiers == 0)
+            {
+                int previousAttemptSeed = previousSeed;
+                currentSeedBase = GetNextDeterministicSeed(previousSeed);
+                UnityEngine.Debug.Log(
+                    $"[SudokuGenerator] level={level} tier={difficulty} " +
+                    $"retryBatch={attempt / AttemptsPerSeedForDifficultTiers + 1} " +
+                    $"previousSeed={previousAttemptSeed} nextSeed={currentSeedBase}");
+            }
+
+            int attemptWithinSeed = rotateSeed
+                ? attempt % AttemptsPerSeedForDifficultTiers
+                : attempt;
+            int seed = unchecked(currentSeedBase ^ attemptWithinSeed * 104729);
+            previousSeed = seed;
             System.Random rng = new System.Random(seed);
             int[,] solution = new int[9, 9];
 
@@ -281,6 +303,14 @@ public static class SudokuGenerator
 
         return null;
     }
+
+    private static int GetNextDeterministicSeed(int previousSeed)
+    {
+        // Full-period 32-bit LCG: deterministic, inexpensive, and avoids a fixed
+        // point for any seed value.
+        return unchecked((int)((uint)previousSeed * 1664525u + 1013904223u));
+    }
+
     private static bool FillBoard(int[,] board, System.Random rng)
     {
         for (int row = 0; row < 9; row++)

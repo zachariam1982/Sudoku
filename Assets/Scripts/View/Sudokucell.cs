@@ -36,8 +36,6 @@ public class SudokuCell : MonoBehaviour
     private bool            isDigitMatchHighlighted = false;
     private bool            isSelected = false;
     private bool            isPickerHighlighted = false;
-    private bool            isRelatedHighlight = false;
-    [SerializeField] private Color relatedHighlightColor = new Color32(112, 154, 238, 255);
     private Color           baseColor;
     private Button[] _pencilButtons;
     private int _pencilCandidateMask;
@@ -261,12 +259,6 @@ public class SudokuCell : MonoBehaviour
         ApplyBackgroundColor();
     }
 
-    public void SetRelatedHighlight(bool highlighted)
-    {
-        isRelatedHighlight = highlighted;
-        ApplyBackgroundColor();
-    }
-
     private void ApplyBackgroundColor()
     {
         if (isPickerHighlighted)
@@ -277,8 +269,6 @@ public class SudokuCell : MonoBehaviour
             baseColor = highlightColor;
         else if (isConflict)
             baseColor = errorColor;
-        else if (isRelatedHighlight)
-            baseColor = relatedHighlightColor;
         else if (isDimmed)
             baseColor = dimmedColor;
         else

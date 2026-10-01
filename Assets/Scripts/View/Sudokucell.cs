@@ -26,7 +26,6 @@ public class SudokuCell : MonoBehaviour
 
     [Header("Pencil Candidate Highlight")]
     [SerializeField] private Color candidateHighlightColor = new Color32(255,200,50,255);
-    [SerializeField] private Color matchingDigitHighlightColor = new Color32(255, 200, 50, 255);
 
     // ── Internal state ────────────────────────────────────────────────────────
     private int             row;
@@ -35,6 +34,8 @@ public class SudokuCell : MonoBehaviour
     private bool            isDimmed   = false;
     private bool            isConflict = false;
     private bool            isDigitMatchHighlighted = false;
+    private bool            isSelected = false;
+    private bool            isPickerHighlighted = false;
     private Color           baseColor;
     private Button[] _pencilButtons;
     private int _pencilCandidateMask;
@@ -215,24 +216,19 @@ public class SudokuCell : MonoBehaviour
         baseColor = isGiven ? givenColor : normalColor;
 
         // Keep conflict feedback on the cell background, not the digit.
-        if (background != null && !isDimmed)
-            background.color = isConflict ? errorColor : baseColor;
+        ApplyBackgroundColor();
     }
 
     public void SetHighlight(bool highlighted)
     {
-        if (isDimmed || isConflict) return;
-        baseColor = highlighted ? highlightColor : (IsGiven ? givenColor : normalColor);
-        if (background != null)
-            background.color = baseColor;
+        isSelected = highlighted;
+        ApplyBackgroundColor();
     }
 
     public void SetDimmed(bool dimmed)
     {
-        isDimmed  = dimmed;
-        baseColor = dimmed ? dimmedColor : (IsGiven ? givenColor : normalColor);
-        if (background != null)
-            background.color = isConflict ? errorColor : baseColor;
+        isDimmed = dimmed;
+        ApplyBackgroundColor();
 
         // Keep the digit palette unchanged while the cell is in conflict.
         if (!isConflict) UpdateDigitColor();
@@ -240,16 +236,8 @@ public class SudokuCell : MonoBehaviour
 
     public void SetPickerHighlight(bool active)
     {
-        if (isConflict)
-        {
-            if (background != null) background.color = errorColor;
-            return;
-        }
-
-        baseColor = active ? pickerHighlight :
-                             (isDimmed ? dimmedColor : (IsGiven ? givenColor : normalColor));
-        if (background != null)
-            background.color = baseColor;
+        isPickerHighlighted = active;
+        ApplyBackgroundColor();
     }
 
     /// <summary>
@@ -259,25 +247,33 @@ public class SudokuCell : MonoBehaviour
     public void SetConflict(bool conflict)
     {
         isConflict = conflict;
+        ApplyBackgroundColor();
 
-        if (conflict)
-        {
-            if (background != null)
-                background.color = errorColor;
-        }
-        else
-        {
+        if (!conflict)
             UpdateDigitColor();
-
-            if (background != null)
-                background.color = isDimmed ? dimmedColor : (IsGiven ? givenColor : normalColor);
-        }
     }
 
     public void SetDigitMatchHighlight(bool highlighted)
     {
         isDigitMatchHighlighted = highlighted;
-        UpdateDigitColor();
+        ApplyBackgroundColor();
+    }
+
+    private void ApplyBackgroundColor()
+    {
+        if (isPickerHighlighted)
+            baseColor = pickerHighlight;
+        else if (isDimmed)
+            baseColor = dimmedColor;
+        else if (isSelected || isDigitMatchHighlighted)
+            baseColor = highlightColor;
+        else if (isConflict)
+            baseColor = errorColor;
+        else
+            baseColor = IsGiven ? givenColor : normalColor;
+
+        if (background != null)
+            background.color = baseColor;
     }
 
     private void UpdateDigitColor()
@@ -285,12 +281,11 @@ public class SudokuCell : MonoBehaviour
         Color digitColor = GetDigitColor(Value);
         if (isDimmed)
             digitColor = Color.Lerp(digitColor, Color.gray, 0.45f);
-        if (isDigitMatchHighlighted && Value > 0)
-            digitColor = matchingDigitHighlightColor;
 
         if (numberText != null) numberText.color = digitColor;
         else if (numberImage != null) numberImage.color = digitColor;
     }
+
 
     private static Color GetDigitColor(int value)
     {
@@ -350,7 +345,6 @@ public class SudokuCell : MonoBehaviour
         {
             if (pickerAlreadyOpen) viewModel.CancelPickerCommand.Execute();
 
-            PlayLockedAnimation();
             viewModel.SelectCellCommand.Execute(
                 new ValueTuple<int, int, object>(row, col, GetComponent<RectTransform>()));
             return;

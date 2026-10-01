@@ -310,6 +310,7 @@ public class BaseViewModel
         IsBoardValid.Value = Model.Validate();
         IsComplete.Value = Model.IsComplete() && IsBoardValid.Value;
         ClosePicker();
+        SelectedDigit.Value = value > 0 ? value : 0;
     }
 
     private void EnterValueForUndo(int row, int col, int value)

@@ -5,7 +5,7 @@ public class GameContext : MonoBehaviour
 {
     public JourneyViewModel ViewModel => JourneyViewModel;
     public JourneyViewModel JourneyViewModel { get; private set; }
-    public BaseViewModel NewGameViewModel { get; private set; }
+    public NewGameViewModel NewGameViewModel { get; private set; }
     public static int cnt = 0;
 
     [SerializeField] private HomeScreenController _homeScreen;
@@ -24,7 +24,7 @@ public class GameContext : MonoBehaviour
         JourneyViewModel = new JourneyViewModel(
             new JourneyUsageStats(),
             new JourneyScorePenalties());
-        NewGameViewModel = new BaseViewModel(
+        NewGameViewModel = new NewGameViewModel(
             new NewGameUsageStats(),
             new NewGameScorePenalties());
 
@@ -39,6 +39,8 @@ public class GameContext : MonoBehaviour
         if (stats != null) stats.Bind(JourneyViewModel);
 
         User.Instance.ViewModel = JourneyViewModel;
+        User.Instance.NewGameViewModel = NewGameViewModel;
+        NewGameViewModel.SaveRequested += User.Instance.SaveNewGameNow;
         _journeyStateMachine.Initialise(JourneyViewModel);
         _newGameStateMachine.Initialise(NewGameViewModel);
         _newGameStateMachine.SetSuspended(true);
@@ -46,10 +48,12 @@ public class GameContext : MonoBehaviour
 
 #if UNITY_WEBGL && !UNITY_EDITOR
         User.Instance.TryLoadSave();
+        User.Instance.TryLoadNewGameSave();
         if (YouTubePlatformManager.Instance != null)
             YouTubePlatformManager.Instance.SendGameReady();
 #else
         User.Instance.TryLoadSave();
+        User.Instance.TryLoadNewGameSave();
 #endif
 
         _journeyStateMachine.SetSuspended(true);
@@ -73,6 +77,17 @@ public class GameContext : MonoBehaviour
         _newGameStateMachine.SetSuspended(false);
     }
 
+    public bool HasSavedNewGame => NewGameViewModel != null && NewGameViewModel.HasActiveGame;
+
+    public void ActivateSavedNewGame()
+    {
+        if (!HasSavedNewGame) return;
+        _journeyStateMachine.SetSuspended(true);
+        _newGameActive = true;
+        BindGameplay(NewGameViewModel);
+        _newGameStateMachine.SetSuspended(false);
+    }
+
     public void SuspendActiveGame()
     {
         if (_newGameActive) _newGameStateMachine.SetSuspended(true);
@@ -82,6 +97,9 @@ public class GameContext : MonoBehaviour
     private void OnNewGameCompleted()
     {
         _newGameStateMachine.SetSuspended(true);
+        _newGameActive = false;
+        NewGameViewModel.ClearActiveGame();
+        SaveSystem.Delete(SaveSlot.NewGame);
         _newGameScreen.Show();
     }
 
@@ -96,7 +114,11 @@ public class GameContext : MonoBehaviour
     private void OnDestroy()
     {
         if (NewGameViewModel != null)
+        {
             NewGameViewModel.GameCompleted -= OnNewGameCompleted;
+            if (User.Instance != null)
+                NewGameViewModel.SaveRequested -= User.Instance.SaveNewGameNow;
+        }
     }
 
 #if UNITY_WEBGL && !UNITY_EDITOR

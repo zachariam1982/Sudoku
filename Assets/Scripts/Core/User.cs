@@ -6,6 +6,7 @@ public class User : MonoBehaviour
 {
     public static User Instance { get; private set;}
     public JourneyViewModel ViewModel { get; set; }
+    public NewGameViewModel NewGameViewModel { get; set; }
     // Start is called once before the first execution of Update after the MonoBehaviour is created
     #if UNITY_WEBGL && !UNITY_EDITOR
 
@@ -33,7 +34,7 @@ public class User : MonoBehaviour
     }
     public bool TryLoadSave()
     {
-        SaveGameData data = SaveSystem.Load();
+        SaveGameData data = SaveSystem.Load(SaveSlot.Journey);
 
         if (data != null)
         {
@@ -45,9 +46,15 @@ public class User : MonoBehaviour
 
         bool recovered = ViewModel.RecoverFromHistory();
 
-        if (recovered) SaveSystem.Save(ViewModel.GetSaveData());
+        if (recovered) SaveSystem.Save(ViewModel.GetSaveData(), SaveSlot.Journey);
 
         return recovered;
+    }
+
+    public bool TryLoadNewGameSave()
+    {
+        SaveGameData data = SaveSystem.Load(SaveSlot.NewGame);
+        return data != null && NewGameViewModel != null && NewGameViewModel.LoadSaveData(data);
     }
     public void TryLoadSaveFromCloud(System.Action onCompleted)
     {
@@ -86,10 +93,11 @@ public class User : MonoBehaviour
                     {
                         SaveGameData data = JsonUtility.FromJson<SaveGameData>(json);
 
-                        if (data != null && data.BoardFlat != null && data.BoardFlat.Length == 81)
+                        if (json.Contains("\"BoardFlat\"") &&
+                            SaveSystem.IsValidSave(data, SaveSlot.Journey))
                         {
                             ViewModel.LoadSaveData(data);
-                            SaveSystem.Save(data);
+                            SaveSystem.Save(data, SaveSlot.Journey);
                             loadedFromCloud = true;
 
                             Debug.Log("[YouTube] Game restored from cloud save.");
@@ -152,11 +160,23 @@ public class User : MonoBehaviour
         }
  
         SaveGameData data = ViewModel.GetSaveData();
-        SaveSystem.Save(data);
+        SaveSystem.Save(data, SaveSlot.Journey);
+
+        if (NewGameViewModel != null && NewGameViewModel.HasActiveGame)
+            SaveSystem.Save(NewGameViewModel.GetSaveData(), SaveSlot.NewGame);
 
         #if UNITY_WEBGL && !UNITY_EDITOR
         YouTubePlatformManager.Instance?.SaveCloudData(data);
         #endif        
+    }
+
+    public void SaveNewGameNow()
+    {
+#if UNITY_WEBGL && !UNITY_EDITOR
+        if (!_initialCloudLoadComplete) return;
+#endif
+        if (NewGameViewModel == null || !NewGameViewModel.HasActiveGame) return;
+        SaveSystem.Save(NewGameViewModel.GetSaveData(), SaveSlot.NewGame);
     }
 
     private void OnApplicationPause(bool paused)

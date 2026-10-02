@@ -98,6 +98,9 @@ public class JourneyViewModel : BaseViewModel
     {
         var data = new SaveGameData
         {
+            SaveVersion = 2,
+            SaveMode = "Journey",
+            GeneratorVersion = 1,
             Level = Model.CurrentLevel,
             Difficulty = (int)Model.CurrentDifficulty,
             PuzzleSeed = Model.PuzzleSeed,
@@ -124,12 +127,17 @@ public class JourneyViewModel : BaseViewModel
             RetryOlderGame_Points = RetryGameData.points
         };
 
+        int[] originalPuzzle = Model.GetOriginalPuzzleFlat();
+        int[] solution = Model.GetSolutionFlat();
         for (int row = 0; row < 9; row++)
             for (int col = 0; col < 9; col++)
             {
-                data.BoardFlat[row * 9 + col] = Model.GetValue(row, col);
+                int index = row * 9 + col;
+                data.BoardFlat[index] = Model.GetValue(row, col);
                 data.PencilCandidateMasksFlat[row * 9 + col] =
                     Model.PencilCandidateMasks[row, col];
+                data.OriginalPuzzleFlat[index] = originalPuzzle[index];
+                data.SolutionFlat[index] = solution[index];
             }
 
         AddHistoryToSave(UndoHistory, data.UndoHistory);
@@ -149,7 +157,8 @@ public class JourneyViewModel : BaseViewModel
         Model.SetLevel(data.Level);
         Model.SetPuzzleSeed(data.PuzzleSeed > 0 ? data.PuzzleSeed : data.Level);
         Model.SetDifficulty((SudokuDifficulty)data.Difficulty);
-        Model.LoadCurrentLevelPuzzle();
+        if (!Model.TryLoadSavedPuzzle(data.OriginalPuzzleFlat, data.SolutionFlat))
+            Model.LoadCurrentLevelPuzzle();
 
         for (int row = 0; row < 9; row++)
             for (int col = 0; col < 9; col++)

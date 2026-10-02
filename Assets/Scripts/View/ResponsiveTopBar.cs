@@ -185,29 +185,6 @@ public class ResponsiveTopBar : MonoBehaviour
                 item.flexibleWidth = 1f;
             }
 
-            // Keep EXIT sized to its label instead of stretching it to fill a
-            // full landscape layout slot.
-            if (exitButton != null)
-            {
-                LayoutElement exitLayout = exitButton.GetComponent<LayoutElement>();
-                if (exitLayout != null)
-                {
-                    exitLayout.minWidth = 93.33f;
-                    exitLayout.preferredWidth = 100f;
-                    exitLayout.flexibleWidth = 0f;
-                }
-            }
-
-            if (isNewGameTopBar && homeBlock != null)
-            {
-                LayoutElement homeLayout = homeBlock.GetComponent<LayoutElement>();
-                if (homeLayout != null)
-                {
-                    homeLayout.minWidth = 100f;
-                    homeLayout.preferredWidth = 100f;
-                    homeLayout.flexibleWidth = 0f;
-                }
-            }
         }
         else
         {
@@ -226,6 +203,32 @@ public class ResponsiveTopBar : MonoBehaviour
                 item.flexibleWidth = _originalFlexibleWidths[i];
             }
         }
+
+        if (isNewGameTopBar)
+        {
+            SetFixedWidth(homeBlock, 100f, 100f);
+            SetFlexibleWidth(level);
+            if (exitButton != null)
+                SetFixedWidth(exitButton.GetComponent<RectTransform>(), 93.33f, 100f);
+        }
+    }
+
+    private static void SetFixedWidth(RectTransform target, float minWidth, float preferredWidth)
+    {
+        LayoutElement layoutElement = target != null ? target.GetComponent<LayoutElement>() : null;
+        if (layoutElement == null) return;
+        layoutElement.minWidth = minWidth;
+        layoutElement.preferredWidth = preferredWidth;
+        layoutElement.flexibleWidth = 0f;
+    }
+
+    private static void SetFlexibleWidth(RectTransform target)
+    {
+        LayoutElement layoutElement = target != null ? target.GetComponent<LayoutElement>() : null;
+        if (layoutElement == null) return;
+        layoutElement.minWidth = 0f;
+        layoutElement.preferredWidth = 0f;
+        layoutElement.flexibleWidth = 1f;
     }
 
 

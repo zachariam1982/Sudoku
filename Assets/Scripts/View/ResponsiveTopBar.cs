@@ -184,6 +184,19 @@ public class ResponsiveTopBar : MonoBehaviour
                 item.preferredWidth = 0f;
                 item.flexibleWidth = 1f;
             }
+
+            // Keep EXIT sized to its label instead of stretching it to fill a
+            // full landscape layout slot.
+            if (exitButton != null)
+            {
+                LayoutElement exitLayout = exitButton.GetComponent<LayoutElement>();
+                if (exitLayout != null)
+                {
+                    exitLayout.minWidth = 93.33f;
+                    exitLayout.preferredWidth = 100f;
+                    exitLayout.flexibleWidth = 0f;
+                }
+            }
         }
         else
         {

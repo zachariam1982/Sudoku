@@ -161,11 +161,9 @@ public class BaseViewModel
             });
         PauseCommand = new RelayCommand(
             _ => PauseRequested.Value = !PauseRequested.Value,
-            _ => StateMachine != null && StateMachine.IsPlaying && !IsEraseMode.Value && !IsPencilMode.Value,
+            _ => StateMachine != null && StateMachine.IsPlaying,
             new (Func<bool> fn, Action showMessage)[]
             {
-                (() => IsEraseMode.Value, () => ShowMessage.Value = ("", "Erase mode is set. Tap on Erase again to enable Pause.", "")),
-                (() => IsPencilMode.Value, () => ShowMessage.Value = ("", "Pencil mode is set. Tap on Pencil again to enable Pause.", "")),
                 (() => StateMachine != null && StateMachine.IsIdle, () => ShowMessage.Value = ("", "Game play is not started. Press an empty box to start the game.", ""))
             });
         ResumeCommand = new RelayCommand(_ => ResumeRequested.Value = true);

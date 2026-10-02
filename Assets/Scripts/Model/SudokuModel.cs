@@ -411,6 +411,92 @@ public class SudokuModel
                 PencilCandidateMasks[row, col] = 0;
             }
     }
+
+    public int[] GetOriginalPuzzleFlat()
+    {
+        var flat = new int[81];
+        if (ret?.Puzzle == null) return flat;
+        for (int row = 0; row < 9; row++)
+            for (int col = 0; col < 9; col++)
+                flat[row * 9 + col] = ret.Puzzle[row, col];
+        return flat;
+    }
+
+    public int[] GetSolutionFlat()
+    {
+        var flat = new int[81];
+        if (ret?.Solution == null) return flat;
+        for (int row = 0; row < 9; row++)
+            for (int col = 0; col < 9; col++)
+                flat[row * 9 + col] = ret.Solution[row, col];
+        return flat;
+    }
+
+    public bool TryLoadSavedPuzzle(int[] puzzleFlat, int[] solutionFlat)
+    {
+        if (!IsValidSavedPuzzle(puzzleFlat, solutionFlat)) return false;
+
+        var puzzle = new int[9, 9];
+        var solution = new int[9, 9];
+        for (int row = 0; row < 9; row++)
+            for (int col = 0; col < 9; col++)
+            {
+                int index = row * 9 + col;
+                puzzle[row, col] = puzzleFlat[index];
+                solution[row, col] = solutionFlat[index];
+                Board[row, col] = puzzle[row, col];
+                GivenMask[row, col] = puzzle[row, col] != 0;
+                PencilCandidateMasks[row, col] = 0;
+            }
+
+        ret = new SudokuResult
+        {
+            Puzzle = puzzle,
+            Solution = solution,
+            Difficulty = _currentDifficulty
+        };
+        return true;
+    }
+
+    public static bool IsValidSavedPuzzle(int[] puzzle, int[] solution)
+    {
+        if (puzzle == null || solution == null || puzzle.Length != 81 || solution.Length != 81)
+            return false;
+
+        for (int index = 0; index < 81; index++)
+            if (puzzle[index] < 0 || puzzle[index] > 9 || solution[index] < 1 ||
+                solution[index] > 9 || (puzzle[index] != 0 && puzzle[index] != solution[index]))
+                return false;
+
+        for (int row = 0; row < 9; row++)
+        {
+            int rowMask = 0;
+            int colMask = 0;
+            for (int i = 0; i < 9; i++)
+            {
+                int rowBit = 1 << solution[row * 9 + i];
+                int colBit = 1 << solution[i * 9 + row];
+                if ((rowMask & rowBit) != 0 || (colMask & colBit) != 0) return false;
+                rowMask |= rowBit;
+                colMask |= colBit;
+            }
+        }
+
+        for (int boxRow = 0; boxRow < 3; boxRow++)
+            for (int boxCol = 0; boxCol < 3; boxCol++)
+            {
+                int mask = 0;
+                for (int row = 0; row < 3; row++)
+                    for (int col = 0; col < 3; col++)
+                    {
+                        int value = solution[(boxRow * 3 + row) * 9 + boxCol * 3 + col];
+                        int bit = 1 << value;
+                        if ((mask & bit) != 0) return false;
+                        mask |= bit;
+                    }
+            }
+        return true;
+    }
     public bool SetValue(int row, int col, int value)
     {
         if (GivenMask[row, col]) return false;

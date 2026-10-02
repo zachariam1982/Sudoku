@@ -70,6 +70,7 @@ public class BaseViewModel
     public ICommand ResumeCommand { get; }
 
     public event Action GameCompleted;
+    public event Action SaveRequested;
 
     public BaseViewModel(IGameUsageStats usageStats, IScorePenalties penalties)
     {
@@ -129,6 +130,7 @@ public class BaseViewModel
                 RecordHistory(-1, -1, 0, 0, previousMasks);
                 PublishPencilCandidates();
                 if (!FirstCellTapped.Value) FirstCellTapped.Value = true;
+                RequestSave();
             },
             _ => !IsEraseMode.Value && !IsComplete.Value,
             new (Func<bool> fn, Action showMessage)[]
@@ -150,6 +152,7 @@ public class BaseViewModel
             RecordHistory(-1, -1, 0, 0, previousMasks);
             HighlightedCandidateNumber.Value = number;
             PublishPencilCandidates();
+            RequestSave();
         });
         ApplySOSCommand = new RelayCommand(
             _ => ApplySOSHint(),
@@ -167,6 +170,10 @@ public class BaseViewModel
                 (() => StateMachine != null && StateMachine.IsIdle, () => ShowMessage.Value = ("", "Game play is not started. Press an empty box to start the game.", ""))
             });
         ResumeCommand = new RelayCommand(_ => ResumeRequested.Value = true);
+        CurrentStateName.OnChanged += _ => RequestSave();
+        PauseRequested.OnChanged += _ => RequestSave();
+        IsPencilMode.OnChanged += _ => RequestSave();
+        HighlightedCandidateNumber.OnChanged += _ => RequestSave();
     }
 
     public void AttachStateMachine(ISudokuStateMachine stateMachine) => StateMachine = stateMachine;
@@ -223,6 +230,7 @@ public class BaseViewModel
 
     public void RecordEraseUse() => UsageStats.AddErase();
     public void NotifyGameCompleted() => GameCompleted?.Invoke();
+    public void RequestSave() => SaveRequested?.Invoke();
 
     protected virtual void OnConflict() { }
 
@@ -307,6 +315,7 @@ public class BaseViewModel
         IsComplete.Value = Model.IsComplete() && IsBoardValid.Value;
         ClosePicker();
         SelectedDigit.Value = value > 0 ? value : 0;
+        RequestSave();
     }
 
     private int[] CopyPencilCandidateMasks()
@@ -357,6 +366,7 @@ public class BaseViewModel
         RedoHistory.Push(entry);
         UsageStats.AddUndo();
         ApplyHistory(entry, undo: true);
+        RequestSave();
     }
 
     private void Redo()
@@ -365,6 +375,7 @@ public class BaseViewModel
         SaveGameHistoryEntry entry = RedoHistory.Pop();
         UndoHistory.Push(entry);
         ApplyHistory(entry, undo: false);
+        RequestSave();
     }
 
     private void ApplyHistory(SaveGameHistoryEntry entry, bool undo)

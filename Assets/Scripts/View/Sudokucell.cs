@@ -22,6 +22,8 @@ public class SudokuCell : MonoBehaviour
     public Color dimmedColor;
     public Color pickerHighlight;
     public Color highlightColor;
+    public Color relatedHighlightColor;
+    public Color digitMatchHighlightColor;
     public Color errorColor;
 
     [Header("Pencil Candidate Highlight")]
@@ -34,6 +36,7 @@ public class SudokuCell : MonoBehaviour
     private bool            isDimmed   = false;
     private bool            isConflict = false;
     private bool            isDigitMatchHighlighted = false;
+    private bool            isRelatedHighlighted = false;
     private bool            isSelected = false;
     private bool            isPickerHighlighted = false;
     private Color           baseColor;
@@ -259,18 +262,26 @@ public class SudokuCell : MonoBehaviour
         ApplyBackgroundColor();
     }
 
+    public void SetRelatedHighlight(bool highlighted)
+    {
+        isRelatedHighlighted = highlighted;
+        ApplyBackgroundColor();
+    }
+
     private void ApplyBackgroundColor()
     {
         if (isPickerHighlighted)
             baseColor = pickerHighlight;
         else if (isDimmed)
             baseColor = dimmedColor;
-        else if (isSelected || isDigitMatchHighlighted)
+        else if (isSelected)
             baseColor = highlightColor;
         else if (isConflict)
             baseColor = errorColor;
-        else if (isDimmed)
-            baseColor = dimmedColor;
+        else if (isDigitMatchHighlighted)
+            baseColor = digitMatchHighlightColor;
+        else if (isRelatedHighlighted)
+            baseColor = relatedHighlightColor;
         else
             baseColor = IsGiven ? givenColor : normalColor;
 

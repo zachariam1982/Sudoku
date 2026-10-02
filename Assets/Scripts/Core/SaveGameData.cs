@@ -45,10 +45,18 @@ public class SaveGameHistoryEntry
 [Serializable]
 public class SaveGameData
 {
+    // Version 2 stores the original puzzle and solution so saves remain valid
+    // even if puzzle generation changes in a later app release.
+    public int SaveVersion;
+    public string SaveMode = "Journey";
+    public int GeneratorVersion = 1;
+
     // ── Puzzle identity ───────────────────────────────────────────────────────
     public int    Level      = 1;
     public int    Difficulty = 2; // maps to SudokuDifficulty enum ordinal
     public int    PuzzleSeed = 0; // 0 means a legacy save; use Level as its seed
+    public int[] OriginalPuzzleFlat = new int[81];
+    public int[] SolutionFlat = new int[81];
 
     // ── Board state ───────────────────────────────────────────────────────────
     /// <summary>Flat row-major array of 81 cell values (0 = empty).</summary>

@@ -71,7 +71,7 @@ public sealed class HomeScreenController : MonoBehaviour
         bool hasSavedNewGame = SaveSystem.HasSave(SaveSlot.NewGame) &&
                                _gameContext != null && _gameContext.HasSavedNewGame;
         newGameLabel.text = hasSavedNewGame
-            ? "<color=#4FD3FF><b>CONTINUE NEW GAME</b></color>\n<size=24><color=#AAACCD>Resume your saved puzzle</color></size>"
+            ? "<color=#4FD3FF><b>RESUME YOUR GAME</b></color>\n<size=24><color=#AAACCD>Resume your saved puzzle</color></size>"
             : "<color=#4FD3FF><b>NEW GAME</b></color>\n<size=24><color=#AAACCD>Choose a difficulty</color></size>";
     }
 

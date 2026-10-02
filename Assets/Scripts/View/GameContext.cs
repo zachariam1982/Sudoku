@@ -17,6 +17,7 @@ public class GameContext : MonoBehaviour
     private ErrorMessage _error;
     private NumberPicker _picker;
     private GameStateView _stateView;
+    private ResponsiveTopBar _responsiveTopBar;
     private bool _newGameActive;
 
     private void Awake()
@@ -32,6 +33,7 @@ public class GameContext : MonoBehaviour
         _error = GetComponent<ErrorMessage>();
         _picker = GetComponentInChildren<NumberPicker>();
         _stateView = GetComponentInChildren<GameStateView>();
+        _responsiveTopBar = GetComponentInChildren<ResponsiveTopBar>(true);
 
         BindGameplay(JourneyViewModel);
 
@@ -88,9 +90,25 @@ public class GameContext : MonoBehaviour
         _newGameStateMachine.SetSuspended(false);
     }
 
+    public void ExitNewGame()
+    {
+        if (!_newGameActive || NewGameViewModel == null) return;
+
+        _newGameStateMachine.SetSuspended(true);
+        _newGameActive = false;
+        NewGameViewModel.ClearActiveGame();
+        SaveSystem.Delete(SaveSlot.NewGame);
+        _responsiveTopBar?.SetNewGameMode(false);
+        _newGameScreen.Show();
+    }
+
     public void SuspendActiveGame()
     {
-        if (_newGameActive) _newGameStateMachine.SetSuspended(true);
+        if (_newGameActive)
+        {
+            _newGameStateMachine.SetSuspended(true);
+            _responsiveTopBar?.SetNewGameMode(false);
+        }
         else _journeyStateMachine.SetSuspended(true);
     }
 
@@ -100,6 +118,7 @@ public class GameContext : MonoBehaviour
         _newGameActive = false;
         NewGameViewModel.ClearActiveGame();
         SaveSystem.Delete(SaveSlot.NewGame);
+        _responsiveTopBar?.SetNewGameMode(false);
         _newGameScreen.Show();
     }
 

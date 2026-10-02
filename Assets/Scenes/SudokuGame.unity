@@ -30546,7 +30546,6 @@ RectTransform:
   m_Children:
   - {fileID: 9000000000008}
   - {fileID: 9000000000018}
-  - {fileID: 9000000000028}
   - {fileID: 9000000000032}
 
   m_Father: {fileID: 2027544913}

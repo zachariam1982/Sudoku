@@ -479,6 +479,12 @@ public class SudokuModel
                         : 0;
     }
 
+    public void SetPencilCandidateMask(int row, int col, int mask)
+    {
+        if (row < 0 || row >= 9 || col < 0 || col >= 9) return;
+        PencilCandidateMasks[row, col] = Board[row, col] == 0 ? mask & 0x3FE : 0;
+    }
+
     private bool CanPlaceNumber(int targetRow, int targetCol, int number)
     {
         for (int col = 0; col < 9; col++)

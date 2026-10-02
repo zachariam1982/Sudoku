@@ -23,6 +23,7 @@ public class HUD : MonoBehaviour
     public void AutoFillCandidatesButtonPressed() => viewModel?.AutoFillCandidatesCommand.Execute();
     public void OnSOSPressed() => viewModel?.SOSCommand.Execute();
     public void UndoButtonPressed() => viewModel?.UndoCommand.Execute();
+    public void RedoButtonPressed() => viewModel?.RedoCommand.Execute();
     public void PauseButtonPressed() => viewModel?.PauseCommand.Execute();
     private void OnDestroy()
     {

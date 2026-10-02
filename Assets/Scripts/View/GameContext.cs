@@ -17,7 +17,6 @@ public class GameContext : MonoBehaviour
     private ErrorMessage _error;
     private NumberPicker _picker;
     private GameStateView _stateView;
-    private ResponsiveTopBar _responsiveTopBar;
     private bool _newGameActive;
 
     private void Awake()
@@ -33,7 +32,6 @@ public class GameContext : MonoBehaviour
         _error = GetComponent<ErrorMessage>();
         _picker = GetComponentInChildren<NumberPicker>();
         _stateView = GetComponentInChildren<GameStateView>();
-        _responsiveTopBar = GetComponentInChildren<ResponsiveTopBar>(true);
 
         BindGameplay(JourneyViewModel);
 
@@ -98,7 +96,7 @@ public class GameContext : MonoBehaviour
         _newGameActive = false;
         NewGameViewModel.ClearActiveGame();
         SaveSystem.Delete(SaveSlot.NewGame);
-        _responsiveTopBar?.SetNewGameMode(false);
+        _stateView?.SetTopBarMode(false);
         _newGameScreen.Show();
     }
 
@@ -107,7 +105,7 @@ public class GameContext : MonoBehaviour
         if (_newGameActive)
         {
             _newGameStateMachine.SetSuspended(true);
-            _responsiveTopBar?.SetNewGameMode(false);
+            _stateView?.SetTopBarMode(false);
         }
         else _journeyStateMachine.SetSuspended(true);
     }
@@ -118,7 +116,7 @@ public class GameContext : MonoBehaviour
         _newGameActive = false;
         NewGameViewModel.ClearActiveGame();
         SaveSystem.Delete(SaveSlot.NewGame);
-        _responsiveTopBar?.SetNewGameMode(false);
+        _stateView?.SetTopBarMode(false);
         _newGameScreen.Show();
     }
 

@@ -1,6 +1,5 @@
 using UnityEngine;
 using UnityEngine.UI;
-using TMPro;
 
 public class ResponsiveTopBar : MonoBehaviour
 {
@@ -11,7 +10,8 @@ public class ResponsiveTopBar : MonoBehaviour
     [SerializeField] private RectTransform timer;
     [SerializeField] private RectTransform pauseBlock;
     [SerializeField] private RectTransform settingsBlock;
-    [SerializeField] private Sprite exitButtonSprite;
+    [SerializeField] private Button exitButton;
+    [SerializeField] private bool isNewGameTopBar;
 
 
     [Header("Scaling")]
@@ -30,13 +30,13 @@ public class ResponsiveTopBar : MonoBehaviour
     private TextAnchor _originalAlignment;
     private bool _originalExpandWidth;
     private bool _originalControlWidth;
-    private RectTransform _exitButtonBlock;
-
     private void Awake()
     {
         _topBar = GetComponent<RectTransform>();
         _layout = GetComponent<HorizontalLayoutGroup>();
-        CreateExitButton();
+
+        if (exitButton != null)
+            exitButton.onClick.AddListener(ExitNewGame);
 
         if (_layout != null)
         {
@@ -50,7 +50,7 @@ public class ResponsiveTopBar : MonoBehaviour
             RectTransform[] items = new RectTransform[]
             {
                 homeBlock, livesContainer, level, timer, pauseBlock, settingsBlock,
-                _exitButtonBlock
+                exitButton != null ? exitButton.GetComponent<RectTransform>() : null
             };
             _itemLayouts = new LayoutElement[items.Length];
             _originalMinWidths = new float[items.Length];
@@ -147,9 +147,7 @@ public class ResponsiveTopBar : MonoBehaviour
             settingsBlock,
             targetScale);
 
-        ApplyScale(
-            _exitButtonBlock,
-            targetScale);
+        ApplyScale(exitButton != null ? exitButton.GetComponent<RectTransform>() : null, targetScale);
 
 
         /*
@@ -220,69 +218,12 @@ public class ResponsiveTopBar : MonoBehaviour
 
     public void SetNewGameMode(bool isNewGame)
     {
-        if (_exitButtonBlock == null) return;
-        if (_exitButtonBlock.gameObject.activeSelf != isNewGame)
-            _exitButtonBlock.gameObject.SetActive(isNewGame);
+        bool shouldBeVisible = isNewGameTopBar == isNewGame;
+        if (gameObject.activeSelf != shouldBeVisible)
+            gameObject.SetActive(shouldBeVisible);
 
         if (_topBar != null)
             LayoutRebuilder.ForceRebuildLayoutImmediate(_topBar);
-    }
-
-    private void CreateExitButton()
-    {
-        var buttonObject = new GameObject(
-            "ExitNewGameBlock",
-            typeof(RectTransform),
-            typeof(CanvasRenderer),
-            typeof(Image),
-            typeof(Button),
-            typeof(LayoutElement));
-        _exitButtonBlock = buttonObject.GetComponent<RectTransform>();
-        _exitButtonBlock.SetParent(transform, false);
-        _exitButtonBlock.sizeDelta = new Vector2(100f, 100f);
-
-        Image image = buttonObject.GetComponent<Image>();
-        image.sprite = exitButtonSprite;
-        image.type = Image.Type.Sliced;
-        image.preserveAspect = false;
-
-        Button button = buttonObject.GetComponent<Button>();
-        button.targetGraphic = image;
-        ColorBlock colors = button.colors;
-        colors.normalColor = Color.white;
-        colors.highlightedColor = new Color(1f, 1f, 1f, 1f);
-        colors.selectedColor = colors.highlightedColor;
-        colors.pressedColor = new Color(0.82f, 0.82f, 0.82f, 1f);
-        button.colors = colors;
-        button.onClick.AddListener(ExitNewGame);
-
-        LayoutElement layoutElement = buttonObject.GetComponent<LayoutElement>();
-        layoutElement.minWidth = 93.33f;
-        layoutElement.preferredWidth = 100f;
-        layoutElement.preferredHeight = 84f;
-
-        var labelObject = new GameObject(
-            "ExitLabel",
-            typeof(RectTransform),
-            typeof(CanvasRenderer),
-            typeof(TextMeshProUGUI));
-        RectTransform labelRect = labelObject.GetComponent<RectTransform>();
-        labelRect.SetParent(_exitButtonBlock, false);
-        labelRect.anchorMin = Vector2.zero;
-        labelRect.anchorMax = Vector2.one;
-        labelRect.offsetMin = new Vector2(8f, 4f);
-        labelRect.offsetMax = new Vector2(-8f, -4f);
-
-        TextMeshProUGUI label = labelObject.GetComponent<TextMeshProUGUI>();
-        label.text = "EXIT";
-        label.font = TMP_Settings.defaultFontAsset;
-        label.fontSize = 30f;
-        label.fontStyle = FontStyles.Bold;
-        label.color = Color.white;
-        label.alignment = TextAlignmentOptions.Center;
-        label.raycastTarget = false;
-
-        buttonObject.SetActive(false);
     }
 
     private void ExitNewGame()
@@ -290,5 +231,11 @@ public class ResponsiveTopBar : MonoBehaviour
         GameContext context = FindObjectOfType<GameContext>();
         if (context != null)
             context.ExitNewGame();
+    }
+
+    private void OnDestroy()
+    {
+        if (exitButton != null)
+            exitButton.onClick.RemoveListener(ExitNewGame);
     }
 }

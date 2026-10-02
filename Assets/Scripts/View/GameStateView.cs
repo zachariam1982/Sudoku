@@ -62,7 +62,7 @@ public class GameStateView : MonoBehaviour
     private BaseViewModel _vm;
     private HUD _hud;
     private VerseTicker _verseTicker;
-    private ResponsiveTopBar _responsiveTopBar;
+    private ResponsiveTopBar[] _responsiveTopBars;
     private Button _pauseResumeButton;
 
     // ── Binding ───────────────────────────────────────────────────────────────
@@ -319,15 +319,20 @@ public class GameStateView : MonoBehaviour
         if (winTimeLabel != null) winTimeLabel.gameObject.SetActive(journeyMode);
         if (winPointsLabel != null) winPointsLabel.gameObject.SetActive(journeyMode);
 
-        if (_responsiveTopBar == null)
+        SetTopBarMode(_vm is NewGameViewModel);
+    }
+
+    public void SetTopBarMode(bool isNewGame)
+    {
+        if (_responsiveTopBars == null || _responsiveTopBars.Length == 0)
         {
             Canvas canvas = GetComponentInParent<Canvas>();
             if (canvas != null)
-                _responsiveTopBar = canvas.GetComponentInChildren<ResponsiveTopBar>(true);
+                _responsiveTopBars = canvas.GetComponentsInChildren<ResponsiveTopBar>(true);
         }
 
-        bool newGameGameplay = stateName == "NewGamePlayingState" ||
-                               stateName == "NewGamePausedState";
-        _responsiveTopBar?.SetNewGameMode(newGameGameplay);
+        if (_responsiveTopBars == null) return;
+        foreach (ResponsiveTopBar topBar in _responsiveTopBars)
+            topBar.SetNewGameMode(isNewGame);
     }
 }

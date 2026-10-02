@@ -183,10 +183,23 @@ public class SudokuGrid : MonoBehaviour
 
         int selectedRow = viewModel.SelectedRow.Value;
         int selectedCol = viewModel.SelectedCol.Value;
+        bool hasSelection = selectedRow >= 0 && selectedRow < 9
+                         && selectedCol >= 0 && selectedCol < 9;
+        int selectedBoxRow = hasSelection ? selectedRow / 3 : -1;
+        int selectedBoxCol = hasSelection ? selectedCol / 3 : -1;
 
         for (int row = 0; row < 9; row++)
             for (int col = 0; col < 9; col++)
-                cells[row, col].SetHighlight(row == selectedRow && col == selectedCol);
+            {
+                bool isSelected = hasSelection && row == selectedRow && col == selectedCol;
+                bool isRelated = hasSelection && !isSelected
+                    && (row == selectedRow
+                        || col == selectedCol
+                        || (row / 3 == selectedBoxRow && col / 3 == selectedBoxCol));
+
+                cells[row, col].SetHighlight(isSelected);
+                cells[row, col].SetRelatedHighlight(isRelated);
+            }
 
         RefreshMatchingDigitHighlights();
     }

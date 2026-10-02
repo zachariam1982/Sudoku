@@ -239,7 +239,7 @@ public class ResponsiveTopBar : MonoBehaviour
             typeof(LayoutElement));
         _exitButtonBlock = buttonObject.GetComponent<RectTransform>();
         _exitButtonBlock.SetParent(transform, false);
-        _exitButtonBlock.sizeDelta = new Vector2(150f, 100f);
+        _exitButtonBlock.sizeDelta = new Vector2(50f, 33.33f);
 
         Image image = buttonObject.GetComponent<Image>();
         image.sprite = exitButtonSprite;
@@ -257,9 +257,9 @@ public class ResponsiveTopBar : MonoBehaviour
         button.onClick.AddListener(ExitNewGame);
 
         LayoutElement layoutElement = buttonObject.GetComponent<LayoutElement>();
-        layoutElement.minWidth = 140f;
-        layoutElement.preferredWidth = 150f;
-        layoutElement.preferredHeight = 84f;
+        layoutElement.minWidth = 46.67f;
+        layoutElement.preferredWidth = 50f;
+        layoutElement.preferredHeight = 28f;
 
         var labelObject = new GameObject(
             "ExitLabel",
@@ -270,13 +270,13 @@ public class ResponsiveTopBar : MonoBehaviour
         labelRect.SetParent(_exitButtonBlock, false);
         labelRect.anchorMin = Vector2.zero;
         labelRect.anchorMax = Vector2.one;
-        labelRect.offsetMin = new Vector2(8f, 4f);
-        labelRect.offsetMax = new Vector2(-8f, -4f);
+        labelRect.offsetMin = new Vector2(2.67f, 1.33f);
+        labelRect.offsetMax = new Vector2(-2.67f, -1.33f);
 
         TextMeshProUGUI label = labelObject.GetComponent<TextMeshProUGUI>();
         label.text = "EXIT";
         label.font = TMP_Settings.defaultFontAsset;
-        label.fontSize = 30f;
+        label.fontSize = 10f;
         label.fontStyle = FontStyles.Bold;
         label.color = Color.white;
         label.alignment = TextAlignmentOptions.Center;

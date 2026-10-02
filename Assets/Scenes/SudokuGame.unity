@@ -5280,6 +5280,7 @@ MonoBehaviour:
   Timer: {fileID: 1480642198}
   Settings: {fileID: 1326735268}
   Level: {fileID: 1107887576}
+  newGameLevel: {fileID: 9000000000020}
   timerLabel: {fileID: 1480642200}
   lifeIcons: []
   lifeActiveColor: {r: 0.92, g: 0.27, b: 0.38, a: 1}
@@ -30649,9 +30650,9 @@ MonoBehaviour:
   m_Name:
   m_EditorClassIdentifier: Assembly-CSharp::ResponsiveTopBar
   homeBlock: {fileID: 9000000000008}
-  livesContainer: {fileID: 9000000000014}
+  livesContainer: {fileID: 0}
   level: {fileID: 9000000000018}
-  timer: {fileID: 9000000000023}
+  timer: {fileID: 0}
   pauseBlock: {fileID: 9000000000028}
   settingsBlock: {fileID: 0}
   exitButton: {fileID: 9000000000033}
@@ -31073,7 +31074,7 @@ GameObject:
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
-  m_IsActive: 1
+  m_IsActive: 0
 --- !u!224 &9000000000023
 RectTransform:
   m_ObjectHideFlags: 0

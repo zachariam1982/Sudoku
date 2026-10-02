@@ -1,4 +1,4 @@
-# Progression regression checks
+# Sudoku model and progression regression checks
 
 Run with .NET 8 from the repository root:
 
@@ -7,14 +7,13 @@ dotnet run --project Tests/Progression/Progression.csproj
 ```
 
 This dependency-free console harness compiles the production SudokuModel,
-ScoringSystem, GameRecord, WinState and LoseState. Unity, database, view model,
-state machine and persistence infrastructure are substitutes. It does not test
-Unity lifecycle, puzzle generation, SQLite, WebGL persistence or actual save recovery.
+SudokuSolver, SudokuDifficultyAnalyzer, ScoringSystem, and GameRecord. Unity, database, view model, state machine and persistence
+infrastructure are substitutes. It does not test Unity lifecycle, state transitions, SQLite, WebGL persistence
+or actual save recovery.
 The project stays outside Assets and adds nothing to game builds.
 
-Coverage: all nine tiers, all win counts and attainable total-score values,
-80% promotion and 45% demotion boundaries, tier caps, idempotence, mixed/short/
-empty history, historical replay exit, and normal/historical Retry handlers.
+Coverage: the bit-mask solver is checked against a known unique puzzle, a multiple-solution board, contradictory row/column/box givens, solution limits, and input preservation; the analyzer's solved/single-hole ratings, candidate-removal write-back, and input preservation are checked; generator fallback is checked for all nine tiers, puzzle validity, uniqueness and clue consistency; fallback order and actual-tier recording are checked; progression tests cover all nine tiers, all win counts and attainable total-score values,
+80% promotion and 45% demotion boundaries, tier caps, idempotence, mixed/short/empty history, and historical replay exit.
 
 ## Manual Unity/device checks still required
 
@@ -37,5 +36,4 @@ empty history, historical replay exit, and normal/historical Retry handlers.
    Records outside the latest five must not affect progression; improvements
    inside that window remain eligible under the existing product behavior.
 
-The fix prevents future stacked adjustments; it does not rewrite previously saved
-incorrect game records or infer the intended tier of already completed puzzles.
+The generator tries the selected tier for up to 100 deterministic attempts, then tries each easier tier in descending order. It records the analyzer-rated tier actually generated, never exceeds the selected tier, and throws only if all tiers fail.

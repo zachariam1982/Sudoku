@@ -52,6 +52,7 @@ public sealed class HomeScreenController : MonoBehaviour
     public void Initialize(JourneyViewModel viewModel, GameContext gameContext)
     {
         _viewModel = viewModel;
+        _gameContext = gameContext;
 
         ApplyResponsiveLayout();
         RefreshJourneyStatus();
@@ -61,11 +62,17 @@ public sealed class HomeScreenController : MonoBehaviour
     {
         if (_viewModel == null) return;
 
-        bool hasProgress = SaveSystem.HasSave() || GameDatabase.GetLastRecord() != null;
+        bool hasProgress = SaveSystem.HasSave(SaveSlot.Journey) || GameDatabase.GetLastRecord() != null;
         int difficultyIndex = Mathf.Clamp(_viewModel.GetDifficulty, 0, 8);
         int totalPoints = GameDatabase.GetTotalPoints();
 
         journeyLabel.text = $"<color=#9771FF><b>{(hasProgress ? "CONTINUE JOURNEY" : "SUDOKU JOURNEY")}</b></color>\n<size=24><color=#AAACCD>Level {_viewModel.GetLevel}  •  {(SudokuDifficulty)difficultyIndex}  •  {totalPoints:N0} Points</color></size>";
+
+        bool hasSavedNewGame = SaveSystem.HasSave(SaveSlot.NewGame) &&
+                               _gameContext != null && _gameContext.HasSavedNewGame;
+        newGameLabel.text = hasSavedNewGame
+            ? "<color=#4FD3FF><b>RESUME YOUR GAME</b></color>\n<size=24><color=#AAACCD>Resume your saved puzzle</color></size>"
+            : "<color=#4FD3FF><b>NEW GAME</b></color>\n<size=24><color=#AAACCD>Choose a difficulty</color></size>";
     }
 
     public void OpenJourney()
@@ -103,8 +110,13 @@ public sealed class HomeScreenController : MonoBehaviour
     public void OpenNewGame()
     {
         SetVerseTickerVisible(false);
-        newGameScreen.SetActive(true);
         gameObject.SetActive(false);
+        if (_gameContext != null && _gameContext.HasSavedNewGame)
+        {
+            _gameContext.ActivateSavedNewGame();
+            return;
+        }
+        newGameScreen.SetActive(true);
     }
 
     public void OpenHome()

@@ -10,6 +10,8 @@ public class ResponsiveTopBar : MonoBehaviour
     [SerializeField] private RectTransform timer;
     [SerializeField] private RectTransform pauseBlock;
     [SerializeField] private RectTransform settingsBlock;
+    [SerializeField] private Button exitButton;
+    [SerializeField] private bool isNewGameTopBar;
 
 
     [Header("Scaling")]
@@ -28,12 +30,13 @@ public class ResponsiveTopBar : MonoBehaviour
     private TextAnchor _originalAlignment;
     private bool _originalExpandWidth;
     private bool _originalControlWidth;
-
     private void Awake()
     {
         _topBar = GetComponent<RectTransform>();
-
         _layout = GetComponent<HorizontalLayoutGroup>();
+
+        if (exitButton != null)
+            exitButton.onClick.AddListener(ExitNewGame);
 
         if (_layout != null)
         {
@@ -46,7 +49,8 @@ public class ResponsiveTopBar : MonoBehaviour
 
             RectTransform[] items = new RectTransform[]
             {
-                homeBlock, livesContainer, level, timer, pauseBlock, settingsBlock
+                homeBlock, livesContainer, level, timer, pauseBlock, settingsBlock,
+                exitButton != null ? exitButton.GetComponent<RectTransform>() : null
             };
             _itemLayouts = new LayoutElement[items.Length];
             _originalMinWidths = new float[items.Length];
@@ -143,6 +147,8 @@ public class ResponsiveTopBar : MonoBehaviour
             settingsBlock,
             targetScale);
 
+        ApplyScale(exitButton != null ? exitButton.GetComponent<RectTransform>() : null, targetScale);
+
 
         /*
          * Tell Unity to recalculate positions
@@ -178,6 +184,7 @@ public class ResponsiveTopBar : MonoBehaviour
                 item.preferredWidth = 0f;
                 item.flexibleWidth = 1f;
             }
+
         }
         else
         {
@@ -196,6 +203,32 @@ public class ResponsiveTopBar : MonoBehaviour
                 item.flexibleWidth = _originalFlexibleWidths[i];
             }
         }
+
+        if (isNewGameTopBar)
+        {
+            SetFixedWidth(homeBlock, 100f, 100f);
+            SetFlexibleWidth(level);
+            if (exitButton != null)
+                SetFixedWidth(exitButton.GetComponent<RectTransform>(), 93.33f, 100f);
+        }
+    }
+
+    private static void SetFixedWidth(RectTransform target, float minWidth, float preferredWidth)
+    {
+        LayoutElement layoutElement = target != null ? target.GetComponent<LayoutElement>() : null;
+        if (layoutElement == null) return;
+        layoutElement.minWidth = minWidth;
+        layoutElement.preferredWidth = preferredWidth;
+        layoutElement.flexibleWidth = 0f;
+    }
+
+    private static void SetFlexibleWidth(RectTransform target)
+    {
+        LayoutElement layoutElement = target != null ? target.GetComponent<LayoutElement>() : null;
+        if (layoutElement == null) return;
+        layoutElement.minWidth = 0f;
+        layoutElement.preferredWidth = 0f;
+        layoutElement.flexibleWidth = 1f;
     }
 
 
@@ -209,5 +242,27 @@ public class ResponsiveTopBar : MonoBehaviour
         target.localScale =
             scale;
     }
-}
 
+    public void SetNewGameMode(bool isNewGame)
+    {
+        bool shouldBeVisible = isNewGameTopBar == isNewGame;
+        if (gameObject.activeSelf != shouldBeVisible)
+            gameObject.SetActive(shouldBeVisible);
+
+        if (_topBar != null)
+            LayoutRebuilder.ForceRebuildLayoutImmediate(_topBar);
+    }
+
+    private void ExitNewGame()
+    {
+        GameContext context = FindObjectOfType<GameContext>();
+        if (context != null)
+            context.ExitNewGame();
+    }
+
+    private void OnDestroy()
+    {
+        if (exitButton != null)
+            exitButton.onClick.RemoveListener(ExitNewGame);
+    }
+}

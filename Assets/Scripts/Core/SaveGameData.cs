@@ -23,12 +23,40 @@ public class SaveGameRecord
 /// No Unity or model dependencies — safe to JSON-serialize.
 /// </summary>
 [Serializable]
+public class SaveGameCandidateChange
+{
+    public int Row;
+    public int Col;
+    public int BeforeMask;
+    public int AfterMask;
+}
+
+[Serializable]
+public class SaveGameHistoryEntry
+{
+    // Row and Col are -1 for candidate-only actions such as Auto Candidates.
+    public int Row = -1;
+    public int Col = -1;
+    public int BeforeValue;
+    public int AfterValue;
+    public List<SaveGameCandidateChange> CandidateChanges = new List<SaveGameCandidateChange>();
+}
+
+[Serializable]
 public class SaveGameData
 {
+    // Version 2 stores the original puzzle and solution so saves remain valid
+    // even if puzzle generation changes in a later app release.
+    public int SaveVersion;
+    public string SaveMode = "Journey";
+    public int GeneratorVersion = 1;
+
     // ── Puzzle identity ───────────────────────────────────────────────────────
     public int    Level      = 1;
     public int    Difficulty = 2; // maps to SudokuDifficulty enum ordinal
     public int    PuzzleSeed = 0; // 0 means a legacy save; use Level as its seed
+    public int[] OriginalPuzzleFlat = new int[81];
+    public int[] SolutionFlat = new int[81];
 
     // ── Board state ───────────────────────────────────────────────────────────
     /// <summary>Flat row-major array of 81 cell values (0 = empty).</summary>
@@ -47,7 +75,10 @@ public class SaveGameData
     /// Each entry encodes one undo frame as "row,col,value".
     /// Bottom of stack = index 0, top = last element.
     /// </summary>
-    public List<string> UndoStack        = new List<string>();
+    // Legacy value-only undo records are read for saves created by older versions.
+    public List<string> UndoStack = new List<string>();
+    public List<SaveGameHistoryEntry> UndoHistory = new List<SaveGameHistoryEntry>();
+    public List<SaveGameHistoryEntry> RedoHistory = new List<SaveGameHistoryEntry>();
     public bool IsWon                    = false;
     public bool IsLost                   = false;
     public bool PauseRequested           = false;

@@ -35,6 +35,7 @@ public class GameStateView : MonoBehaviour
     [SerializeField] private GameObject Timer;
     [SerializeField] private GameObject Settings;
     [SerializeField] private TextMeshProUGUI Level;
+    [SerializeField] private TextMeshProUGUI newGameLevel;
     [Header("HUD — always visible during play")]
     [SerializeField] private TextMeshProUGUI timerLabel;
     [SerializeField] private Image[]         lifeIcons;       // 3 heart images
@@ -62,6 +63,7 @@ public class GameStateView : MonoBehaviour
     private BaseViewModel _vm;
     private HUD _hud;
     private VerseTicker _verseTicker;
+    private ResponsiveTopBar[] _responsiveTopBars;
     private Button _pauseResumeButton;
 
     // ── Binding ───────────────────────────────────────────────────────────────
@@ -134,13 +136,13 @@ public class GameStateView : MonoBehaviour
         {
             case "JourneyIdleState":
                 if (hudPanel != null) hudPanel.SetActive(false);
-                if(_vm != null) Level.text = "        ";
+                SetLevelText("        ");
                 break;
 
             case "JourneyPlayingState":
             case "NewGamePlayingState":
                 if (hudPanel != null) hudPanel.SetActive(true);
-                if(_vm != null) Level.text = ((SudokuDifficulty)_vm.GetDifficulty).ToString();
+                if(_vm != null) SetLevelText(((SudokuDifficulty)_vm.GetDifficulty).ToString());
                 break;
 
             case "JourneyPausedState":
@@ -317,5 +319,27 @@ public class GameStateView : MonoBehaviour
         if (Settings != null) Settings.SetActive(journeyMode);
         if (winTimeLabel != null) winTimeLabel.gameObject.SetActive(journeyMode);
         if (winPointsLabel != null) winPointsLabel.gameObject.SetActive(journeyMode);
+
+        SetTopBarMode(_vm is NewGameViewModel);
+    }
+
+    public void SetTopBarMode(bool isNewGame)
+    {
+        if (_responsiveTopBars == null || _responsiveTopBars.Length == 0)
+        {
+            Canvas canvas = GetComponentInParent<Canvas>();
+            if (canvas != null)
+                _responsiveTopBars = canvas.GetComponentsInChildren<ResponsiveTopBar>(true);
+        }
+
+        if (_responsiveTopBars == null) return;
+        foreach (ResponsiveTopBar topBar in _responsiveTopBars)
+            topBar.SetNewGameMode(isNewGame);
+    }
+
+    private void SetLevelText(string text)
+    {
+        if (Level != null) Level.text = text;
+        if (newGameLevel != null) newGameLevel.text = text;
     }
 }

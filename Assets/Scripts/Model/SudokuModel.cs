@@ -19,6 +19,7 @@ public class SudokuResult
 {
     public int[,] Puzzle;   // The grid with holes (0 represents empty)
     public int[,] Solution; // The completed grid
+    public SudokuDifficulty Difficulty; // The analyzer-rated tier actually generated
 }
 public static class ScoringSystem
 {
@@ -107,18 +108,102 @@ public static class SudokuGenerator
             _ => (25, 55)
         };
     }
-    public static SudokuResult GenerateSudoku( int level, SudokuDifficulty requestedDifficulty)
+    public static SudokuResult GenerateSudoku( int level, SudokuDifficulty requestedDifficulty, int maxAttempts = 100)
     {
-        const int MaxAttempts = 100;
-        var (minClues, maxClues) = GetSearchRange(requestedDifficulty);
+        if (!Enum.IsDefined(typeof(SudokuDifficulty), requestedDifficulty))
+            throw new ArgumentOutOfRangeException(nameof(requestedDifficulty), requestedDifficulty, "Unknown Sudoku difficulty.");
 
-        for (int attempt = 0;attempt < MaxAttempts;attempt++)
+        long generationStartedAt = System.Diagnostics.Stopwatch.GetTimestamp();
+
+        // Try the requested tier first. If this seed cannot produce one, step down
+        // one tier at a time so players never receive a harder puzzle than selected.
+        SudokuResult result = GenerateWithDifficultyFallback(
+            requestedDifficulty,
+            tier => TryGenerateAtDifficulty(level, tier, maxAttempts));
+
+        UnityEngine.Debug.Log(
+            $"[SudokuGenerator] level={level} requested={requestedDifficulty} actual={result.Difficulty} " +
+            $"total={ElapsedMilliseconds(generationStartedAt):F2}ms");
+
+        return result;
+    }
+
+    internal static SudokuResult GenerateWithDifficultyFallback(
+        SudokuDifficulty requestedDifficulty,
+        Func<SudokuDifficulty, SudokuResult> generateAtDifficulty)
+    {
+        for (int tier = (int)requestedDifficulty; tier >= (int)SudokuDifficulty.Simple; tier--)
         {
-            int seed = unchecked(level * 397 ^ ((int)requestedDifficulty + 1) * 7919 ^ attempt * 104729);
+            SudokuDifficulty actualDifficulty = (SudokuDifficulty)tier;
+            SudokuResult result = generateAtDifficulty(actualDifficulty);
+            if (result == null) continue;
+
+            result.Difficulty = actualDifficulty;
+            return result;
+        }
+
+        throw new InvalidOperationException(
+            $"Could not generate a {requestedDifficulty} Sudoku or any lower difficulty.");
+    }
+
+    private static double ElapsedMilliseconds(long startedAt) =>
+        (System.Diagnostics.Stopwatch.GetTimestamp() - startedAt) *
+        1000d / System.Diagnostics.Stopwatch.Frequency;
+
+    private static void LogTierDiagnostics(
+        int level,
+        SudokuDifficulty difficulty,
+        string outcome,
+        int attempts,
+        int maxAttempts,
+        long tierStartedAt,
+        double fillBoardMs,
+        double uniquenessMs,
+        int uniquenessChecks,
+        double analyzerMs,
+        int analyzerCalls,
+        int acceptedRemovals,
+        int slowestAttempt,
+        int slowestSeed,
+        double slowestAttemptMs)
+    {
+        double totalMs = ElapsedMilliseconds(tierStartedAt);
+        double otherMs = Math.Max(0d, totalMs - fillBoardMs - uniquenessMs - analyzerMs);
+
+        UnityEngine.Debug.Log(
+            $"[SudokuGenerator] level={level} tier={difficulty} outcome={outcome} " +
+            $"attempts={attempts}/{maxAttempts} total={totalMs:F2}ms " +
+            $"fill={fillBoardMs:F2}ms uniqueness={uniquenessMs:F2}ms/{uniquenessChecks} checks " +
+            $"analyzer={analyzerMs:F2}ms/{analyzerCalls} calls other={otherMs:F2}ms " +
+            $"acceptedRemovals={acceptedRemovals} slowestAttempt={slowestAttempt} " +
+            $"slowestSeed={slowestSeed} slowestMs={slowestAttemptMs:F2}");
+    }
+
+    private static SudokuResult TryGenerateAtDifficulty(int level, SudokuDifficulty difficulty, int maxAttempts = 100)
+    {
+        var (minClues, maxClues) = GetSearchRange(difficulty);
+
+        long tierStartedAt = System.Diagnostics.Stopwatch.GetTimestamp();
+        double fillBoardMs = 0d;
+        double uniquenessMs = 0d;
+        double analyzerMs = 0d;
+        int uniquenessChecks = 0;
+        int analyzerCalls = 0;
+        int acceptedRemovals = 0;
+        int slowestAttempt = 0;
+        int slowestSeed = 0;
+        double slowestAttemptMs = 0d;
+
+        for (int attempt = 0; attempt < maxAttempts; attempt++)
+        {
+            long attemptStartedAt = System.Diagnostics.Stopwatch.GetTimestamp();
+            int seed = unchecked(level * 397 ^ ((int)difficulty + 1) * 7919 ^ attempt * 104729);
             System.Random rng = new System.Random(seed);
             int[,] solution = new int[9, 9];
 
-            FillBoard( solution, rng);
+            long stageStartedAt = System.Diagnostics.Stopwatch.GetTimestamp();
+            FillBoard(solution, rng);
+            fillBoardMs += ElapsedMilliseconds(stageStartedAt);
 
             int[,] puzzle = (int[,])solution.Clone();
             List<int> cells = Enumerable.Range(0, 81).OrderBy(_ => rng.Next()).ToList();
@@ -132,34 +217,69 @@ public static class SudokuGenerator
 
                 puzzle[row, col] = 0;
 
-                if (!SudokuSolver.HasUniqueSolution(puzzle))
+                uniquenessChecks++;
+                stageStartedAt = System.Diagnostics.Stopwatch.GetTimestamp();
+                bool hasUniqueSolution = SudokuSolver.HasUniqueSolution(puzzle);
+                uniquenessMs += ElapsedMilliseconds(stageStartedAt);
+
+                if (!hasUniqueSolution)
                 {
                     puzzle[row, col] = previous;
                     continue;
                 }
 
                 clueCount--;
+                acceptedRemovals++;
 
                 if (clueCount > maxClues) continue;
                 if (clueCount < minClues) break;
 
+                analyzerCalls++;
+                stageStartedAt = System.Diagnostics.Stopwatch.GetTimestamp();
                 SudokuDifficultyResult rating = SudokuDifficultyAnalyzer.Analyze(puzzle);
+                analyzerMs += ElapsedMilliseconds(stageStartedAt);
 
-                if (requestedDifficulty == SudokuDifficulty.Simple || 
-                    requestedDifficulty == SudokuDifficulty.Beginner ||
-                    (int)rating.Difficulty >= (int)requestedDifficulty || 
-                    (int)rating.Difficulty - 1 == (int)requestedDifficulty)
+                if (rating.Difficulty == difficulty)
                 {
+                    double attemptMs = ElapsedMilliseconds(attemptStartedAt);
+                    if (attemptMs > slowestAttemptMs)
+                    {
+                        slowestAttempt = attempt + 1;
+                        slowestSeed = seed;
+                        slowestAttemptMs = attemptMs;
+                    }
+
+                    LogTierDiagnostics(
+                        level, difficulty, "matched", attempt + 1, maxAttempts, tierStartedAt,
+                        fillBoardMs, uniquenessMs, uniquenessChecks,
+                        analyzerMs, analyzerCalls, acceptedRemovals,
+                        slowestAttempt, slowestSeed, slowestAttemptMs);
+
                     return new SudokuResult
                     {
                         Puzzle = (int[,])puzzle.Clone(),
-                        Solution = (int[,])solution.Clone()
+                        Solution = (int[,])solution.Clone(),
+                        Difficulty = difficulty
                     };
                 }
             }
+
+            double completedAttemptMs = ElapsedMilliseconds(attemptStartedAt);
+            if (completedAttemptMs > slowestAttemptMs)
+            {
+                slowestAttempt = attempt + 1;
+                slowestSeed = seed;
+                slowestAttemptMs = completedAttemptMs;
+            }
         }
 
-        throw new InvalidOperationException( $"Could not generate a " + $"{requestedDifficulty} Sudoku " + $"after {MaxAttempts} generation paths.");
+        LogTierDiagnostics(
+            level, difficulty, "no-match", maxAttempts, maxAttempts, tierStartedAt,
+            fillBoardMs, uniquenessMs, uniquenessChecks,
+            analyzerMs, analyzerCalls, acceptedRemovals,
+            slowestAttempt, slowestSeed, slowestAttemptMs);
+
+        return null;
     }
     private static bool FillBoard(int[,] board, System.Random rng)
     {
@@ -277,9 +397,10 @@ public class SudokuModel
 
         return baseline;
     }
-    public void LoadCurrentLevelPuzzle()
+    public void LoadCurrentLevelPuzzle(int maxAttempts = 100)
     {
-        this.ret = SudokuGenerator.GenerateSudoku(_puzzleSeed, _currentDifficulty);
+        this.ret = SudokuGenerator.GenerateSudoku(_puzzleSeed, _currentDifficulty, maxAttempts);
+        _currentDifficulty = ret.Difficulty;
 
         for (int row = 0; row < 9; row++)
             for (int col = 0; col < 9; col++)
@@ -289,6 +410,92 @@ public class SudokuModel
                 GivenMask[row, col] = value != 0;
                 PencilCandidateMasks[row, col] = 0;
             }
+    }
+
+    public int[] GetOriginalPuzzleFlat()
+    {
+        var flat = new int[81];
+        if (ret?.Puzzle == null) return flat;
+        for (int row = 0; row < 9; row++)
+            for (int col = 0; col < 9; col++)
+                flat[row * 9 + col] = ret.Puzzle[row, col];
+        return flat;
+    }
+
+    public int[] GetSolutionFlat()
+    {
+        var flat = new int[81];
+        if (ret?.Solution == null) return flat;
+        for (int row = 0; row < 9; row++)
+            for (int col = 0; col < 9; col++)
+                flat[row * 9 + col] = ret.Solution[row, col];
+        return flat;
+    }
+
+    public bool TryLoadSavedPuzzle(int[] puzzleFlat, int[] solutionFlat)
+    {
+        if (!IsValidSavedPuzzle(puzzleFlat, solutionFlat)) return false;
+
+        var puzzle = new int[9, 9];
+        var solution = new int[9, 9];
+        for (int row = 0; row < 9; row++)
+            for (int col = 0; col < 9; col++)
+            {
+                int index = row * 9 + col;
+                puzzle[row, col] = puzzleFlat[index];
+                solution[row, col] = solutionFlat[index];
+                Board[row, col] = puzzle[row, col];
+                GivenMask[row, col] = puzzle[row, col] != 0;
+                PencilCandidateMasks[row, col] = 0;
+            }
+
+        ret = new SudokuResult
+        {
+            Puzzle = puzzle,
+            Solution = solution,
+            Difficulty = _currentDifficulty
+        };
+        return true;
+    }
+
+    public static bool IsValidSavedPuzzle(int[] puzzle, int[] solution)
+    {
+        if (puzzle == null || solution == null || puzzle.Length != 81 || solution.Length != 81)
+            return false;
+
+        for (int index = 0; index < 81; index++)
+            if (puzzle[index] < 0 || puzzle[index] > 9 || solution[index] < 1 ||
+                solution[index] > 9 || (puzzle[index] != 0 && puzzle[index] != solution[index]))
+                return false;
+
+        for (int row = 0; row < 9; row++)
+        {
+            int rowMask = 0;
+            int colMask = 0;
+            for (int i = 0; i < 9; i++)
+            {
+                int rowBit = 1 << solution[row * 9 + i];
+                int colBit = 1 << solution[i * 9 + row];
+                if ((rowMask & rowBit) != 0 || (colMask & colBit) != 0) return false;
+                rowMask |= rowBit;
+                colMask |= colBit;
+            }
+        }
+
+        for (int boxRow = 0; boxRow < 3; boxRow++)
+            for (int boxCol = 0; boxCol < 3; boxCol++)
+            {
+                int mask = 0;
+                for (int row = 0; row < 3; row++)
+                    for (int col = 0; col < 3; col++)
+                    {
+                        int value = solution[(boxRow * 3 + row) * 9 + boxCol * 3 + col];
+                        int bit = 1 << value;
+                        if ((mask & bit) != 0) return false;
+                        mask |= bit;
+                    }
+            }
+        return true;
     }
     public bool SetValue(int row, int col, int value)
     {
@@ -356,6 +563,12 @@ public class SudokuModel
                     masks != null && masks.Length == 81 && Board[row, col] == 0
                         ? masks[row * 9 + col]
                         : 0;
+    }
+
+    public void SetPencilCandidateMask(int row, int col, int mask)
+    {
+        if (row < 0 || row >= 9 || col < 0 || col >= 9) return;
+        PencilCandidateMasks[row, col] = Board[row, col] == 0 ? mask & 0x3FE : 0;
     }
 
     private bool CanPlaceNumber(int targetRow, int targetCol, int number)

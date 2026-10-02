@@ -88,15 +88,19 @@ public class JourneyViewModel : BaseViewModel
 
     public ValueTuple<int, int, int> getPreviousValues()
     {
-        return ReplacedValueStack.Count == 0
-            ? new ValueTuple<int, int, int>(-1, -1, -1)
-            : ReplacedValueStack.Pop();
+        if (UndoHistory.Count == 0)
+            return new ValueTuple<int, int, int>(-1, -1, -1);
+        SaveGameHistoryEntry entry = UndoHistory.Peek();
+        return new ValueTuple<int, int, int>(entry.Row, entry.Col, entry.BeforeValue);
     }
 
     public SaveGameData GetSaveData()
     {
         var data = new SaveGameData
         {
+            SaveVersion = 2,
+            SaveMode = "Journey",
+            GeneratorVersion = 1,
             Level = Model.CurrentLevel,
             Difficulty = (int)Model.CurrentDifficulty,
             PuzzleSeed = Model.PuzzleSeed,
@@ -123,20 +127,21 @@ public class JourneyViewModel : BaseViewModel
             RetryOlderGame_Points = RetryGameData.points
         };
 
+        int[] originalPuzzle = Model.GetOriginalPuzzleFlat();
+        int[] solution = Model.GetSolutionFlat();
         for (int row = 0; row < 9; row++)
             for (int col = 0; col < 9; col++)
             {
-                data.BoardFlat[row * 9 + col] = Model.GetValue(row, col);
+                int index = row * 9 + col;
+                data.BoardFlat[index] = Model.GetValue(row, col);
                 data.PencilCandidateMasksFlat[row * 9 + col] =
                     Model.PencilCandidateMasks[row, col];
+                data.OriginalPuzzleFlat[index] = originalPuzzle[index];
+                data.SolutionFlat[index] = solution[index];
             }
 
-        var stackArray = ReplacedValueStack.ToArray();
-        for (int i = stackArray.Length - 1; i >= 0; i--)
-        {
-            var value = stackArray[i];
-            data.UndoStack.Add($"{value.Item1},{value.Item2},{value.Item3}");
-        }
+        AddHistoryToSave(UndoHistory, data.UndoHistory);
+        AddHistoryToSave(RedoHistory, data.RedoHistory);
 
 #if UNITY_WEBGL && !UNITY_EDITOR
         data.GameHistory = GameDatabase.ExportHistory();
@@ -152,7 +157,8 @@ public class JourneyViewModel : BaseViewModel
         Model.SetLevel(data.Level);
         Model.SetPuzzleSeed(data.PuzzleSeed > 0 ? data.PuzzleSeed : data.Level);
         Model.SetDifficulty((SudokuDifficulty)data.Difficulty);
-        Model.LoadCurrentLevelPuzzle();
+        if (!Model.TryLoadSavedPuzzle(data.OriginalPuzzleFlat, data.SolutionFlat))
+            Model.LoadCurrentLevelPuzzle();
 
         for (int row = 0; row < 9; row++)
             for (int col = 0; col < 9; col++)
@@ -163,18 +169,21 @@ public class JourneyViewModel : BaseViewModel
 
         ElapsedSeconds.Value = data.ElapsedSeconds;
         LivesRemaining.Value = data.LivesRemaining;
-        ReplacedValueStack.Clear();
-        foreach (string entry in data.UndoStack)
+        UndoHistory.Clear();
+        RedoHistory.Clear();
+        if (data.UndoHistory != null && data.UndoHistory.Count > 0)
         {
-            string[] parts = entry.Split(',');
-            if (parts.Length == 3 &&
-                int.TryParse(parts[0], out int row) &&
-                int.TryParse(parts[1], out int col) &&
-                int.TryParse(parts[2], out int value))
-            {
-                ReplacedValueStack.Push((row, col, value));
-            }
+            foreach (SaveGameHistoryEntry entry in data.UndoHistory)
+                if (entry != null) UndoHistory.Push(entry);
         }
+        else
+        {
+            LoadLegacyUndoHistory(data);
+        }
+
+        if (data.RedoHistory != null)
+            foreach (SaveGameHistoryEntry entry in data.RedoHistory)
+                if (entry != null) RedoHistory.Push(entry);
 
         PublishBoard();
         PublishPencilCandidates();
@@ -227,6 +236,54 @@ public class JourneyViewModel : BaseViewModel
                 JourneyMachine.TransitionTo(JourneyMachine.Lose);
                 break;
         }
+    }
+
+    private static void AddHistoryToSave(
+        Stack<SaveGameHistoryEntry> history,
+        List<SaveGameHistoryEntry> savedHistory)
+    {
+        SaveGameHistoryEntry[] entries = history.ToArray();
+        for (int i = entries.Length - 1; i >= 0; i--)
+            savedHistory.Add(entries[i]);
+    }
+
+    private void LoadLegacyUndoHistory(SaveGameData data)
+    {
+        if (data.UndoStack == null || data.UndoStack.Count == 0) return;
+
+        var parsed = new List<(int row, int col, int value)>();
+        foreach (string entry in data.UndoStack)
+        {
+            if (string.IsNullOrEmpty(entry)) continue;
+            string[] parts = entry.Split(',');
+            if (parts.Length == 3 &&
+                int.TryParse(parts[0], out int row) &&
+                int.TryParse(parts[1], out int col) &&
+                int.TryParse(parts[2], out int value) &&
+                row >= 0 && row < 9 && col >= 0 && col < 9)
+                parsed.Add((row, col, value));
+        }
+
+        // Older saves stored only the value replaced by each edit. Walk backward
+        // through a board copy to infer each edit's resulting value.
+        var virtualBoard = (int[,])Model.Board.Clone();
+        var newestFirst = new List<SaveGameHistoryEntry>();
+        for (int i = parsed.Count - 1; i >= 0; i--)
+        {
+            var old = parsed[i];
+            int afterValue = virtualBoard[old.row, old.col];
+            newestFirst.Add(new SaveGameHistoryEntry
+            {
+                Row = old.row,
+                Col = old.col,
+                BeforeValue = old.value,
+                AfterValue = afterValue
+            });
+            virtualBoard[old.row, old.col] = old.value;
+        }
+
+        for (int i = newestFirst.Count - 1; i >= 0; i--)
+            UndoHistory.Push(newestFirst[i]);
     }
 
     private void FetchData()

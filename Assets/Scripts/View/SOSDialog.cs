@@ -59,8 +59,7 @@ public class SOSAdDialog : MonoBehaviour
         if (AdManager.Instance == null || !AdManager.Instance.IsAdReady())
         {
             _vm.ApplySOSCommand.Execute();
-            MakeChangesProvidedBySOS(_vm);
-            _isSOSRunning = false;
+            RunSOSSequence(_vm);
             return;
         }
 
@@ -105,20 +104,19 @@ public class SOSAdDialog : MonoBehaviour
 
         _vm.ApplySOSCommand.Execute();
 
-        // Run the sequence from User, which is a persistent
-        // active MonoBehaviour and is not part of the HUD.
+        RunSOSSequence(_vm);
+    }
+
+    private void RunSOSSequence(BaseViewModel vm)
+    {
+        IEnumerator sequence = MakeChangesProvidedBySOS(vm);
+
+        // User persists outside the HUD. Use it when available so a HUD
+        // transition cannot stop the SOS animation midway.
         if (User.Instance != null)
-        {
-            User.Instance.StartCoroutine(
-                MakeChangesProvidedBySOS(_vm)
-            );
-        }
+            User.Instance.StartCoroutine(sequence);
         else
-        {
-            StartCoroutine(
-                MakeChangesProvidedBySOS(_vm)
-            );
-        }
+            StartCoroutine(sequence);
     }
 
     private IEnumerator MakeChangesProvidedBySOS(BaseViewModel vm)
@@ -130,17 +128,17 @@ public class SOSAdDialog : MonoBehaviour
         {
             foreach(var entry in arglist)
             {
-                if(_vm.BoardValues.Value[entry.row, entry.col] != 0)
+                if(vm.BoardValues.Value[entry.row, entry.col] != 0)
                 {
-                    _vm.SelectedRow.Value = entry.row;
-                    _vm.SelectedCol.Value = entry.col;
-                    _vm.EnterValueCommand.Execute(0);
+                    vm.SelectedRow.Value = entry.row;
+                    vm.SelectedCol.Value = entry.col;
+                    vm.EnterValueCommand.Execute(0);
                     Debug.Log($"SOS: Deleting row {entry.row} and column {entry.col} entry");
                     yield return new WaitForSecondsRealtime(1f);
                 }
-                _vm.SelectedRow.Value = entry.row;
-                _vm.SelectedCol.Value = entry.col;
-                _vm.EnterValueCommand.Execute(entry.number);
+                vm.SelectedRow.Value = entry.row;
+                vm.SelectedCol.Value = entry.col;
+                vm.EnterValueCommand.Execute(entry.number);
                 Debug.Log($"SOS: Entering row {entry.row} and column {entry.col} entry to {entry.number}");
                 yield return new WaitForSecondsRealtime(1f);
             }

@@ -197,6 +197,17 @@ public class ResponsiveTopBar : MonoBehaviour
                     exitLayout.flexibleWidth = 0f;
                 }
             }
+
+            if (isNewGameTopBar && homeBlock != null)
+            {
+                LayoutElement homeLayout = homeBlock.GetComponent<LayoutElement>();
+                if (homeLayout != null)
+                {
+                    homeLayout.minWidth = 100f;
+                    homeLayout.preferredWidth = 100f;
+                    homeLayout.flexibleWidth = 0f;
+                }
+            }
         }
         else
         {

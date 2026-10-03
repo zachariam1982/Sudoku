@@ -70,7 +70,15 @@ public class GameStateView : MonoBehaviour
 
     public void Bind(BaseViewModel vm)
     {
-        if (ReferenceEquals(_vm, vm)) return;
+        if (ReferenceEquals(_vm, vm))
+        {
+            // The game can be suspended while the Home screen is shown and then
+            // resumed with the same view model. Reapply its current UI state so
+            // mode-specific controls (including the top bar) become visible again.
+            if (vm != null)
+                OnStateChanged(vm.CurrentStateName.Value);
+            return;
+        }
         Unbind();
         _vm = vm;
 

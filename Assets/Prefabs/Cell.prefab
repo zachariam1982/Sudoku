@@ -1446,8 +1446,8 @@ MonoBehaviour:
   numberText: {fileID: 9006189946741001043}
   pencilGrid: {fileID: 4431507934144657428}
   pencilCell: {fileID: 7678346645169589158}
-  normalColor: {r: 0.78, g: 0.69, b: 0.5, a: 0.58}
-  givenColor: {r: 0.92, g: 0.79, b: 0.52, a: 0.72}
+  normalColor: {r: 0.78, g: 0.69, b: 0.5, a: 0.2}
+  givenColor: {r: 0.92, g: 0.79, b: 0.52, a: 0.26}
   dimmedColor: {r: 0.28, g: 0.4, b: 0.5, a: 0.3}
   pickerHighlight: {r: 1, g: 0.78, b: 0.2, a: 0.9}
   highlightColor: {r: 0.25, g: 0.67, b: 0.95, a: 0.76}

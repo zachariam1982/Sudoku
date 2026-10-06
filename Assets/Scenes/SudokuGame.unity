@@ -27136,6 +27136,11 @@ MonoBehaviour:
   bottomBarHeight: 200
   screenPadding: 20
   gridBuilder: {fileID: 2027544915}
+  landscapeBackground: {fileID: 5019244791283412045, guid: b92eb9ae184e4a66b032005c6b8b4381, type: 3}
+  portraitBackground: {fileID: 6029344928093442117, guid: a514b6c60acf4f27869ea0cb68e048d4, type: 3}
+  backgroundImages:
+  - {fileID: 2027544918}
+  - {fileID: 2147000003}
 --- !u!114 &2027544917
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -27172,7 +27177,7 @@ MonoBehaviour:
   m_OnCullStateChanged:
     m_PersistentCalls:
       m_Calls: []
-  m_Sprite: {fileID: 4247087943790220632, guid: c824877190d14e93ab478c9a2fa5f770, type: 3}
+  m_Sprite: {fileID: 5019244791283412045, guid: b92eb9ae184e4a66b032005c6b8b4381, type: 3}
   m_Type: 0
   m_PreserveAspect: 0
   m_FillCenter: 1
@@ -28822,7 +28827,7 @@ MonoBehaviour:
   m_OnCullStateChanged:
     m_PersistentCalls:
       m_Calls: []
-  m_Sprite: {fileID: 4247087943790220632, guid: c824877190d14e93ab478c9a2fa5f770, type: 3}
+  m_Sprite: {fileID: 5019244791283412045, guid: b92eb9ae184e4a66b032005c6b8b4381, type: 3}
   m_Type: 0
   m_PreserveAspect: 0
   m_FillCenter: 1

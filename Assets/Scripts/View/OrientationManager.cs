@@ -1,4 +1,5 @@
 using UnityEngine;
+using UnityEngine.UI;
 
 /// <summary>
 /// Allows free rotation. Whenever the device orientation changes,
@@ -16,6 +17,9 @@ public class OrientationManager : MonoBehaviour
 
     [Header("References")]
     [SerializeField] private GridBuilder gridBuilder;
+    [SerializeField] private Sprite landscapeBackground;
+    [SerializeField] private Sprite portraitBackground;
+    [SerializeField] private Image[] backgroundImages;
 
     private RectTransform canvasRect;
     private Canvas canvas;
@@ -53,6 +57,18 @@ public class OrientationManager : MonoBehaviour
         }
     }
 
+    private void UpdateBackgroundImages()
+    {
+        Sprite background = Screen.height >= Screen.width ? portraitBackground : landscapeBackground;
+        if (background == null || backgroundImages == null) return;
+
+        foreach (Image image in backgroundImages)
+        {
+            if (image != null && image.sprite != background)
+                image.sprite = background;
+        }
+    }
+
     /// <summary>
     /// Calculates the grid size for the current screen dimensions
     /// and triggers a full grid rebuild.
@@ -62,6 +78,7 @@ public class OrientationManager : MonoBehaviour
         if (gridBuilder == null || canvas == null || canvasRect == null ||
             Screen.width <= 0 || Screen.height <= 0) return;
 
+        UpdateBackgroundImages();
         Canvas.ForceUpdateCanvases();
         Vector2 size = canvasRect.rect.size;
         if (size.x <= 0f || size.y <= 0f || canvas.scaleFactor <= 0f) return;

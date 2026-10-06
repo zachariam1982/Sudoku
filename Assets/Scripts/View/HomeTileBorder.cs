@@ -38,8 +38,9 @@ public sealed class HomeTileBorder : Graphic
         AddQuad(vh, new Rect(halfWidth - t, -halfHeight + t, t, rect.height - (2f * t)));
     }
 
-    private void Start()
+    protected override void Start()
     {
+        base.Start();
         // The button resizes when HomeScreenController switches orientation.
         // Anchored edge Images track that RectTransform without a mesh rebuild.
         CreateEdge(EdgeNames[0], new Vector2(0f, 1f), new Vector2(1f, 1f),

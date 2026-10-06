@@ -4,6 +4,7 @@ using System.Collections.Generic;
 public sealed class NewGameViewModel : BaseViewModel
 {
     private NewGameStateMachine NewGameMachine => (NewGameStateMachine)StateMachine;
+    private bool _resultRecorded;
 
     public bool HasActiveGame { get; private set; }
 
@@ -12,6 +13,7 @@ public sealed class NewGameViewModel : BaseViewModel
 
     public override void ResetPuzzle()
     {
+        _resultRecorded = false;
         HasActiveGame = true;
         base.ResetPuzzle();
     }
@@ -26,6 +28,11 @@ public sealed class NewGameViewModel : BaseViewModel
             Level = Model.CurrentLevel,
             Difficulty = (int)Model.CurrentDifficulty,
             PuzzleSeed = Model.PuzzleSeed,
+            UndoUses = UsageStats.UndoUses,
+            PencilUses = UsageStats.PencilUses,
+            EraseUses = UsageStats.EraseUses,
+            SOSUses = UsageStats.SOSUses,
+            AutoFillUses = UsageStats.AutoFillUses,
             IsPencilMode = IsPencilMode.Value,
             HighlightedCandidateNumber = HighlightedCandidateNumber.Value,
             PauseRequested = PauseRequested.Value,
@@ -71,6 +78,7 @@ public sealed class NewGameViewModel : BaseViewModel
                 Model.SetValue(row, col, data.BoardFlat[i]);
         }
         Model.LoadPencilCandidateMasks(data.PencilCandidateMasksFlat);
+        UsageStats.Load(data.UndoUses, data.PencilUses, data.EraseUses, data.SOSUses, data.AutoFillUses);
 
         UndoHistory.Clear();
         RedoHistory.Clear();
@@ -113,6 +121,51 @@ public sealed class NewGameViewModel : BaseViewModel
     }
 
     public void ClearActiveGame() => HasActiveGame = false;
+
+    public void RecordResult(bool completed)
+    {
+        if (_resultRecorded || !HasActiveGame) return;
+        _resultRecorded = true;
+        NewGameResultDatabase.RecordAttempt(new NewGameResult
+        {
+            Level = Model.CurrentLevel,
+            Difficulty = (int)Model.CurrentDifficulty,
+            PuzzleSeed = Model.PuzzleSeed,
+            PencilUses = UsageStats.PencilUses,
+            SOSUses = UsageStats.SOSUses,
+            AutoFillUses = UsageStats.AutoFillUses,
+            RecordedAt = System.DateTime.UtcNow.ToString("o")
+        }, completed);
+    }
+
+    public void ReplayResult(NewGameResult result)
+    {
+        if (result == null) return;
+        PauseRequested.Value = false;
+        ResumeRequested.Value = false;
+        IsPaused.Value = false;
+        IsWon.Value = false;
+        Model.SetLevel(result.Level);
+        Model.SetDifficulty((SudokuDifficulty)result.Difficulty);
+        Model.SetPuzzleSeed(result.PuzzleSeed > 0 ? result.PuzzleSeed : result.Level);
+        ResetPuzzle();
+
+        IsWon.Value = false;
+        IsComplete.Value = false;
+        IsBoardValid.Value = true;
+        NewGameMachine.StartPlaying();
+        RequestSave();
+    }
+
+    public void RestartCurrentGame()
+    {
+        ReplayResult(new NewGameResult
+        {
+            Level = Model.CurrentLevel,
+            Difficulty = (int)Model.CurrentDifficulty,
+            PuzzleSeed = Model.PuzzleSeed
+        });
+    }
 
     private static void AddHistoryToSave(
         Stack<SaveGameHistoryEntry> history,

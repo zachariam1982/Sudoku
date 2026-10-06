@@ -458,6 +458,7 @@ using UnityEngine;
 public static class GameDatabase
 {
     private static SQLiteConnection _db;
+    internal static SQLiteConnection Connection => _db;
 
     /*
      * Increase this if the definition/schema of game_stats

@@ -207,6 +207,7 @@ public class ResponsiveTopBar : MonoBehaviour
         if (isNewGameTopBar)
         {
             SetFixedWidth(homeBlock, 100f, 100f);
+            SetFixedWidth(settingsBlock, 100f, 100f);
             SetFlexibleWidth(level);
             if (exitButton != null)
                 SetFixedWidth(exitButton.GetComponent<RectTransform>(), 93.33f, 100f);
@@ -255,7 +256,7 @@ public class ResponsiveTopBar : MonoBehaviour
 
     private void ExitNewGame()
     {
-        GameContext context = FindObjectOfType<GameContext>();
+        GameContext context = FindFirstObjectByType<GameContext>();
         if (context != null)
             context.ExitNewGame();
     }

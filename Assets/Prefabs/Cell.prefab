@@ -1450,7 +1450,7 @@ MonoBehaviour:
   givenColor: {r: 0.72, g: 0.76, b: 0.82, a: 0.48}
   dimmedColor: {r: 0.28, g: 0.4, b: 0.5, a: 0.3}
   pickerHighlight: {r: 1, g: 0.78, b: 0.2, a: 0.9}
-  highlightColor: {r: 0.25, g: 0.67, b: 0.95, a: 0.76}
+  highlightColor: {r: 1, g: 0.76, b: 0.24, a: 0.9}
   relatedHighlightColor: {r: 0.35, g: 0.5, b: 0.6, a: 0.35}
   digitMatchHighlightColor: {r: 0.95, g: 0.68, b: 0.22, a: 0.72}
   errorColor: {r: 0.86, g: 0.2, b: 0.2, a: 0.9}

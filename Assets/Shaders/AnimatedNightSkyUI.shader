@@ -61,6 +61,9 @@ Shader "Sudoku/Animated Night Sky UI"
             sampler2D _MainTex;
             float4 _MainTex_TexelSize;
             fixed4 _Color;
+            fixed4 _TextureSampleAdd;
+            float4 _ClipRect;
+            float4 _MainTex_ST;
             float _SkyScrollSpeed;
 
             v2f vert(appdata_t input)
@@ -70,7 +73,7 @@ Shader "Sudoku/Animated Night Sky UI"
                 UNITY_INITIALIZE_VERTEX_OUTPUT_STEREO(output);
                 output.worldPosition = input.vertex;
                 output.vertex = UnityObjectToClipPos(input.vertex);
-                output.texcoord = input.texcoord;
+                output.texcoord = TRANSFORM_TEX(input.texcoord, _MainTex);
                 output.color = input.color * _Color;
                 return output;
             }

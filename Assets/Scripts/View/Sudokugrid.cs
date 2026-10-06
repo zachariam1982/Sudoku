@@ -185,6 +185,36 @@ public class SudokuGrid : MonoBehaviour
         int selectedCol = viewModel.SelectedCol.Value;
         bool hasSelection = selectedRow >= 0 && selectedRow < 9
                          && selectedCol >= 0 && selectedCol < 9;
+        bool selectedCellHasValue = hasSelection && cells[selectedRow, selectedCol].Value > 0;
+
+        if (selectedCellHasValue)
+        {
+            // A selected numbered cell uses the same palette whether its value
+            // is a fixed clue or a player entry.
+            int clueBoxRow = selectedRow / 3;
+            int clueBoxCol = selectedCol / 3;
+
+            for (int row = 0; row < 9; row++)
+                for (int col = 0; col < 9; col++)
+                {
+                    bool isSelected = row == selectedRow && col == selectedCol;
+                    bool isRelated = !isSelected
+                        && (row == selectedRow
+                            || col == selectedCol
+                            || (row / 3 == clueBoxRow && col / 3 == clueBoxCol));
+
+                    SudokuCell cell = cells[row, col];
+                    cell.SetHighlight(false);
+                    cell.SetRelatedHighlight(false);
+                    cell.SetDigitMatchHighlight(false);
+                    cell.SetDimmed(isRelated);
+                    cell.SetPickerHighlight(isSelected);
+                }
+
+            RefreshMatchingDigitHighlights();
+            return;
+        }
+
         int selectedBoxRow = hasSelection ? selectedRow / 3 : -1;
         int selectedBoxCol = hasSelection ? selectedCol / 3 : -1;
 
@@ -197,8 +227,14 @@ public class SudokuGrid : MonoBehaviour
                         || col == selectedCol
                         || (row / 3 == selectedBoxRow && col / 3 == selectedBoxCol));
 
-                cells[row, col].SetHighlight(isSelected);
-                cells[row, col].SetRelatedHighlight(isRelated);
+                SudokuCell cell = cells[row, col];
+                // Use the same selected-cell palette for empty cells:
+                // gold on the selected cell and a muted highlight only across
+                // its row, column, and 3x3 box.
+                cell.SetHighlight(false);
+                cell.SetRelatedHighlight(false);
+                cell.SetDimmed(isRelated);
+                cell.SetPickerHighlight(isSelected);
             }
 
         RefreshMatchingDigitHighlights();
@@ -208,33 +244,47 @@ public class SudokuGrid : MonoBehaviour
     {
         if (!cellsReady || viewModel == null) return;
 
-        int selectedDigit = viewModel.SelectedDigit.Value;
-        for (int row = 0; row < 9; row++)
-            for (int col = 0; col < 9; col++)
-                cells[row, col].SetDigitMatchHighlight(
-                    selectedDigit > 0 && cells[row, col].Value == selectedDigit);
-    }
-
-    private void OnPickerOpenChanged(bool isOpen)
-    {
-        if (!cellsReady) return;
+        int selectedRow = viewModel.SelectedRow.Value;
+        int selectedCol = viewModel.SelectedCol.Value;
+        bool hasSelection = selectedRow >= 0 && selectedRow < 9
+                         && selectedCol >= 0 && selectedCol < 9;
+        bool selectedCellHasValue = hasSelection && cells[selectedRow, selectedCol].Value > 0;
+        int selectedDigit = selectedCellHasValue
+            ? cells[selectedRow, selectedCol].Value
+            : viewModel.SelectedDigit.Value;
+        int selectedBoxRow = selectedCellHasValue ? selectedRow / 3 : -1;
+        int selectedBoxCol = selectedCellHasValue ? selectedCol / 3 : -1;
 
         for (int row = 0; row < 9; row++)
             for (int col = 0; col < 9; col++)
             {
-                bool isSelected = row == viewModel.SelectedRow.Value
-                               && col == viewModel.SelectedCol.Value;
-                if (isOpen)
+                SudokuCell cell = cells[row, col];
+                bool isDigitMatch = selectedDigit > 0 && cell.Value == selectedDigit;
+                cell.SetDigitMatchHighlight(isDigitMatch);
+
+                if (selectedCellHasValue)
                 {
-                    if (isSelected) cells[row, col].SetPickerHighlight(true);
-                    else            cells[row, col].SetDimmed(true);
-                }
-                else
-                {
-                    cells[row, col].SetDimmed(false);
-                    cells[row, col].SetPickerHighlight(false);
+                    bool isSelected = row == selectedRow && col == selectedCol;
+                    bool isRelated = !isSelected
+                        && (row == selectedRow
+                            || col == selectedCol
+                            || (row / 3 == selectedBoxRow && col / 3 == selectedBoxCol));
+
+                    // Matching values use their digit-match color even when they
+                    // also share the selected cell's row, column, or box.
+                    cell.SetDimmed(isRelated && !isDigitMatch);
+                    cell.SetPickerHighlight(isSelected);
                 }
             }
+    }
+
+    private void OnPickerOpenChanged(bool _)
+    {
+        if (!cellsReady) return;
+
+        // Picker visibility no longer changes the board palette: selection
+        // highlights stay limited to the selected cell and its related cells.
+        RefreshHighlights();
     }
 
     /// <summary>

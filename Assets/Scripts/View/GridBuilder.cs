@@ -32,6 +32,10 @@ public class GridBuilder : MonoBehaviour
     private SudokuCell[] _allCells = new SudokuCell[81];
     public void Awake()
     {
+        // Use tight, square cell spacing. The Box prefab supplies the gold 3x3 frames.
+        cellGap = 0f;
+        boxGap = 0f;
+        boxPadding = 3f;
         InitializeGrid();
     }
     public void Rebuild(float gridSize)

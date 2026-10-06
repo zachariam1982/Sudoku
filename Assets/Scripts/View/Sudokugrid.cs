@@ -22,7 +22,7 @@ public class SudokuGrid : MonoBehaviour
     void Start()
     {
         if (gridBackground != null)
-            gridBackground.color = new Color(0.05f, 0.08f, 0.14f, 0.2f);
+            gridBackground.color = new Color(0.05f, 0.08f, 0.14f, 0.08f);
 
     }
 

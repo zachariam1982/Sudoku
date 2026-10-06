@@ -114,13 +114,12 @@ public class NumberPicker : MonoBehaviour
 
                 if (button == null) continue;
 
-                // Keep the button face white and use the same per-number
-                // accent color as digits on the Sudoku board.
+                // Tint the rounded outline while keeping each number-button face transparent.
                 Image buttonBackground = button.targetGraphic as Image;
                 if (buttonBackground == null)
                     buttonBackground = button.GetComponent<Image>();
                 if (buttonBackground != null)
-                    buttonBackground.color = new Color32(120, 83, 29, 255);
+                    buttonBackground.color = new Color32(173, 196, 211, 190);
 
                 TMP_Text label = button.GetComponentInChildren<TMP_Text>(true);
                 if (label != null)

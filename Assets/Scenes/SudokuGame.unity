@@ -704,7 +704,7 @@ MonoBehaviour:
   m_OnCullStateChanged:
     m_PersistentCalls:
       m_Calls: []
-  m_Sprite: {fileID: -684427219, guid: a99bb9ea327624d42be651a0b751e17b, type: 3}
+  m_Sprite: {fileID: 7830190522936627143, guid: a77b5948c9b442ffb26d2205b532baba, type: 3}
   m_Type: 0
   m_PreserveAspect: 1
   m_FillCenter: 1
@@ -2618,7 +2618,7 @@ MonoBehaviour:
   m_OnCullStateChanged:
     m_PersistentCalls:
       m_Calls: []
-  m_Sprite: {fileID: 790142924, guid: a99bb9ea327624d42be651a0b751e17b, type: 3}
+  m_Sprite: {fileID: 7830190522936627143, guid: a77b5948c9b442ffb26d2205b532baba, type: 3}
   m_Type: 0
   m_PreserveAspect: 1
   m_FillCenter: 1
@@ -2743,7 +2743,7 @@ MonoBehaviour:
   m_OnCullStateChanged:
     m_PersistentCalls:
       m_Calls: []
-  m_Sprite: {fileID: 40640172, guid: a99bb9ea327624d42be651a0b751e17b, type: 3}
+  m_Sprite: {fileID: 7830190522936627143, guid: a77b5948c9b442ffb26d2205b532baba, type: 3}
   m_Type: 0
   m_PreserveAspect: 1
   m_FillCenter: 1
@@ -4631,7 +4631,7 @@ MonoBehaviour:
   m_OnCullStateChanged:
     m_PersistentCalls:
       m_Calls: []
-  m_Sprite: {fileID: 1179054847, guid: a99bb9ea327624d42be651a0b751e17b, type: 3}
+  m_Sprite: {fileID: 7830190522936627143, guid: a77b5948c9b442ffb26d2205b532baba, type: 3}
   m_Type: 0
   m_PreserveAspect: 1
   m_FillCenter: 1
@@ -5061,7 +5061,7 @@ MonoBehaviour:
   m_OnCullStateChanged:
     m_PersistentCalls:
       m_Calls: []
-  m_Sprite: {fileID: -1307127474, guid: a99bb9ea327624d42be651a0b751e17b, type: 3}
+  m_Sprite: {fileID: 7830190522936627143, guid: a77b5948c9b442ffb26d2205b532baba, type: 3}
   m_Type: 0
   m_PreserveAspect: 1
   m_FillCenter: 1
@@ -11468,7 +11468,7 @@ MonoBehaviour:
   m_OnCullStateChanged:
     m_PersistentCalls:
       m_Calls: []
-  m_Sprite: {fileID: -906985152, guid: a99bb9ea327624d42be651a0b751e17b, type: 3}
+  m_Sprite: {fileID: 7830190522936627143, guid: a77b5948c9b442ffb26d2205b532baba, type: 3}
   m_Type: 0
   m_PreserveAspect: 1
   m_FillCenter: 1
@@ -12633,7 +12633,7 @@ MonoBehaviour:
   m_OnCullStateChanged:
     m_PersistentCalls:
       m_Calls: []
-  m_Sprite: {fileID: -198999778, guid: a99bb9ea327624d42be651a0b751e17b, type: 3}
+  m_Sprite: {fileID: 7830190522936627143, guid: a77b5948c9b442ffb26d2205b532baba, type: 3}
   m_Type: 0
   m_PreserveAspect: 1
   m_FillCenter: 1
@@ -14867,7 +14867,7 @@ MonoBehaviour:
   m_OnCullStateChanged:
     m_PersistentCalls:
       m_Calls: []
-  m_Sprite: {fileID: 734381914722965486, guid: a99bb9ea327624d42be651a0b751e17b, type: 3}
+  m_Sprite: {fileID: 7830190522936627143, guid: a77b5948c9b442ffb26d2205b532baba, type: 3}
   m_Type: 0
   m_PreserveAspect: 1
   m_FillCenter: 1
@@ -25065,15 +25065,15 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: UnityEngine.UI::UnityEngine.UI.Image
   m_Material: {fileID: 0}
-  m_Color: {r: 0.05882353, g: 0.05490196, b: 0.12941177, a: 1}
+  m_Color: {r: 0.92, g: 0.77, b: 0.43, a: 0.92}
   m_RaycastTarget: 1
   m_RaycastPadding: {x: 0, y: 0, z: 0, w: 0}
   m_Maskable: 1
   m_OnCullStateChanged:
     m_PersistentCalls:
       m_Calls: []
-  m_Sprite: {fileID: 0}
-  m_Type: 1
+  m_Sprite: {fileID: 4623038979112345081, guid: 72545f47d6814431a46874edcc346a77, type: 3}
+  m_Type: 0
   m_PreserveAspect: 0
   m_FillCenter: 1
   m_FillMethod: 4
@@ -27117,9 +27117,9 @@ MonoBehaviour:
   gameContext: {fileID: 0}
   topBarHeight: 200
   bottomBarHeight: 200
-  cellGap: 4
-  boxGap: 15
-  boxPadding: 10
+  cellGap: 1
+  boxGap: 2.5
+  boxPadding: 1.25
 --- !u!114 &2027544916
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -28738,7 +28738,7 @@ MonoBehaviour:
   m_OnCullStateChanged:
     m_PersistentCalls:
       m_Calls: []
-  m_Sprite: {fileID: -1982761011, guid: a99bb9ea327624d42be651a0b751e17b, type: 3}
+  m_Sprite: {fileID: 7830190522936627143, guid: a77b5948c9b442ffb26d2205b532baba, type: 3}
   m_Type: 0
   m_PreserveAspect: 1
   m_FillCenter: 1

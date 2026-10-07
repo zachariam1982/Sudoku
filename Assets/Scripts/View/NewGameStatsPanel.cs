@@ -55,11 +55,36 @@ public sealed class NewGameStatsPanel : MonoBehaviour
     private int _recordOffset;
     private bool _recordLoading;
     private bool _allRecordsLoaded;
+    private bool _layoutInitialized;
+    private bool _lastLandscape;
 
     private void Awake()
     {
         if (recordsScrollRect != null)
             recordsScrollRect.onValueChanged.AddListener(OnRecordsScrolled);
+        ApplyResponsiveLayout(Screen.width > Screen.height);
+    }
+
+    private void Update()
+    {
+        bool landscape = Screen.width > Screen.height;
+        if (!_layoutInitialized || landscape != _lastLandscape)
+            ApplyResponsiveLayout(landscape);
+    }
+
+    private void ApplyResponsiveLayout(bool landscape)
+    {
+        _lastLandscape = landscape;
+        _layoutInitialized = true;
+        if (recordsScrollRect == null) return;
+
+        RectTransform scrollRect = recordsScrollRect.GetComponent<RectTransform>();
+        if (scrollRect == null) return;
+
+        scrollRect.anchorMin = new Vector2(landscape ? 0.20f : 0.045f, 0.04f);
+        scrollRect.anchorMax = new Vector2(landscape ? 0.80f : 0.955f, 0.78f);
+        scrollRect.anchoredPosition = Vector2.zero;
+        scrollRect.sizeDelta = Vector2.zero;
     }
 
     private void OnDestroy()

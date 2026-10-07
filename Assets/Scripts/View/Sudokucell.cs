@@ -325,39 +325,6 @@ public class SudokuCell : MonoBehaviour
         transform.localScale = Vector3.one;
     }
 
-    // ── Animations ────────────────────────────────────────────────────────────
-    public void PlayTapAnimation()
-    {
-        StartCoroutine(UIAnimator.ScalePunch(transform, _originalScale));
-    }
-    public void PlayEntryAnimation()
-    {
-        StartCoroutine(UIAnimator.ScaleBounce(transform, _originalScale));
-    }
-    public void PlayErrorAnimation()
-    {
-        StartCoroutine(PlayErrorSequence());
-    }
-
-    private System.Collections.IEnumerator PlayErrorSequence()
-    {
-        // Pulse the cell background so the digit keeps its normal color.
-        Image pulseTarget = background != null ? background : numberImage;
-        if (pulseTarget == null) yield break;
-
-        yield return UIAnimator.Pulse(pulseTarget, Color.white, errorColor, 3, 0.15f);
-
-        if (isConflict)
-            pulseTarget.color = errorColor;
-        else
-            pulseTarget.color = isDimmed ? dimmedColor : baseColor;
-    }
-
-    public void PlayLockedAnimation()
-    {
-        StartCoroutine(UIAnimator.Wobble(transform, _originalRotation));
-    }
-
     // ── Input ─────────────────────────────────────────────────────────────────
 
     public void OnClick()
@@ -387,8 +354,6 @@ public class SudokuCell : MonoBehaviour
             viewModel.CancelPickerCommand.Execute();
             return;
         }
-
-        PlayTapAnimation();
 
         if (NumberPicker.Instance != null)
             NumberPicker.Instance.SetSelectedCellTransform(GetComponent<RectTransform>());

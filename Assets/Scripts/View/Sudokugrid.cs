@@ -262,15 +262,6 @@ public class SudokuGrid : MonoBehaviour
         if (!cellsReady) return;
 
         SudokuCell enteredCell = cells[entry.row,entry.col];
-
-        if (entry.hasConflict)
-        {
-            enteredCell.PlayErrorAnimation();
-            return;
-        }
-
-        enteredCell.PlayEntryAnimation();
-
     }
     /// <summary>
     /// Fires every time the conflict set changes.

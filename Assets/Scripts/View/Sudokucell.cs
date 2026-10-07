@@ -11,6 +11,7 @@ public class SudokuCell : MonoBehaviour
 {
     [Header("References (auto-found if left empty)")]
     [SerializeField] private Image           background;
+    private Image selectionGlow;
     [SerializeField] private Image        numberImage;
     [SerializeField] private TMP_Text     numberText;
     [SerializeField] private GridLayoutGroup pencilGrid; 
@@ -80,6 +81,14 @@ public class SudokuCell : MonoBehaviour
     void Awake()
     {
         if (background == null) background = GetComponent<Image>();
+
+        Transform glowTransform = transform.Find("SelectionGlow");
+        if (glowTransform != null)
+        {
+            selectionGlow = glowTransform.GetComponent<Image>();
+            if (selectionGlow != null)
+                selectionGlow.gameObject.SetActive(false);
+        }
         if (numberImage == null)
         {
             foreach (Image img in GetComponentsInChildren<Image>())
@@ -287,6 +296,9 @@ public class SudokuCell : MonoBehaviour
 
         if (background != null)
             background.color = baseColor;
+
+        if (selectionGlow != null)
+            selectionGlow.gameObject.SetActive(isSelected || isPickerHighlighted);
     }
 
     private void UpdateDigitColor()

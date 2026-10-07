@@ -185,58 +185,23 @@ public class SudokuGrid : MonoBehaviour
         int selectedCol = viewModel.SelectedCol.Value;
         bool hasSelection = selectedRow >= 0 && selectedRow < 9
                          && selectedCol >= 0 && selectedCol < 9;
-        bool selectedCellHasValue = hasSelection && cells[selectedRow, selectedCol].Value > 0;
-
-        if (selectedCellHasValue)
-        {
-            // A selected numbered cell uses the same palette whether its value
-            // is a fixed clue or a player entry.
-            int clueBoxRow = selectedRow / 3;
-            int clueBoxCol = selectedCol / 3;
-
-            for (int row = 0; row < 9; row++)
-                for (int col = 0; col < 9; col++)
-                {
-                    bool isSelected = row == selectedRow && col == selectedCol;
-                    bool isRelated = !isSelected
-                        && (row == selectedRow
-                            || col == selectedCol
-                            || (row / 3 == clueBoxRow && col / 3 == clueBoxCol));
-
-                    SudokuCell cell = cells[row, col];
-                    cell.SetHighlight(false);
-                    cell.SetRelatedHighlight(false);
-                    cell.SetDigitMatchHighlight(false);
-                    cell.SetDimmed(isRelated);
-                    cell.SetPickerHighlight(isSelected);
-                }
-
-            RefreshMatchingDigitHighlights();
-            return;
-        }
-
-        int selectedBoxRow = hasSelection ? selectedRow / 3 : -1;
-        int selectedBoxCol = hasSelection ? selectedCol / 3 : -1;
 
         for (int row = 0; row < 9; row++)
             for (int col = 0; col < 9; col++)
             {
                 bool isSelected = hasSelection && row == selectedRow && col == selectedCol;
                 bool isRelated = hasSelection && !isSelected
-                    && (row == selectedRow
-                        || col == selectedCol
-                        || (row / 3 == selectedBoxRow && col / 3 == selectedBoxCol));
+                    && (row == selectedRow || col == selectedCol);
 
                 SudokuCell cell = cells[row, col];
-                // Use the same selected-cell palette for empty cells:
-                // gold on the selected cell and a muted highlight only across
-                // its row, column, and 3x3 box.
                 cell.SetHighlight(false);
                 cell.SetRelatedHighlight(false);
+                cell.SetDigitMatchHighlight(false);
                 cell.SetDimmed(isRelated);
                 cell.SetPickerHighlight(isSelected);
             }
 
+        // Keep matching digits highlighted independently of the row/column selection.
         RefreshMatchingDigitHighlights();
     }
 

@@ -1446,15 +1446,16 @@ MonoBehaviour:
   numberText: {fileID: 9006189946741001043}
   pencilGrid: {fileID: 4431507934144657428}
   pencilCell: {fileID: 7678346645169589158}
-  normalColor: {r: 0.72, g: 0.76, b: 0.82, a: 0.48}
-  givenColor: {r: 0.72, g: 0.76, b: 0.82, a: 0.48}
-  dimmedColor: {r: 0.28, g: 0.4, b: 0.5, a: 0.3}
-  pickerHighlight: {r: 1, g: 0.78, b: 0.2, a: 0.9}
-  highlightColor: {r: 1, g: 0.76, b: 0.24, a: 0.9}
+  normalColor: {r: 0.72, g: 0.76, b: 0.82, a: 0.039215688}
+  givenColor: {r: 0.72, g: 0.76, b: 0.82, a: 0.039215688}
+  dimmedColor: {r: 0.28, g: 0.4, b: 0.5, a: 0.039215688}
+  pickerHighlight: {r: 1, g: 0.78, b: 0.2, a: 0.078431375}
+  highlightColor: {r: 1, g: 0.76, b: 0.24, a: 0.078431375}
   relatedHighlightColor: {r: 0.35, g: 0.5, b: 0.6, a: 0.35}
   digitMatchHighlightColor: {r: 0.95, g: 0.68, b: 0.22, a: 0.72}
-  errorColor: {r: 0.86, g: 0.2, b: 0.2, a: 0.9}
+  errorColor: {r: 0.86, g: 0.2, b: 0.2, a: 0.19607843}
   candidateHighlightColor: {r: 1, g: 0.78431374, b: 0.19607843, a: 1}
+  numberFontSizeCellRatio: 0.86
 --- !u!114 &2810559687891449903
 MonoBehaviour:
   m_ObjectHideFlags: 0

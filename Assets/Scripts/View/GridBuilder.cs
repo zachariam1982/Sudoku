@@ -35,7 +35,7 @@ public class GridBuilder : MonoBehaviour
         // Use tight, square cell spacing. The Box prefab supplies the gold 3x3 frames.
         cellGap = 0f;
         boxGap = 0f;
-        boxPadding = 2.5f;
+        boxPadding = 1.5f;
         InitializeGrid();
     }
     public void Rebuild(float gridSize)

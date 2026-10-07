@@ -30524,8 +30524,8 @@ RectTransform:
   - {fileID: 2147100041}
   m_Father: {fileID: 2147100001}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
-  m_AnchorMin: {x: 0.1, y: 0.07}
-  m_AnchorMax: {x: 0.9, y: 0.77}
+  m_AnchorMin: {x: 0.175, y: 0.04}
+  m_AnchorMax: {x: 0.825, y: 0.8}
   m_AnchoredPosition: {x: 0, y: 0}
   m_SizeDelta: {x: 0, y: 0}
   m_Pivot: {x: 0.5, y: 0.5}
@@ -30710,10 +30710,10 @@ MonoBehaviour:
   m_Padding:
     m_Left: 20
     m_Right: 20
-    m_Top: 20
-    m_Bottom: 40
+    m_Top: 12
+    m_Bottom: 12
   m_ChildAlignment: 1
-  m_Spacing: 18
+  m_Spacing: 12
   m_ChildForceExpandWidth: 1
   m_ChildForceExpandHeight: 0
   m_ChildControlWidth: 1
@@ -30773,7 +30773,7 @@ RectTransform:
   m_AnchorMin: {x: 0, y: 1}
   m_AnchorMax: {x: 0, y: 1}
   m_AnchoredPosition: {x: 1664, y: -20}
-  m_SizeDelta: {x: 3288, y: 140}
+  m_SizeDelta: {x: 3288, y: 118}
   m_Pivot: {x: 0.5, y: 1}
 --- !u!222 &2147100102
 CanvasRenderer:
@@ -30883,9 +30883,9 @@ MonoBehaviour:
   m_EditorClassIdentifier: UnityEngine.UI::UnityEngine.UI.LayoutElement
   m_IgnoreLayout: 0
   m_MinWidth: -1
-  m_MinHeight: 140
+  m_MinHeight: 118
   m_PreferredWidth: -1
-  m_PreferredHeight: 140
+  m_PreferredHeight: 118
   m_FlexibleWidth: 1
   m_FlexibleHeight: 0
   m_LayoutPriority: 1
@@ -31064,7 +31064,7 @@ RectTransform:
   m_AnchorMin: {x: 0, y: 1}
   m_AnchorMax: {x: 0, y: 1}
   m_AnchoredPosition: {x: 1664, y: -178}
-  m_SizeDelta: {x: 3288, y: 140}
+  m_SizeDelta: {x: 3288, y: 118}
   m_Pivot: {x: 0.5, y: 1}
 --- !u!222 &2147100122
 CanvasRenderer:
@@ -31174,9 +31174,9 @@ MonoBehaviour:
   m_EditorClassIdentifier: UnityEngine.UI::UnityEngine.UI.LayoutElement
   m_IgnoreLayout: 0
   m_MinWidth: -1
-  m_MinHeight: 140
+  m_MinHeight: 118
   m_PreferredWidth: -1
-  m_PreferredHeight: 140
+  m_PreferredHeight: 118
   m_FlexibleWidth: 1
   m_FlexibleHeight: 0
   m_LayoutPriority: 1
@@ -31355,7 +31355,7 @@ RectTransform:
   m_AnchorMin: {x: 0, y: 1}
   m_AnchorMax: {x: 0, y: 1}
   m_AnchoredPosition: {x: 1664, y: -336}
-  m_SizeDelta: {x: 3288, y: 140}
+  m_SizeDelta: {x: 3288, y: 118}
   m_Pivot: {x: 0.5, y: 1}
 --- !u!222 &2147100142
 CanvasRenderer:
@@ -31465,9 +31465,9 @@ MonoBehaviour:
   m_EditorClassIdentifier: UnityEngine.UI::UnityEngine.UI.LayoutElement
   m_IgnoreLayout: 0
   m_MinWidth: -1
-  m_MinHeight: 140
+  m_MinHeight: 118
   m_PreferredWidth: -1
-  m_PreferredHeight: 140
+  m_PreferredHeight: 118
   m_FlexibleWidth: 1
   m_FlexibleHeight: 0
   m_LayoutPriority: 1
@@ -31646,7 +31646,7 @@ RectTransform:
   m_AnchorMin: {x: 0, y: 1}
   m_AnchorMax: {x: 0, y: 1}
   m_AnchoredPosition: {x: 1664, y: -494}
-  m_SizeDelta: {x: 3288, y: 140}
+  m_SizeDelta: {x: 3288, y: 118}
   m_Pivot: {x: 0.5, y: 1}
 --- !u!222 &2147100162
 CanvasRenderer:
@@ -31756,9 +31756,9 @@ MonoBehaviour:
   m_EditorClassIdentifier: UnityEngine.UI::UnityEngine.UI.LayoutElement
   m_IgnoreLayout: 0
   m_MinWidth: -1
-  m_MinHeight: 140
+  m_MinHeight: 118
   m_PreferredWidth: -1
-  m_PreferredHeight: 140
+  m_PreferredHeight: 118
   m_FlexibleWidth: 1
   m_FlexibleHeight: 0
   m_LayoutPriority: 1
@@ -31797,7 +31797,7 @@ RectTransform:
   m_AnchorMin: {x: 0.09, y: 0.08}
   m_AnchorMax: {x: 0.92, y: 0.92}
   m_AnchoredPosition: {x: 0, y: 0}
-  m_SizeDelta: {x: 2894, y: 118}
+  m_SizeDelta: {x: 0, y: 0}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!222 &2147100168
 CanvasRenderer:
@@ -31937,7 +31937,7 @@ RectTransform:
   m_AnchorMin: {x: 0, y: 1}
   m_AnchorMax: {x: 0, y: 1}
   m_AnchoredPosition: {x: 1664, y: -652}
-  m_SizeDelta: {x: 3288, y: 140}
+  m_SizeDelta: {x: 3288, y: 118}
   m_Pivot: {x: 0.5, y: 1}
 --- !u!222 &2147100182
 CanvasRenderer:
@@ -32047,9 +32047,9 @@ MonoBehaviour:
   m_EditorClassIdentifier: UnityEngine.UI::UnityEngine.UI.LayoutElement
   m_IgnoreLayout: 0
   m_MinWidth: -1
-  m_MinHeight: 140
+  m_MinHeight: 118
   m_PreferredWidth: -1
-  m_PreferredHeight: 140
+  m_PreferredHeight: 118
   m_FlexibleWidth: 1
   m_FlexibleHeight: 0
   m_LayoutPriority: 1
@@ -32228,7 +32228,7 @@ RectTransform:
   m_AnchorMin: {x: 0, y: 1}
   m_AnchorMax: {x: 0, y: 1}
   m_AnchoredPosition: {x: 1664, y: -810}
-  m_SizeDelta: {x: 3288, y: 140}
+  m_SizeDelta: {x: 3288, y: 118}
   m_Pivot: {x: 0.5, y: 1}
 --- !u!222 &2147100202
 CanvasRenderer:
@@ -32338,9 +32338,9 @@ MonoBehaviour:
   m_EditorClassIdentifier: UnityEngine.UI::UnityEngine.UI.LayoutElement
   m_IgnoreLayout: 0
   m_MinWidth: -1
-  m_MinHeight: 140
+  m_MinHeight: 118
   m_PreferredWidth: -1
-  m_PreferredHeight: 140
+  m_PreferredHeight: 118
   m_FlexibleWidth: 1
   m_FlexibleHeight: 0
   m_LayoutPriority: 1
@@ -32519,7 +32519,7 @@ RectTransform:
   m_AnchorMin: {x: 0, y: 1}
   m_AnchorMax: {x: 0, y: 1}
   m_AnchoredPosition: {x: 1664, y: -968}
-  m_SizeDelta: {x: 3288, y: 140}
+  m_SizeDelta: {x: 3288, y: 118}
   m_Pivot: {x: 0.5, y: 1}
 --- !u!222 &2147100222
 CanvasRenderer:
@@ -32629,9 +32629,9 @@ MonoBehaviour:
   m_EditorClassIdentifier: UnityEngine.UI::UnityEngine.UI.LayoutElement
   m_IgnoreLayout: 0
   m_MinWidth: -1
-  m_MinHeight: 140
+  m_MinHeight: 118
   m_PreferredWidth: -1
-  m_PreferredHeight: 140
+  m_PreferredHeight: 118
   m_FlexibleWidth: 1
   m_FlexibleHeight: 0
   m_LayoutPriority: 1
@@ -32810,7 +32810,7 @@ RectTransform:
   m_AnchorMin: {x: 0, y: 1}
   m_AnchorMax: {x: 0, y: 1}
   m_AnchoredPosition: {x: 1664, y: -1126}
-  m_SizeDelta: {x: 3288, y: 140}
+  m_SizeDelta: {x: 3288, y: 118}
   m_Pivot: {x: 0.5, y: 1}
 --- !u!222 &2147100242
 CanvasRenderer:
@@ -32920,9 +32920,9 @@ MonoBehaviour:
   m_EditorClassIdentifier: UnityEngine.UI::UnityEngine.UI.LayoutElement
   m_IgnoreLayout: 0
   m_MinWidth: -1
-  m_MinHeight: 140
+  m_MinHeight: 118
   m_PreferredWidth: -1
-  m_PreferredHeight: 140
+  m_PreferredHeight: 118
   m_FlexibleWidth: 1
   m_FlexibleHeight: 0
   m_LayoutPriority: 1
@@ -33101,7 +33101,7 @@ RectTransform:
   m_AnchorMin: {x: 0, y: 1}
   m_AnchorMax: {x: 0, y: 1}
   m_AnchoredPosition: {x: 1664, y: -1284}
-  m_SizeDelta: {x: 3288, y: 140}
+  m_SizeDelta: {x: 3288, y: 118}
   m_Pivot: {x: 0.5, y: 1}
 --- !u!222 &2147100262
 CanvasRenderer:
@@ -33211,9 +33211,9 @@ MonoBehaviour:
   m_EditorClassIdentifier: UnityEngine.UI::UnityEngine.UI.LayoutElement
   m_IgnoreLayout: 0
   m_MinWidth: -1
-  m_MinHeight: 140
+  m_MinHeight: 118
   m_PreferredWidth: -1
-  m_PreferredHeight: 140
+  m_PreferredHeight: 118
   m_FlexibleWidth: 1
   m_FlexibleHeight: 0
   m_LayoutPriority: 1

@@ -18,41 +18,60 @@ public sealed class NewGameRecordRow : MonoBehaviour, IPointerClickHandler
     private NewGameStatsPanel _owner;
     private NewGameResult _result;
 
+    private static readonly Color Gold = new Color32(242, 198, 108, 255);
+    private static readonly Color White = new Color32(241, 244, 252, 255);
+    private static readonly Color IncompleteAmber = new Color32(232, 151, 83, 255);
+
     public void Setup(NewGameResultEntry entry, NewGameStatsPanel owner)
     {
         if (entry == null || entry.Result == null) return;
         _owner = owner;
         _result = entry.Result;
-        if (levelLabel != null) levelLabel.text = _result.Id.ToString();
-        if (difficultyLabel != null) difficultyLabel.text = ((SudokuDifficulty)_result.Difficulty).ToString();
-        if (statusLabel != null) statusLabel.text = entry.IsCompleted ? "COMPLETED" : "INCOMPLETE";
-        if (retakeLabel != null) retakeLabel.text = "RETAKE";
-        if (detailsText != null)
+
+        if (levelLabel != null)
         {
-            detailsText.text = $"Pencil activations: {_result.PencilUses}\n" +
-                               $"SOS uses: {_result.SOSUses}\n" +
-                               $"Auto-fill uses: {_result.AutoFillUses}";
+            levelLabel.text = $"LEVEL {_result.Id:00}";
+            levelLabel.color = Gold;
         }
 
-        if (detailsPanel != null) detailsPanel.SetActive(false);
+        if (difficultyLabel != null)
+        {
+            difficultyLabel.text = ((SudokuDifficulty)_result.Difficulty).ToString().ToUpperInvariant();
+            difficultyLabel.color = White;
+        }
+
+        if (statusLabel != null)
+        {
+            statusLabel.text = entry.IsCompleted ? "COMPLETED" : "INCOMPLETE";
+            statusLabel.color = entry.IsCompleted ? Gold : IncompleteAmber;
+        }
+
+        if (retakeLabel != null)
+        {
+            retakeLabel.text = "RETAKE";
+            retakeLabel.color = Gold;
+        }
+
+        if (detailsText != null)
+            detailsText.text = BuildUsageDetails(_result);
+
+        if (detailsPanel != null)
+            detailsPanel.SetActive(false);
+
         if (retakeButton != null)
         {
             retakeButton.onClick.RemoveListener(Retake);
             retakeButton.onClick.AddListener(Retake);
         }
+    }
 
-        SudokuDifficulty difficulty = (SudokuDifficulty)_result.Difficulty;
-        if (ColorMap.Color_Map.TryGetValue(difficulty, out var colorMap) &&
-            ColorUtility.TryParseHtmlString(colorMap.bg, out var background) &&
-            ColorUtility.TryParseHtmlString(colorMap.outline, out var outlineColor) &&
-            ColorUtility.TryParseHtmlString(colorMap.txtClr, out var textColor))
-        {
-            Image image = GetComponent<Image>();
-            Outline outline = GetComponent<Outline>();
-            if (image != null) image.color = background;
-            if (outline != null) outline.effectColor = outlineColor;
-            if (difficultyLabel != null) difficultyLabel.color = textColor;
-        }
+    private static string BuildUsageDetails(NewGameResult result)
+    {
+        return $"<align=left><size=140%><color=#F2C66C>{result.PencilUses}</color>" +
+               $"<pos=36%><color=#F2C66C>{result.SOSUses}</color>" +
+               $"<pos=70%><color=#F2C66C>{result.AutoFillUses}</color></size>\n" +
+               "<size=68%><color=#C2CEE3>PENCIL ACTIVATIONS</color>" +
+               "<pos=36%>SOS USES<pos=70%>AUTO-FILL USES</color></size></align>";
     }
 
     public void OnPointerClick(PointerEventData eventData)
@@ -65,18 +84,18 @@ public sealed class NewGameRecordRow : MonoBehaviour, IPointerClickHandler
     private void ToggleDetails()
     {
         if (detailsPanel == null) return;
-        if (!detailsPanel.activeSelf)
-        {
-            if (_expandedRow != null && _expandedRow != this && _expandedRow.detailsPanel != null)
-                _expandedRow.detailsPanel.SetActive(false);
-            detailsPanel.SetActive(true);
-            _expandedRow = this;
-        }
-        else
-        {
-            detailsPanel.SetActive(false);
-            if (_expandedRow == this) _expandedRow = null;
-        }
+        bool show = !detailsPanel.activeSelf;
+        if (show && _expandedRow != null && _expandedRow != this && _expandedRow.detailsPanel != null)
+            _expandedRow.SetDetailsVisible(false);
+        SetDetailsVisible(show);
+        _expandedRow = show ? this : null;
+    }
+
+    private void SetDetailsVisible(bool visible)
+    {
+        if (detailsPanel == null) return;
+        detailsPanel.SetActive(visible);
+        LayoutRebuilder.MarkLayoutForRebuild(transform as RectTransform);
     }
 
     private void Retake()

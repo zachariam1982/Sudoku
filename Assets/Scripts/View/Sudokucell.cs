@@ -376,7 +376,7 @@ public class SudokuCell : MonoBehaviour
 
     [Header("Responsive Number Size")]
     [SerializeField, Range(0.5f, 1.25f)]
-    private float numberFontSizeCellRatio = 0.86f;
+    private float numberFontSizeCellRatio = 0.72f;
 
     public void ResizeCellContent(float newCellSize)
     {

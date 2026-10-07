@@ -1,10 +1,25 @@
 fileFormatVersion: 2
-guid: 68f4aed7010266840abd1cb11bb10c9a
+guid: 31138719612ed2a4ea815a1925719298
 TextureImporter:
   internalIDToNameTable:
   - first:
-      213: 4606908045521496030
-    second: Heart_0
+      213: 1325259955619084341
+    second: ExitButtonBackground_0
+  - first:
+      213: -6192147643401563227
+    second: ExitButtonBackground_1
+  - first:
+      213: -4189396651681299728
+    second: ExitButtonBackground_2
+  - first:
+      213: 1167875982539035580
+    second: ExitButtonBackground_3
+  - first:
+      213: -1159752348500544358
+    second: ExitButtonBackground_4
+  - first:
+      213: -8472534852127489313
+    second: ExitButtonBackground_5
   externalObjects: {}
   serializedVersion: 13
   mipmaps:
@@ -72,7 +87,7 @@ TextureImporter:
   platformSettings:
   - serializedVersion: 4
     buildTarget: DefaultTexturePlatform
-    maxTextureSize: 256
+    maxTextureSize: 2048
     resizeAlgorithm: 0
     textureFormat: -1
     textureCompression: 1
@@ -98,14 +113,14 @@ TextureImporter:
     forceMaximumCompressionQuality_BC6H_BC7: 0
   - serializedVersion: 4
     buildTarget: Android
-    maxTextureSize: 256
+    maxTextureSize: 2048
     resizeAlgorithm: 0
-    textureFormat: 47
+    textureFormat: -1
     textureCompression: 1
     compressionQuality: 50
     crunchedCompression: 0
     allowsAlphaSplitting: 0
-    overridden: 1
+    overridden: 0
     ignorePlatformSupport: 0
     androidETC2FallbackOverride: 0
     forceMaximumCompressionQuality_BC6H_BC7: 0
@@ -126,23 +141,23 @@ TextureImporter:
     serializedVersion: 2
     sprites:
     - serializedVersion: 2
-      name: Heart_0
+      name: ExitButtonBackground_3
       rect:
         serializedVersion: 2
-        x: 195
-        y: 234
-        width: 864
-        height: 773
+        x: 7
+        y: 29
+        width: 498
+        height: 163
       alignment: 0
-      pivot: {x: 0, y: 0}
+      pivot: {x: 0.5, y: 0.5}
       border: {x: 0, y: 0, z: 0, w: 0}
       customData: 
       outline: []
       physicsShape: []
       tessellationDetail: -1
       bones: []
-      spriteID: ed7a23e75760fef30800000000000000
-      internalID: 4606908045521496030
+      spriteID: cb313f8b401253010800000000000000
+      internalID: 1167875982539035580
       vertices: []
       indices: 
       edges: []
@@ -151,7 +166,7 @@ TextureImporter:
     customData: 
     physicsShape: []
     bones: []
-    spriteID: 
+    spriteID: 76d81f9c90cd2a64eba7aac9fc11a9d7
     internalID: 0
     vertices: []
     indices: 
@@ -161,7 +176,12 @@ TextureImporter:
     spriteCustomMetadata:
       entries: []
     nameFileIdTable:
-      Heart_0: 4606908045521496030
+      ExitButtonBackground_0: 1325259955619084341
+      ExitButtonBackground_1: -6192147643401563227
+      ExitButtonBackground_2: -4189396651681299728
+      ExitButtonBackground_3: 1167875982539035580
+      ExitButtonBackground_4: -1159752348500544358
+      ExitButtonBackground_5: -8472534852127489313
   mipmapLimitGroupName: 
   pSDRemoveMatte: 0
   userData: 

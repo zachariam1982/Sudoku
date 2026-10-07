@@ -1454,7 +1454,7 @@ MonoBehaviour:
   highlightColor: {r: 1, g: 0.76, b: 0.24, a: 0.078431375}
   relatedHighlightColor: {r: 0.35, g: 0.5, b: 0.6, a: 0.35}
   digitMatchHighlightColor: {r: 0.95, g: 0.68, b: 0.22, a: 0.72}
-  errorColor: {r: 0.86, g: 0.2, b: 0.2, a: 0.19607843}
+  errorColor: {r: 0.86, g: 0.2, b: 0.2, a: 0.72156864}
   candidateHighlightColor: {r: 1, g: 0.78431374, b: 0.19607843, a: 1}
   numberFontSizeCellRatio: 0.86
 --- !u!114 &2810559687891449903

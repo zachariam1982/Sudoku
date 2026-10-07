@@ -5,7 +5,7 @@ using UnityEngine;
 using UnityEngine.UI;
 
 /// <summary>
-/// Statistics sidebar dedicated to the standalone New Game mode.
+/// Full-screen statistics page dedicated to the standalone New Game mode.
 /// Journey statistics remain owned by StatsPanel.
 /// </summary>
 public sealed class NewGameStatsPanel : MonoBehaviour
@@ -81,8 +81,8 @@ public sealed class NewGameStatsPanel : MonoBehaviour
         RectTransform scrollRect = recordsScrollRect.GetComponent<RectTransform>();
         if (scrollRect == null) return;
 
-        scrollRect.anchorMin = new Vector2(landscape ? 0.20f : 0.045f, 0.04f);
-        scrollRect.anchorMax = new Vector2(landscape ? 0.80f : 0.955f, 0.78f);
+        scrollRect.anchorMin = new Vector2(landscape ? 0.08f : 0.045f, 0.04f);
+        scrollRect.anchorMax = new Vector2(landscape ? 0.92f : 0.955f, 0.82f);
         scrollRect.anchoredPosition = Vector2.zero;
         scrollRect.sizeDelta = Vector2.zero;
     }

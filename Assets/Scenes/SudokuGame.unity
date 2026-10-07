@@ -37315,6 +37315,8 @@ MonoBehaviour:
   expertStats: {fileID: 1413592733}
   hardestStats: {fileID: 1205975421}
   gameplayTools: {fileID: 1023807773}
+  gameplayGrid: {fileID: 1905441633}
+  newGameTopBar: {fileID: 9000000000000}
   slideDuration: 0.26
   barDuration: 0.8
 --- !u!222 &9100000000181

@@ -22,9 +22,12 @@ public sealed class NewGameStatsPanel : MonoBehaviour
     [Header("Panel root")]
     [SerializeField] private RectTransform panelRT;
     [SerializeField] private CanvasGroup panelCG;
-    [Header("Session stat pills")]
+    [Header("Current game stats")]
     [SerializeField] private TextMeshProUGUI levelValue;
     [SerializeField] private TextMeshProUGUI difficultyValue;
+    [SerializeField] private TextMeshProUGUI pencilUsesValue;
+    [SerializeField] private TextMeshProUGUI sosUsesValue;
+    [SerializeField] private TextMeshProUGUI autoFillUsesValue;
     [Header("All-time stats")]
     [SerializeField] private TextMeshProUGUI winRatePctLabel;
     [SerializeField] private RectTransform winRateBarFill;
@@ -147,6 +150,9 @@ public sealed class NewGameStatsPanel : MonoBehaviour
         if (_viewModel == null) return;
         Set(levelValue, _viewModel.GetLevel.ToString());
         Set(difficultyValue, ((SudokuDifficulty)_viewModel.GetDifficulty).ToString());
+        Set(pencilUsesValue, _viewModel.UsageStats.PencilUses.ToString());
+        Set(sosUsesValue, _viewModel.UsageStats.SOSUses.ToString());
+        Set(autoFillUsesValue, _viewModel.UsageStats.AutoFillUses.ToString());
 
         NewGameResultStats stats = NewGameResultDatabase.GetStats();
         float rate = stats.TotalGames > 0 ? stats.CompletedGames / (float)stats.TotalGames : 0f;

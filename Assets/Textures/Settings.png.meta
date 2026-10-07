@@ -1,0 +1,306 @@
+fileFormatVersion: 2
+guid: a5316e2725e722c44ac74555d2d3a481
+TextureImporter:
+  internalIDToNameTable:
+  - first:
+      213: -4502898750964783929
+    second: Elegant gold settings gear icon_0
+  - first:
+      213: 3921441298214875396
+    second: Elegant gold settings gear icon_1
+  - first:
+      213: 4429303003115059129
+    second: Elegant gold settings gear icon_2
+  - first:
+      213: -5300164606481648542
+    second: Elegant gold settings gear icon_3
+  - first:
+      213: 7743244927177288723
+    second: Elegant gold settings gear icon_4
+  - first:
+      213: 1727476157480727894
+    second: Elegant gold settings gear icon_5
+  - first:
+      213: 2959185466155754540
+    second: Elegant gold settings gear icon_6
+  - first:
+      213: 4848735975713141548
+    second: Elegant gold settings gear icon_7
+  - first:
+      213: 4845780604564790341
+    second: Elegant gold settings gear icon_8
+  - first:
+      213: -2883139845208378753
+    second: Elegant gold settings gear icon_9
+  - first:
+      213: -4275910979877565094
+    second: Elegant gold settings gear icon_10
+  - first:
+      213: -5959848615151683995
+    second: Elegant gold settings gear icon_11
+  - first:
+      213: -3528520021295511840
+    second: Elegant gold settings gear icon_12
+  - first:
+      213: -4868878852656926142
+    second: Elegant gold settings gear icon_13
+  - first:
+      213: -2620399050397674069
+    second: Elegant gold settings gear icon_14
+  - first:
+      213: 8381110948761207245
+    second: Elegant gold settings gear icon_15
+  - first:
+      213: 770836513156260524
+    second: Elegant gold settings gear icon_16
+  - first:
+      213: -3844680651648004907
+    second: Elegant gold settings gear icon_17
+  - first:
+      213: -6826361519788498102
+    second: Elegant gold settings gear icon_18
+  - first:
+      213: 176041470314795485
+    second: Elegant gold settings gear icon_19
+  - first:
+      213: -5772442336941263671
+    second: Elegant gold settings gear icon_20
+  - first:
+      213: 8754549638206945345
+    second: Elegant gold settings gear icon_21
+  - first:
+      213: -8484376376165153127
+    second: Elegant gold settings gear icon_22
+  - first:
+      213: 1306616686738523890
+    second: Elegant gold settings gear icon_23
+  - first:
+      213: 8593541743350439980
+    second: Elegant gold settings gear icon_24
+  - first:
+      213: 3041436443751187211
+    second: Elegant gold settings gear icon_25
+  - first:
+      213: -5509789083815566174
+    second: Elegant gold settings gear icon_26
+  - first:
+      213: 658274143237098001
+    second: Elegant gold settings gear icon_27
+  - first:
+      213: -7777753940866905189
+    second: Elegant gold settings gear icon_28
+  - first:
+      213: -4475573361645925158
+    second: Elegant gold settings gear icon_29
+  - first:
+      213: -2301630233286491941
+    second: Elegant gold settings gear icon_30
+  - first:
+      213: 4293876925276072825
+    second: Elegant gold settings gear icon_31
+  - first:
+      213: 5723890308732690768
+    second: Elegant gold settings gear icon_32
+  - first:
+      213: -1570591283183132345
+    second: Elegant gold settings gear icon_33
+  - first:
+      213: 3476302401240855767
+    second: Elegant gold settings gear icon_34
+  externalObjects: {}
+  serializedVersion: 13
+  mipmaps:
+    mipMapMode: 0
+    enableMipMap: 0
+    sRGBTexture: 1
+    linearTexture: 0
+    fadeOut: 0
+    borderMipMap: 0
+    mipMapsPreserveCoverage: 0
+    alphaTestReferenceValue: 0.5
+    mipMapFadeDistanceStart: 1
+    mipMapFadeDistanceEnd: 3
+  bumpmap:
+    convertToNormalMap: 0
+    externalNormalMap: 0
+    heightScale: 0.25
+    normalMapFilter: 0
+    flipGreenChannel: 0
+  isReadable: 0
+  streamingMipmaps: 0
+  streamingMipmapsPriority: 0
+  vTOnly: 0
+  ignoreMipmapLimit: 0
+  grayScaleToAlpha: 0
+  generateCubemap: 6
+  cubemapConvolution: 0
+  seamlessCubemap: 0
+  textureFormat: 1
+  maxTextureSize: 2048
+  textureSettings:
+    serializedVersion: 2
+    filterMode: 1
+    aniso: 1
+    mipBias: 0
+    wrapU: 1
+    wrapV: 1
+    wrapW: 1
+  nPOTScale: 0
+  lightmap: 0
+  compressionQuality: 50
+  spriteMode: 2
+  spriteExtrude: 1
+  spriteMeshType: 1
+  alignment: 0
+  spritePivot: {x: 0.5, y: 0.5}
+  spritePixelsToUnits: 100
+  spriteBorder: {x: 0, y: 0, z: 0, w: 0}
+  spriteGenerateFallbackPhysicsShape: 1
+  alphaUsage: 1
+  alphaIsTransparency: 1
+  spriteTessellationDetail: -1
+  textureType: 8
+  textureShape: 1
+  singleChannelComponent: 0
+  flipbookRows: 1
+  flipbookColumns: 1
+  maxTextureSizeSet: 0
+  compressionQualitySet: 0
+  textureFormatSet: 0
+  ignorePngGamma: 0
+  applyGammaDecoding: 0
+  swizzle: 50462976
+  cookieLightType: 0
+  platformSettings:
+  - serializedVersion: 4
+    buildTarget: DefaultTexturePlatform
+    maxTextureSize: 2048
+    resizeAlgorithm: 0
+    textureFormat: -1
+    textureCompression: 1
+    compressionQuality: 50
+    crunchedCompression: 0
+    allowsAlphaSplitting: 0
+    overridden: 0
+    ignorePlatformSupport: 0
+    androidETC2FallbackOverride: 0
+    forceMaximumCompressionQuality_BC6H_BC7: 0
+  - serializedVersion: 4
+    buildTarget: Standalone
+    maxTextureSize: 2048
+    resizeAlgorithm: 0
+    textureFormat: -1
+    textureCompression: 1
+    compressionQuality: 50
+    crunchedCompression: 0
+    allowsAlphaSplitting: 0
+    overridden: 0
+    ignorePlatformSupport: 0
+    androidETC2FallbackOverride: 0
+    forceMaximumCompressionQuality_BC6H_BC7: 0
+  - serializedVersion: 4
+    buildTarget: Android
+    maxTextureSize: 2048
+    resizeAlgorithm: 0
+    textureFormat: -1
+    textureCompression: 1
+    compressionQuality: 50
+    crunchedCompression: 0
+    allowsAlphaSplitting: 0
+    overridden: 0
+    ignorePlatformSupport: 0
+    androidETC2FallbackOverride: 0
+    forceMaximumCompressionQuality_BC6H_BC7: 0
+  - serializedVersion: 4
+    buildTarget: WebGL
+    maxTextureSize: 2048
+    resizeAlgorithm: 0
+    textureFormat: -1
+    textureCompression: 1
+    compressionQuality: 50
+    crunchedCompression: 0
+    allowsAlphaSplitting: 0
+    overridden: 0
+    ignorePlatformSupport: 0
+    androidETC2FallbackOverride: 0
+    forceMaximumCompressionQuality_BC6H_BC7: 0
+  spriteSheet:
+    serializedVersion: 2
+    sprites:
+    - serializedVersion: 2
+      name: Elegant gold settings gear icon_10
+      rect:
+        serializedVersion: 2
+        x: 117
+        y: 155
+        width: 1011
+        height: 953
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: a5d84395e99e8a4c0800000000000000
+      internalID: -4275910979877565094
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    outline: []
+    customData: 
+    physicsShape: []
+    bones: []
+    spriteID: a9769990fd533b44795b7d9dc81dc34a
+    internalID: 0
+    vertices: []
+    indices: 
+    edges: []
+    weights: []
+    secondaryTextures: []
+    spriteCustomMetadata:
+      entries: []
+    nameFileIdTable:
+      Elegant gold settings gear icon_0: -4502898750964783929
+      Elegant gold settings gear icon_1: 3921441298214875396
+      Elegant gold settings gear icon_10: -4275910979877565094
+      Elegant gold settings gear icon_11: -5959848615151683995
+      Elegant gold settings gear icon_12: -3528520021295511840
+      Elegant gold settings gear icon_13: -4868878852656926142
+      Elegant gold settings gear icon_14: -2620399050397674069
+      Elegant gold settings gear icon_15: 8381110948761207245
+      Elegant gold settings gear icon_16: 770836513156260524
+      Elegant gold settings gear icon_17: -3844680651648004907
+      Elegant gold settings gear icon_18: -6826361519788498102
+      Elegant gold settings gear icon_19: 176041470314795485
+      Elegant gold settings gear icon_2: 4429303003115059129
+      Elegant gold settings gear icon_20: -5772442336941263671
+      Elegant gold settings gear icon_21: 8754549638206945345
+      Elegant gold settings gear icon_22: -8484376376165153127
+      Elegant gold settings gear icon_23: 1306616686738523890
+      Elegant gold settings gear icon_24: 8593541743350439980
+      Elegant gold settings gear icon_25: 3041436443751187211
+      Elegant gold settings gear icon_26: -5509789083815566174
+      Elegant gold settings gear icon_27: 658274143237098001
+      Elegant gold settings gear icon_28: -7777753940866905189
+      Elegant gold settings gear icon_29: -4475573361645925158
+      Elegant gold settings gear icon_3: -5300164606481648542
+      Elegant gold settings gear icon_30: -2301630233286491941
+      Elegant gold settings gear icon_31: 4293876925276072825
+      Elegant gold settings gear icon_32: 5723890308732690768
+      Elegant gold settings gear icon_33: -1570591283183132345
+      Elegant gold settings gear icon_34: 3476302401240855767
+      Elegant gold settings gear icon_4: 7743244927177288723
+      Elegant gold settings gear icon_5: 1727476157480727894
+      Elegant gold settings gear icon_6: 2959185466155754540
+      Elegant gold settings gear icon_7: 4848735975713141548
+      Elegant gold settings gear icon_8: 4845780604564790341
+      Elegant gold settings gear icon_9: -2883139845208378753
+      Settings_0: -586613449
+  mipmapLimitGroupName: 
+  pSDRemoveMatte: 0
+  userData: 
+  assetBundleName: 
+  assetBundleVariant: 

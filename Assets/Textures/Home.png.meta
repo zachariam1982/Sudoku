@@ -1,10 +1,19 @@
 fileFormatVersion: 2
-guid: 81754d22dcece7c42980d2f4bfdfffda
+guid: d87cf5b37f498c64db697296904016c5
 TextureImporter:
   internalIDToNameTable:
   - first:
-      213: 3891269495536304776
-    second: Gear_0
+      213: 3008524925995765822
+    second: Golden home HUD icon_0
+  - first:
+      213: 2053250979959724153
+    second: Golden home HUD icon_1
+  - first:
+      213: -6518429308270777540
+    second: Golden home HUD icon_2
+  - first:
+      213: 1957945468376110985
+    second: Golden home HUD icon_3
   externalObjects: {}
   serializedVersion: 13
   mipmaps:
@@ -72,7 +81,7 @@ TextureImporter:
   platformSettings:
   - serializedVersion: 4
     buildTarget: DefaultTexturePlatform
-    maxTextureSize: 256
+    maxTextureSize: 2048
     resizeAlgorithm: 0
     textureFormat: -1
     textureCompression: 1
@@ -84,7 +93,7 @@ TextureImporter:
     androidETC2FallbackOverride: 0
     forceMaximumCompressionQuality_BC6H_BC7: 0
   - serializedVersion: 4
-    buildTarget: iOS
+    buildTarget: Standalone
     maxTextureSize: 2048
     resizeAlgorithm: 0
     textureFormat: -1
@@ -98,19 +107,6 @@ TextureImporter:
     forceMaximumCompressionQuality_BC6H_BC7: 0
   - serializedVersion: 4
     buildTarget: Android
-    maxTextureSize: 256
-    resizeAlgorithm: 0
-    textureFormat: 47
-    textureCompression: 1
-    compressionQuality: 50
-    crunchedCompression: 0
-    allowsAlphaSplitting: 0
-    overridden: 1
-    ignorePlatformSupport: 0
-    androidETC2FallbackOverride: 0
-    forceMaximumCompressionQuality_BC6H_BC7: 0
-  - serializedVersion: 4
-    buildTarget: Standalone
     maxTextureSize: 2048
     resizeAlgorithm: 0
     textureFormat: -1
@@ -135,40 +131,27 @@ TextureImporter:
     ignorePlatformSupport: 0
     androidETC2FallbackOverride: 0
     forceMaximumCompressionQuality_BC6H_BC7: 0
-  - serializedVersion: 4
-    buildTarget: WindowsStoreApps
-    maxTextureSize: 2048
-    resizeAlgorithm: 0
-    textureFormat: -1
-    textureCompression: 1
-    compressionQuality: 50
-    crunchedCompression: 0
-    allowsAlphaSplitting: 0
-    overridden: 0
-    ignorePlatformSupport: 0
-    androidETC2FallbackOverride: 0
-    forceMaximumCompressionQuality_BC6H_BC7: 0
   spriteSheet:
     serializedVersion: 2
     sprites:
     - serializedVersion: 2
-      name: Gear_0
+      name: Golden home HUD icon_0
       rect:
         serializedVersion: 2
-        x: 0
-        y: 0
-        width: 1024
-        height: 1024
+        x: 141
+        y: 179
+        width: 971
+        height: 902
       alignment: 0
-      pivot: {x: 0, y: 0}
+      pivot: {x: 0.5, y: 0.5}
       border: {x: 0, y: 0, z: 0, w: 0}
       customData: 
       outline: []
       physicsShape: []
       tessellationDetail: -1
       bones: []
-      spriteID: 88241c64df0900630800000000000000
-      internalID: 3891269495536304776
+      spriteID: e30d2e7fa7d60c920800000000000000
+      internalID: 3008524925995765822
       vertices: []
       indices: 
       edges: []
@@ -177,7 +160,7 @@ TextureImporter:
     customData: 
     physicsShape: []
     bones: []
-    spriteID: 
+    spriteID: 96a46201f3ea1144483cd74390dc4f6f
     internalID: 0
     vertices: []
     indices: 
@@ -187,7 +170,10 @@ TextureImporter:
     spriteCustomMetadata:
       entries: []
     nameFileIdTable:
-      Gear_0: 3891269495536304776
+      Golden home HUD icon_0: 3008524925995765822
+      Golden home HUD icon_1: 2053250979959724153
+      Golden home HUD icon_2: -6518429308270777540
+      Golden home HUD icon_3: 1957945468376110985
   mipmapLimitGroupName: 
   pSDRemoveMatte: 0
   userData: 

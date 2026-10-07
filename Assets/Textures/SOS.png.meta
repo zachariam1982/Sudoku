@@ -1,10 +1,19 @@
 fileFormatVersion: 2
-guid: 141471fb75ee78146a3e8841bb42fecb
+guid: 716b34b1abc0a0540a84f5abd5c4bdda
 TextureImporter:
   internalIDToNameTable:
   - first:
-      213: -3682175421923832593
-    second: SOS_0
+      213: -1588034514499979473
+    second: Ruby glass SOS HUD button_0
+  - first:
+      213: -5167104688906228758
+    second: Ruby glass SOS HUD button_1
+  - first:
+      213: 802805097385533338
+    second: Ruby glass SOS HUD button_2
+  - first:
+      213: 5475898995238479605
+    second: Ruby glass SOS HUD button_3
   externalObjects: {}
   serializedVersion: 13
   mipmaps:
@@ -72,7 +81,7 @@ TextureImporter:
   platformSettings:
   - serializedVersion: 4
     buildTarget: DefaultTexturePlatform
-    maxTextureSize: 256
+    maxTextureSize: 2048
     resizeAlgorithm: 0
     textureFormat: -1
     textureCompression: 1
@@ -84,7 +93,7 @@ TextureImporter:
     androidETC2FallbackOverride: 0
     forceMaximumCompressionQuality_BC6H_BC7: 0
   - serializedVersion: 4
-    buildTarget: iOS
+    buildTarget: Standalone
     maxTextureSize: 2048
     resizeAlgorithm: 0
     textureFormat: -1
@@ -98,19 +107,6 @@ TextureImporter:
     forceMaximumCompressionQuality_BC6H_BC7: 0
   - serializedVersion: 4
     buildTarget: Android
-    maxTextureSize: 256
-    resizeAlgorithm: 0
-    textureFormat: 47
-    textureCompression: 1
-    compressionQuality: 50
-    crunchedCompression: 0
-    allowsAlphaSplitting: 0
-    overridden: 1
-    ignorePlatformSupport: 0
-    androidETC2FallbackOverride: 0
-    forceMaximumCompressionQuality_BC6H_BC7: 0
-  - serializedVersion: 4
-    buildTarget: Standalone
     maxTextureSize: 2048
     resizeAlgorithm: 0
     textureFormat: -1
@@ -135,40 +131,27 @@ TextureImporter:
     ignorePlatformSupport: 0
     androidETC2FallbackOverride: 0
     forceMaximumCompressionQuality_BC6H_BC7: 0
-  - serializedVersion: 4
-    buildTarget: WindowsStoreApps
-    maxTextureSize: 2048
-    resizeAlgorithm: 0
-    textureFormat: -1
-    textureCompression: 1
-    compressionQuality: 50
-    crunchedCompression: 0
-    allowsAlphaSplitting: 0
-    overridden: 0
-    ignorePlatformSupport: 0
-    androidETC2FallbackOverride: 0
-    forceMaximumCompressionQuality_BC6H_BC7: 0
   spriteSheet:
     serializedVersion: 2
     sprites:
     - serializedVersion: 2
-      name: SOS_0
+      name: Ruby glass SOS HUD button_3
       rect:
         serializedVersion: 2
-        x: 176
-        y: 169
-        width: 675
-        height: 679
+        x: 125
+        y: 163
+        width: 1004
+        height: 980
       alignment: 0
-      pivot: {x: 0, y: 0}
+      pivot: {x: 0.5, y: 0.5}
       border: {x: 0, y: 0, z: 0, w: 0}
       customData: 
       outline: []
       physicsShape: []
       tessellationDetail: -1
       bones: []
-      spriteID: fec4e8776f846ecc0800000000000000
-      internalID: -3682175421923832593
+      spriteID: 5f6ab15af1d4efb40800000000000000
+      internalID: 5475898995238479605
       vertices: []
       indices: 
       edges: []
@@ -177,7 +160,7 @@ TextureImporter:
     customData: 
     physicsShape: []
     bones: []
-    spriteID: 
+    spriteID: f68165cd5eb0ea34db8113749c70530e
     internalID: 0
     vertices: []
     indices: 
@@ -187,7 +170,10 @@ TextureImporter:
     spriteCustomMetadata:
       entries: []
     nameFileIdTable:
-      SOS_0: -3682175421923832593
+      Ruby glass SOS HUD button_0: -1588034514499979473
+      Ruby glass SOS HUD button_1: -5167104688906228758
+      Ruby glass SOS HUD button_2: 802805097385533338
+      Ruby glass SOS HUD button_3: 5475898995238479605
   mipmapLimitGroupName: 
   pSDRemoveMatte: 0
   userData: 

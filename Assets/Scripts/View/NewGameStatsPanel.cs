@@ -41,6 +41,8 @@ public sealed class NewGameStatsPanel : MonoBehaviour
     [SerializeField] private TextMeshProUGUI hardestStats;
     [Header("Gameplay UI")]
     [SerializeField] private GameObject gameplayTools;
+    [SerializeField] private GameObject gameplayGrid;
+    [SerializeField] private GameObject newGameTopBar;
     [Header("Animation")]
     [SerializeField] private float slideDuration = 0.26f;
     [SerializeField] private float barDuration = 0.8f;
@@ -48,6 +50,8 @@ public sealed class NewGameStatsPanel : MonoBehaviour
     private NewGameViewModel _viewModel;
     private bool _open;
     private bool _gameplayToolsWasActive;
+    private bool _gameplayGridWasActive;
+    private bool _newGameTopBarWasActive;
     private bool _tickerWasActive;
     private Coroutine _slideAnim;
     private Coroutine _barAnim;
@@ -114,6 +118,16 @@ public sealed class NewGameStatsPanel : MonoBehaviour
         {
             _gameplayToolsWasActive = gameplayTools.activeSelf;
             gameplayTools.SetActive(false);
+        }
+        if (gameplayGrid != null)
+        {
+            _gameplayGridWasActive = gameplayGrid.activeSelf;
+            gameplayGrid.SetActive(false);
+        }
+        if (newGameTopBar != null)
+        {
+            _newGameTopBarWasActive = newGameTopBar.activeSelf;
+            newGameTopBar.SetActive(false);
         }
         Refresh();
         if (_slideAnim != null) StopCoroutine(_slideAnim);
@@ -264,6 +278,8 @@ public sealed class NewGameStatsPanel : MonoBehaviour
         panelRT.anchoredPosition = new Vector2(panelRT.sizeDelta.x, panelRT.anchoredPosition.y);
         panelCG.alpha = 0f;
         if (gameplayTools != null) gameplayTools.SetActive(_gameplayToolsWasActive);
+        if (gameplayGrid != null) gameplayGrid.SetActive(_gameplayGridWasActive);
+        if (newGameTopBar != null) newGameTopBar.SetActive(_newGameTopBarWasActive);
         if (verseTicker != null)
         {
             bool anotherScreenIsOpen = (homeScreen != null && homeScreen.gameObject.activeInHierarchy) ||

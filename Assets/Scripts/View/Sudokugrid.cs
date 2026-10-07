@@ -217,9 +217,6 @@ public class SudokuGrid : MonoBehaviour
         int selectedDigit = selectedCellHasValue
             ? cells[selectedRow, selectedCol].Value
             : viewModel.SelectedDigit.Value;
-        int selectedBoxRow = selectedCellHasValue ? selectedRow / 3 : -1;
-        int selectedBoxCol = selectedCellHasValue ? selectedCol / 3 : -1;
-
         for (int row = 0; row < 9; row++)
             for (int col = 0; col < 9; col++)
             {
@@ -231,9 +228,7 @@ public class SudokuGrid : MonoBehaviour
                 {
                     bool isSelected = row == selectedRow && col == selectedCol;
                     bool isRelated = !isSelected
-                        && (row == selectedRow
-                            || col == selectedCol
-                            || (row / 3 == selectedBoxRow && col / 3 == selectedBoxCol));
+                        && (row == selectedRow || col == selectedCol);
 
                     // Matching values use their digit-match color even when they
                     // also share the selected cell's row, column, or box.

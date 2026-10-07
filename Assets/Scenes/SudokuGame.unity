@@ -34891,11 +34891,11 @@ RectTransform:
   m_Children:
   - {fileID: 9100000000070}
   - {fileID: 9100000000048}
-  - {fileID: 9100000000044}
-  - {fileID: 9100000000035}
   - {fileID: 9100000000031}
   - {fileID: 9100000000025}
   - {fileID: 9100000000015}
+  - {fileID: 9100000000044}
+  - {fileID: 9100000000035}
   - {fileID: 9100000000006}
   m_Father: {fileID: 9100000000004}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
@@ -36209,7 +36209,7 @@ GameObject:
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
-  m_IsActive: 0
+  m_IsActive: 1
 --- !u!1 &9100000000097
 GameObject:
   m_ObjectHideFlags: 0
@@ -36283,7 +36283,7 @@ GameObject:
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
-  m_IsActive: 0
+  m_IsActive: 1
 --- !u!1 &9100000000106
 GameObject:
   m_ObjectHideFlags: 0
@@ -36465,7 +36465,7 @@ GameObject:
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
-  m_IsActive: 0
+  m_IsActive: 1
 --- !u!1 &9100000000116
 GameObject:
   m_ObjectHideFlags: 0
@@ -36575,7 +36575,7 @@ GameObject:
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
-  m_IsActive: 0
+  m_IsActive: 1
 --- !u!1 &9100000000122
 GameObject:
   m_ObjectHideFlags: 0
@@ -36648,7 +36648,7 @@ GameObject:
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
-  m_IsActive: 0
+  m_IsActive: 1
 --- !u!1 &9100000000134
 GameObject:
   m_ObjectHideFlags: 0
@@ -36666,7 +36666,7 @@ GameObject:
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
-  m_IsActive: 0
+  m_IsActive: 1
 --- !u!1 &9100000000135
 GameObject:
   m_ObjectHideFlags: 0
@@ -36740,7 +36740,7 @@ GameObject:
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
-  m_IsActive: 0
+  m_IsActive: 1
 --- !u!1 &9100000000139
 GameObject:
   m_ObjectHideFlags: 0
@@ -36759,7 +36759,7 @@ GameObject:
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
-  m_IsActive: 0
+  m_IsActive: 1
 --- !u!1 &9100000000140
 GameObject:
   m_ObjectHideFlags: 0
@@ -36814,7 +36814,7 @@ GameObject:
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
-  m_IsActive: 0
+  m_IsActive: 1
 --- !u!1 &9100000000143
 GameObject:
   m_ObjectHideFlags: 0
@@ -36981,7 +36981,7 @@ GameObject:
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
-  m_IsActive: 0
+  m_IsActive: 1
 --- !u!1 &9100000000152
 GameObject:
   m_ObjectHideFlags: 0
@@ -37145,7 +37145,7 @@ GameObject:
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
-  m_IsActive: 0
+  m_IsActive: 1
 --- !u!1 &9100000000161
 GameObject:
   m_ObjectHideFlags: 0
@@ -37301,6 +37301,9 @@ MonoBehaviour:
   panelCG: {fileID: 9100000000183}
   levelValue: {fileID: 9100000000338}
   difficultyValue: {fileID: 9100000000331}
+  pencilUsesValue: {fileID: 9100000000324}
+  sosUsesValue: {fileID: 9100000000294}
+  autoFillUsesValue: {fileID: 9100000000301}
   winRatePctLabel: {fileID: 9100000000248}
   winRateBarFill: {fileID: 9100000000027}
   totalGamesValue: {fileID: 9100000000238}
@@ -39788,7 +39791,7 @@ MonoBehaviour:
   m_OnCullStateChanged:
     m_PersistentCalls:
       m_Calls: []
-  m_text: SOS USED
+  m_text: SOS USES
   m_isRightToLeft: 0
   m_fontAsset: {fileID: 11400000, guid: 8f586378b4e144a9851e7b34d9b748ee, type: 2}
   m_sharedMaterial: {fileID: 2180264, guid: 8f586378b4e144a9851e7b34d9b748ee, type: 2}
@@ -40052,7 +40055,7 @@ MonoBehaviour:
   m_OnCullStateChanged:
     m_PersistentCalls:
       m_Calls: []
-  m_text: MISTAKES
+  m_text: AUTO-FILL USES
   m_isRightToLeft: 0
   m_fontAsset: {fileID: 11400000, guid: 8f586378b4e144a9851e7b34d9b748ee, type: 2}
   m_sharedMaterial: {fileID: 2180264, guid: 8f586378b4e144a9851e7b34d9b748ee, type: 2}
@@ -40700,7 +40703,7 @@ MonoBehaviour:
   m_OnCullStateChanged:
     m_PersistentCalls:
       m_Calls: []
-  m_text: TIME
+  m_text: PENCIL ACTIVATIONS
   m_isRightToLeft: 0
   m_fontAsset: {fileID: 11400000, guid: 8f586378b4e144a9851e7b34d9b748ee, type: 2}
   m_sharedMaterial: {fileID: 2180264, guid: 8f586378b4e144a9851e7b34d9b748ee, type: 2}

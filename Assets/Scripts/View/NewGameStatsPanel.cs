@@ -77,6 +77,8 @@ public sealed class NewGameStatsPanel : MonoBehaviour
     private TextMeshProUGUI[] _currentGameTexts;
     private float[] _currentGameBaseFontSizes;
     private float _currentGameHeadingBaseFontSize;
+    private Vector2 _allTimeGridBaseCellSize;
+    private bool _hasAllTimeGridBaseCellSize;
 
     private const float PortraitCurrentGameRowHeight = 112f;
     private const float LandscapeCurrentGameRowHeight = 148f;
@@ -85,6 +87,11 @@ public sealed class NewGameStatsPanel : MonoBehaviour
     private void Awake()
     {
         CacheCurrentGameTypography();
+        if (allTimeGrid != null)
+        {
+            _allTimeGridBaseCellSize = allTimeGrid.cellSize;
+            _hasAllTimeGridBaseCellSize = true;
+        }
         if (recordsScrollRect != null)
             recordsScrollRect.onValueChanged.AddListener(OnRecordsScrolled);
         ApplyResponsiveLayout(Screen.width > Screen.height);
@@ -99,7 +106,40 @@ public sealed class NewGameStatsPanel : MonoBehaviour
 
     private void LateUpdate()
     {
+        ApplyAllTimeGridCellWidth(Screen.width > Screen.height);
         ApplyScrollContentWidth(Screen.width > Screen.height);
+    }
+
+    private void ApplyAllTimeGridCellWidth(bool landscape)
+    {
+        if (allTimeGrid == null || !_hasAllTimeGridBaseCellSize)
+            return;
+
+        if (!landscape)
+        {
+            // Keep the existing portrait card dimensions and alignment intact.
+            if (allTimeGrid.cellSize != _allTimeGridBaseCellSize)
+                allTimeGrid.cellSize = _allTimeGridBaseCellSize;
+            return;
+        }
+
+        RectTransform gridRect = allTimeGrid.transform as RectTransform;
+        if (gridRect == null || gridRect.rect.width <= 0f)
+            return;
+
+        int columns = Mathf.Max(1, allTimeGrid.constraintCount);
+        float availableWidth = gridRect.rect.width
+            - allTimeGrid.padding.left
+            - allTimeGrid.padding.right
+            - allTimeGrid.spacing.x * (columns - 1);
+        float cellWidth = Mathf.Max(0f, availableWidth / columns);
+        Vector2 targetCellSize = new Vector2(cellWidth, _allTimeGridBaseCellSize.y);
+
+        if ((allTimeGrid.cellSize - targetCellSize).sqrMagnitude > 0.25f)
+        {
+            allTimeGrid.cellSize = targetCellSize;
+            LayoutRebuilder.MarkLayoutForRebuild(gridRect);
+        }
     }
 
     private void ApplyScrollContentWidth(bool landscape)

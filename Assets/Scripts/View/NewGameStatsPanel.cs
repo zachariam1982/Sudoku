@@ -1,4 +1,5 @@
 using System.Collections;
+using System.Globalization;
 using System.Text;
 using TMPro;
 using UnityEngine;
@@ -36,6 +37,7 @@ public sealed class NewGameStatsPanel : MonoBehaviour
     [SerializeField, Range(0.5f, 0.9f)] private float landscapeContentWidthRatio = 0.72f;
     [Header("All-time stats")]
     [SerializeField] private TextMeshProUGUI winRatePctLabel;
+    [SerializeField] private GridLayoutGroup allTimeGrid;
     [SerializeField] private RectTransform winRateBarFill;
     [SerializeField] private TextMeshProUGUI totalGamesValue;
     [SerializeField] private TextMeshProUGUI winsValue;
@@ -48,6 +50,7 @@ public sealed class NewGameStatsPanel : MonoBehaviour
     [SerializeField] private TextMeshProUGUI hardStats;
     [SerializeField] private TextMeshProUGUI expertStats;
     [SerializeField] private TextMeshProUGUI hardestStats;
+    [SerializeField] private TextMeshProUGUI difficultyTableText;
     [Header("Gameplay UI")]
     [SerializeField] private GameObject gameplayTools;
     [SerializeField] private GameObject gameplayGrid;
@@ -130,6 +133,8 @@ public sealed class NewGameStatsPanel : MonoBehaviour
         _lastLandscape = landscape;
         _layoutInitialized = true;
         ApplyCurrentGameResponsiveLayout(landscape);
+        if (allTimeGrid != null)
+            allTimeGrid.constraintCount = landscape ? 3 : 2;
         if (recordsScrollRect == null) return;
 
         RectTransform scrollRect = recordsScrollRect.GetComponent<RectTransform>();
@@ -259,26 +264,39 @@ public sealed class NewGameStatsPanel : MonoBehaviour
 
     private void RefreshDifficultySummary(NewGameResultStats stats)
     {
-        NewGameDifficultyStats tier;
+        StringBuilder table = new StringBuilder();
+        table.Append("<size=90%><color=#FFD66B>BY DIFFICULTY</color></size>\n\n")
+            .Append("<size=72%><color=#AFC5E9>DIFFICULTY</color><pos=53%><color=#AFC5E9>PLAYED</color><pos=68%><color=#AFC5E9>WON</color><pos=82%><color=#AFC5E9>WIN RATE</color></size>\n");
 
-        tier = NewGameResultDatabase.GetDifficultyStats(SudokuDifficulty.Simple);
-        simpleStats.text = tier.GamesCompleted.ToString() + "/" + tier.GamesStarted.ToString();
-        tier = NewGameResultDatabase.GetDifficultyStats(SudokuDifficulty.Beginner);
-        beginnerStats.text = tier.GamesCompleted.ToString() + "/" + tier.GamesStarted.ToString();
-        tier = NewGameResultDatabase.GetDifficultyStats(SudokuDifficulty.Easy);
-        easyStats.text = tier.GamesCompleted.ToString() + "/" + tier.GamesStarted.ToString();
-        tier = NewGameResultDatabase.GetDifficultyStats(SudokuDifficulty.Novice);
-        noviceStats.text = tier.GamesCompleted.ToString() + "/" + tier.GamesStarted.ToString();
-        tier = NewGameResultDatabase.GetDifficultyStats(SudokuDifficulty.Moderate);
-        moderateStats.text = tier.GamesCompleted.ToString() + "/" + tier.GamesStarted.ToString();
-        tier = NewGameResultDatabase.GetDifficultyStats(SudokuDifficulty.Advanced);
-        advancedStats.text = tier.GamesCompleted.ToString() + "/" + tier.GamesStarted.ToString();
-        tier = NewGameResultDatabase.GetDifficultyStats(SudokuDifficulty.Hard);
-        hardStats.text = tier.GamesCompleted.ToString() + "/" + tier.GamesStarted.ToString();
-        tier = NewGameResultDatabase.GetDifficultyStats(SudokuDifficulty.Expert);
-        expertStats.text = tier.GamesCompleted.ToString() + "/" + tier.GamesStarted.ToString();
-        tier = NewGameResultDatabase.GetDifficultyStats(SudokuDifficulty.Hardest);
-        hardestStats.text = tier.GamesCompleted.ToString() + "/" + tier.GamesStarted.ToString();
+        AppendDifficultyRow(table, "SIMPLE", SudokuDifficulty.Simple, simpleStats);
+        AppendDifficultyRow(table, "BEGINNER", SudokuDifficulty.Beginner, beginnerStats);
+        AppendDifficultyRow(table, "EASY", SudokuDifficulty.Easy, easyStats);
+        AppendDifficultyRow(table, "NOVICE", SudokuDifficulty.Novice, noviceStats);
+        AppendDifficultyRow(table, "MODERATE", SudokuDifficulty.Moderate, moderateStats);
+        AppendDifficultyRow(table, "ADVANCED", SudokuDifficulty.Advanced, advancedStats);
+        AppendDifficultyRow(table, "HARD", SudokuDifficulty.Hard, hardStats);
+        AppendDifficultyRow(table, "EXPERT", SudokuDifficulty.Expert, expertStats);
+        AppendDifficultyRow(table, "HARDEST", SudokuDifficulty.Hardest, hardestStats);
+
+        if (difficultyTableText != null)
+            difficultyTableText.text = table.ToString();
+    }
+
+    private static void AppendDifficultyRow(StringBuilder table, string label, SudokuDifficulty difficulty, TextMeshProUGUI legacyValue)
+    {
+        NewGameDifficultyStats tier = NewGameResultDatabase.GetDifficultyStats(difficulty);
+        if (legacyValue != null)
+            legacyValue.text = tier.GamesCompleted.ToString() + "/" + tier.GamesStarted.ToString();
+
+        float winRate = tier.GamesStarted > 0
+            ? tier.GamesCompleted * 100f / tier.GamesStarted
+            : 0f;
+
+        table.Append("<color=#F3F6FF>").Append(label).Append("</color>")
+            .Append("<pos=53%><color=#FFD66B>").Append(tier.GamesStarted).Append("</color>")
+            .Append("<pos=68%><color=#FFD66B>").Append(tier.GamesCompleted).Append("</color>")
+            .Append("<pos=82%><color=#FFD66B>")
+            .Append(winRate.ToString("0.#", CultureInfo.InvariantCulture)).Append("%</color>\n");
     }
 
     private void RefreshRecords()

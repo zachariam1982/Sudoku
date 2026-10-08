@@ -36298,7 +36298,7 @@ GameObject:
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
-  m_IsActive: 1
+  m_IsActive: 0
 --- !u!1 &9100000000106
 GameObject:
   m_ObjectHideFlags: 0
@@ -36590,7 +36590,7 @@ GameObject:
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
-  m_IsActive: 1
+  m_IsActive: 0
 --- !u!1 &9100000000122
 GameObject:
   m_ObjectHideFlags: 0
@@ -37327,10 +37327,6 @@ MonoBehaviour:
   currentGameSummaryRow: {fileID: 9200000000004}
   currentGameUsageRow: {fileID: 9200000000008}
   currentGameHeading: {fileID: 9100000000347}
-  winRatePctLabel: {fileID: 9100000000224}
-  winRateBarFill: {fileID: 9100000000027}
-  totalGamesValue: {fileID: 9100000000238}
-  winsValue: {fileID: 9100000000231}
   simpleStats: {fileID: 2085059879}
   beginnerStats: {fileID: 127610350}
   easyStats: {fileID: 598641393}
@@ -37345,7 +37341,6 @@ MonoBehaviour:
   gameplayGrid: {fileID: 1905441633}
   newGameTopBar: {fileID: 9000000000000}
   slideDuration: 0.26
-  barDuration: 0.8
 --- !u!222 &9100000000181
 CanvasRenderer:
   m_ObjectHideFlags: 0
@@ -46658,9 +46653,9 @@ MonoBehaviour:
   m_EditorClassIdentifier: UnityEngine.UI::UnityEngine.UI.LayoutElement
   m_IgnoreLayout: 0
   m_MinWidth: -1
-  m_MinHeight: 560
+  m_MinHeight: 680
   m_PreferredWidth: -1
-  m_PreferredHeight: 560
+  m_PreferredHeight: 680
   m_FlexibleWidth: -1
   m_FlexibleHeight: 0
   m_LayoutPriority: 1

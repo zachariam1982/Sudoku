@@ -35,10 +35,6 @@ public sealed class NewGameStatsPanel : MonoBehaviour
     [SerializeField] private LayoutElement currentGameUsageRow;
     [SerializeField] private TextMeshProUGUI currentGameHeading;
     [Header("All-time stats")]
-    [SerializeField] private TextMeshProUGUI winRatePctLabel;
-    [SerializeField] private RectTransform winRateBarFill;
-    [SerializeField] private TextMeshProUGUI totalGamesValue;
-    [SerializeField] private TextMeshProUGUI winsValue;
     [SerializeField] private TextMeshProUGUI simpleStats;
     [SerializeField] private TextMeshProUGUI beginnerStats;
     [SerializeField] private TextMeshProUGUI easyStats;
@@ -55,7 +51,6 @@ public sealed class NewGameStatsPanel : MonoBehaviour
     [SerializeField] private GameObject newGameTopBar;
     [Header("Animation")]
     [SerializeField] private float slideDuration = 0.26f;
-    [SerializeField] private float barDuration = 0.8f;
 
     private NewGameViewModel _viewModel;
     private bool _open;
@@ -64,7 +59,6 @@ public sealed class NewGameStatsPanel : MonoBehaviour
     private bool _newGameTopBarWasActive;
     private bool _tickerWasActive;
     private Coroutine _slideAnim;
-    private Coroutine _barAnim;
     private const int RecordPageSize = 10;
     private int _recordOffset;
     private bool _recordLoading;
@@ -232,21 +226,23 @@ public sealed class NewGameStatsPanel : MonoBehaviour
         Set(autoFillUsesValue, _viewModel.UsageStats.AutoFillUses.ToString());
 
         NewGameResultStats stats = NewGameResultDatabase.GetStats();
-        float rate = stats.TotalGames > 0 ? stats.CompletedGames / (float)stats.TotalGames : 0f;
-        Set(totalGamesValue, stats.TotalGames.ToString());
-        Set(winsValue, stats.CompletedGames.ToString());
-        if (winRatePctLabel != null) winRatePctLabel.text = $"{rate * 100f:F1}%";
-        if (_barAnim != null) StopCoroutine(_barAnim);
-        _barAnim = StartCoroutine(AnimateBar(rate));
-
         RefreshDifficultySummary(stats);
         RefreshRecords();
     }
 
     private void RefreshDifficultySummary(NewGameResultStats stats)
     {
+        float winRate = stats.TotalGames > 0
+            ? stats.CompletedGames * 100f / stats.TotalGames
+            : 0f;
         StringBuilder table = new StringBuilder();
-        table.Append("<size=100%><color=#FFD66B>BY DIFFICULTY</color></size>\n\n")
+        table.Append("<align=center><b><size=110%><color=#FFD66B>ALL TIME</color></size></b></align>\n")
+            .Append("<size=78%><color=#AFC5E9><pos=14%>PLAYED<pos=44%>WON<pos=72%>WIN RATE</color></size>\n")
+            .Append("<color=#FFD66B><pos=14%>").Append(stats.TotalGames)
+            .Append("<pos=44%>").Append(stats.CompletedGames)
+            .Append("<pos=72%>").Append(winRate.ToString("0.0", CultureInfo.InvariantCulture))
+            .Append("%</color>\n\n")
+            .Append("<align=center><b><color=#FFD66B>BY DIFFICULTY</color></b></align>\n")
             .Append("<size=78%><color=#AFC5E9>DIFFICULTY</color><pos=43%><color=#AFC5E9>PLAYED</color><pos=62%><color=#AFC5E9>WON</color><pos=81%><color=#AFC5E9>WIN RATE</color></size>\n");
 
         AppendDifficultyRow(table, "SIMPLE", SudokuDifficulty.Simple, simpleStats);
@@ -382,24 +378,6 @@ public sealed class NewGameStatsPanel : MonoBehaviour
                                        (newGameScreen != null && newGameScreen.gameObject.activeInHierarchy);
             verseTicker.SetGameActive(_tickerWasActive && !anotherScreenIsOpen);
         }
-    }
-
-    private IEnumerator AnimateBar(float targetRate)
-    {
-        if (winRateBarFill == null) yield break;
-        RectTransform parent = winRateBarFill.parent.GetComponent<RectTransform>();
-        if (parent == null) yield break;
-        float from = winRateBarFill.sizeDelta.x;
-        float to = parent.rect.width * targetRate;
-        float t = 0f;
-        while (t < 1f)
-        {
-            t += Time.deltaTime / barDuration;
-            float e = EaseOut(Mathf.Clamp01(t));
-            winRateBarFill.sizeDelta = new Vector2(Mathf.Lerp(from, to, e), winRateBarFill.sizeDelta.y);
-            yield return null;
-        }
-        winRateBarFill.sizeDelta = new Vector2(to, winRateBarFill.sizeDelta.y);
     }
 
     private static float EaseOut(float t) => 1f - Mathf.Pow(1f - t, 3f);

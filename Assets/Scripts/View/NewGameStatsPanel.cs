@@ -137,7 +137,10 @@ public sealed class NewGameStatsPanel : MonoBehaviour
         _layoutInitialized = true;
         ApplyCurrentGameResponsiveLayout(landscape);
         if (allTimeGrid != null)
+        {
             allTimeGrid.constraintCount = landscape ? 3 : 2;
+            allTimeGrid.childAlignment = landscape ? TextAnchor.UpperCenter : TextAnchor.UpperLeft;
+        }
         if (recordsScrollRect == null) return;
 
         RectTransform scrollRect = recordsScrollRect.GetComponent<RectTransform>();

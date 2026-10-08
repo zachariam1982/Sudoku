@@ -33,6 +33,8 @@ public sealed class NewGameStatsPanel : MonoBehaviour
     [SerializeField] private LayoutElement currentGameSummaryRow;
     [SerializeField] private LayoutElement currentGameUsageRow;
     [SerializeField] private TextMeshProUGUI currentGameHeading;
+    [SerializeField, Range(0.5f, 0.9f)] private float landscapeCardWidthRatio = 0.68f;
+    [SerializeField, Range(0.5f, 0.9f)] private float landscapeCardWidthRatio = 0.68f;
     [Header("All-time stats")]
     [SerializeField] private TextMeshProUGUI winRatePctLabel;
     [SerializeField] private RectTransform winRateBarFill;
@@ -69,6 +71,8 @@ public sealed class NewGameStatsPanel : MonoBehaviour
     private bool _allRecordsLoaded;
     private bool _layoutInitialized;
     private bool _lastLandscape;
+    private bool _landscapeCardWidthApplied;
+    private bool _landscapeCardWidthApplied;
     private TextMeshProUGUI[] _currentGameTexts;
     private float[] _currentGameBaseFontSizes;
     private float _currentGameHeadingBaseFontSize;
@@ -90,6 +94,108 @@ public sealed class NewGameStatsPanel : MonoBehaviour
         bool landscape = Screen.width > Screen.height;
         if (!_layoutInitialized || landscape != _lastLandscape)
             ApplyResponsiveLayout(landscape);
+    }
+
+    private void LateUpdate()
+    {
+        ApplyCurrentGameCardWidth(Screen.width > Screen.height);
+    }
+
+    private void ApplyCurrentGameCardWidth(bool landscape)
+    {
+        if (currentGameCard == null || currentGameCard.parent == null)
+            return;
+
+        RectTransform content = currentGameCard.parent as RectTransform;
+        if (content == null)
+            return;
+
+        if (!landscape)
+        {
+            if (_landscapeCardWidthApplied)
+            {
+                LayoutRebuilder.MarkLayoutForRebuild(content);
+                _landscapeCardWidthApplied = false;
+            }
+            return;
+        }
+
+        VerticalLayoutGroup contentLayout = content.GetComponent<VerticalLayoutGroup>();
+        RectOffset padding = contentLayout != null ? contentLayout.padding : new RectOffset();
+        float availableWidth = Mathf.Max(0f, content.rect.width - padding.left - padding.right);
+        float targetWidth = availableWidth * landscapeCardWidthRatio;
+        if (targetWidth <= 0f)
+            return;
+
+        bool changed = false;
+        if (Mathf.Abs(currentGameCard.rect.width - targetWidth) > 0.5f)
+        {
+            currentGameCard.SetSizeWithCurrentAnchors(RectTransform.Axis.Horizontal, targetWidth);
+            changed = true;
+        }
+
+        Vector2 position = currentGameCard.anchoredPosition;
+        float centeredX = content.rect.width * 0.5f + (padding.left - padding.right) * 0.5f;
+        if (Mathf.Abs(position.x - centeredX) > 0.5f)
+        {
+            position.x = centeredX;
+            currentGameCard.anchoredPosition = position;
+        }
+
+        if (changed)
+            LayoutRebuilder.MarkLayoutForRebuild(currentGameCard);
+        _landscapeCardWidthApplied = true;
+    }
+
+    private void LateUpdate()
+    {
+        ApplyCurrentGameCardWidth(Screen.width > Screen.height);
+    }
+
+    private void ApplyCurrentGameCardWidth(bool landscape)
+    {
+        if (currentGameCard == null || currentGameCard.parent == null)
+            return;
+
+        RectTransform content = currentGameCard.parent as RectTransform;
+        if (content == null)
+            return;
+
+        if (!landscape)
+        {
+            if (_landscapeCardWidthApplied)
+            {
+                LayoutRebuilder.MarkLayoutForRebuild(content);
+                _landscapeCardWidthApplied = false;
+            }
+            return;
+        }
+
+        VerticalLayoutGroup contentLayout = content.GetComponent<VerticalLayoutGroup>();
+        RectOffset padding = contentLayout != null ? contentLayout.padding : new RectOffset();
+        float availableWidth = Mathf.Max(0f, content.rect.width - padding.left - padding.right);
+        float targetWidth = availableWidth * landscapeCardWidthRatio;
+        if (targetWidth <= 0f)
+            return;
+
+        bool changed = false;
+        if (Mathf.Abs(currentGameCard.rect.width - targetWidth) > 0.5f)
+        {
+            currentGameCard.SetSizeWithCurrentAnchors(RectTransform.Axis.Horizontal, targetWidth);
+            changed = true;
+        }
+
+        Vector2 position = currentGameCard.anchoredPosition;
+        float centeredX = content.rect.width * 0.5f + (padding.left - padding.right) * 0.5f;
+        if (Mathf.Abs(position.x - centeredX) > 0.5f)
+        {
+            position.x = centeredX;
+            currentGameCard.anchoredPosition = position;
+        }
+
+        if (changed)
+            LayoutRebuilder.MarkLayoutForRebuild(currentGameCard);
+        _landscapeCardWidthApplied = true;
     }
 
     private void ApplyResponsiveLayout(bool landscape)

@@ -111,6 +111,8 @@ public sealed class NewGameStatsPanel : MonoBehaviour
 
     private void ApplyCurrentGameResponsiveLayout(bool landscape)
     {
+        ApplyStatsContentWidth(landscape);
+
         float rowHeight = landscape ? LandscapeCurrentGameRowHeight : PortraitCurrentGameRowHeight;
         SetRowHeight(currentGameSummaryRow, rowHeight);
         SetRowHeight(currentGameUsageRow, rowHeight);
@@ -130,6 +132,36 @@ public sealed class NewGameStatsPanel : MonoBehaviour
 
         if (currentGameCard != null)
             LayoutRebuilder.MarkLayoutForRebuild(currentGameCard);
+    }
+
+    private void ApplyStatsContentWidth(bool landscape)
+    {
+        RectTransform scrollViewRect = recordsScrollRect != null
+            ? recordsScrollRect.transform as RectTransform
+            : null;
+
+        if (scrollViewRect != null)
+        {
+            Vector2 anchorMin = scrollViewRect.anchorMin;
+            Vector2 anchorMax = scrollViewRect.anchorMax;
+            anchorMin.x = landscape ? 0.08f : 0.02f;
+            anchorMax.x = landscape ? 0.92f : 0.98f;
+            scrollViewRect.anchorMin = anchorMin;
+            scrollViewRect.anchorMax = anchorMax;
+            LayoutRebuilder.MarkLayoutForRebuild(scrollViewRect);
+        }
+
+        RectTransform contentRect = recordsContent as RectTransform;
+        if (contentRect != null)
+        {
+            Vector2 anchorMin = contentRect.anchorMin;
+            Vector2 anchorMax = contentRect.anchorMax;
+            anchorMin.x = landscape ? 0.14f : 0.02f;
+            anchorMax.x = landscape ? 0.86f : 0.98f;
+            contentRect.anchorMin = anchorMin;
+            contentRect.anchorMax = anchorMax;
+            LayoutRebuilder.MarkLayoutForRebuild(contentRect);
+        }
     }
 
     private static void SetRowHeight(LayoutElement row, float height)

@@ -132,7 +132,10 @@ public sealed class NewGameStatsPanel : MonoBehaviour
             - allTimeGrid.padding.left
             - allTimeGrid.padding.right
             - allTimeGrid.spacing.x * (columns - 1);
-        float cellWidth = Mathf.Max(0f, availableWidth / columns);
+        // The grid's parent can stretch wider than the cards' intended stats
+        // panel width in landscape. Keep the three-card row capped at the
+        // scene's original card width, while still shrinking it on narrow screens.
+        float cellWidth = Mathf.Min(_allTimeGridBaseCellSize.x, Mathf.Max(0f, availableWidth / columns));
         Vector2 targetCellSize = new Vector2(cellWidth, _allTimeGridBaseCellSize.y);
 
         if ((allTimeGrid.cellSize - targetCellSize).sqrMagnitude > 0.25f)

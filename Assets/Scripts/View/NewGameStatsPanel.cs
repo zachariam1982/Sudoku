@@ -138,8 +138,8 @@ public sealed class NewGameStatsPanel : MonoBehaviour
         {
             Vector2 anchorMin = scrollViewRect.anchorMin;
             Vector2 anchorMax = scrollViewRect.anchorMax;
-            anchorMin.x = landscape ? 0.08f : 0.02f;
-            anchorMax.x = landscape ? 0.92f : 0.98f;
+            anchorMin.x = landscape ? 0.15f : 0.02f;
+            anchorMax.x = landscape ? 0.85f : 0.98f;
             scrollViewRect.anchorMin = anchorMin;
             scrollViewRect.anchorMax = anchorMax;
             LayoutRebuilder.MarkLayoutForRebuild(scrollViewRect);
@@ -236,13 +236,13 @@ public sealed class NewGameStatsPanel : MonoBehaviour
             ? stats.CompletedGames * 100f / stats.TotalGames
             : 0f;
         StringBuilder table = new StringBuilder();
-        table.Append("<align=center><b><size=110%><color=#FFD66B>ALL TIME</color></size></b></align>\n")
+        table.Append("<align=center><b><size=110%><color=#FFD66B>ALL TIME</color></size></b></align>\n\n")
             .Append("<size=78%><color=#AFC5E9><pos=14%>PLAYED<pos=44%>WON<pos=72%>WIN RATE</color></size>\n")
             .Append("<color=#FFD66B><pos=14%>").Append(stats.TotalGames)
             .Append("<pos=44%>").Append(stats.CompletedGames)
             .Append("<pos=72%>").Append(winRate.ToString("0.0", CultureInfo.InvariantCulture))
             .Append("%</color>\n\n")
-            .Append("<align=center><b><color=#FFD66B>BY DIFFICULTY</color></b></align>\n")
+            .Append("<align=center><b><color=#FFD66B>BY DIFFICULTY</color></b></align>\n\n")
             .Append("<size=78%><color=#AFC5E9>DIFFICULTY</color><pos=43%><color=#AFC5E9>PLAYED</color><pos=62%><color=#AFC5E9>WON</color><pos=81%><color=#AFC5E9>WIN RATE</color></size>\n");
 
         AppendDifficultyRow(table, "SIMPLE", SudokuDifficulty.Simple, simpleStats);

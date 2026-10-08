@@ -26521,7 +26521,7 @@ MonoBehaviour:
   isNewGameTopBar: 1
   landscapeScale: 1.4
   portraitScale: 1
-  newGameLandscapeSpacing: 28
+  newGameLandscapeSpacing: 64
 --- !u!1 &9000000000007
 GameObject:
   m_ObjectHideFlags: 0

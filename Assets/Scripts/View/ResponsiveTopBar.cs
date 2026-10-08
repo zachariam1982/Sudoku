@@ -17,7 +17,7 @@ public class ResponsiveTopBar : MonoBehaviour
     [Header("Scaling")]
     [SerializeField] [Range(1f, 2f)] private float landscapeScale = 1.4f;
     [SerializeField] private float portraitScale = 1f;
-    [SerializeField] private float newGameLandscapeSpacing = 28f;
+    [SerializeField] private float newGameLandscapeSpacing = 64f;
 
     private bool _layoutApplied;
     private bool _lastLandscape;

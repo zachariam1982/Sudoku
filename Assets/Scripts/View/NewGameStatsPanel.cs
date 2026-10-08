@@ -35,6 +35,7 @@ public sealed class NewGameStatsPanel : MonoBehaviour
     [SerializeField] private LayoutElement currentGameUsageRow;
     [SerializeField] private TextMeshProUGUI currentGameHeading;
     [SerializeField, Range(0.5f, 0.9f)] private float landscapeContentWidthRatio = 0.72f;
+    [SerializeField, Min(880f)] private float landscapeContentMaxWidth = 1050f;
     [Header("All-time stats")]
     [SerializeField] private TextMeshProUGUI winRatePctLabel;
     [SerializeField] private GridLayoutGroup allTimeGrid;
@@ -110,6 +111,8 @@ public sealed class NewGameStatsPanel : MonoBehaviour
 
         float widthRatio = landscape ? landscapeContentWidthRatio : 1f;
         float targetWidth = viewport.rect.width * widthRatio;
+        if (landscape)
+            targetWidth = Mathf.Min(targetWidth, landscapeContentMaxWidth);
         bool changed = false;
         if (Mathf.Abs(content.rect.width - targetWidth) > 0.5f)
         {
@@ -141,7 +144,7 @@ public sealed class NewGameStatsPanel : MonoBehaviour
         if (scrollRect == null) return;
 
         scrollRect.anchorMin = new Vector2(landscape ? 0.08f : 0.045f, 0.04f);
-        scrollRect.anchorMax = new Vector2(landscape ? 0.92f : 0.955f, 0.82f);
+        scrollRect.anchorMax = new Vector2(landscape ? 0.90f : 0.955f, landscape ? 0.74f : 0.82f);
         scrollRect.anchoredPosition = Vector2.zero;
         scrollRect.sizeDelta = Vector2.zero;
     }
@@ -265,8 +268,8 @@ public sealed class NewGameStatsPanel : MonoBehaviour
     private void RefreshDifficultySummary(NewGameResultStats stats)
     {
         StringBuilder table = new StringBuilder();
-        table.Append("<size=90%><color=#FFD66B>BY DIFFICULTY</color></size>\n\n")
-            .Append("<size=72%><color=#AFC5E9>DIFFICULTY</color><pos=53%><color=#AFC5E9>PLAYED</color><pos=68%><color=#AFC5E9>WON</color><pos=82%><color=#AFC5E9>WIN RATE</color></size>\n");
+        table.Append("<size=100%><color=#FFD66B>BY DIFFICULTY</color></size>\n\n")
+            .Append("<size=78%><color=#AFC5E9>DIFFICULTY</color><pos=43%><color=#AFC5E9>PLAYED</color><pos=62%><color=#AFC5E9>WON</color><pos=81%><color=#AFC5E9>WIN RATE</color></size>\n");
 
         AppendDifficultyRow(table, "SIMPLE", SudokuDifficulty.Simple, simpleStats);
         AppendDifficultyRow(table, "BEGINNER", SudokuDifficulty.Beginner, beginnerStats);
@@ -293,9 +296,9 @@ public sealed class NewGameStatsPanel : MonoBehaviour
             : 0f;
 
         table.Append("<color=#F3F6FF>").Append(label).Append("</color>")
-            .Append("<pos=53%><color=#FFD66B>").Append(tier.GamesStarted).Append("</color>")
-            .Append("<pos=68%><color=#FFD66B>").Append(tier.GamesCompleted).Append("</color>")
-            .Append("<pos=82%><color=#FFD66B>")
+            .Append("<pos=43%><color=#FFD66B>").Append(tier.GamesStarted).Append("</color>")
+            .Append("<pos=62%><color=#FFD66B>").Append(tier.GamesCompleted).Append("</color>")
+            .Append("<pos=81%><color=#FFD66B>")
             .Append(winRate.ToString("0.#", CultureInfo.InvariantCulture)).Append("%</color>\n");
     }
 

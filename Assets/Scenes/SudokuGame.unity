@@ -34846,8 +34846,8 @@ RectTransform:
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children:
-  - {fileID: 9100000000086}
   - {fileID: 9100000000003}
+  - {fileID: 9100000000086}
   m_Father: {fileID: 9100000000001}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0, y: 0}
@@ -37327,6 +37327,8 @@ MonoBehaviour:
   currentGameSummaryRow: {fileID: 9200000000004}
   currentGameUsageRow: {fileID: 9200000000008}
   currentGameHeading: {fileID: 9100000000347}
+  landscapeContentWidthRatio: 0.72
+  landscapeContentMaxWidth: 1050
   winRatePctLabel: {fileID: 9100000000224}
   allTimeGrid: {fileID: 9100000000216}
   winRateBarFill: {fileID: 9100000000027}
@@ -37835,7 +37837,7 @@ MonoBehaviour:
     m_Right: 0
     m_Top: 0
     m_Bottom: 0
-  m_ChildAlignment: 0
+  m_ChildAlignment: 1
   m_StartCorner: 0
   m_StartAxis: 0
   m_CellSize: {x: 280, y: 100}
@@ -46600,8 +46602,8 @@ MonoBehaviour:
   m_faceColor:
     serializedVersion: 2
     rgba: 4294967295
-  m_fontSize: 24
-  m_fontSizeBase: 24
+  m_fontSize: 34
+  m_fontSizeBase: 34
   m_fontWeight: 400
   m_enableAutoSizing: 0
   m_fontSizeMin: 18
@@ -46613,7 +46615,7 @@ MonoBehaviour:
   m_characterSpacing: 2
   m_characterHorizontalScale: 1
   m_wordSpacing: 0
-  m_lineSpacing: 12
+  m_lineSpacing: 4
   m_lineSpacingMax: 0
   m_paragraphSpacing: 0
   m_charWidthMaxAdj: 0

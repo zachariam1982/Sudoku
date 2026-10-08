@@ -28,6 +28,11 @@ public sealed class NewGameStatsPanel : MonoBehaviour
     [SerializeField] private TextMeshProUGUI pencilUsesValue;
     [SerializeField] private TextMeshProUGUI sosUsesValue;
     [SerializeField] private TextMeshProUGUI autoFillUsesValue;
+    [Header("Current game responsive layout")]
+    [SerializeField] private RectTransform currentGameCard;
+    [SerializeField] private LayoutElement currentGameSummaryRow;
+    [SerializeField] private LayoutElement currentGameUsageRow;
+    [SerializeField] private TextMeshProUGUI currentGameHeading;
     [Header("All-time stats")]
     [SerializeField] private TextMeshProUGUI winRatePctLabel;
     [SerializeField] private RectTransform winRateBarFill;
@@ -64,9 +69,17 @@ public sealed class NewGameStatsPanel : MonoBehaviour
     private bool _allRecordsLoaded;
     private bool _layoutInitialized;
     private bool _lastLandscape;
+    private TextMeshProUGUI[] _currentGameTexts;
+    private float[] _currentGameBaseFontSizes;
+    private float _currentGameHeadingBaseFontSize;
+
+    private const float PortraitCurrentGameRowHeight = 112f;
+    private const float LandscapeCurrentGameRowHeight = 148f;
+    private const float LandscapeCurrentGameFontScale = 1.25f;
 
     private void Awake()
     {
+        CacheCurrentGameTypography();
         if (recordsScrollRect != null)
             recordsScrollRect.onValueChanged.AddListener(OnRecordsScrolled);
         ApplyResponsiveLayout(Screen.width > Screen.height);
@@ -83,6 +96,7 @@ public sealed class NewGameStatsPanel : MonoBehaviour
     {
         _lastLandscape = landscape;
         _layoutInitialized = true;
+        ApplyCurrentGameResponsiveLayout(landscape);
         if (recordsScrollRect == null) return;
 
         RectTransform scrollRect = recordsScrollRect.GetComponent<RectTransform>();
@@ -92,6 +106,50 @@ public sealed class NewGameStatsPanel : MonoBehaviour
         scrollRect.anchorMax = new Vector2(landscape ? 0.92f : 0.955f, 0.82f);
         scrollRect.anchoredPosition = Vector2.zero;
         scrollRect.sizeDelta = Vector2.zero;
+    }
+
+    private void CacheCurrentGameTypography()
+    {
+        if (currentGameCard != null)
+        {
+            _currentGameTexts = currentGameCard.GetComponentsInChildren<TextMeshProUGUI>(true);
+            _currentGameBaseFontSizes = new float[_currentGameTexts.Length];
+            for (int i = 0; i < _currentGameTexts.Length; i++)
+                _currentGameBaseFontSizes[i] = _currentGameTexts[i].fontSize;
+        }
+
+        if (currentGameHeading != null)
+            _currentGameHeadingBaseFontSize = currentGameHeading.fontSize;
+    }
+
+    private void ApplyCurrentGameResponsiveLayout(bool landscape)
+    {
+        float rowHeight = landscape ? LandscapeCurrentGameRowHeight : PortraitCurrentGameRowHeight;
+        SetRowHeight(currentGameSummaryRow, rowHeight);
+        SetRowHeight(currentGameUsageRow, rowHeight);
+
+        float fontScale = landscape ? LandscapeCurrentGameFontScale : 1f;
+        if (_currentGameTexts != null)
+        {
+            for (int i = 0; i < _currentGameTexts.Length; i++)
+            {
+                if (_currentGameTexts[i] != null)
+                    _currentGameTexts[i].fontSize = _currentGameBaseFontSizes[i] * fontScale;
+            }
+        }
+
+        if (currentGameHeading != null)
+            currentGameHeading.fontSize = _currentGameHeadingBaseFontSize * fontScale;
+
+        if (currentGameCard != null)
+            LayoutRebuilder.MarkLayoutForRebuild(currentGameCard);
+    }
+
+    private static void SetRowHeight(LayoutElement row, float height)
+    {
+        if (row == null) return;
+        row.minHeight = height;
+        row.preferredHeight = height;
     }
 
     private void OnDestroy()

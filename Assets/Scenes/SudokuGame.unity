@@ -37302,6 +37302,10 @@ MonoBehaviour:
   pencilUsesValue: {fileID: 9100000000324}
   sosUsesValue: {fileID: 9100000000294}
   autoFillUsesValue: {fileID: 9100000000301}
+  currentGameCard: {fileID: 9100000000048}
+  currentGameSummaryRow: {fileID: 9200000000004}
+  currentGameUsageRow: {fileID: 9200000000008}
+  currentGameHeading: {fileID: 9100000000347}
   winRatePctLabel: {fileID: 9100000000248}
   winRateBarFill: {fileID: 9100000000027}
   totalGamesValue: {fileID: 9100000000238}

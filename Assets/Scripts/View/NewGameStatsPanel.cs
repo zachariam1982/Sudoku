@@ -34,11 +34,8 @@ public sealed class NewGameStatsPanel : MonoBehaviour
     [SerializeField] private LayoutElement currentGameSummaryRow;
     [SerializeField] private LayoutElement currentGameUsageRow;
     [SerializeField] private TextMeshProUGUI currentGameHeading;
-    [SerializeField, Range(0.5f, 0.9f)] private float landscapeContentWidthRatio = 0.72f;
-    [SerializeField, Min(880f)] private float landscapeContentMaxWidth = 1050f;
     [Header("All-time stats")]
     [SerializeField] private TextMeshProUGUI winRatePctLabel;
-    [SerializeField] private GridLayoutGroup allTimeGrid;
     [SerializeField] private RectTransform winRateBarFill;
     [SerializeField] private TextMeshProUGUI totalGamesValue;
     [SerializeField] private TextMeshProUGUI winsValue;
@@ -72,13 +69,10 @@ public sealed class NewGameStatsPanel : MonoBehaviour
     private int _recordOffset;
     private bool _recordLoading;
     private bool _allRecordsLoaded;
-    private bool _layoutInitialized;
     private bool _lastLandscape;
     private TextMeshProUGUI[] _currentGameTexts;
     private float[] _currentGameBaseFontSizes;
     private float _currentGameHeadingBaseFontSize;
-    private Vector2 _allTimeGridBaseCellSize;
-    private bool _hasAllTimeGridBaseCellSize;
 
     private const float PortraitCurrentGameRowHeight = 112f;
     private const float LandscapeCurrentGameRowHeight = 148f;
@@ -87,112 +81,18 @@ public sealed class NewGameStatsPanel : MonoBehaviour
     private void Awake()
     {
         CacheCurrentGameTypography();
-        if (allTimeGrid != null)
-        {
-            _allTimeGridBaseCellSize = allTimeGrid.cellSize;
-            _hasAllTimeGridBaseCellSize = true;
-        }
         if (recordsScrollRect != null)
             recordsScrollRect.onValueChanged.AddListener(OnRecordsScrolled);
-        ApplyResponsiveLayout(Screen.width > Screen.height);
+        _lastLandscape = Screen.width > Screen.height;
+        ApplyCurrentGameResponsiveLayout(_lastLandscape);
     }
 
     private void Update()
     {
         bool landscape = Screen.width > Screen.height;
-        if (!_layoutInitialized || landscape != _lastLandscape)
-            ApplyResponsiveLayout(landscape);
-    }
-
-    private void LateUpdate()
-    {
-        ApplyAllTimeGridCellWidth(Screen.width > Screen.height);
-        ApplyScrollContentWidth(Screen.width > Screen.height);
-    }
-
-    private void ApplyAllTimeGridCellWidth(bool landscape)
-    {
-        if (allTimeGrid == null || !_hasAllTimeGridBaseCellSize)
-            return;
-
-        if (!landscape)
-        {
-            // Keep the existing portrait card dimensions and alignment intact.
-            if (allTimeGrid.cellSize != _allTimeGridBaseCellSize)
-                allTimeGrid.cellSize = _allTimeGridBaseCellSize;
-            return;
-        }
-
-        RectTransform gridRect = allTimeGrid.transform as RectTransform;
-        if (gridRect == null || gridRect.rect.width <= 0f)
-            return;
-
-        int columns = Mathf.Max(1, allTimeGrid.constraintCount);
-        float availableWidth = gridRect.rect.width
-            - allTimeGrid.padding.left
-            - allTimeGrid.padding.right
-            - allTimeGrid.spacing.x * (columns - 1);
-        // The grid's parent can stretch wider than the cards' intended stats
-        // panel width in landscape. Keep the three-card row capped at the
-        // scene's original card width, while still shrinking it on narrow screens.
-        float cellWidth = Mathf.Min(_allTimeGridBaseCellSize.x, Mathf.Max(0f, availableWidth / columns));
-        Vector2 targetCellSize = new Vector2(cellWidth, _allTimeGridBaseCellSize.y);
-
-        if ((allTimeGrid.cellSize - targetCellSize).sqrMagnitude > 0.25f)
-        {
-            allTimeGrid.cellSize = targetCellSize;
-            LayoutRebuilder.MarkLayoutForRebuild(gridRect);
-        }
-    }
-
-    private void ApplyScrollContentWidth(bool landscape)
-    {
-        RectTransform content = recordsContent as RectTransform;
-        RectTransform viewport = content != null ? content.parent as RectTransform : null;
-        if (content == null || viewport == null || viewport.rect.width <= 0f)
-            return;
-
-        float widthRatio = landscape ? landscapeContentWidthRatio : 1f;
-        float targetWidth = viewport.rect.width * widthRatio;
-        if (landscape)
-            targetWidth = Mathf.Min(targetWidth, landscapeContentMaxWidth);
-        bool changed = false;
-        if (Mathf.Abs(content.rect.width - targetWidth) > 0.5f)
-        {
-            content.SetSizeWithCurrentAnchors(RectTransform.Axis.Horizontal, targetWidth);
-            changed = true;
-        }
-
-        Vector2 position = content.anchoredPosition;
-        if (Mathf.Abs(position.x) > 0.5f)
-        {
-            position.x = 0f;
-            content.anchoredPosition = position;
-        }
-
-        if (changed)
-            LayoutRebuilder.MarkLayoutForRebuild(content);
-    }
-
-    private void ApplyResponsiveLayout(bool landscape)
-    {
+        if (landscape == _lastLandscape) return;
         _lastLandscape = landscape;
-        _layoutInitialized = true;
         ApplyCurrentGameResponsiveLayout(landscape);
-        if (allTimeGrid != null)
-        {
-            allTimeGrid.constraintCount = landscape ? 3 : 2;
-            allTimeGrid.childAlignment = landscape ? TextAnchor.UpperCenter : TextAnchor.UpperLeft;
-        }
-        if (recordsScrollRect == null) return;
-
-        RectTransform scrollRect = recordsScrollRect.GetComponent<RectTransform>();
-        if (scrollRect == null) return;
-
-        scrollRect.anchorMin = new Vector2(landscape ? 0.08f : 0.045f, 0.04f);
-        scrollRect.anchorMax = new Vector2(landscape ? 0.90f : 0.955f, landscape ? 0.74f : 0.82f);
-        scrollRect.anchoredPosition = Vector2.zero;
-        scrollRect.sizeDelta = Vector2.zero;
     }
 
     private void CacheCurrentGameTypography()

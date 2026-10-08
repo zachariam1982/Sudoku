@@ -17,6 +17,7 @@ public class ResponsiveTopBar : MonoBehaviour
     [Header("Scaling")]
     [SerializeField] [Range(1f, 2f)] private float landscapeScale = 1.4f;
     [SerializeField] private float portraitScale = 1f;
+    [SerializeField] private float newGameLandscapeSpacing = 28f;
 
     private bool _layoutApplied;
     private bool _lastLandscape;
@@ -168,9 +169,9 @@ public class ResponsiveTopBar : MonoBehaviour
 
         if (isLandscape)
         {
-            // Give every visible item the same slot. This keeps the title and
-            // controls evenly distributed on wide screens, like the bottom HUD.
-            _layout.spacing = 0;
+            // Journey uses equal slots for each visible item. New Game keeps
+            // fixed icon slots around a flexible, centered level label.
+            _layout.spacing = isNewGameTopBar ? newGameLandscapeSpacing : 0f;
             _layout.childAlignment = TextAnchor.MiddleCenter;
             _layout.childForceExpandWidth = false;
             _layout.childControlWidth = true;

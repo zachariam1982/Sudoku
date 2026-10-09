@@ -367,9 +367,7 @@ public class StatsPanel : MonoBehaviour
 
         // Streak chip
         if (streakNumber != null) streakNumber.text = $"{streak}";
-        if (streakDesc   != null) streakDesc.text   = streak > 1
-            ? $"Win streak — keep it up"
-            : streak == 1 ? "On a roll" : "Start a streak";
+        if (streakDesc   != null) streakDesc.text   = "GAME WIN STREAK";
     }
     private void RefreshProgression()
     {

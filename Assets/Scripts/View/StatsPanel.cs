@@ -65,13 +65,15 @@ public class StatsPanel : MonoBehaviour
     [SerializeField] private RectTransform contentRT;
     [Header("Gameplay UI")]
     [SerializeField] private GameObject gameplayTools;
+    [SerializeField] private GameObject gameplayGrid;
+    [SerializeField] private GameObject journeyTopBar;
 
     private bool _gameplayToolsWasActive;
+    private bool _gameplayGridWasActive;
+    private bool _journeyTopBarWasActive;
     private bool _tickerWasActive;
     private VerseTicker _verseTicker;
 
-    private const float StatsDesignWidth = 972f;
-    private const float StatsDesignHeight = 1920f;
 
     private JourneyViewModel _vm;
     private bool            _open;
@@ -87,12 +89,13 @@ public class StatsPanel : MonoBehaviour
     
     void Awake()
     {
-        _hiddenX = panelRT.sizeDelta.x;
+        _hiddenX = canvas != null ? canvas.rect.width : panelRT.rect.width;
         panelRT.anchoredPosition = new Vector2(_hiddenX, panelRT.anchoredPosition.y);
 
         panelCG.alpha          = 0f;
         panelCG.blocksRaycasts = false;
         panelCG.interactable   = false;
+        ApplyResponsiveStatsContentWidth();
 
         if (backdropButton != null) backdropButton.gameObject.SetActive(false);
 
@@ -145,32 +148,44 @@ public class StatsPanel : MonoBehaviour
     {
         if (canvas == null || panelRT == null) return;
 
-        float availableWidth = canvas.rect.width;
-        float availableHeight = canvas.rect.height;
+        _hiddenX = canvas.rect.width;
+        ApplyResponsiveStatsContentWidth();
+        if (!_open)
+            panelRT.anchoredPosition = new Vector2(_hiddenX, panelRT.anchoredPosition.y);
+    }
 
-        // Sidebar itself fills the available height,
-        // but never grows wider than its 972-unit design width.
-        float panelWidth = Mathf.Min(availableWidth, StatsDesignWidth);
+    private void ApplyResponsiveStatsContentWidth()
+    {
+        if (canvas == null) return;
 
-        panelRT.sizeDelta =  new Vector2( panelWidth, availableHeight);
+        bool landscape = Screen.width > Screen.height;
+        float min = landscape ? 0.15f : 0.02f;
+        float max = landscape ? 0.85f : 0.98f;
 
-        if (contentRT != null)
-        {
-            // Scale the original 972x1920 layout down only when needed.
-            float widthScale = panelWidth / StatsDesignWidth;
-            float heightScale = availableHeight / StatsDesignHeight;
-            float scale = Mathf.Min( 1f, Mathf.Min(widthScale, heightScale));
+        RectTransform viewport = scrollRect != null
+            ? scrollRect.transform as RectTransform
+            : null;
+        SetHorizontalAnchors(viewport, min, max);
 
-            contentRT.sizeDelta = new Vector2( StatsDesignWidth, StatsDesignHeight);
-            contentRT.localScale = new Vector3(scale, scale, 1f);
-            // Keep scaled content attached to top-right.
-            contentRT.anchoredPosition = Vector2.zero;
-        }
+        SetHorizontalAnchors(parentScroll as RectTransform,
+            landscape ? 0.14f : 0.02f,
+            landscape ? 0.86f : 0.98f);
+    }
 
-        // IMPORTANT: panel width can change after orientation changes.
-        _hiddenX = panelWidth;
+    private static void SetHorizontalAnchors(RectTransform rect, float min, float max)
+    {
+        if (rect == null) return;
 
-        if (!_open) panelRT.anchoredPosition = new Vector2( _hiddenX, panelRT.anchoredPosition.y);
+        Vector2 anchorMin = rect.anchorMin;
+        Vector2 anchorMax = rect.anchorMax;
+        if (Mathf.Approximately(anchorMin.x, min) && Mathf.Approximately(anchorMax.x, max))
+            return;
+
+        anchorMin.x = min;
+        anchorMax.x = max;
+        rect.anchorMin = anchorMin;
+        rect.anchorMax = anchorMax;
+        LayoutRebuilder.MarkLayoutForRebuild(rect);
     }
 
     public void Bind(JourneyViewModel vm)
@@ -252,6 +267,16 @@ public class StatsPanel : MonoBehaviour
             _gameplayToolsWasActive = gameplayTools.activeSelf;
             gameplayTools.SetActive(false);
         }
+        if (gameplayGrid != null)
+        {
+            _gameplayGridWasActive = gameplayGrid.activeSelf;
+            gameplayGrid.SetActive(false);
+        }
+        if (journeyTopBar != null)
+        {
+            _journeyTopBarWasActive = journeyTopBar.activeSelf;
+            journeyTopBar.SetActive(false);
+        }
 
         if (backdropButton != null) backdropButton.gameObject.SetActive(true);
         _vm.FetchHistoricalData.Execute();
@@ -270,7 +295,6 @@ public class StatsPanel : MonoBehaviour
     {
         _open = false;
 
-        if (gameplayTools != null) gameplayTools.SetActive( _gameplayToolsWasActive );
         if (backdropButton != null) backdropButton.gameObject.SetActive(false);
         if (_slideAnim != null) StopCoroutine(_slideAnim);
         _slideAnim = StartCoroutine(SlideOut());
@@ -629,6 +653,9 @@ public class StatsPanel : MonoBehaviour
         }
         panelRT.anchoredPosition = new Vector2(_hiddenX, panelRT.anchoredPosition.y);
         panelCG.alpha = 0f;
+        if (gameplayTools != null) gameplayTools.SetActive(_gameplayToolsWasActive);
+        if (gameplayGrid != null) gameplayGrid.SetActive(_gameplayGridWasActive);
+        if (journeyTopBar != null) journeyTopBar.SetActive(_journeyTopBarWasActive);
         _vm.ResetHistoricalData.Execute();
         for(int i = 0; i < lstOfRecords.Count; i++)
             Destroy(lstOfRecords[i]);

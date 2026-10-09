@@ -2309,8 +2309,8 @@ MonoBehaviour:
   m_fontMaterials: []
   m_fontColor32:
     serializedVersion: 2
-    rgba: 4289694346
-  m_fontColor: {r: 0.5411765, g: 0.5411765, b: 0.6862745, a: 1}
+    rgba: 3353080575
+  m_fontColor: {r: 0.78, g: 0.86, b: 0.95, a: 1}
   m_enableVertexGradient: 0
   m_colorMode: 3
   m_fontColorGradient:
@@ -2327,14 +2327,14 @@ MonoBehaviour:
   m_faceColor:
     serializedVersion: 2
     rgba: 4294967295
-  m_fontSize: 22
-  m_fontSizeBase: 22
+  m_fontSize: 26
+  m_fontSizeBase: 26
   m_fontWeight: 400
   m_enableAutoSizing: 0
   m_fontSizeMin: 18
   m_fontSizeMax: 72
   m_fontStyle: 0
-  m_HorizontalAlignment: 1
+  m_HorizontalAlignment: 2
   m_VerticalAlignment: 256
   m_textAlignment: 65535
   m_characterSpacing: 0
@@ -7705,8 +7705,8 @@ MonoBehaviour:
   m_fontMaterials: []
   m_fontColor32:
     serializedVersion: 2
-    rgba: 4294935110
-  m_fontColor: {r: 0.27450982, g: 0.50980395, b: 1, a: 1}
+    rgba: 3656450047
+  m_fontColor: {r: 0.8509804, g: 0.9411765, b: 1, a: 1}
   m_enableVertexGradient: 0
   m_colorMode: 3
   m_fontColorGradient:
@@ -7723,14 +7723,14 @@ MonoBehaviour:
   m_faceColor:
     serializedVersion: 2
     rgba: 4294967295
-  m_fontSize: 48
-  m_fontSizeBase: 48
+  m_fontSize: 56
+  m_fontSizeBase: 56
   m_fontWeight: 400
   m_enableAutoSizing: 0
   m_fontSizeMin: 18
   m_fontSizeMax: 72
   m_fontStyle: 1
-  m_HorizontalAlignment: 1
+  m_HorizontalAlignment: 2
   m_VerticalAlignment: 256
   m_textAlignment: 65535
   m_characterSpacing: 0
@@ -12372,8 +12372,8 @@ MonoBehaviour:
   m_IgnoreLayout: 0
   m_MinWidth: -1
   m_MinHeight: -1
-  m_PreferredWidth: 50
-  m_PreferredHeight: 56
+  m_PreferredWidth: 64
+  m_PreferredHeight: 64
   m_FlexibleWidth: -1
   m_FlexibleHeight: -1
   m_LayoutPriority: 1
@@ -20678,7 +20678,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: UnityEngine.UI::UnityEngine.UI.Image
   m_Material: {fileID: 0}
-  m_Color: {r: 0.86, g: 0.91, b: 1, a: 0.39215687}
+  m_Color: {r: 0.9, g: 0.96, b: 1, a: 0.62}
   m_RaycastTarget: 1
   m_RaycastPadding: {x: 0, y: 0, z: 0, w: 0}
   m_Maskable: 1
@@ -20733,8 +20733,8 @@ MonoBehaviour:
   m_Padding:
     m_Left: 28
     m_Right: 28
-    m_Top: 24
-    m_Bottom: 24
+    m_Top: 32
+    m_Bottom: 32
   m_ChildAlignment: 3
   m_Spacing: 20
   m_ChildForceExpandWidth: 0

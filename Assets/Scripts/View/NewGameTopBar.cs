@@ -1,7 +1,7 @@
 using UnityEngine;
 using UnityEngine.UI;
 
-public class ResponsiveTopBar : MonoBehaviour
+public class NewGameTopBar : MonoBehaviour
 {
     [Header("TopBar Items")]
     [SerializeField] private RectTransform homeBlock;
@@ -17,8 +17,35 @@ public class ResponsiveTopBar : MonoBehaviour
     [Header("Scaling")]
     [SerializeField] [Range(1f, 2f)] private float landscapeScale = 1.4f;
     [SerializeField] private float portraitScale = 1f;
-    [SerializeField] private float newGameLandscapeSpacing = 64f;
 
+
+    private struct RectTransformState
+    {
+        public Vector2 anchorMin;
+        public Vector2 anchorMax;
+        public Vector2 anchoredPosition;
+        public Vector2 sizeDelta;
+        public Vector2 pivot;
+
+        public RectTransformState(RectTransform rect)
+        {
+            anchorMin = rect.anchorMin;
+            anchorMax = rect.anchorMax;
+            anchoredPosition = rect.anchoredPosition;
+            sizeDelta = rect.sizeDelta;
+            pivot = rect.pivot;
+        }
+
+        public void Restore(RectTransform rect)
+        {
+            if (rect == null) return;
+            rect.anchorMin = anchorMin;
+            rect.anchorMax = anchorMax;
+            rect.anchoredPosition = anchoredPosition;
+            rect.sizeDelta = sizeDelta;
+            rect.pivot = pivot;
+        }
+    }
     private bool _layoutApplied;
     private bool _lastLandscape;
     private RectTransform _topBar;
@@ -31,6 +58,11 @@ public class ResponsiveTopBar : MonoBehaviour
     private TextAnchor _originalAlignment;
     private bool _originalExpandWidth;
     private bool _originalControlWidth;
+    private bool _originalLayoutEnabled;
+    private RectTransformState _homeState;
+    private RectTransformState _levelState;
+    private RectTransformState _settingsState;
+    private RectTransformState _exitState;
     private void Awake()
     {
         _topBar = GetComponent<RectTransform>();
@@ -41,12 +73,20 @@ public class ResponsiveTopBar : MonoBehaviour
 
         if (_layout != null)
         {
+            _originalLayoutEnabled = _layout.enabled;
             _layout.childScaleWidth = true;
             _layout.childScaleHeight = true;
             _originalSpacing = _layout.spacing;
             _originalAlignment = _layout.childAlignment;
             _originalExpandWidth = _layout.childForceExpandWidth;
             _originalControlWidth = _layout.childControlWidth;
+
+            _homeState = new RectTransformState(homeBlock);
+            _levelState = new RectTransformState(level);
+            _settingsState = new RectTransformState(settingsBlock);
+            _exitState = new RectTransformState(exitButton != null
+                ? exitButton.GetComponent<RectTransform>()
+                : null);
 
             RectTransform[] items = new RectTransform[]
             {
@@ -167,11 +207,37 @@ public class ResponsiveTopBar : MonoBehaviour
     {
         if (_layout == null || _itemLayouts == null) return;
 
+        if (isNewGameTopBar)
+        {
+            // Keep the level label centered. Place the Home control on the left
+            // and spread Settings and Exit across the right side of the bar.
+            _layout.enabled = false;
+            SetAnchoredSlot(homeBlock, 0.07f, 100f);
+            SetAnchoredSlot(level, 0.50f, 280f);
+            SetAnchoredSlot(settingsBlock, 0.78f, 100f);
+            if (exitButton != null)
+                SetAnchoredSlot(exitButton.GetComponent<RectTransform>(), 0.93f, 100f);
+            return;
+        }
+
+        _layout.enabled = _originalLayoutEnabled;
+
+        if (isNewGameTopBar)
+        {
+            _homeState.Restore(homeBlock);
+            _levelState.Restore(level);
+            _settingsState.Restore(settingsBlock);
+            _exitState.Restore(exitButton != null
+                ? exitButton.GetComponent<RectTransform>()
+                : null);
+        }
+
+
         if (isLandscape)
         {
             // Journey uses equal slots for each visible item. New Game keeps
             // fixed icon slots around a flexible, centered level label.
-            _layout.spacing = isNewGameTopBar ? newGameLandscapeSpacing : 0f;
+            _layout.spacing = 0f;
             _layout.childAlignment = TextAnchor.MiddleCenter;
             _layout.childForceExpandWidth = false;
             _layout.childControlWidth = true;
@@ -213,6 +279,16 @@ public class ResponsiveTopBar : MonoBehaviour
             if (exitButton != null)
                 SetFixedWidth(exitButton.GetComponent<RectTransform>(), 93.33f, 100f);
         }
+    }
+
+    private static void SetAnchoredSlot(RectTransform target, float anchorX, float width)
+    {
+        if (target == null) return;
+        target.anchorMin = new Vector2(anchorX, 0.5f);
+        target.anchorMax = new Vector2(anchorX, 0.5f);
+        target.pivot = new Vector2(0.5f, 0.5f);
+        target.anchoredPosition = Vector2.zero;
+        target.sizeDelta = new Vector2(width, 100f);
     }
 
     private static void SetFixedWidth(RectTransform target, float minWidth, float preferredWidth)

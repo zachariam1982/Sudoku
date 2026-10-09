@@ -59,11 +59,13 @@ public class GameStateView : MonoBehaviour
 
     [Header("New Game Win Panel")]
     [SerializeField] private GameObject      newGameWinPanel;
+    [Header("Top Bar")]
+    [SerializeField] private NewGameTopBar      newGameTopBar;
+    [SerializeField] private JourneyTopBar      JourneyTopBar;
 
     private BaseViewModel _vm;
     private HUD _hud;
     private VerseTicker _verseTicker;
-    private ResponsiveTopBar[] _responsiveTopBars;
     private Button _pauseResumeButton;
 
     // ── Binding ───────────────────────────────────────────────────────────────
@@ -333,16 +335,8 @@ public class GameStateView : MonoBehaviour
 
     public void SetTopBarMode(bool isNewGame)
     {
-        if (_responsiveTopBars == null || _responsiveTopBars.Length == 0)
-        {
-            Canvas canvas = GetComponentInParent<Canvas>();
-            if (canvas != null)
-                _responsiveTopBars = canvas.GetComponentsInChildren<ResponsiveTopBar>(true);
-        }
-
-        if (_responsiveTopBars == null) return;
-        foreach (ResponsiveTopBar topBar in _responsiveTopBars)
-            topBar.SetNewGameMode(isNewGame);
+        JourneyTopBar.SetNewGameMode(isNewGame);
+        newGameTopBar.SetNewGameMode(isNewGame);
     }
 
     private void SetLevelText(string text)

@@ -5241,6 +5241,8 @@ MonoBehaviour:
   loseMistakesLabel: {fileID: 0}
   pausePanel: {fileID: 1030801303}
   newGameWinPanel: {fileID: 2147300000}
+  newGameTopBar: {fileID: 9000000000006}
+  JourneyTopBar: {fileID: 1515388385}
 --- !u!1 &649014147
 GameObject:
   m_ObjectHideFlags: 0
@@ -14255,6 +14257,7 @@ MonoBehaviour:
   isNewGameTopBar: 0
   landscapeScale: 1.4
   portraitScale: 1
+  newGameLandscapeSpacing: 64
 --- !u!1 &1540856545
 GameObject:
   m_ObjectHideFlags: 0
@@ -26508,9 +26511,9 @@ MonoBehaviour:
   m_GameObject: {fileID: 9000000000000}
   m_Enabled: 1
   m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: ced77acaa21e3f544a819745121989de, type: 3}
+  m_Script: {fileID: 11500000, guid: 713409e0db1ac494a8bbd64e5744c413, type: 3}
   m_Name: 
-  m_EditorClassIdentifier: Assembly-CSharp::ResponsiveTopBar
+  m_EditorClassIdentifier: Assembly-CSharp::NewGameTopBar
   homeBlock: {fileID: 9000000000008}
   livesContainer: {fileID: 0}
   level: {fileID: 9000000000018}

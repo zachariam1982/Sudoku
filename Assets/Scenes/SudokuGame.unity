@@ -6036,9 +6036,6 @@ GameObject:
   - component: {fileID: 753092975}
   - component: {fileID: 753092974}
   - component: {fileID: 753092973}
-  - component: {fileID: 9900000000102}
-  - component: {fileID: 9900000000103}
-  - component: {fileID: 9900000000200}
   m_Layer: 5
   m_Name: AtCard_Wins
   m_TagString: Untagged

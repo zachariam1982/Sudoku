@@ -398,6 +398,12 @@ TextureImporter:
   - first:
       213: 274599434571466800
     second: Sprite pack_131
+  - first:
+      213: 5635248251539509055
+    second: AllTimePlayedIcon
+  - first:
+      213: 7222032299464201078
+    second: AllTimeWonIcon
   externalObjects: {}
   serializedVersion: 13
   mipmaps:
@@ -782,6 +788,50 @@ TextureImporter:
       indices: 
       edges: []
       weights: []
+    - serializedVersion: 2
+      name: AllTimePlayedIcon
+      rect:
+        serializedVersion: 2
+        x: 43
+        y: 1100
+        width: 309
+        height: 291
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData:
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 0a028aa34c14400baacb45a94abab2ad
+      internalID: 5635248251539509055
+      vertices: []
+      indices:
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: AllTimeWonIcon
+      rect:
+        serializedVersion: 2
+        x: 414
+        y: 1100
+        width: 269
+        height: 292
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData:
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 02c088da7ef9413fb59cab932b39242b
+      internalID: 7222032299464201078
+      vertices: []
+      indices:
+      edges: []
+      weights: []
     outline: []
     customData: 
     physicsShape: []
@@ -928,6 +978,8 @@ TextureImporter:
       Sprite pack_97: -6221893480301186230
       Sprite pack_98: 790267896040213513
       Sprite pack_99: 1796550253280731903
+      AllTimePlayedIcon: 5635248251539509055
+      AllTimeWonIcon: 7222032299464201078
   mipmapLimitGroupName: 
   pSDRemoveMatte: 0
   userData: 

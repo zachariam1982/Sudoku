@@ -118,17 +118,51 @@ public class StatsPanel : MonoBehaviour
         _lastScreenWidth = Screen.width;
         _lastScreenHeight = Screen.height;
 
-        if (_responsiveLayoutRefresh != null)
-            StopCoroutine(_responsiveLayoutRefresh);
-        _responsiveLayoutRefresh = StartCoroutine(RefreshResponsiveLayoutAfterCanvasResize());
+        // Update anchors immediately, then let the canvas and parent layout settle
+        // before measuring the three columns.
+        ApplyResponsiveStatsContentWidth();
+        ScheduleResponsiveLayoutRefresh();
+    }
+
+    private void ScheduleResponsiveLayoutRefresh()
+    {
+        if (_responsiveLayoutRefresh == null)
+            _responsiveLayoutRefresh = StartCoroutine(RefreshResponsiveLayoutAfterCanvasResize());
     }
 
     private IEnumerator RefreshResponsiveLayoutAfterCanvasResize()
     {
-        // Let Unity finish updating the CanvasScaler and RectTransforms for the new orientation.
-        yield return null;
-        Canvas.ForceUpdateCanvases();
         ApplyResponsiveStatsContentWidth();
+
+        float previousWidth = -1f;
+        float previousHeight = -1f;
+        int stableFrames = 0;
+        for (int frame = 0; frame < 8 && stableFrames < 2; frame++)
+        {
+            yield return null;
+            Canvas.ForceUpdateCanvases();
+
+            float width = currentJourneyColumns != null
+                ? currentJourneyColumns.rect.width
+                : canvas != null ? canvas.rect.width : 0f;
+            float height = currentJourneyColumns != null
+                ? currentJourneyColumns.rect.height
+                : canvas != null ? canvas.rect.height : 0f;
+
+            if (Mathf.Abs(width - previousWidth) < 0.5f &&
+                Mathf.Abs(height - previousHeight) < 0.5f)
+                stableFrames++;
+            else
+                stableFrames = 0;
+
+            previousWidth = width;
+            previousHeight = height;
+        }
+
+        // Re-read the actual resized RectTransform bounds after the canvas settles.
+        ApplyResponsiveStatsContentWidth();
+        Canvas.ForceUpdateCanvases();
+        ApplyCurrentJourneyResponsiveLayout();
         Canvas.ForceUpdateCanvases();
 
         if (currentJourneyColumns != null)
@@ -183,6 +217,7 @@ public class StatsPanel : MonoBehaviour
 
         _hiddenX = canvas.rect.width;
         ApplyResponsiveStatsContentWidth();
+        ScheduleResponsiveLayoutRefresh();
         if (!_open)
             panelRT.anchoredPosition = new Vector2(_hiddenX, panelRT.anchoredPosition.y);
     }
@@ -235,11 +270,12 @@ public class StatsPanel : MonoBehaviour
         grid.spacing = new Vector2(12f, 12f);
         grid.cellSize = new Vector2(300f, 72f);
 
-        // The child RectTransform can still report the previous orientation's width
-        // while Unity is processing a device rotation. Derive it from the live canvas
-        // width and the same centered content ratios used for New Game stats.
-        float columnsWidth = canvas.rect.width *
-            (Screen.width > Screen.height ? 0.72f : 0.96f);
+        // Use the measured body width after its parent scroll content has resized.
+        // The orientation refresh waits for this RectTransform to settle before applying
+        // the equal-width columns.
+        float columnsWidth = currentJourneyColumns.rect.width;
+        if (columnsWidth <= 1f)
+            columnsWidth = canvas.rect.width * (Screen.width > Screen.height ? 0.72f : 0.96f);
 
         float horizontalPadding = horizontal != null
             ? horizontal.padding.left + horizontal.padding.right

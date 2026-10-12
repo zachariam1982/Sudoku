@@ -30,6 +30,7 @@ public class StatsPanel : MonoBehaviour
     [SerializeField] private Image[]         liveDots;
     [SerializeField] private TextMeshProUGUI mistakesValue;
     [SerializeField] private TextMeshProUGUI sosValue;
+    [SerializeField] private TextMeshProUGUI livesValue;
 
     [Header("Win-rate bar")]
     [SerializeField] private TextMeshProUGUI winRatePctLabel;
@@ -63,6 +64,7 @@ public class StatsPanel : MonoBehaviour
     [SerializeField] private GameObject recordScroll;
     [Header("Responsive Layout")]
     [SerializeField] private RectTransform contentRT;
+    [SerializeField] private RectTransform currentJourneyColumns;
     [Header("Gameplay UI")]
     [SerializeField] private GameObject gameplayTools;
     [SerializeField] private GameObject gameplayGrid;
@@ -159,8 +161,8 @@ public class StatsPanel : MonoBehaviour
         if (canvas == null) return;
 
         bool landscape = Screen.width > Screen.height;
-        float min = landscape ? 0.15f : 0.02f;
-        float max = landscape ? 0.85f : 0.98f;
+        float min = 0.02f;
+        float max = 0.98f;
 
         RectTransform viewport = scrollRect != null
             ? scrollRect.transform as RectTransform
@@ -168,8 +170,53 @@ public class StatsPanel : MonoBehaviour
         SetHorizontalAnchors(viewport, min, max);
 
         SetHorizontalAnchors(parentScroll as RectTransform,
-            landscape ? 0.14f : 0.02f,
-            landscape ? 0.86f : 0.98f);
+            0.02f,
+            0.98f);
+        ApplyCurrentJourneyResponsiveLayout();
+    }
+
+
+    private void ApplyCurrentJourneyResponsiveLayout()
+    {
+        if (currentJourneyColumns == null || currentJourneyColumns.childCount < 2) return;
+
+        bool landscape = Screen.width > Screen.height;
+        var horizontal = currentJourneyColumns.GetComponent<HorizontalLayoutGroup>();
+        var vertical = currentJourneyColumns.GetComponent<VerticalLayoutGroup>();
+        if (horizontal != null) horizontal.enabled = landscape;
+        if (vertical != null) vertical.enabled = !landscape;
+
+        var bodyLayout = currentJourneyColumns.GetComponent<LayoutElement>();
+        if (bodyLayout != null) bodyLayout.preferredHeight = landscape ? 250f : 620f;
+
+        var cardLayout = currentJourneyColumns.parent != null
+            ? currentJourneyColumns.parent.GetComponent<LayoutElement>()
+            : null;
+        if (cardLayout != null) cardLayout.preferredHeight = landscape ? 330f : 700f;
+
+        var ringLayout = currentJourneyColumns.GetChild(0).GetComponent<LayoutElement>();
+        if (ringLayout != null)
+        {
+            ringLayout.preferredWidth = landscape ? 350f : -1f;
+            ringLayout.preferredHeight = landscape ? 250f : 210f;
+        }
+
+        var grid = currentJourneyColumns.GetChild(1).GetComponent<GridLayoutGroup>();
+        if (grid != null)
+        {
+            grid.constraintCount = landscape ? 2 : 1;
+            grid.cellSize = landscape ? new Vector2(370f, 72f) : new Vector2(300f, 56f);
+            grid.spacing = landscape ? new Vector2(14f, 12f) : new Vector2(12f, 8f);
+            var gridLayout = grid.GetComponent<LayoutElement>();
+            if (gridLayout != null)
+            {
+                gridLayout.preferredWidth = landscape ? 754f : -1f;
+                gridLayout.preferredHeight = landscape ? 240f : 376f;
+                gridLayout.flexibleWidth = landscape ? 2f : 1f;
+            }
+        }
+
+        LayoutRebuilder.MarkLayoutForRebuild(currentJourneyColumns);
     }
 
     private static void SetHorizontalAnchors(RectTransform rect, float min, float max)
@@ -352,6 +399,7 @@ public class StatsPanel : MonoBehaviour
 
         // Lives dots
         int lives = _vm.LivesRemaining.Value;
+        Set(livesValue, lives.ToString());
         for (int i = 0; i < liveDots.Length; i++)
             if (liveDots[i] != null)
                 liveDots[i].color = i < lives ? colorDotOn : colorDotOff;

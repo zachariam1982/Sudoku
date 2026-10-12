@@ -90,6 +90,7 @@ public class StatsPanel : MonoBehaviour
     private int _totalPossiblePoints;
     private int _lastScreenWidth = -1;
     private int _lastScreenHeight = -1;
+    private Coroutine _responsiveLayoutRefresh;
     
     void Awake()
     {
@@ -116,7 +117,24 @@ public class StatsPanel : MonoBehaviour
 
         _lastScreenWidth = Screen.width;
         _lastScreenHeight = Screen.height;
+
+        if (_responsiveLayoutRefresh != null)
+            StopCoroutine(_responsiveLayoutRefresh);
+        _responsiveLayoutRefresh = StartCoroutine(RefreshResponsiveLayoutAfterCanvasResize());
+    }
+
+    private IEnumerator RefreshResponsiveLayoutAfterCanvasResize()
+    {
+        // Let Unity finish updating the CanvasScaler and RectTransforms for the new orientation.
+        yield return null;
+        Canvas.ForceUpdateCanvases();
         ApplyResponsiveStatsContentWidth();
+        Canvas.ForceUpdateCanvases();
+
+        if (currentJourneyColumns != null)
+            LayoutRebuilder.ForceRebuildLayoutImmediate(currentJourneyColumns);
+
+        _responsiveLayoutRefresh = null;
     }
 
     private void Update()
@@ -217,9 +235,11 @@ public class StatsPanel : MonoBehaviour
         grid.spacing = new Vector2(12f, 12f);
         grid.cellSize = new Vector2(300f, 72f);
 
-        float columnsWidth = currentJourneyColumns.rect.width;
-        if (columnsWidth <= 1f)
-            columnsWidth = canvas.rect.width * (Screen.width > Screen.height ? 0.72f : 0.96f);
+        // The child RectTransform can still report the previous orientation's width
+        // while Unity is processing a device rotation. Derive it from the live canvas
+        // width and the same centered content ratios used for New Game stats.
+        float columnsWidth = canvas.rect.width *
+            (Screen.width > Screen.height ? 0.72f : 0.96f);
 
         float horizontalPadding = horizontal != null
             ? horizontal.padding.left + horizontal.padding.right
@@ -245,7 +265,11 @@ public class StatsPanel : MonoBehaviour
         }
 
         grid.cellSize = new Vector2(columnWidth, 72f);
+        LayoutRebuilder.MarkLayoutForRebuild(grid.GetComponent<RectTransform>());
         LayoutRebuilder.MarkLayoutForRebuild(currentJourneyColumns);
+        RectTransform cardRect = currentJourneyColumns.parent as RectTransform;
+        if (cardRect != null)
+            LayoutRebuilder.MarkLayoutForRebuild(cardRect);
     }
 
     private static void SetHorizontalAnchors(RectTransform rect, float min, float max)

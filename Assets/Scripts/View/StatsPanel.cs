@@ -88,6 +88,8 @@ public class StatsPanel : MonoBehaviour
     private List<GameObject> lstOfRecords = new List<GameObject>();
     private GameStats _gameStats;
     private int _totalPossiblePoints;
+    private int _lastScreenWidth = -1;
+    private int _lastScreenHeight = -1;
     
     void Awake()
     {
@@ -97,6 +99,8 @@ public class StatsPanel : MonoBehaviour
         panelCG.alpha          = 0f;
         panelCG.blocksRaycasts = false;
         panelCG.interactable   = false;
+        _lastScreenWidth = Screen.width;
+        _lastScreenHeight = Screen.height;
         ApplyResponsiveStatsContentWidth();
 
         if (backdropButton != null) backdropButton.gameObject.SetActive(false);
@@ -104,6 +108,15 @@ public class StatsPanel : MonoBehaviour
         if (closeButton    != null) closeButton.onClick.AddListener(ClosePanel);
         if (backdropButton != null) backdropButton.onClick.AddListener(ClosePanel);
         if (scrollRect     != null) scrollRect.onValueChanged.AddListener(OnScroll);
+    }
+
+    private void LateUpdate()
+    {
+        if (_lastScreenWidth == Screen.width && _lastScreenHeight == Screen.height) return;
+
+        _lastScreenWidth = Screen.width;
+        _lastScreenHeight = Screen.height;
+        ApplyResponsiveStatsContentWidth();
     }
 
     private void Update()
@@ -161,61 +174,77 @@ public class StatsPanel : MonoBehaviour
         if (canvas == null) return;
 
         bool landscape = Screen.width > Screen.height;
-        float min = 0.02f;
-        float max = 0.98f;
 
         RectTransform viewport = scrollRect != null
             ? scrollRect.transform as RectTransform
             : null;
-        SetHorizontalAnchors(viewport, min, max);
+        SetHorizontalAnchors(viewport,
+            landscape ? 0.15f : 0.02f,
+            landscape ? 0.85f : 0.98f);
 
         SetHorizontalAnchors(parentScroll as RectTransform,
-            0.02f,
-            0.98f);
+            landscape ? 0.14f : 0.02f,
+            landscape ? 0.86f : 0.98f);
+
         ApplyCurrentJourneyResponsiveLayout();
     }
-
 
     private void ApplyCurrentJourneyResponsiveLayout()
     {
         if (currentJourneyColumns == null || currentJourneyColumns.childCount < 2) return;
 
-        bool landscape = Screen.width > Screen.height;
         var horizontal = currentJourneyColumns.GetComponent<HorizontalLayoutGroup>();
         var vertical = currentJourneyColumns.GetComponent<VerticalLayoutGroup>();
-        if (horizontal != null) horizontal.enabled = landscape;
-        if (vertical != null) vertical.enabled = !landscape;
+        if (horizontal != null)
+        {
+            horizontal.enabled = true;
+            horizontal.spacing = 12f;
+        }
+        if (vertical != null) vertical.enabled = false;
 
         var bodyLayout = currentJourneyColumns.GetComponent<LayoutElement>();
-        if (bodyLayout != null) bodyLayout.preferredHeight = landscape ? 250f : 620f;
+        if (bodyLayout != null) bodyLayout.preferredHeight = 250f;
 
         var cardLayout = currentJourneyColumns.parent != null
             ? currentJourneyColumns.parent.GetComponent<LayoutElement>()
             : null;
-        if (cardLayout != null) cardLayout.preferredHeight = landscape ? 330f : 700f;
+        if (cardLayout != null) cardLayout.preferredHeight = 330f;
+
+        var grid = currentJourneyColumns.GetChild(1).GetComponent<GridLayoutGroup>();
+        if (grid == null) return;
+
+        grid.constraintCount = 2;
+        grid.spacing = new Vector2(12f, 12f);
+        grid.cellSize = new Vector2(300f, 72f);
+
+        float columnsWidth = currentJourneyColumns.rect.width;
+        if (columnsWidth <= 1f)
+            columnsWidth = canvas.rect.width * (Screen.width > Screen.height ? 0.72f : 0.96f);
+
+        float horizontalPadding = horizontal != null
+            ? horizontal.padding.left + horizontal.padding.right
+            : 0f;
+        float groupSpacing = horizontal != null ? horizontal.spacing : 0f;
+        float columnWidth = Mathf.Max(0f,
+            (columnsWidth - horizontalPadding - groupSpacing - grid.spacing.x) / 3f);
 
         var ringLayout = currentJourneyColumns.GetChild(0).GetComponent<LayoutElement>();
         if (ringLayout != null)
         {
-            ringLayout.preferredWidth = landscape ? 350f : -1f;
-            ringLayout.preferredHeight = landscape ? 250f : 210f;
+            ringLayout.preferredWidth = columnWidth;
+            ringLayout.preferredHeight = 250f;
+            ringLayout.flexibleWidth = 0f;
         }
 
-        var grid = currentJourneyColumns.GetChild(1).GetComponent<GridLayoutGroup>();
-        if (grid != null)
+        var gridLayout = grid.GetComponent<LayoutElement>();
+        if (gridLayout != null)
         {
-            grid.constraintCount = landscape ? 2 : 1;
-            grid.cellSize = landscape ? new Vector2(370f, 72f) : new Vector2(300f, 56f);
-            grid.spacing = landscape ? new Vector2(14f, 12f) : new Vector2(12f, 8f);
-            var gridLayout = grid.GetComponent<LayoutElement>();
-            if (gridLayout != null)
-            {
-                gridLayout.preferredWidth = landscape ? 754f : -1f;
-                gridLayout.preferredHeight = landscape ? 240f : 376f;
-                gridLayout.flexibleWidth = landscape ? 2f : 1f;
-            }
+            gridLayout.preferredWidth = columnWidth * 2f + grid.spacing.x;
+            gridLayout.preferredHeight = grid.cellSize.y * 3f + grid.spacing.y * 2f;
+            gridLayout.flexibleWidth = 0f;
         }
 
+        grid.cellSize = new Vector2(columnWidth, 72f);
         LayoutRebuilder.MarkLayoutForRebuild(currentJourneyColumns);
     }
 

@@ -4,6 +4,8 @@ using UnityEngine.UI;
 using TMPro;
 using System.Collections.Generic;
 using UnityEngine.InputSystem;
+using System.Globalization;
+using System.Text;
 
 public class StatsPanel : MonoBehaviour
 {
@@ -40,6 +42,7 @@ public class StatsPanel : MonoBehaviour
     [SerializeField] private TextMeshProUGUI totalGamesValue;
     [SerializeField] private TextMeshProUGUI winsValue;
     [SerializeField] private TextMeshProUGUI bestTimeValue;
+    [SerializeField] private TextMeshProUGUI allTimeStatsText;
 
     [Header("Streak chip")]
     [SerializeField] private TextMeshProUGUI streakNumber;
@@ -515,20 +518,72 @@ public class StatsPanel : MonoBehaviour
         float rate     = games > 0 ? wins / (float)games : 0f;
         string bestStr = bestSecs >= 0 ? $"{(int)bestSecs / 60:00}:{(int)bestSecs % 60:00}" : "--:--";
 
-        Set(totalGamesValue, $"{games}");
         Set(winsValue, $"{wins}");
         Set(bestTimeValue, bestStr);
 
         if (winRatePctLabel != null)
             winRatePctLabel.text = $"{rate * 100f:F1}%";
 
-        // Animate the win-rate bar fill
-        if (_barAnim != null) StopCoroutine(_barAnim);
-        _barAnim = StartCoroutine(AnimateBar(rate));
+        if (allTimeStatsText != null)
+        {
+            allTimeStatsText.alignment = TextAlignmentOptions.TopLeft;
+            allTimeStatsText.richText = true;
+            allTimeStatsText.enableWordWrapping = false;
+            allTimeStatsText.fontSize = 25f;
+            allTimeStatsText.enableAutoSizing = true;
+            allTimeStatsText.fontSizeMin = 18f;
+            allTimeStatsText.fontSizeMax = 25f;
+            allTimeStatsText.overflowMode = TextOverflowModes.Overflow;
+            allTimeStatsText.text = BuildAllTimeSummary(games, wins, rate);
+        }
 
         // Streak chip
         if (streakNumber != null) streakNumber.text = $"{streak}";
         if (streakDesc   != null) streakDesc.text   = "GAME WIN STREAK";
+    }
+
+    private string BuildAllTimeSummary(int totalGames, int totalWins, float totalWinRate)
+    {
+        int[] gamesByDifficulty = new int[9];
+        int[] winsByDifficulty = new int[9];
+        List<GameRecord> records = GameDatabase.GetAll();
+        if (records != null)
+        {
+            foreach (GameRecord record in records)
+            {
+                if (record == null || record.Difficulty < 0 || record.Difficulty >= gamesByDifficulty.Length)
+                    continue;
+
+                gamesByDifficulty[record.Difficulty]++;
+                if (record.IsWon) winsByDifficulty[record.Difficulty]++;
+            }
+        }
+
+        string[] labels = { "Simple", "Beginner", "Easy", "Novice", "Moderate", "Advanced", "Hard", "Expert", "Hardest" };
+        string[] colors = { "#78D48B", "#55C7E8", "#62A8FF", "#62A8FF", "#B27BEA", "#B27BEA", "#F2B04F", "#EA795E", "#E65B57" };
+        StringBuilder summary = new StringBuilder();
+        summary.Append("<align=left><size=125%><b><color=#FFD66B>ALL TIME</color></b></size></align>\n")
+            .Append("<size=78%><color=#AFC5E9><pos=18%>PLAYED<pos=52%>WON<pos=80%>WIN RATE</color></size>\n")
+            .Append("<size=115%><color=#FFD66B><pos=18%>").Append(totalGames)
+            .Append("<pos=52%>").Append(totalWins)
+            .Append("<pos=80%>").Append((totalWinRate * 100f).ToString("0.0", CultureInfo.InvariantCulture))
+            .Append("%</color></size>\n\n")
+            .Append("<size=78%><b><color=#AFC5E9>DIFFICULTY<pos=43%>PLAYED<pos=63%>WON<pos=81%>WIN RATE</color></b></size>\n");
+
+        for (int i = 0; i < gamesByDifficulty.Length; i++)
+        {
+            int played = gamesByDifficulty[i];
+            int won = winsByDifficulty[i];
+            float winRate = played > 0 ? won * 100f / played : 0f;
+            summary.Append("<size=90%><color=").Append(colors[i]).Append(">●</color> ")
+                .Append(labels[i]).Append("<pos=43%>").Append(played)
+                .Append("<pos=63%>").Append(won)
+                .Append("<pos=81%>").Append(winRate.ToString("0.#", CultureInfo.InvariantCulture))
+                .Append("%</size>");
+            if (i < gamesByDifficulty.Length - 1) summary.Append("\n");
+        }
+
+        return summary.ToString();
     }
     private void RefreshProgression()
     {

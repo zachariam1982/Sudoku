@@ -70,6 +70,10 @@ public class StatsPanel : MonoBehaviour
     [Header("Responsive Layout")]
     [SerializeField] private RectTransform contentRT;
     [SerializeField] private RectTransform currentJourneyColumns;
+    [SerializeField] private RectTransform[] allTimeSummaryIcons;
+    [SerializeField] private RectTransform[] allTimeSummaryLabels;
+    [SerializeField] private RectTransform[] allTimeSummaryValues;
+    [SerializeField] private float landscapeSummaryIconGap = 8f;
     [Header("Gameplay UI")]
     [SerializeField] private GameObject gameplayTools;
     [SerializeField] private GameObject gameplayGrid;
@@ -168,6 +172,7 @@ public class StatsPanel : MonoBehaviour
         ApplyResponsiveStatsContentWidth();
         Canvas.ForceUpdateCanvases();
         ApplyCurrentJourneyResponsiveLayout();
+        ApplyAllTimeSummaryResponsiveLayout();
         Canvas.ForceUpdateCanvases();
 
         if (currentJourneyColumns != null)
@@ -245,6 +250,49 @@ public class StatsPanel : MonoBehaviour
             landscape ? 0.86f : 0.98f);
 
         ApplyCurrentJourneyResponsiveLayout();
+        ApplyAllTimeSummaryResponsiveLayout();
+    }
+
+    private void ApplyAllTimeSummaryResponsiveLayout()
+    {
+        if (allTimeSummaryIcons == null || allTimeSummaryLabels == null || allTimeSummaryValues == null ||
+            allTimeSummaryIcons.Length < 3 || allTimeSummaryLabels.Length < 3 || allTimeSummaryValues.Length < 3)
+            return;
+
+        bool landscape = Screen.width > Screen.height;
+        for (int i = 0; i < 3; i++)
+        {
+            RectTransform icon = allTimeSummaryIcons[i];
+            RectTransform label = allTimeSummaryLabels[i];
+            RectTransform value = allTimeSummaryValues[i];
+            if (icon == null || label == null || value == null) continue;
+
+            if (!landscape)
+            {
+                // Keep the approved portrait presentation exactly as authored in the scene.
+                float portraitX = 0.075f + i * 0.33f;
+                icon.anchorMin = new Vector2(portraitX, 0.8625f);
+                icon.anchorMax = new Vector2(portraitX, 0.8625f);
+                icon.anchoredPosition = Vector2.zero;
+                icon.sizeDelta = new Vector2(50.4f, 50.4f);
+                continue;
+            }
+
+            RectTransform summary = icon.parent as RectTransform;
+            if (summary == null || summary.rect.width <= 0f || summary.rect.height <= 0f) continue;
+
+            // Size the icon to span both text rows, including their inter-row gap.
+            float bottom = Mathf.Min(label.anchorMin.y, value.anchorMin.y);
+            float top = Mathf.Max(label.anchorMax.y, value.anchorMax.y);
+            float iconSize = (top - bottom) * summary.rect.height;
+            float centerY = (bottom + top) * 0.5f;
+            float centerX = label.anchorMin.x - (iconSize * 0.5f + landscapeSummaryIconGap) / summary.rect.width;
+
+            icon.anchorMin = new Vector2(centerX, centerY);
+            icon.anchorMax = new Vector2(centerX, centerY);
+            icon.anchoredPosition = Vector2.zero;
+            icon.sizeDelta = new Vector2(iconSize, iconSize);
+        }
     }
 
     private void ApplyCurrentJourneyResponsiveLayout()
@@ -397,6 +445,9 @@ public class StatsPanel : MonoBehaviour
     private void OpenPanel()
     {
         _open = true;
+        ApplyResponsiveStatsContentWidth();
+        Canvas.ForceUpdateCanvases();
+        ApplyAllTimeSummaryResponsiveLayout();
 
         if (_verseTicker == null && canvas != null)
             _verseTicker = canvas.GetComponent<VerseTicker>();

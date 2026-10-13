@@ -2277,6 +2277,19 @@ MonoBehaviour:
   recordScroll: {fileID: 8125523581376138801, guid: 4d5e8ca8a6ef3c846b629c90cbf1bba1, type: 3}
   contentRT: {fileID: 0}
   currentJourneyColumns: {fileID: 9300000000001}
+  allTimeSummaryIcons:
+  - {fileID: 9300000000202}
+  - {fileID: 9300000000212}
+  - {fileID: 9300000000222}
+  allTimeSummaryLabels:
+  - {fileID: 9600000000001}
+  - {fileID: 9600000000021}
+  - {fileID: 9600000000041}
+  allTimeSummaryValues:
+  - {fileID: 9600000000011}
+  - {fileID: 9600000000031}
+  - {fileID: 9600000000051}
+  landscapeSummaryIconGap: 8
   gameplayTools: {fileID: 1023807773}
   gameplayGrid: {fileID: 1905441633}
   journeyTopBar: {fileID: 1515388379}

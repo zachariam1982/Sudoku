@@ -253,6 +253,20 @@ public class StatsPanel : MonoBehaviour
             landscape ? 0.14f : 0.02f,
             landscape ? 0.86f : 0.98f);
 
+        // Keep portrait cards close to the screen edges while preserving a visible
+        // margin for the glass border. Landscape retains the roomier authored inset.
+        VerticalLayoutGroup contentLayout = parentScroll != null
+            ? parentScroll.GetComponent<VerticalLayoutGroup>()
+            : null;
+        if (contentLayout != null)
+        {
+            int horizontalPadding = landscape ? 36 : 12;
+            RectOffset padding = contentLayout.padding;
+            padding.left = horizontalPadding;
+            padding.right = horizontalPadding;
+            contentLayout.padding = padding;
+        }
+
         ApplyCurrentJourneyResponsiveLayout();
         ApplyAllTimeSummaryResponsiveLayout();
     }

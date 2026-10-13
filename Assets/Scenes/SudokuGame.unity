@@ -2293,6 +2293,8 @@ MonoBehaviour:
   landscapeSummaryTextShift: 0.06
   landscapeWinRateTextShift: 0.03
   landscapeSummaryValueFontSize: 44
+  portraitSummaryTextShift: 0.04
+  portraitWinRateTextShift: 0.02
   gameplayTools: {fileID: 1023807773}
   gameplayGrid: {fileID: 1905441633}
   journeyTopBar: {fileID: 1515388379}

@@ -77,6 +77,8 @@ public class StatsPanel : MonoBehaviour
     [SerializeField] private float landscapeSummaryTextShift = 0.06f;
     [SerializeField] private float landscapeWinRateTextShift = 0.03f;
     [SerializeField] private float landscapeSummaryValueFontSize = 44f;
+    [SerializeField] private float portraitSummaryTextShift = 0.04f;
+    [SerializeField] private float portraitWinRateTextShift = 0.02f;
     [Header("Gameplay UI")]
     [SerializeField] private GameObject gameplayTools;
     [SerializeField] private GameObject gameplayGrid;
@@ -278,7 +280,8 @@ public class StatsPanel : MonoBehaviour
                 icon.anchorMax = new Vector2(portraitX, 0.8625f);
                 icon.anchoredPosition = Vector2.zero;
                 icon.sizeDelta = new Vector2(50.4f, 50.4f);
-                SetAllTimeSummaryTextAnchors(label, value, i, 0f);
+                float textShift = i == 2 ? portraitWinRateTextShift : portraitSummaryTextShift;
+                SetAllTimeSummaryTextAnchors(label, value, i, textShift);
                 SetAllTimeSummaryValueFontSize(i, 30f);
                 continue;
             }

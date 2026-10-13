@@ -276,8 +276,8 @@ public class StatsPanel : MonoBehaviour
             {
                 // Keep the approved portrait presentation exactly as authored in the scene.
                 float portraitX = 0.075f + i * 0.33f;
-                icon.anchorMin = new Vector2(portraitX, 0.8625f);
-                icon.anchorMax = new Vector2(portraitX, 0.8625f);
+                icon.anchorMin = new Vector2(portraitX, 0.7825f);
+                icon.anchorMax = new Vector2(portraitX, 0.7825f);
                 icon.anchoredPosition = Vector2.zero;
                 icon.sizeDelta = new Vector2(50.4f, 50.4f);
                 float portraitTextShift = i == 2 ? portraitWinRateTextShift : portraitSummaryTextShift;

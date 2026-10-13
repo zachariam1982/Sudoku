@@ -2030,6 +2030,7 @@ MonoBehaviour:
   mistakesValue: {fileID: 1441539674}
   sosValue: {fileID: 603215688}
   livesValue: {fileID: 9500000000003}
+  allTimeTitle: {fileID: 876969128}
   allTimePlayedValue: {fileID: 9600000000013}
   allTimeWonValue: {fileID: 9600000000033}
   allTimeWinRateValue: {fileID: 9600000000053}

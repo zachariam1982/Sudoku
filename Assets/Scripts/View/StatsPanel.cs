@@ -34,6 +34,7 @@ public class StatsPanel : MonoBehaviour
     [SerializeField] private TextMeshProUGUI livesValue;
 
     [Header("All-time summary values")]
+    [SerializeField] private TextMeshProUGUI allTimeTitle;
     [SerializeField] private TextMeshProUGUI allTimePlayedValue;
     [SerializeField] private TextMeshProUGUI allTimeWonValue;
     [SerializeField] private TextMeshProUGUI allTimeWinRateValue;
@@ -611,6 +612,7 @@ public class StatsPanel : MonoBehaviour
         int streak = _gameStats?.CurrentStreak ?? 0;
         float rate     = games > 0 ? wins / (float)games : 0f;
 
+        ApplyAllTimeColorProfile();
         Set(allTimePlayedValue, games.ToString(CultureInfo.InvariantCulture));
         Set(allTimeWonValue, wins.ToString(CultureInfo.InvariantCulture));
         Set(allTimeWinRateValue, (rate * 100f).ToString("0.0", CultureInfo.InvariantCulture) + "%");
@@ -630,7 +632,7 @@ public class StatsPanel : MonoBehaviour
             }
         }
 
-        Set(allTimeTableHeader, "DIFFICULTY<pos=42%>PLAYED<pos=62%>WON<pos=79%>WIN RATE");
+        Set(allTimeTableHeader, "<color=#AFC5E9>DIFFICULTY<pos=42%>PLAYED<pos=62%>WON<pos=79%>WIN RATE</color>");
 
         string[] difficultyRows = new string[gamesByDifficulty.Length];
         for (int i = 0; i < gamesByDifficulty.Length; i++)
@@ -638,9 +640,9 @@ public class StatsPanel : MonoBehaviour
             float difficultyRate = gamesByDifficulty[i] > 0
                 ? winsByDifficulty[i] * 100f / gamesByDifficulty[i]
                 : 0f;
-            difficultyRows[i] = $"{((SudokuDifficulty)i)}<pos=42%>{gamesByDifficulty[i].ToString(CultureInfo.InvariantCulture)}" +
-                $"<pos=62%>{winsByDifficulty[i].ToString(CultureInfo.InvariantCulture)}" +
-                $"<pos=79%>{difficultyRate.ToString("0.#", CultureInfo.InvariantCulture)}%";
+            difficultyRows[i] = $"<color=#F3F6FF>{((SudokuDifficulty)i)}</color><pos=42%><color=#FFD66B>{gamesByDifficulty[i].ToString(CultureInfo.InvariantCulture)}</color>" +
+                $"<pos=62%><color=#FFD66B>{winsByDifficulty[i].ToString(CultureInfo.InvariantCulture)}</color>" +
+                $"<pos=79%><color=#FFD66B>{difficultyRate.ToString("0.#", CultureInfo.InvariantCulture)}%</color>";
         }
 
         Set(allTimeTableDetails, string.Join("\n", difficultyRows));
@@ -648,6 +650,37 @@ public class StatsPanel : MonoBehaviour
         // Streak chip
         if (streakNumber != null) streakNumber.text = $"{streak}";
         if (streakDesc   != null) streakDesc.text   = "GAME WIN STREAK";
+    }
+
+    private void ApplyAllTimeColorProfile()
+    {
+        Color gold = new Color32(255, 214, 107, 255);       // #FFD66B
+        Color mutedBlue = new Color32(175, 197, 233, 255);  // #AFC5E9
+
+        if (allTimeTitle != null) allTimeTitle.color = gold;
+        if (allTimeTableHeader != null) allTimeTableHeader.color = mutedBlue;
+
+        if (allTimeSummaryLabels != null)
+        {
+            foreach (RectTransform labelTransform in allTimeSummaryLabels)
+            {
+                TextMeshProUGUI label = labelTransform != null
+                    ? labelTransform.GetComponent<TextMeshProUGUI>()
+                    : null;
+                if (label != null) label.color = mutedBlue;
+            }
+        }
+
+        if (allTimeSummaryValues != null)
+        {
+            foreach (RectTransform valueTransform in allTimeSummaryValues)
+            {
+                TextMeshProUGUI value = valueTransform != null
+                    ? valueTransform.GetComponent<TextMeshProUGUI>()
+                    : null;
+                if (value != null) value.color = gold;
+            }
+        }
     }
 
     private void RefreshProgression()

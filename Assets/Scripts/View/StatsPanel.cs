@@ -5,7 +5,6 @@ using TMPro;
 using System.Collections.Generic;
 using UnityEngine.InputSystem;
 using System.Globalization;
-using System.Text;
 
 public class StatsPanel : MonoBehaviour
 {
@@ -34,15 +33,18 @@ public class StatsPanel : MonoBehaviour
     [SerializeField] private TextMeshProUGUI sosValue;
     [SerializeField] private TextMeshProUGUI livesValue;
 
-    [Header("Win-rate bar")]
-    [SerializeField] private TextMeshProUGUI winRatePctLabel;
-    [SerializeField] private RectTransform   winRateBarFill;
+    [Header("All-time summary values")]
+    [SerializeField] private TextMeshProUGUI allTimePlayedValue;
+    [SerializeField] private TextMeshProUGUI allTimeWonValue;
+    [SerializeField] private TextMeshProUGUI allTimeWinRateValue;
 
-    [Header("All-time stat cards — value labels")]
-    [SerializeField] private TextMeshProUGUI totalGamesValue;
-    [SerializeField] private TextMeshProUGUI winsValue;
-    [SerializeField] private TextMeshProUGUI bestTimeValue;
-    [SerializeField] private TextMeshProUGUI allTimeStatsText;
+    [Header("All-time difficulty values")]
+    [SerializeField] private TextMeshProUGUI[] allTimeDifficultyPlayedValues;
+    [SerializeField] private TextMeshProUGUI[] allTimeDifficultyWonValues;
+    [SerializeField] private TextMeshProUGUI[] allTimeDifficultyWinRateValues;
+
+    [Header("All-time win-rate bar")]
+    [SerializeField] private RectTransform winRateBarFill;
 
     [Header("Streak chip")]
     [SerializeField] private TextMeshProUGUI streakNumber;
@@ -514,39 +516,12 @@ public class StatsPanel : MonoBehaviour
         int games = _gameStats?.TotalGames ?? 0;
         int wins = _gameStats?.TotalWins ?? 0;
         int streak = _gameStats?.CurrentStreak ?? 0;
-        float bestSecs = _gameStats?.FastestWinSeconds != null ? (float) _gameStats.FastestWinSeconds.Value : -1f;
         float rate     = games > 0 ? wins / (float)games : 0f;
-        string bestStr = bestSecs >= 0 ? $"{(int)bestSecs / 60:00}:{(int)bestSecs % 60:00}" : "--:--";
 
-        Set(winsValue, $"{wins}");
-        Set(bestTimeValue, bestStr);
+        Set(allTimePlayedValue, games.ToString(CultureInfo.InvariantCulture));
+        Set(allTimeWonValue, wins.ToString(CultureInfo.InvariantCulture));
+        Set(allTimeWinRateValue, (rate * 100f).ToString("0.0", CultureInfo.InvariantCulture) + "%");
 
-        if (winRatePctLabel != null)
-            winRatePctLabel.text = $"{rate * 100f:F1}%";
-
-        if (allTimeStatsText != null)
-        {
-            allTimeStatsText.alignment = TextAlignmentOptions.TopLeft;
-            allTimeStatsText.richText = true;
-            allTimeStatsText.enableWordWrapping = false;
-            // The All Time panel is designed around a readable summary row and
-            // a compact difficulty table. A larger base size lets the rich-text
-            // sizing below establish hierarchy without shrinking every line.
-            allTimeStatsText.fontSize = 30f;
-            allTimeStatsText.enableAutoSizing = true;
-            allTimeStatsText.fontSizeMin = 22f;
-            allTimeStatsText.fontSizeMax = 30f;
-            allTimeStatsText.overflowMode = TextOverflowModes.Overflow;
-            allTimeStatsText.text = BuildAllTimeSummary(games, wins, rate);
-        }
-
-        // Streak chip
-        if (streakNumber != null) streakNumber.text = $"{streak}";
-        if (streakDesc   != null) streakDesc.text   = "GAME WIN STREAK";
-    }
-
-    private string BuildAllTimeSummary(int totalGames, int totalWins, float totalWinRate)
-    {
         int[] gamesByDifficulty = new int[9];
         int[] winsByDifficulty = new int[9];
         List<GameRecord> records = GameDatabase.GetAll();
@@ -562,32 +537,26 @@ public class StatsPanel : MonoBehaviour
             }
         }
 
-        string[] labels = { "Simple", "Beginner", "Easy", "Novice", "Moderate", "Advanced", "Hard", "Expert", "Hardest" };
-        string[] colors = { "#78D48B", "#55C7E8", "#62A8FF", "#62A8FF", "#B27BEA", "#B27BEA", "#F2B04F", "#EA795E", "#E65B57" };
-        StringBuilder summary = new StringBuilder();
-        summary.Append("<line-height=125%><align=left><size=135%><b><color=#F4D58A>ALL TIME</color></b></size></align></line-height>\n")
-            .Append("<line-height=92%><size=76%><color=#C5D9F5><pos=18%>PLAYED<pos=52%>WON<pos=80%>WIN RATE</color></size></line-height>\n")
-            .Append("<line-height=125%><size=145%><b><color=#FFE6A0><pos=18%>").Append(totalGames)
-            .Append("<pos=52%>").Append(totalWins)
-            .Append("<pos=80%>").Append((totalWinRate * 100f).ToString("0.0", CultureInfo.InvariantCulture))
-            .Append("%</color></b></size></line-height>\n")
-            .Append("<line-height=50%> </line-height>\n")
-            .Append("<line-height=115%><size=76%><b><color=#D9E8FF><pos=5%>DIFFICULTY<pos=53%>PLAYED<pos=68%>WON<pos=84%>WIN RATE</color></b></size></line-height>\n");
-
         for (int i = 0; i < gamesByDifficulty.Length; i++)
         {
-            int played = gamesByDifficulty[i];
-            int won = winsByDifficulty[i];
-            float winRate = played > 0 ? won * 100f / played : 0f;
-            summary.Append("<line-height=110%><size=86%><color=").Append(colors[i]).Append(">●</color> ")
-                .Append(labels[i]).Append("<pos=53%>").Append(played)
-                .Append("<pos=68%>").Append(won)
-                .Append("<pos=84%>").Append(winRate.ToString("0.#", CultureInfo.InvariantCulture))
-                .Append("%</size></line-height>");
-            if (i < gamesByDifficulty.Length - 1) summary.Append("\n");
+            SetAt(allTimeDifficultyPlayedValues, i, gamesByDifficulty[i].ToString(CultureInfo.InvariantCulture));
+            SetAt(allTimeDifficultyWonValues, i, winsByDifficulty[i].ToString(CultureInfo.InvariantCulture));
+            float difficultyRate = gamesByDifficulty[i] > 0
+                ? winsByDifficulty[i] * 100f / gamesByDifficulty[i]
+                : 0f;
+            SetAt(allTimeDifficultyWinRateValues, i,
+                difficultyRate.ToString("0.#", CultureInfo.InvariantCulture) + "%");
         }
 
-        return summary.ToString();
+        // Streak chip
+        if (streakNumber != null) streakNumber.text = $"{streak}";
+        if (streakDesc   != null) streakDesc.text   = "GAME WIN STREAK";
+    }
+
+    private static void SetAt(TextMeshProUGUI[] labels, int index, string value)
+    {
+        if (labels != null && index >= 0 && index < labels.Length)
+            Set(labels[index], value);
     }
     private void RefreshProgression()
     {

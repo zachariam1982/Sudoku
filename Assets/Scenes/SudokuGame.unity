@@ -2033,36 +2033,8 @@ MonoBehaviour:
   allTimePlayedValue: {fileID: 9600000000013}
   allTimeWonValue: {fileID: 9600000000033}
   allTimeWinRateValue: {fileID: 9600000000053}
-  allTimeDifficultyPlayedValues:
-  - {fileID: 0}
-  - {fileID: 0}
-  - {fileID: 0}
-  - {fileID: 0}
-  - {fileID: 0}
-  - {fileID: 0}
-  - {fileID: 0}
-  - {fileID: 0}
-  - {fileID: 0}
-  allTimeDifficultyWonValues:
-  - {fileID: 0}
-  - {fileID: 0}
-  - {fileID: 0}
-  - {fileID: 0}
-  - {fileID: 0}
-  - {fileID: 0}
-  - {fileID: 0}
-  - {fileID: 0}
-  - {fileID: 0}
-  allTimeDifficultyWinRateValues:
-  - {fileID: 0}
-  - {fileID: 0}
-  - {fileID: 0}
-  - {fileID: 0}
-  - {fileID: 0}
-  - {fileID: 0}
-  - {fileID: 0}
-  - {fileID: 0}
-  - {fileID: 0}
+  allTimeTableHeader: {fileID: 9600000000063}
+  allTimeTableDetails: {fileID: 9600000000103}
   winRateBarFill: {fileID: 0}
   streakNumber: {fileID: 906523243}
   streakDesc: {fileID: 247833112}
@@ -32241,7 +32213,7 @@ GameObject:
   - component: {fileID: 9600000000062}
   - component: {fileID: 9600000000063}
   m_Layer: 5
-  m_Name: AllTimeHeaderTable
+  m_Name: AllTimeTableHeader
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -32294,7 +32266,7 @@ MonoBehaviour:
   m_OnCullStateChanged:
     m_PersistentCalls:
       m_Calls: []
-  m_text: DIFFICULTY
+  m_text: "DIFFICULTY<pos=42%>PLAYED<pos=62%>WON<pos=79%>WIN RATE"
   m_isRightToLeft: 0
   m_fontAsset: {fileID: 11400000, guid: 8f586378b4e144a9851e7b34d9b748ee, type: 2}
   m_sharedMaterial: {fileID: 2180264, guid: 8f586378b4e144a9851e7b34d9b748ee, type: 2}
@@ -32398,10 +32370,10 @@ RectTransform:
   m_Children: []
   m_Father: {fileID: 1730154237}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
-  m_AnchorMin: {x: 0.045, y: 0.553}
-  m_AnchorMax: {x: 0.425, y: 0.597}
-  m_AnchoredPosition: {x: 67.5, y: 0}
-  m_SizeDelta: {x: -135, y: 0}
+  m_AnchorMin: {x: 0.045, y: 0.153}
+  m_AnchorMax: {x: 0.955, y: 0.597}
+  m_AnchoredPosition: {x: 0, y: 0}
+  m_SizeDelta: {x: 0, y: 0}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!222 &9600000000102
 CanvasRenderer:
@@ -32431,7 +32403,7 @@ MonoBehaviour:
   m_OnCullStateChanged:
     m_PersistentCalls:
       m_Calls: []
-  m_text: Simple
+  m_text: "Simple<pos=42%>0<pos=62%>0<pos=79%>0%\nBeginner<pos=42%>0<pos=62%>0<pos=79%>0%\nEasy<pos=42%>0<pos=62%>0<pos=79%>0%\nNovice<pos=42%>0<pos=62%>0<pos=79%>0%\nModerate<pos=42%>0<pos=62%>0<pos=79%>0%\nAdvanced<pos=42%>0<pos=62%>0<pos=79%>0%\nHard<pos=42%>0<pos=62%>0<pos=79%>0%\nExpert<pos=42%>0<pos=62%>0<pos=79%>0%\nHardest<pos=42%>0<pos=62%>0<pos=79%>0%"
   m_isRightToLeft: 0
   m_fontAsset: {fileID: 11400000, guid: 8f586378b4e144a9851e7b34d9b748ee, type: 2}
   m_sharedMaterial: {fileID: 2180264, guid: 8f586378b4e144a9851e7b34d9b748ee, type: 2}
@@ -32466,7 +32438,7 @@ MonoBehaviour:
   m_fontSizeMax: 18
   m_fontStyle: 0
   m_HorizontalAlignment: 1
-  m_VerticalAlignment: 512
+  m_VerticalAlignment: 256
   m_textAlignment: 65535
   m_characterSpacing: 0
   m_characterHorizontalScale: 1

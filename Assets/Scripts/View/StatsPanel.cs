@@ -38,10 +38,9 @@ public class StatsPanel : MonoBehaviour
     [SerializeField] private TextMeshProUGUI allTimeWonValue;
     [SerializeField] private TextMeshProUGUI allTimeWinRateValue;
 
-    [Header("All-time difficulty values")]
-    [SerializeField] private TextMeshProUGUI[] allTimeDifficultyPlayedValues;
-    [SerializeField] private TextMeshProUGUI[] allTimeDifficultyWonValues;
-    [SerializeField] private TextMeshProUGUI[] allTimeDifficultyWinRateValues;
+    [Header("All-time difficulty table")]
+    [SerializeField] private TextMeshProUGUI allTimeTableHeader;
+    [SerializeField] private TextMeshProUGUI allTimeTableDetails;
 
     [Header("All-time win-rate bar")]
     [SerializeField] private RectTransform winRateBarFill;
@@ -617,27 +616,26 @@ public class StatsPanel : MonoBehaviour
             }
         }
 
+        Set(allTimeTableHeader, "DIFFICULTY<pos=42%>PLAYED<pos=62%>WON<pos=79%>WIN RATE");
+
+        string[] difficultyRows = new string[gamesByDifficulty.Length];
         for (int i = 0; i < gamesByDifficulty.Length; i++)
         {
-            SetAt(allTimeDifficultyPlayedValues, i, gamesByDifficulty[i].ToString(CultureInfo.InvariantCulture));
-            SetAt(allTimeDifficultyWonValues, i, winsByDifficulty[i].ToString(CultureInfo.InvariantCulture));
             float difficultyRate = gamesByDifficulty[i] > 0
                 ? winsByDifficulty[i] * 100f / gamesByDifficulty[i]
                 : 0f;
-            SetAt(allTimeDifficultyWinRateValues, i,
-                difficultyRate.ToString("0.#", CultureInfo.InvariantCulture) + "%");
+            difficultyRows[i] = $"{((SudokuDifficulty)i)}<pos=42%>{gamesByDifficulty[i].ToString(CultureInfo.InvariantCulture)}" +
+                $"<pos=62%>{winsByDifficulty[i].ToString(CultureInfo.InvariantCulture)}" +
+                $"<pos=79%>{difficultyRate.ToString("0.#", CultureInfo.InvariantCulture)}%";
         }
+
+        Set(allTimeTableDetails, string.Join("\n", difficultyRows));
 
         // Streak chip
         if (streakNumber != null) streakNumber.text = $"{streak}";
         if (streakDesc   != null) streakDesc.text   = "GAME WIN STREAK";
     }
 
-    private static void SetAt(TextMeshProUGUI[] labels, int index, string value)
-    {
-        if (labels != null && index >= 0 && index < labels.Length)
-            Set(labels[index], value);
-    }
     private void RefreshProgression()
     {
         const int ProgressionWindow = 5;

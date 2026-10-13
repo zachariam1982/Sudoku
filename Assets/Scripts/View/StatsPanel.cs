@@ -280,8 +280,8 @@ public class StatsPanel : MonoBehaviour
                 icon.anchorMax = new Vector2(portraitX, 0.8625f);
                 icon.anchoredPosition = Vector2.zero;
                 icon.sizeDelta = new Vector2(50.4f, 50.4f);
-                float textShift = i == 2 ? portraitWinRateTextShift : portraitSummaryTextShift;
-                SetAllTimeSummaryTextAnchors(label, value, i, textShift);
+                float portraitTextShift = i == 2 ? portraitWinRateTextShift : portraitSummaryTextShift;
+                SetAllTimeSummaryTextAnchors(label, value, i, portraitTextShift);
                 SetAllTimeSummaryValueFontSize(i, 30f);
                 continue;
             }

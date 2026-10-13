@@ -2290,6 +2290,8 @@ MonoBehaviour:
   - {fileID: 9600000000031}
   - {fileID: 9600000000051}
   landscapeSummaryIconGap: 8
+  landscapeSummaryTextShift: 0.06
+  landscapeSummaryValueFontSize: 44
   gameplayTools: {fileID: 1023807773}
   gameplayGrid: {fileID: 1905441633}
   journeyTopBar: {fileID: 1515388379}

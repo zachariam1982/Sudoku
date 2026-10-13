@@ -74,6 +74,8 @@ public class StatsPanel : MonoBehaviour
     [SerializeField] private RectTransform[] allTimeSummaryLabels;
     [SerializeField] private RectTransform[] allTimeSummaryValues;
     [SerializeField] private float landscapeSummaryIconGap = 8f;
+    [SerializeField] private float landscapeSummaryTextShift = 0.06f;
+    [SerializeField] private float landscapeSummaryValueFontSize = 44f;
     [Header("Gameplay UI")]
     [SerializeField] private GameObject gameplayTools;
     [SerializeField] private GameObject gameplayGrid;
@@ -275,6 +277,8 @@ public class StatsPanel : MonoBehaviour
                 icon.anchorMax = new Vector2(portraitX, 0.8625f);
                 icon.anchoredPosition = Vector2.zero;
                 icon.sizeDelta = new Vector2(50.4f, 50.4f);
+                SetAllTimeSummaryTextAnchors(label, value, i, 0f);
+                SetAllTimeSummaryValueFontSize(i, 30f);
                 continue;
             }
 
@@ -286,13 +290,33 @@ public class StatsPanel : MonoBehaviour
             float top = Mathf.Max(label.anchorMax.y, value.anchorMax.y);
             float iconSize = (top - bottom) * summary.rect.height;
             float centerY = (bottom + top) * 0.5f;
-            float centerX = label.anchorMin.x - (iconSize * 0.5f + landscapeSummaryIconGap) / summary.rect.width;
+            float originalTextLeft = 0.135f + i * 0.33f;
+            float centerX = originalTextLeft - (iconSize * 0.5f + landscapeSummaryIconGap) / summary.rect.width;
 
             icon.anchorMin = new Vector2(centerX, centerY);
             icon.anchorMax = new Vector2(centerX, centerY);
             icon.anchoredPosition = Vector2.zero;
             icon.sizeDelta = new Vector2(iconSize, iconSize);
+            SetAllTimeSummaryTextAnchors(label, value, i, landscapeSummaryTextShift);
+            SetAllTimeSummaryValueFontSize(i, landscapeSummaryValueFontSize);
         }
+    }
+
+    private void SetAllTimeSummaryTextAnchors(RectTransform label, RectTransform value, int index, float shift)
+    {
+        float minX = 0.135f + index * 0.33f - shift;
+        float maxX = 0.315f + index * 0.33f - shift;
+        label.anchorMin = new Vector2(minX, label.anchorMin.y);
+        label.anchorMax = new Vector2(maxX, label.anchorMax.y);
+        value.anchorMin = new Vector2(minX, value.anchorMin.y);
+        value.anchorMax = new Vector2(maxX, value.anchorMax.y);
+    }
+
+    private void SetAllTimeSummaryValueFontSize(int index, float fontSize)
+    {
+        TextMeshProUGUI value = index == 0 ? allTimePlayedValue :
+            index == 1 ? allTimeWonValue : allTimeWinRateValue;
+        if (value != null) value.fontSize = fontSize;
     }
 
     private void ApplyCurrentJourneyResponsiveLayout()

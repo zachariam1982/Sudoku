@@ -75,7 +75,7 @@ public class StatsPanel : MonoBehaviour
     [SerializeField] private float landscapeSummaryIconGap = 8f;
     [SerializeField] private float landscapeSummaryTextShift = 0.06f;
     [SerializeField] private float landscapeWinRateTextShift = 0.03f;
-    [SerializeField] private float landscapeSummaryValueFontSize = 44f;
+    [SerializeField] private float landscapeSummaryValueFontSize = 34f;
     [SerializeField] private float portraitSummaryTextShift = 0.04f;
     [SerializeField] private float portraitWinRateTextShift = 0.02f;
     [Header("Gameplay UI")]
@@ -281,7 +281,7 @@ public class StatsPanel : MonoBehaviour
                 icon.sizeDelta = new Vector2(50.4f, 50.4f);
                 float portraitTextShift = i == 2 ? portraitWinRateTextShift : portraitSummaryTextShift;
                 SetAllTimeSummaryTextAnchors(label, value, i, portraitTextShift);
-                SetAllTimeSummaryValueFontSize(i, 30f);
+                SetAllTimeSummaryValueFontSize(i, 34f);
                 continue;
             }
 

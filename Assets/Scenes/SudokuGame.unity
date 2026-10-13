@@ -2291,6 +2291,7 @@ MonoBehaviour:
   - {fileID: 9600000000051}
   landscapeSummaryIconGap: 8
   landscapeSummaryTextShift: 0.06
+  landscapeWinRateTextShift: 0.03
   landscapeSummaryValueFontSize: 44
   gameplayTools: {fileID: 1023807773}
   gameplayGrid: {fileID: 1905441633}

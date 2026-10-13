@@ -529,10 +529,13 @@ public class StatsPanel : MonoBehaviour
             allTimeStatsText.alignment = TextAlignmentOptions.TopLeft;
             allTimeStatsText.richText = true;
             allTimeStatsText.enableWordWrapping = false;
-            allTimeStatsText.fontSize = 25f;
+            // The All Time panel is designed around a readable summary row and
+            // a compact difficulty table. A larger base size lets the rich-text
+            // sizing below establish hierarchy without shrinking every line.
+            allTimeStatsText.fontSize = 30f;
             allTimeStatsText.enableAutoSizing = true;
-            allTimeStatsText.fontSizeMin = 18f;
-            allTimeStatsText.fontSizeMax = 25f;
+            allTimeStatsText.fontSizeMin = 22f;
+            allTimeStatsText.fontSizeMax = 30f;
             allTimeStatsText.overflowMode = TextOverflowModes.Overflow;
             allTimeStatsText.text = BuildAllTimeSummary(games, wins, rate);
         }
@@ -562,24 +565,25 @@ public class StatsPanel : MonoBehaviour
         string[] labels = { "Simple", "Beginner", "Easy", "Novice", "Moderate", "Advanced", "Hard", "Expert", "Hardest" };
         string[] colors = { "#78D48B", "#55C7E8", "#62A8FF", "#62A8FF", "#B27BEA", "#B27BEA", "#F2B04F", "#EA795E", "#E65B57" };
         StringBuilder summary = new StringBuilder();
-        summary.Append("<align=left><size=125%><b><color=#FFD66B>ALL TIME</color></b></size></align>\n")
-            .Append("<size=78%><color=#AFC5E9><pos=18%>PLAYED<pos=52%>WON<pos=80%>WIN RATE</color></size>\n")
-            .Append("<size=115%><color=#FFD66B><pos=18%>").Append(totalGames)
+        summary.Append("<line-height=125%><align=left><size=135%><b><color=#F4D58A>ALL TIME</color></b></size></align></line-height>\n")
+            .Append("<line-height=92%><size=76%><color=#C5D9F5><pos=18%>PLAYED<pos=52%>WON<pos=80%>WIN RATE</color></size></line-height>\n")
+            .Append("<line-height=125%><size=145%><b><color=#FFE6A0><pos=18%>").Append(totalGames)
             .Append("<pos=52%>").Append(totalWins)
             .Append("<pos=80%>").Append((totalWinRate * 100f).ToString("0.0", CultureInfo.InvariantCulture))
-            .Append("%</color></size>\n\n")
-            .Append("<size=78%><b><color=#AFC5E9>DIFFICULTY<pos=43%>PLAYED<pos=63%>WON<pos=81%>WIN RATE</color></b></size>\n");
+            .Append("%</color></b></size></line-height>\n")
+            .Append("<line-height=50%> </line-height>\n")
+            .Append("<line-height=115%><size=76%><b><color=#D9E8FF><pos=5%>DIFFICULTY<pos=53%>PLAYED<pos=68%>WON<pos=84%>WIN RATE</color></b></size></line-height>\n");
 
         for (int i = 0; i < gamesByDifficulty.Length; i++)
         {
             int played = gamesByDifficulty[i];
             int won = winsByDifficulty[i];
             float winRate = played > 0 ? won * 100f / played : 0f;
-            summary.Append("<size=90%><color=").Append(colors[i]).Append(">●</color> ")
-                .Append(labels[i]).Append("<pos=43%>").Append(played)
-                .Append("<pos=63%>").Append(won)
-                .Append("<pos=81%>").Append(winRate.ToString("0.#", CultureInfo.InvariantCulture))
-                .Append("%</size>");
+            summary.Append("<line-height=110%><size=86%><color=").Append(colors[i]).Append(">●</color> ")
+                .Append(labels[i]).Append("<pos=53%>").Append(played)
+                .Append("<pos=68%>").Append(won)
+                .Append("<pos=84%>").Append(winRate.ToString("0.#", CultureInfo.InvariantCulture))
+                .Append("%</size></line-height>");
             if (i < gamesByDifficulty.Length - 1) summary.Append("\n");
         }
 

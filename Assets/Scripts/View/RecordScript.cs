@@ -6,6 +6,11 @@ using UnityEngine.EventSystems;
 
 public class RecordScript : MonoBehaviour, IPointerClickHandler
 {
+    // These are normalized positions in the record row so the summary keeps
+    // the same proportions as its width changes between portrait/landscape.
+    private const string DifficultySummaryPosition = "20%";
+    private const string PointsSummaryPosition = "57%";
+
     private static RecordScript _expandedRecord;
 
     private int _Id;
@@ -56,8 +61,8 @@ public class RecordScript : MonoBehaviour, IPointerClickHandler
         {
             SummaryText.text =
                 $"<pos=4%><color=#4A82FF>{record.Level}</color>" +
-                $"<pos=40%><color=#{difficultyColor}>{difficulty}</color>" +
-                $"<pos=75%><color=#FFD66B>{record.Points}</color>";
+                $"<pos={DifficultySummaryPosition}><color=#{difficultyColor}>{difficulty}</color>" +
+                $"<pos={PointsSummaryPosition}><color=#FFD66B>{record.Points}</color>";
         }
 
         int totalSeconds = Mathf.FloorToInt(record.ElapsedSeconds);

@@ -1,11 +1,8 @@
-//using System;
-//using Unity.VisualScripting;
 using UnityEngine;
 using UnityEngine.UI;
 using TMPro;
 using System.Collections.Generic;
 using UnityEngine.EventSystems;
-//using Microsoft.Unity.VisualStudio.Editor;
 
 public class RecordScript : MonoBehaviour, IPointerClickHandler
 {
@@ -14,6 +11,7 @@ public class RecordScript : MonoBehaviour, IPointerClickHandler
     private int _Id;
     private JourneyViewModel _vm;
     private Button _retakeBtn;
+    private GameObject _retakeButtonContainer;
 
     [Header("DB Values")]
     [SerializeField] private TextMeshProUGUI Level;
@@ -23,10 +21,16 @@ public class RecordScript : MonoBehaviour, IPointerClickHandler
     [Header("Expanded Details")]
     [SerializeField] private GameObject DetailsPanel;
     [SerializeField] private TextMeshProUGUI DetailsText;
-
+    [SerializeField] private TextMeshProUGUI ExpandArrow;
+    [SerializeField] private GameObject RetakeButtonContainer;
 
     public void OnPointerClick(PointerEventData eventData)
     {
+        // The row expands only when its chevron is tapped.
+        if (ExpandArrow == null ||
+            eventData.pointerCurrentRaycast.gameObject != ExpandArrow.gameObject)
+            return;
+
         ToggleDetails();
     }
 
@@ -40,8 +44,10 @@ public class RecordScript : MonoBehaviour, IPointerClickHandler
         Points.text = record.Points.ToString();
 
         int totalSeconds = Mathf.FloorToInt(record.ElapsedSeconds);
-        string completed = !string.IsNullOrEmpty(record.CompletedAt) && 
-                            record.CompletedAt.Length >= 10 ? record.CompletedAt.Substring(0, 10) : record.CompletedAt;
+        string completed = !string.IsNullOrEmpty(record.CompletedAt) &&
+                            record.CompletedAt.Length >= 10
+            ? record.CompletedAt.Substring(0, 10)
+            : record.CompletedAt;
 
         if (DetailsText != null)
         {
@@ -49,58 +55,69 @@ public class RecordScript : MonoBehaviour, IPointerClickHandler
                 $"Result: {(record.IsWon ? "Win" : "Loss")}" +
                 $"      Time: {totalSeconds / 60:00}:{totalSeconds % 60:00}" +
                 $"      Lives: {record.LivesRemaining}\n" +
-
                 $"Undo: {record.UndoUses}" +
                 $"      Pencil: {record.PencilUses}" +
                 $"      Erase: {record.EraseUses}\n" +
-
                 $"SOS: {record.SOSUses}" +
                 $"      Auto Fill: {record.AutoFillUses}\n" +
-
                 $"Completed: {completed}";
         }
 
         SudokuDifficulty difficulty = (SudokuDifficulty)record.Difficulty;
-
-        Color color_1, color_2, color_3;
-        if( UnityEngine.ColorUtility.TryParseHtmlString( ColorMap.Color_Map[difficulty].bg, out color_1) && 
-            UnityEngine.ColorUtility.TryParseHtmlString( ColorMap.Color_Map[difficulty].outline, out color_2) && 
-            UnityEngine.ColorUtility.TryParseHtmlString( ColorMap.Color_Map[difficulty].txtClr, out color_3))
+        if (ColorUtility.TryParseHtmlString(ColorMap.Color_Map[difficulty].bg, out Color color1) &&
+            ColorUtility.TryParseHtmlString(ColorMap.Color_Map[difficulty].outline, out Color color2) &&
+            ColorUtility.TryParseHtmlString(ColorMap.Color_Map[difficulty].txtClr, out Color color3))
         {
-            var rowBackGround = gameObject.GetComponent<Image>();
-            rowBackGround.color = color_1;
+            Image rowBackground = GetComponent<Image>();
+            if (rowBackground != null) rowBackground.color = color1;
 
-            var outline = gameObject.GetComponent<Outline>();
-            outline.effectColor = color_2;
+            Outline outline = GetComponent<Outline>();
+            if (outline != null) outline.effectColor = color2;
 
-            Difficulty.color = color_3;
+            Difficulty.color = color3;
         }
 
-        _retakeBtn = transform.Find("SummaryRow/Restart/Value").GetComponent<Button>();
+        Transform retakeTransform = transform.Find("SummaryRow/Restart/Value");
+        _retakeButtonContainer = RetakeButtonContainer != null
+            ? RetakeButtonContainer
+            : retakeTransform != null ? retakeTransform.gameObject : null;
+        _retakeBtn = retakeTransform != null
+            ? retakeTransform.GetComponent<Button>()
+            : null;
+
+        if (ExpandArrow == null)
+        {
+            Transform arrowTransform = transform.Find("SummaryRow/Restart/Desc");
+            if (arrowTransform != null)
+                ExpandArrow = arrowTransform.GetComponent<TextMeshProUGUI>();
+        }
+
+        if (DetailsPanel != null) DetailsPanel.SetActive(false);
+        if (_retakeButtonContainer != null) _retakeButtonContainer.SetActive(false);
+        SetExpandedArrow(false);
 
         StateChange(_vm.CurrentStateName.Value);
-
-        //Register for state change.
         _vm.CurrentStateName.OnChanged += StateChange;
-        _retakeBtn.onClick.AddListener(() => 
+
+        if (_retakeBtn != null)
         {
-            Debug.Log($"RETRY FEATURE: Button clicked for Id = {record.Id}");
-            _vm.RetryOlderGameCommand.Execute((record.Id, record.Level, record.Difficulty, record.Points));
-        });
+            _retakeBtn.onClick.AddListener(() =>
+                _vm.RetryOlderGameCommand.Execute((record.Id, record.Level, record.Difficulty, record.Points)));
+        }
     }
 
     public void ToggleDetails()
     {
         if (DetailsPanel == null) return;
 
-        bool shouldExpand = !DetailsPanel.activeSelf;
-
-        if (shouldExpand)
+        if (!DetailsPanel.activeSelf)
         {
             if (_expandedRecord != null && _expandedRecord != this)
                 _expandedRecord.CollapseDetails();
 
             DetailsPanel.SetActive(true);
+            if (_retakeButtonContainer != null) _retakeButtonContainer.SetActive(true);
+            SetExpandedArrow(true);
             _expandedRecord = this;
         }
         else
@@ -111,13 +128,21 @@ public class RecordScript : MonoBehaviour, IPointerClickHandler
 
     private void CollapseDetails()
     {
-        if (DetailsPanel != null)
-            DetailsPanel.SetActive(false);
+        if (DetailsPanel != null) DetailsPanel.SetActive(false);
+        if (_retakeButtonContainer != null) _retakeButtonContainer.SetActive(false);
+        SetExpandedArrow(false);
 
         if (_expandedRecord == this)
             _expandedRecord = null;
     }
-    public void OnDestroy()
+
+    private void SetExpandedArrow(bool expanded)
+    {
+        if (ExpandArrow != null)
+            ExpandArrow.text = expanded ? "⌄" : ">";
+    }
+
+    private void OnDestroy()
     {
         if (_expandedRecord == this)
             _expandedRecord = null;
@@ -127,16 +152,8 @@ public class RecordScript : MonoBehaviour, IPointerClickHandler
     }
 
     private void StateChange(string stateName)
-    {      
-        if( _retakeBtn == null) return; 
-
-        if(stateName == "JourneyIdleState")
-        {
-            _retakeBtn.interactable = true;
-        }
-        else
-        {
-            _retakeBtn.interactable = false;
-        }
+    {
+        if (_retakeBtn == null) return;
+        _retakeBtn.interactable = stateName == "JourneyIdleState";
     }
 }

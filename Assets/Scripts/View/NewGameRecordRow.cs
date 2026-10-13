@@ -1,8 +1,9 @@
 using TMPro;
 using UnityEngine;
+using UnityEngine.EventSystems;
 using UnityEngine.UI;
 
-public sealed class NewGameRecordRow : MonoBehaviour
+public sealed class NewGameRecordRow : MonoBehaviour, IPointerClickHandler
 {
     private static NewGameRecordRow _expandedRow;
 
@@ -29,37 +30,38 @@ public sealed class NewGameRecordRow : MonoBehaviour
 
         if (levelLabel != null)
         {
-            levelLabel.text = $"Lv {_result.Level}";
+            levelLabel.text = $"LEVEL {_result.Id:00}";
             levelLabel.color = Gold;
         }
 
         if (difficultyLabel != null)
         {
-            difficultyLabel.text = ((SudokuDifficulty)_result.Difficulty).ToString();
+            difficultyLabel.text = ((SudokuDifficulty)_result.Difficulty).ToString().ToUpperInvariant();
             difficultyLabel.color = White;
         }
 
         if (statusLabel != null)
         {
-            statusLabel.text = entry.IsCompleted ? "Won" : "Incomplete";
+            statusLabel.text = entry.IsCompleted ? "COMPLETED" : "INCOMPLETE";
             statusLabel.color = entry.IsCompleted ? Gold : IncompleteAmber;
         }
 
         if (retakeLabel != null)
         {
-            retakeLabel.text = ">";
+            retakeLabel.text = "  RETAKE";
             retakeLabel.color = Gold;
         }
 
         if (detailsText != null)
             detailsText.text = BuildUsageDetails(_result);
 
-        SetDetailsVisible(false);
+        if (detailsPanel != null)
+            detailsPanel.SetActive(false);
 
         if (retakeButton != null)
         {
-            retakeButton.onClick.RemoveListener(AccessoryButtonClicked);
-            retakeButton.onClick.AddListener(AccessoryButtonClicked);
+            retakeButton.onClick.RemoveListener(Retake);
+            retakeButton.onClick.AddListener(Retake);
         }
     }
 
@@ -70,6 +72,13 @@ public sealed class NewGameRecordRow : MonoBehaviour
                $"<pos=70%><color=#F2C66C>{result.AutoFillUses}</color></size>\n" +
                "<size=68%><color=#C2CEE3>PENCIL ACTIVATIONS</color>" +
                "<pos=36%>SOS USES<pos=70%>AUTO-FILL USES</color></size></align>";
+    }
+
+    public void OnPointerClick(PointerEventData eventData)
+    {
+        if (eventData.pointerPress != null && eventData.pointerPress.GetComponentInParent<Button>() != null)
+            return;
+        ToggleDetails();
     }
 
     private void ToggleDetails()
@@ -86,30 +95,7 @@ public sealed class NewGameRecordRow : MonoBehaviour
     {
         if (detailsPanel == null) return;
         detailsPanel.SetActive(visible);
-        if (retakeLabel != null)
-        {
-            retakeLabel.text = visible ? "RETAKE" : ">";
-            retakeLabel.color = Gold;
-        }
-
-        LayoutElement accessoryLayout = retakeButton != null
-            ? retakeButton.transform.parent.GetComponent<LayoutElement>()
-            : null;
-        if (accessoryLayout != null)
-        {
-            accessoryLayout.minWidth = visible ? 112f : 52f;
-            accessoryLayout.preferredWidth = visible ? 132f : 60f;
-        }
-
         LayoutRebuilder.MarkLayoutForRebuild(transform as RectTransform);
-    }
-
-    private void AccessoryButtonClicked()
-    {
-        if (detailsPanel != null && detailsPanel.activeSelf)
-            Retake();
-        else
-            ToggleDetails();
     }
 
     private void Retake()

@@ -13,11 +13,8 @@ public class RecordScript : MonoBehaviour, IPointerClickHandler
     private Button _retakeBtn;
     private GameObject _retakeButtonContainer;
 
-    [Header("DB Values")]
-    [SerializeField] private TextMeshProUGUI Level;
-    [SerializeField] private TextMeshProUGUI Difficulty;
-    [SerializeField] private TextMeshProUGUI Points;
-    [SerializeField] private TextMeshProUGUI Restart;
+    [Header("Summary")]
+    [SerializeField] private TextMeshProUGUI SummaryText;
     [Header("Expanded Details")]
     [SerializeField] private GameObject DetailsPanel;
     [SerializeField] private TextMeshProUGUI DetailsText;
@@ -39,9 +36,29 @@ public class RecordScript : MonoBehaviour, IPointerClickHandler
         _Id = record.Id;
         _vm = viewModel;
 
-        Level.text = record.Level.ToString();
-        Difficulty.text = ((SudokuDifficulty)record.Difficulty).ToString();
-        Points.text = record.Points.ToString();
+        SudokuDifficulty difficulty = (SudokuDifficulty)record.Difficulty;
+        string difficultyColor = "F3F6FF";
+
+        if (ColorUtility.TryParseHtmlString(ColorMap.Color_Map[difficulty].bg, out Color color1) &&
+            ColorUtility.TryParseHtmlString(ColorMap.Color_Map[difficulty].outline, out Color color2) &&
+            ColorUtility.TryParseHtmlString(ColorMap.Color_Map[difficulty].txtClr, out Color color3))
+        {
+            Image rowBackground = GetComponent<Image>();
+            if (rowBackground != null) rowBackground.color = color1;
+
+            Outline outline = GetComponent<Outline>();
+            if (outline != null) outline.effectColor = color2;
+
+            difficultyColor = ColorUtility.ToHtmlStringRGB(color3);
+        }
+
+        if (SummaryText != null)
+        {
+            SummaryText.text =
+                $"<pos=4%><color=#4A82FF>{record.Level}</color>" +
+                $"<pos=40%><color=#{difficultyColor}>{difficulty}</color>" +
+                $"<pos=75%><color=#FFD66B>{record.Points}</color>";
+        }
 
         int totalSeconds = Mathf.FloorToInt(record.ElapsedSeconds);
         string completed = !string.IsNullOrEmpty(record.CompletedAt) &&
@@ -63,20 +80,6 @@ public class RecordScript : MonoBehaviour, IPointerClickHandler
                 $"Completed: {completed}";
         }
 
-        SudokuDifficulty difficulty = (SudokuDifficulty)record.Difficulty;
-        if (ColorUtility.TryParseHtmlString(ColorMap.Color_Map[difficulty].bg, out Color color1) &&
-            ColorUtility.TryParseHtmlString(ColorMap.Color_Map[difficulty].outline, out Color color2) &&
-            ColorUtility.TryParseHtmlString(ColorMap.Color_Map[difficulty].txtClr, out Color color3))
-        {
-            Image rowBackground = GetComponent<Image>();
-            if (rowBackground != null) rowBackground.color = color1;
-
-            Outline outline = GetComponent<Outline>();
-            if (outline != null) outline.effectColor = color2;
-
-            Difficulty.color = color3;
-        }
-
         Transform retakeTransform = transform.Find("SummaryRow/Restart/Value");
         _retakeButtonContainer = RetakeButtonContainer != null
             ? RetakeButtonContainer
@@ -87,7 +90,7 @@ public class RecordScript : MonoBehaviour, IPointerClickHandler
 
         if (ExpandArrow == null)
         {
-            Transform arrowTransform = transform.Find("SummaryRow/Restart/Desc");
+            Transform arrowTransform = transform.Find("SummaryRow/Restart/ExpandArrow");
             if (arrowTransform != null)
                 ExpandArrow = arrowTransform.GetComponent<TextMeshProUGUI>();
         }

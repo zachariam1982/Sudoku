@@ -2,9 +2,8 @@ using UnityEngine;
 using UnityEngine.UI;
 using TMPro;
 using System.Collections.Generic;
-using UnityEngine.EventSystems;
 
-public class RecordScript : MonoBehaviour, IPointerClickHandler
+public class RecordScript : MonoBehaviour
 {
     // Summary positions are normalized to the row width. Portrait rows use
     // wider spacing between difficulty and points to avoid text/icon overlap.
@@ -23,6 +22,7 @@ public class RecordScript : MonoBehaviour, IPointerClickHandler
     private int _Id;
     private JourneyViewModel _vm;
     private Button _retakeBtn;
+    private Button _expandArrowButton;
     private GameObject _retakeButtonContainer;
     private RectTransform _difficultyIcon;
     private RectTransform _pointsIcon;
@@ -60,16 +60,6 @@ public class RecordScript : MonoBehaviour, IPointerClickHandler
     [SerializeField] private TextMeshProUGUI DetailsText;
     [SerializeField] private TextMeshProUGUI ExpandArrow;
     [SerializeField] private GameObject RetakeButtonContainer;
-
-    public void OnPointerClick(PointerEventData eventData)
-    {
-        // The row expands only when its chevron is tapped.
-        if (ExpandArrow == null ||
-            eventData.pointerCurrentRaycast.gameObject != ExpandArrow.gameObject)
-            return;
-
-        ToggleDetails();
-    }
 
     public void Setup(JourneyViewModel viewModel, GameRecord record)
     {
@@ -167,6 +157,21 @@ public class RecordScript : MonoBehaviour, IPointerClickHandler
             Transform arrowTransform = transform.Find("SummaryRow/Restart/ExpandArrow");
             if (arrowTransform != null)
                 ExpandArrow = arrowTransform.GetComponent<TextMeshProUGUI>();
+        }
+
+        if (ExpandArrow != null)
+        {
+            ExpandArrow.raycastTarget = true;
+            _expandArrowButton = ExpandArrow.GetComponent<Button>();
+            if (_expandArrowButton == null)
+                _expandArrowButton = ExpandArrow.gameObject.AddComponent<Button>();
+
+            _expandArrowButton.transition = Selectable.Transition.None;
+            _expandArrowButton.targetGraphic = ExpandArrow;
+            Navigation arrowNavigation = _expandArrowButton.navigation;
+            arrowNavigation.mode = Navigation.Mode.None;
+            _expandArrowButton.navigation = arrowNavigation;
+            _expandArrowButton.onClick.AddListener(ToggleDetails);
         }
 
         if (DetailsPanel != null) DetailsPanel.SetActive(false);
@@ -373,6 +378,8 @@ public class RecordScript : MonoBehaviour, IPointerClickHandler
         {
             CollapseDetails();
         }
+
+        LayoutRebuilder.MarkLayoutForRebuild(transform as RectTransform);
     }
 
     private void CollapseDetails()
@@ -380,6 +387,8 @@ public class RecordScript : MonoBehaviour, IPointerClickHandler
         if (DetailsPanel != null) DetailsPanel.SetActive(false);
         if (_retakeButtonContainer != null) _retakeButtonContainer.SetActive(false);
         SetExpandedArrow(false);
+
+        LayoutRebuilder.MarkLayoutForRebuild(transform as RectTransform);
 
         if (_expandedRecord == this)
             _expandedRecord = null;
@@ -398,6 +407,9 @@ public class RecordScript : MonoBehaviour, IPointerClickHandler
 
         if (_vm != null)
             _vm.CurrentStateName.OnChanged -= StateChange;
+
+        if (_expandArrowButton != null)
+            _expandArrowButton.onClick.RemoveListener(ToggleDetails);
     }
 
     private void StateChange(string stateName)

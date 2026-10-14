@@ -6,10 +6,13 @@ using UnityEngine.EventSystems;
 
 public class RecordScript : MonoBehaviour, IPointerClickHandler
 {
-    // These are normalized positions in the record row so the summary keeps
-    // the same proportions as its width changes between portrait/landscape.
-    private const string DifficultySummaryPosition = "20%";
-    private const string PointsSummaryPosition = "57%";
+    // Summary positions are normalized to the row width. Portrait rows use
+    // wider spacing between difficulty and points to avoid text/icon overlap.
+    private const float LandscapeDifficultyPosition = 0.20f;
+    private const float LandscapePointsPosition = 0.57f;
+    private const float PortraitDifficultyPosition = 0.23f;
+    private const float PortraitPointsPosition = 0.70f;
+    private const float SummaryIconGap = 4f;
 
     private static RecordScript _expandedRecord;
 
@@ -17,6 +20,14 @@ public class RecordScript : MonoBehaviour, IPointerClickHandler
     private JourneyViewModel _vm;
     private Button _retakeBtn;
     private GameObject _retakeButtonContainer;
+    private RectTransform _difficultyIcon;
+    private RectTransform _pointsIcon;
+    private int _summaryLevel;
+    private int _summaryPoints;
+    private string _summaryDifficulty;
+    private string _summaryDifficultyColor;
+    private bool _hasAppliedSummaryLayout;
+    private bool _lastSummaryLayoutWasPortrait;
 
     [Header("Summary")]
     [SerializeField] private TextMeshProUGUI SummaryText;
@@ -43,6 +54,9 @@ public class RecordScript : MonoBehaviour, IPointerClickHandler
 
         SudokuDifficulty difficulty = (SudokuDifficulty)record.Difficulty;
         string difficultyColor = "F3F6FF";
+        _summaryLevel = record.Level;
+        _summaryPoints = record.Points;
+        _summaryDifficulty = difficulty.ToString();
 
         if (ColorUtility.TryParseHtmlString(ColorMap.Color_Map[difficulty].bg, out Color color1) &&
             ColorUtility.TryParseHtmlString(ColorMap.Color_Map[difficulty].outline, out Color color2) &&
@@ -57,13 +71,10 @@ public class RecordScript : MonoBehaviour, IPointerClickHandler
             difficultyColor = ColorUtility.ToHtmlStringRGB(color3);
         }
 
-        if (SummaryText != null)
-        {
-            SummaryText.text =
-                $"<pos=4%><color=#4A82FF>{record.Level}</color>" +
-                $"<pos={DifficultySummaryPosition}><color=#{difficultyColor}>{difficulty}</color>" +
-                $"<pos={PointsSummaryPosition}><color=#FFD66B>{record.Points}</color>";
-        }
+        _summaryDifficultyColor = difficultyColor;
+        _difficultyIcon = transform.Find("SummaryRow/DifficultyIcon") as RectTransform;
+        _pointsIcon = transform.Find("SummaryRow/PointsIcon") as RectTransform;
+        ApplyResponsiveSummaryLayout(Screen.height > Screen.width);
 
         int totalSeconds = Mathf.FloorToInt(record.ElapsedSeconds);
         string completed = !string.IsNullOrEmpty(record.CompletedAt) &&
@@ -112,6 +123,60 @@ public class RecordScript : MonoBehaviour, IPointerClickHandler
             _retakeBtn.onClick.AddListener(() =>
                 _vm.RetryOlderGameCommand.Execute((record.Id, record.Level, record.Difficulty, record.Points)));
         }
+    }
+
+    private void LateUpdate()
+    {
+        if (SummaryText == null || _summaryDifficulty == null)
+            return;
+
+        bool isPortrait = Screen.height > Screen.width;
+        if (!_hasAppliedSummaryLayout || isPortrait != _lastSummaryLayoutWasPortrait)
+            ApplyResponsiveSummaryLayout(isPortrait);
+    }
+
+    private void ApplyResponsiveSummaryLayout(bool isPortrait)
+    {
+        if (SummaryText == null || _summaryDifficulty == null)
+            return;
+
+        float difficultyPosition = isPortrait
+            ? PortraitDifficultyPosition
+            : LandscapeDifficultyPosition;
+        float pointsPosition = isPortrait
+            ? PortraitPointsPosition
+            : LandscapePointsPosition;
+
+        SummaryText.text =
+            $"<pos=4%><color=#4A82FF>{_summaryLevel}</color>" +
+            $"<pos={difficultyPosition * 100f:0}%><color=#{_summaryDifficultyColor}>{_summaryDifficulty}</color>" +
+            $"<pos={pointsPosition * 100f:0}%><color=#FFD66B>{_summaryPoints}</color>";
+
+        // Keep the landscape typography unchanged, and reduce only the
+        // portrait summary slightly to preserve a clear gap between columns.
+        float summaryFontSize = isPortrait ? 56f : 64f;
+        SummaryText.fontSize = summaryFontSize;
+        SummaryText.fontSizeMax = summaryFontSize;
+
+        PositionSummaryIcon(_difficultyIcon, difficultyPosition);
+        PositionSummaryIcon(_pointsIcon, pointsPosition);
+
+        _lastSummaryLayoutWasPortrait = isPortrait;
+        _hasAppliedSummaryLayout = true;
+    }
+
+    private static void PositionSummaryIcon(RectTransform icon, float textPosition)
+    {
+        if (icon == null)
+            return;
+
+        Vector2 anchorMin = icon.anchorMin;
+        Vector2 anchorMax = icon.anchorMax;
+        anchorMin.x = textPosition;
+        anchorMax.x = textPosition;
+        icon.anchorMin = anchorMin;
+        icon.anchorMax = anchorMax;
+        icon.anchoredPosition = new Vector2(-icon.rect.width * 0.5f - SummaryIconGap, 0f);
     }
 
     public void ToggleDetails()

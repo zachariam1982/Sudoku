@@ -128,7 +128,10 @@ public class SudokuGrid : MonoBehaviour
             for (int col = 0;col < 9;col++)
             {
                 SudokuCell cell = cells[row, col];
-                if (cell == null || cell.pencilCell == null) continue;
+                if (cell == null) continue;
+
+                cell.SetPencilModeActive(isPencilMode);
+                if (cell.pencilCell == null) continue;
 
                 // Always write the active state. Otherwise a pencil panel
                 // left visible by the previous game mode can leak into the

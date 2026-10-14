@@ -40,6 +40,7 @@ public class SudokuCell : MonoBehaviour
     private bool            isRelatedHighlighted = false;
     private bool            isSelected = false;
     private bool            isPickerHighlighted = false;
+    private bool            isPencilModeActive = false;
     private Color           baseColor;
     private Button[] _pencilButtons;
     private int _pencilCandidateMask;
@@ -56,6 +57,11 @@ public class SudokuCell : MonoBehaviour
             255,
             255,
             255);
+
+    // GridCellFrame uses an opaque one-pixel edge and a translucent glass
+    // fill. Raise the image tint alpha in pencil mode so the edge stays easy
+    // to follow between the small candidate digits without clouding the fill.
+    private const float PencilModeBoundaryOpacity = 0.28f;
 
     // Keep the board digits in the same bright, playful palette as the
     // variant-selection artwork. The sprite sheet supplies the shading;
@@ -277,6 +283,14 @@ public class SudokuCell : MonoBehaviour
         ApplyBackgroundColor();
     }
 
+    public void SetPencilModeActive(bool active)
+    {
+        if (isPencilModeActive == active) return;
+
+        isPencilModeActive = active;
+        ApplyBackgroundColor();
+    }
+
     private void ApplyBackgroundColor()
     {
         if (isPickerHighlighted)
@@ -295,7 +309,13 @@ public class SudokuCell : MonoBehaviour
             baseColor = IsGiven ? givenColor : normalColor;
 
         if (background != null)
-            background.color = baseColor;
+        {
+            Color displayColor = baseColor;
+            if (isPencilModeActive)
+                displayColor.a = Mathf.Max(displayColor.a, PencilModeBoundaryOpacity);
+
+            background.color = displayColor;
+        }
 
         if (selectionGlow != null)
             selectionGlow.gameObject.SetActive(isSelected || isPickerHighlighted);

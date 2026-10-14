@@ -15,6 +15,8 @@ public class RecordScript : MonoBehaviour, IPointerClickHandler
     private const float SummaryIconGap = 4f;
     private const float LandscapeResultIconGap = 20f;
     private const float PortraitResultIconGap = 12f;
+    private const float RestartInlineGap = 12f;
+    private const float RestartRowHeight = 84f;
 
     private static RecordScript _expandedRecord;
 
@@ -26,6 +28,21 @@ public class RecordScript : MonoBehaviour, IPointerClickHandler
     private RectTransform _pointsIcon;
     private Image _resultIcon;
     private RectTransform _resultIconRect;
+    private RectTransform _restartRect;
+    private RectTransform _summaryRowRect;
+    private Transform _originalRestartParent;
+    private GameObject _restartBelowRow;
+    private LayoutElement _restartLayoutElement;
+    private LayoutElement _restartBelowRowLayoutElement;
+    private Vector2 _inlineRestartAnchorMin;
+    private Vector2 _inlineRestartAnchorMax;
+    private Vector2 _inlineRestartAnchoredPosition;
+    private Vector2 _inlineRestartSizeDelta;
+    private float _originalRestartPreferredWidth;
+    private float _originalRestartPreferredHeight;
+    private float _originalRestartFlexibleWidth;
+    private float _originalRestartFlexibleHeight;
+    private bool _restartIsBelowRow;
     private int _summaryLevel;
     private int _summaryPoints;
     private string _summaryDifficulty;
@@ -79,6 +96,7 @@ public class RecordScript : MonoBehaviour, IPointerClickHandler
         }
 
         _summaryDifficultyColor = difficultyColor;
+        _summaryRowRect = SummaryText != null ? SummaryText.rectTransform : null;
         _difficultyIcon = transform.Find("SummaryRow/DifficultyIcon") as RectTransform;
         _pointsIcon = transform.Find("SummaryRow/PointsIcon") as RectTransform;
         _resultIcon = ResultIcon != null
@@ -120,6 +138,30 @@ public class RecordScript : MonoBehaviour, IPointerClickHandler
             ? retakeTransform.GetComponent<Button>()
             : null;
 
+        Transform restartTransform = transform.Find("SummaryRow/Restart");
+        if (restartTransform != null)
+        {
+            _restartRect = restartTransform as RectTransform;
+            _originalRestartParent = restartTransform.parent;
+            _restartLayoutElement = restartTransform.GetComponent<LayoutElement>();
+            if (_restartRect != null)
+            {
+                _inlineRestartAnchorMin = _restartRect.anchorMin;
+                _inlineRestartAnchorMax = _restartRect.anchorMax;
+                _inlineRestartAnchoredPosition = _restartRect.anchoredPosition;
+                _inlineRestartSizeDelta = _restartRect.sizeDelta;
+            }
+            if (_restartLayoutElement != null)
+            {
+                _originalRestartPreferredWidth = _restartLayoutElement.preferredWidth;
+                _originalRestartPreferredHeight = _restartLayoutElement.preferredHeight;
+                _originalRestartFlexibleWidth = _restartLayoutElement.flexibleWidth;
+                _originalRestartFlexibleHeight = _restartLayoutElement.flexibleHeight;
+            }
+
+            CreateRestartBelowRow();
+        }
+
         if (ExpandArrow == null)
         {
             Transform arrowTransform = transform.Find("SummaryRow/Restart/ExpandArrow");
@@ -149,6 +191,8 @@ public class RecordScript : MonoBehaviour, IPointerClickHandler
         bool isPortrait = Screen.height > Screen.width;
         if (!_hasAppliedSummaryLayout || isPortrait != _lastSummaryLayoutWasPortrait)
             ApplyResponsiveSummaryLayout(isPortrait);
+
+        ApplyResponsiveRestartPlacement();
     }
 
     private void ApplyResponsiveSummaryLayout(bool isPortrait)
@@ -180,6 +224,101 @@ public class RecordScript : MonoBehaviour, IPointerClickHandler
 
         _lastSummaryLayoutWasPortrait = isPortrait;
         _hasAppliedSummaryLayout = true;
+    }
+
+    private void CreateRestartBelowRow()
+    {
+        if (_restartRect == null || _restartBelowRow != null)
+            return;
+
+        _restartBelowRow = new GameObject(
+            "RestartBelowRow",
+            typeof(RectTransform),
+            typeof(LayoutElement),
+            typeof(HorizontalLayoutGroup));
+        RectTransform rowRect = _restartBelowRow.GetComponent<RectTransform>();
+        rowRect.SetParent(transform, false);
+        rowRect.SetSiblingIndex(_summaryRowRect != null
+            ? _summaryRowRect.GetSiblingIndex() + 1
+            : 1);
+
+        _restartBelowRowLayoutElement = _restartBelowRow.GetComponent<LayoutElement>();
+        _restartBelowRowLayoutElement.minHeight = RestartRowHeight;
+        _restartBelowRowLayoutElement.preferredHeight = RestartRowHeight;
+        _restartBelowRowLayoutElement.flexibleHeight = 0f;
+        _restartBelowRowLayoutElement.flexibleWidth = 1f;
+
+        HorizontalLayoutGroup rowLayout = _restartBelowRow.GetComponent<HorizontalLayoutGroup>();
+        rowLayout.padding = new RectOffset(0, 28, 0, 0);
+        rowLayout.childAlignment = TextAnchor.MiddleRight;
+        rowLayout.childControlWidth = true;
+        rowLayout.childControlHeight = true;
+        rowLayout.childForceExpandWidth = false;
+        rowLayout.childForceExpandHeight = false;
+
+        _restartBelowRow.SetActive(false);
+    }
+
+    private void ApplyResponsiveRestartPlacement()
+    {
+        if (_summaryRowRect == null || _restartRect == null || _restartBelowRow == null)
+            return;
+
+        float rowWidth = _summaryRowRect.rect.width;
+        if (rowWidth <= 0f)
+            return;
+
+        // Keep Restart inline only when it clears the result icon with a
+        // readable gap. Otherwise reserve a full row beneath the summary.
+        bool isPortrait = Screen.height > Screen.width;
+        float pointsPosition = isPortrait ? PortraitPointsPosition : LandscapePointsPosition;
+        float resultIconGap = isPortrait ? PortraitResultIconGap : LandscapeResultIconGap;
+        float pointsWidth = SummaryText.GetPreferredValues("999").x;
+        float iconWidth = _resultIconRect != null ? _resultIconRect.rect.width : 52f;
+        float resultRight = (pointsPosition - 0.5f) * rowWidth +
+                            pointsWidth + resultIconGap + iconWidth;
+        float restartWidth = _inlineRestartSizeDelta.x;
+        float restartLeft = (_inlineRestartAnchorMin.x - 0.5f) * rowWidth - restartWidth * 0.5f;
+        bool needsBelowRow = restartLeft - resultRight < RestartInlineGap;
+
+        if (needsBelowRow == _restartIsBelowRow)
+            return;
+
+        if (needsBelowRow)
+        {
+            _restartRect.SetParent(_restartBelowRow.transform, false);
+            _restartBelowRow.SetActive(true);
+            _restartRect.anchorMin = new Vector2(0.5f, 0.5f);
+            _restartRect.anchorMax = new Vector2(0.5f, 0.5f);
+            _restartRect.anchoredPosition = Vector2.zero;
+            _restartRect.sizeDelta = _inlineRestartSizeDelta;
+            if (_restartLayoutElement != null)
+            {
+                _restartLayoutElement.preferredWidth = _inlineRestartSizeDelta.x;
+                _restartLayoutElement.preferredHeight = RestartRowHeight;
+                _restartLayoutElement.flexibleWidth = 0f;
+                _restartLayoutElement.flexibleHeight = 0f;
+            }
+        }
+        else
+        {
+            _restartBelowRow.SetActive(false);
+            _restartRect.SetParent(_originalRestartParent, false);
+            _restartRect.anchorMin = _inlineRestartAnchorMin;
+            _restartRect.anchorMax = _inlineRestartAnchorMax;
+            _restartRect.anchoredPosition = _inlineRestartAnchoredPosition;
+            _restartRect.sizeDelta = _inlineRestartSizeDelta;
+            if (_restartLayoutElement != null)
+            {
+                _restartLayoutElement.preferredWidth = _originalRestartPreferredWidth;
+                _restartLayoutElement.preferredHeight = _originalRestartPreferredHeight;
+                _restartLayoutElement.flexibleWidth = _originalRestartFlexibleWidth;
+                _restartLayoutElement.flexibleHeight = _originalRestartFlexibleHeight;
+            }
+        }
+
+        _restartIsBelowRow = needsBelowRow;
+        LayoutRebuilder.MarkLayoutForRebuild(transform as RectTransform);
     }
 
     private void PositionResultIcon(bool isPortrait, float pointsPosition)

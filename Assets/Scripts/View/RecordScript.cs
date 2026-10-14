@@ -104,16 +104,26 @@ public class RecordScript : MonoBehaviour
 
         if (DetailsText != null)
         {
+            string labelColor = "#9FB8D8";
+            string valueColor = "#F3F6FF";
+            string resultColor = record.IsWon ? "#83E6B1" : "#FF9B9B";
+            string time = $"{totalSeconds / 60:00}:{totalSeconds % 60:00}";
+
+            // Use a fixed second-column start rather than runs of spaces, which
+            // drift with the proportional font and make the details hard to scan.
             DetailsText.text =
-                $"Result: {(record.IsWon ? "Win" : "Loss")}" +
-                $"      Time: {totalSeconds / 60:00}:{totalSeconds % 60:00}" +
-                $"      Lives: {record.LivesRemaining}\n" +
-                $"Undo: {record.UndoUses}" +
-                $"      Pencil: {record.PencilUses}" +
-                $"      Erase: {record.EraseUses}\n" +
-                $"SOS: {record.SOSUses}" +
-                $"      Auto Fill: {record.AutoFillUses}\n" +
-                $"Completed: {completed}";
+                $"<color={labelColor}>RESULT</color>  <color={resultColor}><b>{(record.IsWon ? "WON" : "LOSS")}</b></color>" +
+                $"<pos=50%><color={labelColor}>TIME</color>  <color={valueColor}><b>{time}</b></color>\n" +
+                $"<color={labelColor}>LIVES</color>  <color={valueColor}><b>{record.LivesRemaining}</b></color>" +
+                $"<pos=50%><color={labelColor}>UNDO</color>  <color={valueColor}><b>{record.UndoUses}</b></color>\n" +
+                $"<color={labelColor}>PENCIL</color>  <color={valueColor}><b>{record.PencilUses}</b></color>" +
+                $"<pos=50%><color={labelColor}>ERASE</color>  <color={valueColor}><b>{record.EraseUses}</b></color>\n" +
+                $"<color={labelColor}>SOS</color>  <color={valueColor}><b>{record.SOSUses}</b></color>" +
+                $"<pos=50%><color={labelColor}>AUTO-FILL</color>  <color={valueColor}><b>{record.AutoFillUses}</b></color>\n" +
+                $"<align=center><color={labelColor}>COMPLETED</color>  <color={valueColor}><b>{completed}</b></color></align>";
+            DetailsText.fontSize = 28f;
+            DetailsText.fontSizeMax = 28f;
+            DetailsText.lineSpacing = 3f;
         }
 
         Transform retakeTransform = transform.Find("SummaryRow/Restart/Value");

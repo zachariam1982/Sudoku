@@ -1243,6 +1243,7 @@ GameObject:
   - component: {fileID: 115060421}
   - component: {fileID: 9300000000010}
   - component: {fileID: 9300000000011}
+  - component: {fileID: 9300000000014}
   m_Layer: 5
   m_Name: CurrentJourneyAeroStatsGlass
   m_TagString: Untagged
@@ -14072,6 +14073,7 @@ GameObject:
   - component: {fileID: 9300000000100}
   - component: {fileID: 9300000000101}
   - component: {fileID: 9300000000102}
+  - component: {fileID: 9300000000103}
   m_Layer: 5
   m_Name: AllTimeGrid
   m_TagString: Untagged
@@ -15045,6 +15047,7 @@ GameObject:
   - component: {fileID: 9800000000010}
   - component: {fileID: 9800000000011}
   - component: {fileID: 9800000000012}
+  - component: {fileID: 9800000000013}
   m_Layer: 5
   m_Name: ProgressionSection
   m_TagString: Untagged
@@ -29654,6 +29657,21 @@ MonoBehaviour:
   m_ChildScaleWidth: 0
   m_ChildScaleHeight: 0
   m_ReverseArrangement: 0
+--- !u!114 &9300000000014
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 115060419}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: e19747de3f5aca642ab2be37e372fb86, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: UnityEngine.UI::UnityEngine.UI.Outline
+  m_EffectColor: {r: 1, g: 1, b: 1, a: 1}
+  m_EffectDistance: {x: 1, y: -1}
+  m_UseGraphicAlpha: 1
 --- !u!114 &9300000000100
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -29712,6 +29730,21 @@ MonoBehaviour:
   m_FlexibleWidth: 1
   m_FlexibleHeight: 0
   m_LayoutPriority: 1
+--- !u!114 &9300000000103
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1730154236}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: e19747de3f5aca642ab2be37e372fb86, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: UnityEngine.UI::UnityEngine.UI.Outline
+  m_EffectColor: {r: 1, g: 1, b: 1, a: 1}
+  m_EffectDistance: {x: 1, y: -1}
+  m_UseGraphicAlpha: 1
 --- !u!1 &9300000000201
 GameObject:
   m_ObjectHideFlags: 0
@@ -31818,6 +31851,21 @@ MonoBehaviour:
   m_FlexibleWidth: 1
   m_FlexibleHeight: 0
   m_LayoutPriority: 1
+--- !u!114 &9800000000013
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1858270210}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: e19747de3f5aca642ab2be37e372fb86, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: UnityEngine.UI::UnityEngine.UI.Outline
+  m_EffectColor: {r: 1, g: 1, b: 1, a: 1}
+  m_EffectDistance: {x: 1, y: -1}
+  m_UseGraphicAlpha: 1
 --- !u!1 &9800000000020
 GameObject:
   m_ObjectHideFlags: 0

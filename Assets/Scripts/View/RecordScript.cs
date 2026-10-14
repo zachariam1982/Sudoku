@@ -62,8 +62,8 @@ public class RecordScript : MonoBehaviour, IPointerClickHandler
             ColorUtility.TryParseHtmlString(ColorMap.Color_Map[difficulty].outline, out Color color2) &&
             ColorUtility.TryParseHtmlString(ColorMap.Color_Map[difficulty].txtClr, out Color color3))
         {
-            Image rowBackground = GetComponent<Image>();
-            if (rowBackground != null) rowBackground.color = color1;
+            //Image rowBackground = GetComponent<Image>();
+            //if (rowBackground != null) rowBackground.color = color1;
 
             Outline outline = GetComponent<Outline>();
             if (outline != null) outline.effectColor = color2;

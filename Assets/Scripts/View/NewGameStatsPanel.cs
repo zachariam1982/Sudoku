@@ -35,16 +35,15 @@ public sealed class NewGameStatsPanel : MonoBehaviour
     [SerializeField] private LayoutElement currentGameUsageRow;
     [SerializeField] private TextMeshProUGUI currentGameHeading;
     [Header("All-time stats")]
-    [SerializeField] private TextMeshProUGUI simpleStats;
-    [SerializeField] private TextMeshProUGUI beginnerStats;
-    [SerializeField] private TextMeshProUGUI easyStats;
-    [SerializeField] private TextMeshProUGUI noviceStats;
-    [SerializeField] private TextMeshProUGUI moderateStats;
-    [SerializeField] private TextMeshProUGUI advancedStats;
-    [SerializeField] private TextMeshProUGUI hardStats;
-    [SerializeField] private TextMeshProUGUI expertStats;
-    [SerializeField] private TextMeshProUGUI hardestStats;
-    [SerializeField] private TextMeshProUGUI difficultyTableText;
+    [SerializeField] private TextMeshProUGUI allTimeTitle;
+    [SerializeField] private TextMeshProUGUI allTimePlayedValue;
+    [SerializeField] private TextMeshProUGUI allTimeWonValue;
+    [SerializeField] private TextMeshProUGUI allTimeWinRateValue;
+    [SerializeField] private TextMeshProUGUI allTimeTableHeader;
+    [SerializeField] private TextMeshProUGUI allTimeTableDetails;
+    [SerializeField] private RectTransform[] allTimeSummaryIcons;
+    [SerializeField] private RectTransform[] allTimeSummaryLabels;
+    [SerializeField] private RectTransform[] allTimeSummaryValues;
     [Header("Gameplay UI")]
     [SerializeField] private GameObject gameplayTools;
     [SerializeField] private GameObject gameplayGrid;
@@ -79,6 +78,8 @@ public sealed class NewGameStatsPanel : MonoBehaviour
             recordsScrollRect.onValueChanged.AddListener(OnRecordsScrolled);
         _lastLandscape = Screen.width > Screen.height;
         ApplyCurrentGameResponsiveLayout(_lastLandscape);
+        ApplyAllTimeSummaryResponsiveLayout(_lastLandscape);
+        StartCoroutine(RefreshAllTimeLayoutAfterCanvasBuild());
     }
 
     private void Update()
@@ -87,6 +88,7 @@ public sealed class NewGameStatsPanel : MonoBehaviour
         if (landscape == _lastLandscape) return;
         _lastLandscape = landscape;
         ApplyCurrentGameResponsiveLayout(landscape);
+        ApplyAllTimeSummaryResponsiveLayout(landscape);
     }
 
     private void CacheCurrentGameTypography()
@@ -235,45 +237,98 @@ public sealed class NewGameStatsPanel : MonoBehaviour
         float winRate = stats.TotalGames > 0
             ? stats.CompletedGames * 100f / stats.TotalGames
             : 0f;
-        StringBuilder table = new StringBuilder();
-        table.Append("<align=center><b><size=110%><color=#FFD66B>ALL TIME</color></size></b></align>\n\n")
-            .Append("<size=78%><color=#AFC5E9><pos=14%>PLAYED<pos=44%>WON<pos=72%>WIN RATE</color></size>\n")
-            .Append("<color=#FFD66B><pos=14%>").Append(stats.TotalGames)
-            .Append("<pos=44%>").Append(stats.CompletedGames)
-            .Append("<pos=72%>").Append(winRate.ToString("0.0", CultureInfo.InvariantCulture))
-            .Append("%</color>\n\n")
-            .Append("<align=center><b><color=#FFD66B>BY DIFFICULTY</color></b></align>\n\n")
-            .Append("<size=78%><color=#AFC5E9>DIFFICULTY</color><pos=43%><color=#AFC5E9>PLAYED</color><pos=62%><color=#AFC5E9>WON</color><pos=81%><color=#AFC5E9>WIN RATE</color></size>\n");
+        Set(allTimeTitle, "ALL TIME");
+        Set(allTimePlayedValue, stats.TotalGames.ToString());
+        Set(allTimeWonValue, stats.CompletedGames.ToString());
+        Set(allTimeWinRateValue, winRate.ToString("0.0", CultureInfo.InvariantCulture) + "%");
 
-        AppendDifficultyRow(table, "SIMPLE", SudokuDifficulty.Simple, simpleStats);
-        AppendDifficultyRow(table, "BEGINNER", SudokuDifficulty.Beginner, beginnerStats);
-        AppendDifficultyRow(table, "EASY", SudokuDifficulty.Easy, easyStats);
-        AppendDifficultyRow(table, "NOVICE", SudokuDifficulty.Novice, noviceStats);
-        AppendDifficultyRow(table, "MODERATE", SudokuDifficulty.Moderate, moderateStats);
-        AppendDifficultyRow(table, "ADVANCED", SudokuDifficulty.Advanced, advancedStats);
-        AppendDifficultyRow(table, "HARD", SudokuDifficulty.Hard, hardStats);
-        AppendDifficultyRow(table, "EXPERT", SudokuDifficulty.Expert, expertStats);
-        AppendDifficultyRow(table, "HARDEST", SudokuDifficulty.Hardest, hardestStats);
+        if (allTimeTableHeader != null)
+            allTimeTableHeader.text = "<color=#AFC5E9>DIFFICULTY<pos=42%>PLAYED<pos=62%>WON<pos=79%>WIN RATE</color>";
 
-        if (difficultyTableText != null)
-            difficultyTableText.text = table.ToString();
+        StringBuilder rows = new StringBuilder();
+        AppendDifficultyRow(rows, "SIMPLE", SudokuDifficulty.Simple);
+        AppendDifficultyRow(rows, "BEGINNER", SudokuDifficulty.Beginner);
+        AppendDifficultyRow(rows, "EASY", SudokuDifficulty.Easy);
+        AppendDifficultyRow(rows, "NOVICE", SudokuDifficulty.Novice);
+        AppendDifficultyRow(rows, "MODERATE", SudokuDifficulty.Moderate);
+        AppendDifficultyRow(rows, "ADVANCED", SudokuDifficulty.Advanced);
+        AppendDifficultyRow(rows, "HARD", SudokuDifficulty.Hard);
+        AppendDifficultyRow(rows, "EXPERT", SudokuDifficulty.Expert);
+        AppendDifficultyRow(rows, "HARDEST", SudokuDifficulty.Hardest);
+        if (allTimeTableDetails != null)
+            allTimeTableDetails.text = rows.ToString();
     }
 
-    private static void AppendDifficultyRow(StringBuilder table, string label, SudokuDifficulty difficulty, TextMeshProUGUI legacyValue)
+    private static void AppendDifficultyRow(StringBuilder table, string label, SudokuDifficulty difficulty)
     {
         NewGameDifficultyStats tier = NewGameResultDatabase.GetDifficultyStats(difficulty);
-        if (legacyValue != null)
-            legacyValue.text = tier.GamesCompleted.ToString() + "/" + tier.GamesStarted.ToString();
-
         float winRate = tier.GamesStarted > 0
             ? tier.GamesCompleted * 100f / tier.GamesStarted
             : 0f;
 
+        if (table.Length > 0) table.Append('\n');
         table.Append("<color=#F3F6FF>").Append(label).Append("</color>")
-            .Append("<pos=43%><color=#FFD66B>").Append(tier.GamesStarted).Append("</color>")
+            .Append("<pos=42%><color=#FFD66B>").Append(tier.GamesStarted).Append("</color>")
             .Append("<pos=62%><color=#FFD66B>").Append(tier.GamesCompleted).Append("</color>")
-            .Append("<pos=81%><color=#FFD66B>")
-            .Append(winRate.ToString("0.#", CultureInfo.InvariantCulture)).Append("%</color>\n");
+            .Append("<pos=79%><color=#FFD66B>")
+            .Append(winRate.ToString("0.#", CultureInfo.InvariantCulture)).Append("%</color>");
+    }
+
+    private void ApplyAllTimeSummaryResponsiveLayout(bool landscape)
+    {
+        if (allTimeSummaryIcons == null || allTimeSummaryLabels == null || allTimeSummaryValues == null ||
+            allTimeSummaryIcons.Length < 3 || allTimeSummaryLabels.Length < 3 || allTimeSummaryValues.Length < 3)
+            return;
+
+        for (int i = 0; i < 3; i++)
+        {
+            RectTransform icon = allTimeSummaryIcons[i];
+            RectTransform label = allTimeSummaryLabels[i];
+            RectTransform value = allTimeSummaryValues[i];
+            if (icon == null || label == null || value == null) continue;
+
+            float shift = landscape ? (i == 2 ? 0.03f : 0.06f) : (i == 2 ? 0.02f : 0.04f);
+            float minX = 0.135f + i * 0.33f - shift;
+            float maxX = 0.315f + i * 0.33f - shift;
+            label.anchorMin = new Vector2(minX, label.anchorMin.y);
+            label.anchorMax = new Vector2(maxX, label.anchorMax.y);
+            value.anchorMin = new Vector2(minX, value.anchorMin.y);
+            value.anchorMax = new Vector2(maxX, value.anchorMax.y);
+
+            if (landscape)
+            {
+                RectTransform summary = icon.parent as RectTransform;
+                if (summary == null || summary.rect.width <= 0f || summary.rect.height <= 0f) continue;
+                float bottom = Mathf.Min(label.anchorMin.y, value.anchorMin.y);
+                float top = Mathf.Max(label.anchorMax.y, value.anchorMax.y);
+                float size = (top - bottom) * summary.rect.height;
+                float centerX = (0.135f + i * 0.33f) - (size * 0.5f + 8f) / summary.rect.width;
+                icon.anchorMin = icon.anchorMax = new Vector2(centerX, (bottom + top) * 0.5f);
+                icon.anchoredPosition = Vector2.zero;
+                icon.sizeDelta = new Vector2(size, size);
+                TextMeshProUGUI valueText = value.GetComponent<TextMeshProUGUI>();
+                if (valueText != null) valueText.fontSize = 34f;
+            }
+            else
+            {
+                float x = 0.075f + i * 0.33f;
+                icon.anchorMin = icon.anchorMax = new Vector2(x, 0.7825f);
+                icon.anchoredPosition = Vector2.zero;
+                icon.sizeDelta = new Vector2(50.4f, 50.4f);
+                TextMeshProUGUI valueText = value.GetComponent<TextMeshProUGUI>();
+                if (valueText != null) valueText.fontSize = 34f;
+            }
+        }
+        RectTransform summaryRoot = allTimeSummaryIcons[0].parent as RectTransform;
+        if (summaryRoot != null)
+            LayoutRebuilder.MarkLayoutForRebuild(summaryRoot);
+    }
+
+    private IEnumerator RefreshAllTimeLayoutAfterCanvasBuild()
+    {
+        yield return null;
+        Canvas.ForceUpdateCanvases();
+        ApplyAllTimeSummaryResponsiveLayout(Screen.width > Screen.height);
     }
 
     private void RefreshRecords()

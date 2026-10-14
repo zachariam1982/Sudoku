@@ -477,7 +477,7 @@ TextureImporter:
   platformSettings:
   - serializedVersion: 4
     buildTarget: DefaultTexturePlatform
-    maxTextureSize: 2048
+    maxTextureSize: 512
     resizeAlgorithm: 0
     textureFormat: -1
     textureCompression: 1
@@ -805,7 +805,7 @@ TextureImporter:
       alignment: 0
       pivot: {x: 0, y: 0}
       border: {x: 0, y: 0, z: 0, w: 0}
-      customData:
+      customData: 
       outline: []
       physicsShape: []
       tessellationDetail: -1
@@ -813,7 +813,7 @@ TextureImporter:
       spriteID: 0a028aa34c14400baacb45a94abab2ad
       internalID: 5635248251539509055
       vertices: []
-      indices:
+      indices: 
       edges: []
       weights: []
     - serializedVersion: 2
@@ -827,7 +827,7 @@ TextureImporter:
       alignment: 0
       pivot: {x: 0, y: 0}
       border: {x: 0, y: 0, z: 0, w: 0}
-      customData:
+      customData: 
       outline: []
       physicsShape: []
       tessellationDetail: -1
@@ -835,7 +835,7 @@ TextureImporter:
       spriteID: 02c088da7ef9413fb59cab932b39242b
       internalID: 7222032299464201078
       vertices: []
-      indices:
+      indices: 
       edges: []
       weights: []
     - serializedVersion: 2
@@ -849,7 +849,7 @@ TextureImporter:
       alignment: 0
       pivot: {x: 0, y: 0}
       border: {x: 0, y: 0, z: 0, w: 0}
-      customData:
+      customData: 
       outline: []
       physicsShape: []
       tessellationDetail: -1
@@ -857,7 +857,7 @@ TextureImporter:
       spriteID: 82147fd9b9c34cccb9bd78cd3289b415
       internalID: 8436886402699389391
       vertices: []
-      indices:
+      indices: 
       edges: []
       weights: []
     - serializedVersion: 2
@@ -871,7 +871,7 @@ TextureImporter:
       alignment: 0
       pivot: {x: 0, y: 0}
       border: {x: 0, y: 0, z: 0, w: 0}
-      customData:
+      customData: 
       outline: []
       physicsShape: []
       tessellationDetail: -1
@@ -879,7 +879,7 @@ TextureImporter:
       spriteID: 8dc3c53f01834b60bfc83e464573573e
       internalID: 109113094714238386
       vertices: []
-      indices:
+      indices: 
       edges: []
       weights: []
     outline: []
@@ -896,6 +896,10 @@ TextureImporter:
     spriteCustomMetadata:
       entries: []
     nameFileIdTable:
+      AllTimePlayedIcon: 5635248251539509055
+      AllTimeWonIcon: 7222032299464201078
+      CheckCircleGreen: 8436886402699389391
+      CrossCircleRed: 109113094714238386
       Sprite pack_0: -2570282314549232001
       Sprite pack_1: 6648337317869223188
       Sprite pack_10: 8993497279189759041
@@ -1028,10 +1032,6 @@ TextureImporter:
       Sprite pack_97: -6221893480301186230
       Sprite pack_98: 790267896040213513
       Sprite pack_99: 1796550253280731903
-      AllTimePlayedIcon: 5635248251539509055
-      AllTimeWonIcon: 7222032299464201078
-      CheckCircleGreen: 8436886402699389391
-      CrossCircleRed: 109113094714238386
   mipmapLimitGroupName: 
   pSDRemoveMatte: 0
   userData: 

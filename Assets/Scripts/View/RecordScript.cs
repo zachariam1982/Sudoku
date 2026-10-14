@@ -15,7 +15,7 @@ public class RecordScript : MonoBehaviour
     private const float LandscapeResultIconGap = 20f;
     private const float PortraitResultIconGap = 12f;
     private const float RestartInlineGap = 8f;
-    private const float RestartRowHeight = 84f;
+    private const float RestartRowHeight = 76f;
 
     private static RecordScript _expandedRecord;
 
@@ -126,18 +126,28 @@ public class RecordScript : MonoBehaviour
             DetailsText.lineSpacing = 3f;
         }
 
-        Transform retakeTransform = transform.Find("SummaryRow/Restart/Value");
+        Transform retakeTransform = transform.Find("SummaryRow/Restart/RetakeButton/Value");
+        Transform retakeButtonTransform = RetakeButtonContainer != null
+            ? RetakeButtonContainer.transform
+            : retakeTransform != null ? retakeTransform.parent : null;
         _retakeButtonContainer = RetakeButtonContainer != null
             ? RetakeButtonContainer
-            : retakeTransform != null ? retakeTransform.gameObject : null;
+            : retakeButtonTransform != null ? retakeButtonTransform.gameObject : null;
         _retakeBtn = retakeTransform != null
             ? retakeTransform.GetComponent<Button>()
             : null;
-        if (retakeTransform != null)
+        if (retakeButtonTransform != null)
         {
-            _retakeRect = retakeTransform as RectTransform;
-            _retakeLayoutElement = retakeTransform.GetComponent<LayoutElement>();
-            _retakeText = retakeTransform.GetComponent<TextMeshProUGUI>();
+            _retakeRect = retakeButtonTransform as RectTransform;
+            _retakeLayoutElement = retakeButtonTransform.GetComponent<LayoutElement>();
+            _retakeText = retakeTransform != null
+                ? retakeTransform.GetComponent<TextMeshProUGUI>()
+                : retakeButtonTransform.GetComponentInChildren<TextMeshProUGUI>();
+            if (_retakeText != null)
+            {
+                _retakeText.color = new Color32(242, 198, 108, 255);
+                _retakeText.fontStyle = FontStyles.Bold;
+            }
             CreateRetakeBelowRow();
         }
 
@@ -349,6 +359,7 @@ public class RecordScript : MonoBehaviour
 
         if (_retakeLayoutElement != null)
         {
+            _retakeLayoutElement.ignoreLayout = true;
             _retakeLayoutElement.minWidth = width;
             _retakeLayoutElement.preferredWidth = width;
             _retakeLayoutElement.flexibleWidth = 0f;

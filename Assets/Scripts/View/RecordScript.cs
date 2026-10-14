@@ -13,6 +13,7 @@ public class RecordScript : MonoBehaviour, IPointerClickHandler
     private const float PortraitDifficultyPosition = 0.23f;
     private const float PortraitPointsPosition = 0.70f;
     private const float SummaryIconGap = 4f;
+    private const float ResultIconGap = 10f;
 
     private static RecordScript _expandedRecord;
 
@@ -22,6 +23,8 @@ public class RecordScript : MonoBehaviour, IPointerClickHandler
     private GameObject _retakeButtonContainer;
     private RectTransform _difficultyIcon;
     private RectTransform _pointsIcon;
+    private Image _resultIcon;
+    private RectTransform _resultIconRect;
     private int _summaryLevel;
     private int _summaryPoints;
     private string _summaryDifficulty;
@@ -31,6 +34,9 @@ public class RecordScript : MonoBehaviour, IPointerClickHandler
 
     [Header("Summary")]
     [SerializeField] private TextMeshProUGUI SummaryText;
+    [SerializeField] private Image ResultIcon;
+    [SerializeField] private Sprite WonSprite;
+    [SerializeField] private Sprite LostSprite;
     [Header("Expanded Details")]
     [SerializeField] private GameObject DetailsPanel;
     [SerializeField] private TextMeshProUGUI DetailsText;
@@ -74,6 +80,15 @@ public class RecordScript : MonoBehaviour, IPointerClickHandler
         _summaryDifficultyColor = difficultyColor;
         _difficultyIcon = transform.Find("SummaryRow/DifficultyIcon") as RectTransform;
         _pointsIcon = transform.Find("SummaryRow/PointsIcon") as RectTransform;
+        _resultIcon = ResultIcon != null
+            ? ResultIcon
+            : transform.Find("SummaryRow/ResultIcon")?.GetComponent<Image>();
+        _resultIconRect = _resultIcon != null ? _resultIcon.rectTransform : null;
+        if (_resultIcon != null)
+        {
+            _resultIcon.sprite = record.IsWon ? WonSprite : LostSprite;
+            _resultIcon.gameObject.SetActive(_resultIcon.sprite != null);
+        }
         ApplyResponsiveSummaryLayout(Screen.height > Screen.width);
 
         int totalSeconds = Mathf.FloorToInt(record.ElapsedSeconds);
@@ -160,9 +175,29 @@ public class RecordScript : MonoBehaviour, IPointerClickHandler
 
         PositionSummaryIcon(_difficultyIcon, difficultyPosition);
         PositionSummaryIcon(_pointsIcon, pointsPosition);
+        PositionResultIcon(pointsPosition);
 
         _lastSummaryLayoutWasPortrait = isPortrait;
         _hasAppliedSummaryLayout = true;
+    }
+
+    private void PositionResultIcon(float pointsPosition)
+    {
+        if (SummaryText == null || _resultIconRect == null || !_resultIcon.gameObject.activeSelf)
+            return;
+
+        float pointsWidth = SummaryText.GetPreferredValues(
+            _summaryPoints.ToString(), SummaryText.fontSize).x;
+        float iconWidth = _resultIconRect.sizeDelta.x;
+        Vector2 anchorMin = _resultIconRect.anchorMin;
+        Vector2 anchorMax = _resultIconRect.anchorMax;
+        anchorMin.x = pointsPosition;
+        anchorMax.x = pointsPosition;
+        _resultIconRect.anchorMin = anchorMin;
+        _resultIconRect.anchorMax = anchorMax;
+        _resultIconRect.anchoredPosition = new Vector2(
+            pointsWidth + ResultIconGap + iconWidth * 0.5f,
+            0f);
     }
 
     private static void PositionSummaryIcon(RectTransform icon, float textPosition)

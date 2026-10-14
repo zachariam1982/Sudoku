@@ -187,7 +187,7 @@ public class RecordScript : MonoBehaviour, IPointerClickHandler
             return;
 
         float pointsWidth = SummaryText.GetPreferredValues(
-            _summaryPoints.ToString(), SummaryText.fontSize).x;
+            _summaryPoints.ToString()).x;
         float iconWidth = _resultIconRect.sizeDelta.x;
         Vector2 anchorMin = _resultIconRect.anchorMin;
         Vector2 anchorMax = _resultIconRect.anchorMax;

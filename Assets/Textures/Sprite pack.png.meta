@@ -404,6 +404,12 @@ TextureImporter:
   - first:
       213: 7222032299464201078
     second: AllTimeWonIcon
+  - first:
+      213: 8436886402699389391
+    second: CheckCircleGreen
+  - first:
+      213: 109113094714238386
+    second: CrossCircleRed
   externalObjects: {}
   serializedVersion: 13
   mipmaps:
@@ -832,6 +838,50 @@ TextureImporter:
       indices:
       edges: []
       weights: []
+    - serializedVersion: 2
+      name: CheckCircleGreen
+      rect:
+        serializedVersion: 2
+        x: 746
+        y: 1100
+        width: 309
+        height: 309
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData:
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 82147fd9b9c34cccb9bd78cd3289b415
+      internalID: 8436886402699389391
+      vertices: []
+      indices:
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: CrossCircleRed
+      rect:
+        serializedVersion: 2
+        x: 1115
+        y: 1100
+        width: 310
+        height: 309
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData:
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 8dc3c53f01834b60bfc83e464573573e
+      internalID: 109113094714238386
+      vertices: []
+      indices:
+      edges: []
+      weights: []
     outline: []
     customData: 
     physicsShape: []
@@ -980,6 +1030,8 @@ TextureImporter:
       Sprite pack_99: 1796550253280731903
       AllTimePlayedIcon: 5635248251539509055
       AllTimeWonIcon: 7222032299464201078
+      CheckCircleGreen: 8436886402699389391
+      CrossCircleRed: 109113094714238386
   mipmapLimitGroupName: 
   pSDRemoveMatte: 0
   userData: 

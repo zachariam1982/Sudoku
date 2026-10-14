@@ -13,7 +13,8 @@ public class RecordScript : MonoBehaviour, IPointerClickHandler
     private const float PortraitDifficultyPosition = 0.23f;
     private const float PortraitPointsPosition = 0.70f;
     private const float SummaryIconGap = 4f;
-    private const float ResultIconGap = 10f;
+    private const float LandscapeResultIconGap = 20f;
+    private const float PortraitResultIconGap = 12f;
 
     private static RecordScript _expandedRecord;
 
@@ -175,19 +176,20 @@ public class RecordScript : MonoBehaviour, IPointerClickHandler
 
         PositionSummaryIcon(_difficultyIcon, difficultyPosition);
         PositionSummaryIcon(_pointsIcon, pointsPosition);
-        PositionResultIcon(pointsPosition);
+        PositionResultIcon(isPortrait, pointsPosition);
 
         _lastSummaryLayoutWasPortrait = isPortrait;
         _hasAppliedSummaryLayout = true;
     }
 
-    private void PositionResultIcon(float pointsPosition)
+    private void PositionResultIcon(bool isPortrait, float pointsPosition)
     {
         if (SummaryText == null || _resultIconRect == null || !_resultIcon.gameObject.activeSelf)
             return;
 
-        float pointsWidth = SummaryText.GetPreferredValues(
-            _summaryPoints.ToString()).x;
+        // Reserve space for the widest expected score (three digits) so the
+        // result icon stays aligned consistently across records.
+        float pointsWidth = SummaryText.GetPreferredValues("999").x;
         float iconWidth = _resultIconRect.sizeDelta.x;
         Vector2 anchorMin = _resultIconRect.anchorMin;
         Vector2 anchorMax = _resultIconRect.anchorMax;
@@ -196,7 +198,7 @@ public class RecordScript : MonoBehaviour, IPointerClickHandler
         _resultIconRect.anchorMin = anchorMin;
         _resultIconRect.anchorMax = anchorMax;
         _resultIconRect.anchoredPosition = new Vector2(
-            pointsWidth + ResultIconGap + iconWidth * 0.5f,
+            pointsWidth + (isPortrait ? PortraitResultIconGap : LandscapeResultIconGap) + iconWidth * 0.5f,
             0f);
     }
 

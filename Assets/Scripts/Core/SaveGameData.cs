@@ -55,6 +55,7 @@ public class SaveGameData
     public int    Level      = 1;
     public int    Difficulty = 2; // maps to SudokuDifficulty enum ordinal
     public int    PuzzleSeed = 0; // 0 means a legacy save; use Level as its seed
+    public int NewGameReplayResultId = 0; // 0 means a fresh New Game, not a retake
     public int[] OriginalPuzzleFlat = new int[81];
     public int[] SolutionFlat = new int[81];
 

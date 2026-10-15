@@ -14365,8 +14365,8 @@ RectTransform:
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0, y: 1}
   m_AnchorMax: {x: 0, y: 1}
-  m_AnchoredPosition: {x: 2921.3333, y: -128}
-  m_SizeDelta: {x: 754, y: 0}
+  m_AnchoredPosition: {x: 613.54266, y: -128}
+  m_SizeDelta: {x: 702.9146, y: 0}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!114 &1785954376
 MonoBehaviour:
@@ -18968,7 +18968,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: UnityEngine.UI::UnityEngine.UI.Image
   m_Material: {fileID: 0}
-  m_Color: {r: 1, g: 1, b: 1, a: 1}
+  m_Color: {r: 0.46666667, g: 0.46666667, b: 0.46666667, a: 1}
   m_RaycastTarget: 0
   m_RaycastPadding: {x: 0, y: 0, z: 0, w: 0}
   m_Maskable: 1
@@ -19798,7 +19798,7 @@ MonoBehaviour:
   m_OnCullStateChanged:
     m_PersistentCalls:
       m_Calls: []
-  m_text: <color=#DCC27F><b>01</b></color>   <color=#F1F4FC><b>SIMPLE</b></color>
+  m_text: <color=#DCC27F><b>01</b></color>   <color=#4A90E2><b>SIMPLE</b></color>
   m_isRightToLeft: 0
   m_fontAsset: {fileID: 11400000, guid: 8f586378b4e144a9851e7b34d9b748ee, type: 2}
   m_sharedMaterial: {fileID: 2180264, guid: 8f586378b4e144a9851e7b34d9b748ee, type: 2}
@@ -20089,7 +20089,7 @@ MonoBehaviour:
   m_OnCullStateChanged:
     m_PersistentCalls:
       m_Calls: []
-  m_text: <color=#DCC27F><b>02</b></color>   <color=#F1F4FC><b>BEGINNER</b></color>
+  m_text: <color=#DCC27F><b>02</b></color>   <color=#3AADB3><b>BEGINNER</b></color>
   m_isRightToLeft: 0
   m_fontAsset: {fileID: 11400000, guid: 8f586378b4e144a9851e7b34d9b748ee, type: 2}
   m_sharedMaterial: {fileID: 2180264, guid: 8f586378b4e144a9851e7b34d9b748ee, type: 2}
@@ -20380,7 +20380,7 @@ MonoBehaviour:
   m_OnCullStateChanged:
     m_PersistentCalls:
       m_Calls: []
-  m_text: <color=#DCC27F><b>03</b></color>   <color=#F1F4FC><b>EASY</b></color>
+  m_text: <color=#DCC27F><b>03</b></color>   <color=#44BB86><b>EASY</b></color>
   m_isRightToLeft: 0
   m_fontAsset: {fileID: 11400000, guid: 8f586378b4e144a9851e7b34d9b748ee, type: 2}
   m_sharedMaterial: {fileID: 2180264, guid: 8f586378b4e144a9851e7b34d9b748ee, type: 2}
@@ -20671,7 +20671,7 @@ MonoBehaviour:
   m_OnCullStateChanged:
     m_PersistentCalls:
       m_Calls: []
-  m_text: <color=#DCC27F><b>04</b></color>   <color=#F1F4FC><b>NOVICE</b></color>
+  m_text: <color=#DCC27F><b>04</b></color>   <color=#52C41A><b>NOVICE</b></color>
   m_isRightToLeft: 0
   m_fontAsset: {fileID: 11400000, guid: 8f586378b4e144a9851e7b34d9b748ee, type: 2}
   m_sharedMaterial: {fileID: 2180264, guid: 8f586378b4e144a9851e7b34d9b748ee, type: 2}
@@ -20962,7 +20962,7 @@ MonoBehaviour:
   m_OnCullStateChanged:
     m_PersistentCalls:
       m_Calls: []
-  m_text: <color=#DCC27F><b>05</b></color>   <color=#F1F4FC><b>MODERATE</b></color>
+  m_text: <color=#DCC27F><b>05</b></color>   <color=#D4B106><b>MODERATE</b></color>
   m_isRightToLeft: 0
   m_fontAsset: {fileID: 11400000, guid: 8f586378b4e144a9851e7b34d9b748ee, type: 2}
   m_sharedMaterial: {fileID: 2180264, guid: 8f586378b4e144a9851e7b34d9b748ee, type: 2}
@@ -21253,7 +21253,7 @@ MonoBehaviour:
   m_OnCullStateChanged:
     m_PersistentCalls:
       m_Calls: []
-  m_text: <color=#DCC27F><b>06</b></color>   <color=#F1F4FC><b>ADVANCED</b></color>
+  m_text: <color=#DCC27F><b>06</b></color>   <color=#E67E22><b>ADVANCED</b></color>
   m_isRightToLeft: 0
   m_fontAsset: {fileID: 11400000, guid: 8f586378b4e144a9851e7b34d9b748ee, type: 2}
   m_sharedMaterial: {fileID: 2180264, guid: 8f586378b4e144a9851e7b34d9b748ee, type: 2}
@@ -21544,7 +21544,7 @@ MonoBehaviour:
   m_OnCullStateChanged:
     m_PersistentCalls:
       m_Calls: []
-  m_text: <color=#DCC27F><b>07</b></color>   <color=#F1F4FC><b>HARD</b></color>
+  m_text: <color=#DCC27F><b>07</b></color>   <color=#E74C3C><b>HARD</b></color>
   m_isRightToLeft: 0
   m_fontAsset: {fileID: 11400000, guid: 8f586378b4e144a9851e7b34d9b748ee, type: 2}
   m_sharedMaterial: {fileID: 2180264, guid: 8f586378b4e144a9851e7b34d9b748ee, type: 2}
@@ -21835,7 +21835,7 @@ MonoBehaviour:
   m_OnCullStateChanged:
     m_PersistentCalls:
       m_Calls: []
-  m_text: <color=#DCC27F><b>08</b></color>   <color=#F1F4FC><b>EXPERT</b></color>
+  m_text: <color=#DCC27F><b>08</b></color>   <color=#C0392B><b>EXPERT</b></color>
   m_isRightToLeft: 0
   m_fontAsset: {fileID: 11400000, guid: 8f586378b4e144a9851e7b34d9b748ee, type: 2}
   m_sharedMaterial: {fileID: 2180264, guid: 8f586378b4e144a9851e7b34d9b748ee, type: 2}
@@ -22126,7 +22126,7 @@ MonoBehaviour:
   m_OnCullStateChanged:
     m_PersistentCalls:
       m_Calls: []
-  m_text: <color=#DCC27F><b>09</b></color>   <color=#F1F4FC><b>HARDEST</b></color>
+  m_text: <color=#DCC27F><b>09</b></color>   <color=#9B59B6><b>HARDEST</b></color>
   m_isRightToLeft: 0
   m_fontAsset: {fileID: 11400000, guid: 8f586378b4e144a9851e7b34d9b748ee, type: 2}
   m_sharedMaterial: {fileID: 2180264, guid: 8f586378b4e144a9851e7b34d9b748ee, type: 2}
@@ -23943,8 +23943,8 @@ RectTransform:
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0, y: 1}
   m_AnchorMax: {x: 0, y: 1}
-  m_AnchoredPosition: {x: 1564.7039, y: -238}
-  m_SizeDelta: {x: 3057.4077, y: 0}
+  m_AnchoredPosition: {x: 489.50403, y: -238}
+  m_SizeDelta: {x: 907.00806, y: 0}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!224 &9100000000049
 RectTransform:

@@ -212,10 +212,15 @@ public sealed class NewGameStatsPanel : MonoBehaviour
 
     public void ClosePanel()
     {
+        ClosePanelThen(null);
+    }
+
+    private void ClosePanelThen(System.Action onClosed)
+    {
         if (!_open) return;
         _open = false;
         if (_slideAnim != null) StopCoroutine(_slideAnim);
-        _slideAnim = StartCoroutine(SlideOut());
+        _slideAnim = StartCoroutine(SlideOut(onClosed));
     }
 
     private void Refresh()
@@ -386,8 +391,9 @@ public sealed class NewGameStatsPanel : MonoBehaviour
     public void RetakeResult(NewGameResult result)
     {
         if (gameContext == null || result == null) return;
-        ClosePanel();
-        gameContext.RetryNewGameResult(result);
+        // Finish restoring the previous screen before the replay applies its
+        // gameplay UI. Otherwise SlideOut can hide the new HUD and top bar.
+        ClosePanelThen(() => gameContext.RetryNewGameResult(result));
     }
 
     private IEnumerator SlideIn()
@@ -408,7 +414,7 @@ public sealed class NewGameStatsPanel : MonoBehaviour
         panelCG.alpha = 1f;
     }
 
-    private IEnumerator SlideOut()
+    private IEnumerator SlideOut(System.Action onClosed)
     {
         panelCG.interactable = false;
         panelCG.blocksRaycasts = false;
@@ -433,6 +439,7 @@ public sealed class NewGameStatsPanel : MonoBehaviour
                                        (newGameScreen != null && newGameScreen.gameObject.activeInHierarchy);
             verseTicker.SetGameActive(_tickerWasActive && !anotherScreenIsOpen);
         }
+        onClosed?.Invoke();
     }
 
     private static float EaseOut(float t) => 1f - Mathf.Pow(1f - t, 3f);

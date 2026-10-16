@@ -56,6 +56,7 @@ public sealed class NewGameStatsPanel : MonoBehaviour
     private bool _gameplayToolsWasActive;
     private bool _gameplayGridWasActive;
     private bool _newGameTopBarWasActive;
+    private bool _newGameScreenWasActive;
     private bool _tickerWasActive;
     private Coroutine _slideAnim;
     private const int RecordPageSize = 10;
@@ -219,6 +220,11 @@ public sealed class NewGameStatsPanel : MonoBehaviour
         {
             _newGameTopBarWasActive = newGameTopBar.activeSelf;
             newGameTopBar.SetActive(false);
+        }
+        if (newGameScreen != null)
+        {
+            _newGameScreenWasActive = newGameScreen.gameObject.activeSelf;
+            newGameScreen.gameObject.SetActive(false);
         }
         Refresh();
         if (_slideAnim != null) StopCoroutine(_slideAnim);
@@ -409,7 +415,7 @@ public sealed class NewGameStatsPanel : MonoBehaviour
         _open = false;
         if (_slideAnim != null) StopCoroutine(_slideAnim);
         _slideAnim = null;
-        FinishClosingPanel();
+        FinishClosingPanel(restoreNewGameScreen: false);
         if (gameplayGrid != null) gameplayGrid.SetActive(true);
         gameContext.RetryNewGameResult(result);
     }
@@ -449,7 +455,7 @@ public sealed class NewGameStatsPanel : MonoBehaviour
         FinishClosingPanel();
     }
 
-    private void FinishClosingPanel()
+    private void FinishClosingPanel(bool restoreNewGameScreen = true)
     {
         if (panelRT != null)
             panelRT.anchoredPosition = new Vector2(panelRT.rect.width, panelRT.anchoredPosition.y);
@@ -462,6 +468,8 @@ public sealed class NewGameStatsPanel : MonoBehaviour
         if (gameplayTools != null) gameplayTools.SetActive(_gameplayToolsWasActive);
         if (gameplayGrid != null) gameplayGrid.SetActive(_gameplayGridWasActive);
         if (newGameTopBar != null) newGameTopBar.SetActive(_newGameTopBarWasActive);
+        if (restoreNewGameScreen && newGameScreen != null)
+            newGameScreen.gameObject.SetActive(_newGameScreenWasActive);
         if (verseTicker != null)
         {
             bool anotherScreenIsOpen = (homeScreen != null && homeScreen.gameObject.activeInHierarchy) ||

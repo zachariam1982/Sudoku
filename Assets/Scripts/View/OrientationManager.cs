@@ -1,6 +1,5 @@
 using UnityEngine;
 using UnityEngine.UI;
-using System.Collections.Generic;
 
 /// <summary>
 /// Allows free rotation. Whenever the device orientation changes,
@@ -28,9 +27,6 @@ public class OrientationManager : MonoBehaviour
     private Vector2 lastCanvasSize;
     private Rect lastSafeArea;
     private bool layoutReady;
-    private readonly Vector3[] gridCorners = new Vector3[4];
-    private readonly Dictionary<Image, Material> skyMaterials = new Dictionary<Image, Material>();
-    private static readonly int SkyGridTop = Shader.PropertyToID("_SkyGridTop");
 
     void Start()
     {
@@ -97,7 +93,6 @@ public class OrientationManager : MonoBehaviour
         using (new Benchmark("Grid rebuild")){
             gridBuilder.Rebuild(gridSize);
         }
-        UpdateSkyClearance();
 
         lastScreenSize = new Vector2(Screen.width, Screen.height);
         lastCanvasSize = size;
@@ -123,37 +118,5 @@ public class OrientationManager : MonoBehaviour
         );
 
         return Mathf.Max(available, 1f);
-    }
-
-    private void UpdateSkyClearance()
-    {
-        if (gridBuilder.GridPanel == null || backgroundImages == null) return;
-        gridBuilder.GridPanel.GetWorldCorners(gridCorners);
-        foreach (Image image in backgroundImages)
-        {
-            if (image == null || image.material == null || !image.material.HasProperty(SkyGridTop))
-                continue;
-            RectTransform background = image.rectTransform;
-            if (background.rect.height <= 0f) continue;
-            if (!skyMaterials.TryGetValue(image, out Material material))
-            {
-                material = new Material(image.material);
-                skyMaterials.Add(image, material);
-                image.material = material;
-            }
-            float gridTop = Mathf.Max(
-                background.InverseTransformPoint(gridCorners[1]).y,
-                background.InverseTransformPoint(gridCorners[2]).y);
-            float normalizedTop = (gridTop - background.rect.yMin) / background.rect.height;
-            material.SetFloat(SkyGridTop, normalizedTop);
-            image.SetMaterialDirty();
-        }
-    }
-
-    private void OnDestroy()
-    {
-        foreach (Material material in skyMaterials.Values)
-            Destroy(material);
-        skyMaterials.Clear();
     }
 }

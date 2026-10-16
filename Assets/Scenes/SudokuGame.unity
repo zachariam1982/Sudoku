@@ -17414,9 +17414,10 @@ MonoBehaviour:
   topBarHeight: 200
   bottomBarHeight: 200
   screenPadding: 20
+  proceduralSkyMaterial: {fileID: 2100000, guid: a248ecfd8c5340e1b9e123470dcdb010, type: 2}
   gridBuilder: {fileID: 2027544915}
-  landscapeBackground: {fileID: 5019244791283412045, guid: b92eb9ae184e4a66b032005c6b8b4381, type: 3}
-  portraitBackground: {fileID: 6029344928093442117, guid: a514b6c60acf4f27869ea0cb68e048d4, type: 3}
+  landscapeBackground: {fileID: 5019244791283412045, guid: 430ae92ec9964ec0b0f83c535ebe8196, type: 3}
+  portraitBackground: {fileID: 6029344928093442117, guid: 054f6294df934657915a2845c0d1f70e, type: 3}
   backgroundImages:
   - {fileID: 2027544918}
   - {fileID: 2147000003}

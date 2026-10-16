@@ -19,6 +19,7 @@ public class GameContext : MonoBehaviour
     private GameStateView _stateView;
     private StatsPanel _statsPanel;
     private NewGameStatsPanel _newGameStatsPanel;
+    private OrientationManager _orientationManager;
     private bool _newGameActive;
 
     private void Awake()
@@ -31,6 +32,7 @@ public class GameContext : MonoBehaviour
             new NewGameScorePenalties());
 
         _grid = GetComponent<SudokuGrid>();
+        _orientationManager = GetComponent<OrientationManager>();
         _error = GetComponent<ErrorMessage>();
         _picker = GetComponentInChildren<NumberPicker>();
         _stateView = GetComponentInChildren<GameStateView>();
@@ -75,6 +77,7 @@ public class GameContext : MonoBehaviour
     {
         _journeyStateMachine.SetSuspended(true);
         _newGameActive = true;
+        _orientationManager?.GenerateNightSky();
         BindGameplay(NewGameViewModel);
         NewGameViewModel.StartRandomGame(difficulty);
         _newGameStateMachine.SetSuspended(false);

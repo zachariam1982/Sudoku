@@ -20,6 +20,7 @@ public class OrientationManager : MonoBehaviour
     [SerializeField] private Sprite landscapeBackground;
     [SerializeField] private Sprite portraitBackground;
     [SerializeField] private Image[] backgroundImages;
+    [SerializeField] private Material proceduralSkyMaterial;
 
     private RectTransform canvasRect;
     private Canvas canvas;
@@ -27,6 +28,15 @@ public class OrientationManager : MonoBehaviour
     private Vector2 lastCanvasSize;
     private Rect lastSafeArea;
     private bool layoutReady;
+    private Material skyMaterialInstance;
+    private static readonly int SkySeedId = Shader.PropertyToID("_SkySeed");
+    private static readonly int MoonCenterId = Shader.PropertyToID("_MoonCenter");
+
+    private void Awake()
+    {
+        if (proceduralSkyMaterial != null)
+            skyMaterialInstance = new Material(proceduralSkyMaterial);
+    }
 
     void Start()
     {
@@ -59,8 +69,17 @@ public class OrientationManager : MonoBehaviour
 
     private void UpdateBackgroundImages()
     {
-        Sprite background = Screen.height >= Screen.width ? portraitBackground : landscapeBackground;
+        bool portrait = Screen.height >= Screen.width;
+        Sprite background = portrait ? portraitBackground : landscapeBackground;
         if (background == null || backgroundImages == null) return;
+
+        if (skyMaterialInstance != null)
+        {
+            // Keep the generated moon aligned with the reflection in the foreground.
+            skyMaterialInstance.SetVector(MoonCenterId, portrait
+                ? new Vector4(0.42f, 0.84f, 0f, 0f)
+                : new Vector4(0.86f, 0.78f, 0f, 0f));
+        }
 
         foreach (Image image in backgroundImages)
         {
@@ -68,7 +87,17 @@ public class OrientationManager : MonoBehaviour
             if (image.sprite != background)
                 image.sprite = background;
             image.color = Color.white;
+            if (skyMaterialInstance != null && image.material != skyMaterialInstance)
+                image.material = skyMaterialInstance;
         }
+    }
+
+    /// <summary>Changes the procedural sky pattern for a newly started game.</summary>
+    public void GenerateNightSky()
+    {
+        if (skyMaterialInstance != null)
+            skyMaterialInstance.SetFloat(SkySeedId, Random.Range(0f, 10000f));
+    }
     }
 
     /// <summary>
@@ -120,5 +149,11 @@ public class OrientationManager : MonoBehaviour
         );
 
         return Mathf.Max(available, 1f);
+    }
+
+    private void OnDestroy()
+    {
+        if (skyMaterialInstance != null)
+            Destroy(skyMaterialInstance);
     }
 }

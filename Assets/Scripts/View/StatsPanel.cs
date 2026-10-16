@@ -250,8 +250,17 @@ public class StatsPanel : MonoBehaviour
             ? scrollRect.transform as RectTransform
             : null;
         SetHorizontalAnchors(viewport,
-            0.175f,
-            0.825f);
+            landscape ? 0.175f : 0f,
+            landscape ? 0.825f : 1f);
+        if (viewport != null)
+        {
+            Vector2 viewportSize = viewport.sizeDelta;
+            viewportSize.x = landscape ? 0f : -20f;
+            viewport.sizeDelta = viewportSize;
+            Vector2 viewportPosition = viewport.anchoredPosition;
+            viewportPosition.x = 0f;
+            viewport.anchoredPosition = viewportPosition;
+        }
 
         SetHorizontalAnchors(parentScroll as RectTransform,
             landscape ? 0.14f : 0.02f,

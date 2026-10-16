@@ -162,10 +162,17 @@ public sealed class NewGameStatsPanel : MonoBehaviour
         {
             Vector2 anchorMin = scrollViewRect.anchorMin;
             Vector2 anchorMax = scrollViewRect.anchorMax;
-            anchorMin.x = 0.175f;
-            anchorMax.x = 0.825f;
+            anchorMin.x = landscape ? 0.175f : 0f;
+            anchorMax.x = landscape ? 0.825f : 1f;
             scrollViewRect.anchorMin = anchorMin;
             scrollViewRect.anchorMax = anchorMax;
+
+            Vector2 scrollSize = scrollViewRect.sizeDelta;
+            scrollSize.x = landscape ? 0f : -20f;
+            scrollViewRect.sizeDelta = scrollSize;
+            Vector2 scrollPosition = scrollViewRect.anchoredPosition;
+            scrollPosition.x = 0f;
+            scrollViewRect.anchoredPosition = scrollPosition;
             LayoutRebuilder.MarkLayoutForRebuild(scrollViewRect);
         }
 

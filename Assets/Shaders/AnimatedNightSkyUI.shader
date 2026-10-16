@@ -90,19 +90,6 @@ Shader "Sudoku/Animated Night Sky UI"
 
                 fixed4 stillColor = tex2D(_MainTex, input.texcoord) + _TextureSampleAdd;
                 fixed4 movingColor = tex2D(_MainTex, movingUV) + _TextureSampleAdd;
-
-                // The landscape moon's trailing cloud reaches the right edge
-                // of the source image. Soften only that tail as the texture
-                // wraps, instead of letting it end at a hard image boundary.
-                float landscapeCloudTail = isLandscape
-                    * smoothstep(0.88, 0.99, movingUV.x)
-                    * smoothstep(0.66, 0.72, movingUV.y)
-                    * (1.0 - smoothstep(0.82, 0.88, movingUV.y));
-                fixed3 nightSkyAtSameHeight = tex2D(
-                    _MainTex, float2(0.08, movingUV.y)).rgb;
-                movingColor.rgb = lerp(
-                    movingColor.rgb, nightSkyAtSameHeight, landscapeCloudTail);
-
                 fixed4 color = lerp(stillColor, movingColor, skyMask) * input.color;
 
                 #ifdef UNITY_UI_CLIP_RECT

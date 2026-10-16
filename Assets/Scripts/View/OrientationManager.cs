@@ -98,7 +98,6 @@ public class OrientationManager : MonoBehaviour
         if (skyMaterialInstance != null)
             skyMaterialInstance.SetFloat(SkySeedId, Random.Range(0f, 10000f));
     }
-    }
 
     /// <summary>
     /// Calculates the grid size for the current screen dimensions

@@ -38,6 +38,12 @@ public class GridBuilder : MonoBehaviour
         boxPadding = 1.5f;
         InitializeGrid();
     }
+    public void SetVisible(bool visible)
+    {
+        if (gridPanel != null)
+            gridPanel.gameObject.SetActive(visible);
+    }
+
     public void Rebuild(float gridSize)
     {
         if (NumberPicker.Instance != null) NumberPicker.Instance.Hide();

@@ -339,6 +339,21 @@ public class GameStateView : MonoBehaviour
         newGameTopBar.SetNewGameMode(isNewGame);
     }
 
+    /// <summary>Shows gameplay HUD only while a game mode is active.</summary>
+    public void SetGameplayVisible(bool visible)
+    {
+        if (visible)
+        {
+            if (_vm != null)
+                OnStateChanged(_vm.CurrentStateName.Value);
+            return;
+        }
+
+        if (hudPanel != null) hudPanel.SetActive(false);
+        if (JourneyTopBar != null) JourneyTopBar.gameObject.SetActive(false);
+        if (newGameTopBar != null) newGameTopBar.gameObject.SetActive(false);
+    }
+
     private void SetLevelText(string text)
     {
         if (Level != null) Level.text = text;

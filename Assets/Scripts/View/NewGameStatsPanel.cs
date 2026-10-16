@@ -62,6 +62,7 @@ public sealed class NewGameStatsPanel : MonoBehaviour
     private int _recordOffset;
     private bool _recordLoading;
     private bool _allRecordsLoaded;
+    private readonly Vector3[] _contentCorners = new Vector3[4];
     private bool _lastLandscape;
     private TextMeshProUGUI[] _currentGameTexts;
     private float[] _currentGameBaseFontSizes;
@@ -74,8 +75,6 @@ public sealed class NewGameStatsPanel : MonoBehaviour
     private void Awake()
     {
         CacheCurrentGameTypography();
-        if (recordsScrollRect != null)
-            recordsScrollRect.onValueChanged.AddListener(OnRecordsScrolled);
         _lastLandscape = Screen.width > Screen.height;
         ApplyCurrentGameResponsiveLayout(_lastLandscape);
         ApplyAllTimeSummaryResponsiveLayout(_lastLandscape);
@@ -89,6 +88,28 @@ public sealed class NewGameStatsPanel : MonoBehaviour
         _lastLandscape = landscape;
         ApplyCurrentGameResponsiveLayout(landscape);
         ApplyAllTimeSummaryResponsiveLayout(landscape);
+    }
+
+    private void LateUpdate()
+    {
+        // Check actual viewport geometry rather than relying on a normalized
+        // scroll event. This also fills a tall viewport when one page fits.
+        if (!_open || _recordLoading || _allRecordsLoaded ||
+            recordsScrollRect == null || panelCG == null || panelCG.alpha < 0.99f)
+            return;
+
+        RectTransform content = recordsContent as RectTransform;
+        RectTransform viewport = recordsScrollRect.viewport != null
+            ? recordsScrollRect.viewport
+            : recordsScrollRect.transform as RectTransform;
+        if (content == null || viewport == null || !content.gameObject.activeInHierarchy ||
+            viewport.rect.height <= 0f) return;
+
+        content.GetWorldCorners(_contentCorners);
+        float bottom = viewport.InverseTransformPoint(_contentCorners[0]).y;
+        float preloadDistance = viewport.rect.height * 0.35f;
+        if (bottom >= viewport.rect.yMin - preloadDistance)
+            LoadNextRecordPage();
     }
 
     private void CacheCurrentGameTypography()
@@ -167,12 +188,6 @@ public sealed class NewGameStatsPanel : MonoBehaviour
         row.preferredHeight = height;
     }
 
-    private void OnDestroy()
-    {
-        if (recordsScrollRect != null)
-            recordsScrollRect.onValueChanged.RemoveListener(OnRecordsScrolled);
-    }
-
     public void Bind(NewGameViewModel viewModel)
     {
         _viewModel = viewModel;
@@ -212,15 +227,10 @@ public sealed class NewGameStatsPanel : MonoBehaviour
 
     public void ClosePanel()
     {
-        ClosePanelThen(null);
-    }
-
-    private void ClosePanelThen(System.Action onClosed)
-    {
         if (!_open) return;
         _open = false;
         if (_slideAnim != null) StopCoroutine(_slideAnim);
-        _slideAnim = StartCoroutine(SlideOut(onClosed));
+        _slideAnim = StartCoroutine(SlideOut());
     }
 
     private void Refresh()
@@ -359,41 +369,49 @@ public sealed class NewGameStatsPanel : MonoBehaviour
             recordsScrollRect.verticalNormalizedPosition = 1f;
     }
 
-    private void OnRecordsScrolled(Vector2 position)
-    {
-        if (position.y <= 0.08f)
-            LoadNextRecordPage();
-    }
-
     private void LoadNextRecordPage()
     {
         if (_recordLoading || _allRecordsLoaded || recordsContent == null || recordPrefab == null)
             return;
 
         _recordLoading = true;
-        var entries = NewGameResultDatabase.GetRecentEntries(_recordOffset, RecordPageSize);
-        foreach (NewGameResultEntry entry in entries)
+        try
         {
-            NewGameRecordRow row = Instantiate(recordPrefab, recordsContent, false);
-            row.Setup(entry, this);
+            RectTransform contentRect = recordsContent as RectTransform;
+            Vector2 previousPosition = contentRect != null ? contentRect.anchoredPosition : Vector2.zero;
+            var entries = NewGameResultDatabase.GetRecentEntries(_recordOffset, RecordPageSize);
+            foreach (NewGameResultEntry entry in entries)
+            {
+                NewGameRecordRow row = Instantiate(recordPrefab, recordsContent, false);
+                row.Setup(entry, this);
+            }
+
+            _recordOffset += entries.Count;
+            if (entries.Count < RecordPageSize)
+                _allRecordsLoaded = true;
+            if (contentRect != null)
+            {
+                LayoutRebuilder.ForceRebuildLayoutImmediate(contentRect);
+                contentRect.anchoredPosition = previousPosition;
+            }
         }
-
-        _recordOffset += entries.Count;
-        if (entries.Count < RecordPageSize)
-            _allRecordsLoaded = true;
-        _recordLoading = false;
-
-        RectTransform contentRect = recordsContent as RectTransform;
-        if (contentRect != null)
-            LayoutRebuilder.ForceRebuildLayoutImmediate(contentRect);
+        finally
+        {
+            _recordLoading = false;
+        }
     }
 
     public void RetakeResult(NewGameResult result)
     {
         if (gameContext == null || result == null) return;
-        // Finish restoring the previous screen before the replay applies its
-        // gameplay UI. Otherwise SlideOut can hide the new HUD and top bar.
-        ClosePanelThen(() => gameContext.RetryNewGameResult(result));
+        // Retake is navigation, not a normal dismissal. Complete it synchronously
+        // so a stopped animation or stale _open flag cannot swallow the action.
+        _open = false;
+        if (_slideAnim != null) StopCoroutine(_slideAnim);
+        _slideAnim = null;
+        FinishClosingPanel();
+        if (gameplayGrid != null) gameplayGrid.SetActive(true);
+        gameContext.RetryNewGameResult(result);
     }
 
     private IEnumerator SlideIn()
@@ -404,7 +422,7 @@ public sealed class NewGameStatsPanel : MonoBehaviour
         float t = 0f;
         while (t < 1f)
         {
-            t += Time.deltaTime / slideDuration;
+            t += Time.unscaledDeltaTime / Mathf.Max(slideDuration, 0.001f);
             float e = EaseOut(Mathf.Clamp01(t));
             panelRT.anchoredPosition = new Vector2(Mathf.Lerp(from, 0f, e), panelRT.anchoredPosition.y);
             panelCG.alpha = e;
@@ -414,7 +432,7 @@ public sealed class NewGameStatsPanel : MonoBehaviour
         panelCG.alpha = 1f;
     }
 
-    private IEnumerator SlideOut(System.Action onClosed)
+    private IEnumerator SlideOut()
     {
         panelCG.interactable = false;
         panelCG.blocksRaycasts = false;
@@ -422,14 +440,25 @@ public sealed class NewGameStatsPanel : MonoBehaviour
         float t = 0f;
         while (t < 1f)
         {
-            t += Time.deltaTime / slideDuration;
+            t += Time.unscaledDeltaTime / Mathf.Max(slideDuration, 0.001f);
             float e = EaseOut(Mathf.Clamp01(t));
-            panelRT.anchoredPosition = new Vector2(Mathf.Lerp(from, panelRT.sizeDelta.x, e), panelRT.anchoredPosition.y);
+            panelRT.anchoredPosition = new Vector2(Mathf.Lerp(from, panelRT.rect.width, e), panelRT.anchoredPosition.y);
             panelCG.alpha = 1f - e;
             yield return null;
         }
-        panelRT.anchoredPosition = new Vector2(panelRT.sizeDelta.x, panelRT.anchoredPosition.y);
-        panelCG.alpha = 0f;
+        FinishClosingPanel();
+    }
+
+    private void FinishClosingPanel()
+    {
+        if (panelRT != null)
+            panelRT.anchoredPosition = new Vector2(panelRT.rect.width, panelRT.anchoredPosition.y);
+        if (panelCG != null)
+        {
+            panelCG.alpha = 0f;
+            panelCG.interactable = false;
+            panelCG.blocksRaycasts = false;
+        }
         if (gameplayTools != null) gameplayTools.SetActive(_gameplayToolsWasActive);
         if (gameplayGrid != null) gameplayGrid.SetActive(_gameplayGridWasActive);
         if (newGameTopBar != null) newGameTopBar.SetActive(_newGameTopBarWasActive);
@@ -439,7 +468,6 @@ public sealed class NewGameStatsPanel : MonoBehaviour
                                        (newGameScreen != null && newGameScreen.gameObject.activeInHierarchy);
             verseTicker.SetGameActive(_tickerWasActive && !anotherScreenIsOpen);
         }
-        onClosed?.Invoke();
     }
 
     private static float EaseOut(float t) => 1f - Mathf.Pow(1f - t, 3f);

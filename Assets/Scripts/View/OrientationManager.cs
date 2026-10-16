@@ -64,8 +64,10 @@ public class OrientationManager : MonoBehaviour
 
         foreach (Image image in backgroundImages)
         {
-            if (image != null && image.sprite != background)
+            if (image == null) continue;
+            if (image.sprite != background)
                 image.sprite = background;
+            image.color = Color.white;
         }
     }
 

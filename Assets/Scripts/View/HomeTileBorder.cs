@@ -86,7 +86,14 @@ public sealed class HomeTileBorder : Graphic
         edgeTransform.anchorMin = anchorMin;
         edgeTransform.anchorMax = anchorMax;
         edgeTransform.pivot = pivot;
-        edgeTransform.anchoredPosition = Vector2.zero;
+        // Keep the runtime bottom stroke one screen pixel inside the tile.
+        // Scene view uses the outline mesh, but Play/Simulator renders this
+        // as a separate Image; sitting exactly on the lower edge can be clipped.
+        float bottomInset = edgeName == EdgeNames[1] ? 1f : 0f;
+        Canvas canvas = GetComponentInParent<Canvas>();
+        if (bottomInset > 0f && canvas != null && canvas.scaleFactor > 0f)
+            bottomInset /= canvas.scaleFactor;
+        edgeTransform.anchoredPosition = new Vector2(0f, bottomInset);
         edgeTransform.sizeDelta = sizeDelta;
 
         edgeImage.sprite = null;

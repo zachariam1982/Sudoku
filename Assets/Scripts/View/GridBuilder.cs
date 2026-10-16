@@ -15,6 +15,7 @@ public class GridBuilder : MonoBehaviour
 
     [Header("Scene References")]
     [SerializeField] private RectTransform gridPanel;
+    public RectTransform GridPanel => gridPanel;
     [SerializeField] private SudokuGrid    sudokuGrid;
     [SerializeField] private GameContext   gameContext;
 

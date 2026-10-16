@@ -5,6 +5,8 @@ Shader "Sudoku/Animated Night Sky UI"
         [PerRendererData] _MainTex ("Sprite Texture", 2D) = "white" {}
         _Color ("Tint", Color) = (1,1,1,1)
         _SkyScrollSpeed ("Sky Scroll Speed", Range(0, 0.001)) = 0.00018
+        _SkyArcHeight ("Sky Arc Height", Range(0, 0.2)) = 0.08
+        _SkyGridTop ("Grid Top In Background UV", Float) = 0
         _StencilComp ("Stencil Comparison", Float) = 8
         _Stencil ("Stencil ID", Float) = 0
         _StencilOp ("Stencil Operation", Float) = 0
@@ -65,6 +67,8 @@ Shader "Sudoku/Animated Night Sky UI"
             float4 _ClipRect;
             float4 _MainTex_ST;
             float _SkyScrollSpeed;
+            float _SkyArcHeight;
+            float _SkyGridTop;
 
             v2f vert(appdata_t input)
             {
@@ -86,7 +90,22 @@ Shader "Sudoku/Animated Night Sky UI"
                 float skyMask = smoothstep(skyBottom, skyBottom + 0.08, input.texcoord.y);
 
                 float2 movingUV = input.texcoord;
-                movingUV.x = frac(movingUV.x + _Time.y * _SkyScrollSpeed);
+                float scroll = frac(_Time.y * _SkyScrollSpeed);
+                movingUV.x = frac(movingUV.x + scroll);
+
+                // The moon is baked into each background. Translate the whole
+                // upper sky rigidly so its disc stays round along the parabola.
+                float moonSourceX = lerp(0.412, 0.861, isLandscape);
+                float moonX = frac(moonSourceX - scroll);
+                float arc = 4.0 * moonX * (1.0 - moonX);
+                // Conservative lower edge of the moon/glow in the source art.
+                float moonFloor = lerp(0.81, 0.68, isLandscape);
+                float clearanceLift = max(0.0, _SkyGridTop + 0.025 - moonFloor);
+                float rise = clearanceLift + _SkyArcHeight * arc;
+                // Fade the displacement in above the horizon. Never wrap Y:
+                // the moon must not reappear at the bottom of the texture.
+                movingUV.y = max(skyBottom + 0.08,
+                    input.texcoord.y - rise * skyMask);
 
                 fixed4 stillColor = tex2D(_MainTex, input.texcoord) + _TextureSampleAdd;
                 fixed4 movingColor = tex2D(_MainTex, movingUV) + _TextureSampleAdd;

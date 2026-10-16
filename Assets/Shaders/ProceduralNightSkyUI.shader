@@ -46,13 +46,13 @@ float3 nightSky(float2 uv) {
  float bandCenter=0.66+0.11*sin(uv.x*4.2+seed*0.017);
  float band=exp(-pow((uv.y-bandCenter)*5.5,2.0));
  float nebula=valueNoise(uv*float2(9,7)+seed*0.03)*0.55+valueNoise(uv*float2(23,18)-seed*0.02)*0.3;
- sky+=band*nebula*float3(0.09,0.075,0.18)+band*band*float3(0.018,0.032,0.095);
+ sky+=band*nebula*float3(0.28,0.20,0.48)+band*band*float3(0.055,0.065,0.18);
  float2 cell=floor(uv*float2(145,105));
  float2 local=frac(uv*float2(145,105))-0.5;
  float rnd=hash21(cell+seed*13.17);
- float radius=lerp(0.025,0.095,hash21(cell+seed*7.31));
- float star=(1.0-smoothstep(radius,radius+0.025,length(local)))*step(0.91,rnd);
- sky+=star*(0.35+step(0.965,rnd)*2.4)*lerp(float3(0.45,0.62,1),float3(1,0.87,0.68),hash21(cell+seed*3.7));
+ float radius=lerp(0.08,0.24,hash21(cell+seed*7.31));
+ float star=(1.0-smoothstep(radius,radius+0.06,length(local)))*step(0.93,rnd);
+ sky+=star*(0.35+step(0.985,rnd)*3.2)*lerp(float3(0.45,0.62,1),float3(1,0.87,0.68),hash21(cell+seed*3.7));
  float aspect=_MainTex_TexelSize.z/_MainTex_TexelSize.w;
  float2 md=(uv-_MoonCenter.xy)*float2(aspect,1);
  float moon=1.0-smoothstep(0.037,0.039,length(md));

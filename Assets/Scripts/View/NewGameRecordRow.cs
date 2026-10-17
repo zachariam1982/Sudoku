@@ -30,7 +30,7 @@ public sealed class NewGameRecordRow : MonoBehaviour, IPointerClickHandler
 
         if (levelLabel != null)
         {
-            levelLabel.text = $"LEVEL {_result.Id:00}";
+            levelLabel.text = $"# {_result.Id:00}";
             levelLabel.color = Gold;
         }
 

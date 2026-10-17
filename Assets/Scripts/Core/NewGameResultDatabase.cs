@@ -84,6 +84,40 @@ public static class NewGameResultDatabase
         Save();
     }
 
+    public static void UpdateCompletedAttempt(NewGameResult result)
+    {
+        if (result == null || result.Id <= 0) return;
+        Load();
+        ResultRow existing = _results.Rows.FirstOrDefault(row => row.Id == result.Id);
+        if (existing == null)
+        {
+            Debug.LogWarning("[NewGameResultDatabase] Retake result no longer exists: " + result.Id);
+            return;
+        }
+
+        existing.PencilUses = result.PencilUses;
+        existing.SOSUses = result.SOSUses;
+        existing.AutoFillUses = result.AutoFillUses;
+        existing.RecordedAt = result.RecordedAt;
+        if (!_completions.ResultIds.Contains(existing.Id))
+            _completions.ResultIds.Add(existing.Id);
+
+        // Retakes count as the same game, including repeated successful retakes.
+        _stats.Rows = _results.Rows.GroupBy(row => row.Difficulty)
+            .Select(group => new StatsRow {
+                Difficulty = group.Key,
+                GamesStarted = group.Count(),
+                GamesCompleted = group.Count(row => _completions.ResultIds.Contains(row.Id))
+            }).ToList();
+        Save();
+    }
+
+    public static int GetNextId()
+    {
+        Load();
+        return _results.Rows.Count == 0 ? 1 : _results.Rows.Max(row => row.Id) + 1;
+    }
+
     public static NewGameResult GetLatest()
     {
         Load();
@@ -194,6 +228,39 @@ public static class NewGameResultDatabase
     }
 
 
+    public static void UpdateCompletedAttempt(NewGameResult result)
+    {
+        SQLiteConnection db = _db;
+        if (result == null || result.Id <= 0 || db == null) return;
+
+        db.BeginTransaction();
+        try
+        {
+            NewGameResult existing = db.Find<NewGameResult>(result.Id);
+            if (existing == null)
+            {
+                db.Rollback();
+                Debug.LogWarning("[NewGameResultDatabase] Retake result no longer exists: " + result.Id);
+                return;
+            }
+
+            // Preserve the original row and puzzle identity; replace usage stats.
+            existing.PencilUses = result.PencilUses;
+            existing.SOSUses = result.SOSUses;
+            existing.AutoFillUses = result.AutoFillUses;
+            existing.RecordedAt = result.RecordedAt;
+            db.Update(existing);
+            // The completion trigger increments wins only on the first success.
+            db.Execute("INSERT OR IGNORE INTO new_game_result_completions (ResultId) VALUES (?);", existing.Id);
+            db.Commit();
+        }
+        catch (System.Exception ex)
+        {
+            db.Rollback();
+            Debug.LogError("[NewGameResultDatabase] UpdateCompletedAttempt failed: " + ex);
+        }
+    }
+
     private static void EnsureUsageCountColumns()
     {
         var columns = new System.Collections.Generic.HashSet<string>(
@@ -240,6 +307,13 @@ public static class NewGameResultDatabase
                 );
             END;
         ");
+    }
+
+    public static int GetNextId()
+    {
+        if (_db == null) return 1;
+        NewGameResult latest = _db.Table<NewGameResult>().OrderByDescending(result => result.Id).FirstOrDefault();
+        return latest == null ? 1 : latest.Id + 1;
     }
 
     public static NewGameResult GetLatest() =>

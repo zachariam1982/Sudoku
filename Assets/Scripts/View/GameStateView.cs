@@ -59,11 +59,13 @@ public class GameStateView : MonoBehaviour
 
     [Header("New Game Win Panel")]
     [SerializeField] private GameObject      newGameWinPanel;
+    [Header("Top Bar")]
+    [SerializeField] private NewGameTopBar      newGameTopBar;
+    [SerializeField] private JourneyTopBar      JourneyTopBar;
 
     private BaseViewModel _vm;
     private HUD _hud;
     private VerseTicker _verseTicker;
-    private ResponsiveTopBar[] _responsiveTopBars;
     private Button _pauseResumeButton;
 
     // ── Binding ───────────────────────────────────────────────────────────────
@@ -333,16 +335,23 @@ public class GameStateView : MonoBehaviour
 
     public void SetTopBarMode(bool isNewGame)
     {
-        if (_responsiveTopBars == null || _responsiveTopBars.Length == 0)
+        JourneyTopBar.SetNewGameMode(isNewGame);
+        newGameTopBar.SetNewGameMode(isNewGame);
+    }
+
+    /// <summary>Shows gameplay HUD only while a game mode is active.</summary>
+    public void SetGameplayVisible(bool visible)
+    {
+        if (visible)
         {
-            Canvas canvas = GetComponentInParent<Canvas>();
-            if (canvas != null)
-                _responsiveTopBars = canvas.GetComponentsInChildren<ResponsiveTopBar>(true);
+            if (_vm != null)
+                OnStateChanged(_vm.CurrentStateName.Value);
+            return;
         }
 
-        if (_responsiveTopBars == null) return;
-        foreach (ResponsiveTopBar topBar in _responsiveTopBars)
-            topBar.SetNewGameMode(isNewGame);
+        if (hudPanel != null) hudPanel.SetActive(false);
+        if (JourneyTopBar != null) JourneyTopBar.gameObject.SetActive(false);
+        if (newGameTopBar != null) newGameTopBar.gameObject.SetActive(false);
     }
 
     private void SetLevelText(string text)

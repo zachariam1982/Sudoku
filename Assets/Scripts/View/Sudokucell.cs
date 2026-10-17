@@ -11,6 +11,7 @@ public class SudokuCell : MonoBehaviour
 {
     [Header("References (auto-found if left empty)")]
     [SerializeField] private Image           background;
+    private Image selectionGlow;
     [SerializeField] private Image        numberImage;
     [SerializeField] private TMP_Text     numberText;
     [SerializeField] private GridLayoutGroup pencilGrid; 
@@ -39,6 +40,7 @@ public class SudokuCell : MonoBehaviour
     private bool            isRelatedHighlighted = false;
     private bool            isSelected = false;
     private bool            isPickerHighlighted = false;
+    private bool            isPencilModeActive = false;
     private Color           baseColor;
     private Button[] _pencilButtons;
     private int _pencilCandidateMask;
@@ -55,6 +57,11 @@ public class SudokuCell : MonoBehaviour
             255,
             255,
             255);
+
+    // GridCellFrame uses an opaque one-pixel edge and a translucent glass
+    // fill. Raise the image tint alpha in pencil mode so the edge stays easy
+    // to follow between the small candidate digits without clouding the fill.
+    private const float PencilModeBoundaryOpacity = 0.28f;
 
     // Keep the board digits in the same bright, playful palette as the
     // variant-selection artwork. The sprite sheet supplies the shading;
@@ -80,6 +87,14 @@ public class SudokuCell : MonoBehaviour
     void Awake()
     {
         if (background == null) background = GetComponent<Image>();
+
+        Transform glowTransform = transform.Find("SelectionGlow");
+        if (glowTransform != null)
+        {
+            selectionGlow = glowTransform.GetComponent<Image>();
+            if (selectionGlow != null)
+                selectionGlow.gameObject.SetActive(false);
+        }
         if (numberImage == null)
         {
             foreach (Image img in GetComponentsInChildren<Image>())
@@ -268,6 +283,14 @@ public class SudokuCell : MonoBehaviour
         ApplyBackgroundColor();
     }
 
+    public void SetPencilModeActive(bool active)
+    {
+        if (isPencilModeActive == active) return;
+
+        isPencilModeActive = active;
+        ApplyBackgroundColor();
+    }
+
     private void ApplyBackgroundColor()
     {
         if (isPickerHighlighted)
@@ -286,7 +309,16 @@ public class SudokuCell : MonoBehaviour
             baseColor = IsGiven ? givenColor : normalColor;
 
         if (background != null)
-            background.color = baseColor;
+        {
+            Color displayColor = baseColor;
+            if (isPencilModeActive)
+                displayColor.a = Mathf.Max(displayColor.a, PencilModeBoundaryOpacity);
+
+            background.color = displayColor;
+        }
+
+        if (selectionGlow != null)
+            selectionGlow.gameObject.SetActive(isSelected || isPickerHighlighted);
     }
 
     private void UpdateDigitColor()
@@ -311,39 +343,6 @@ public class SudokuCell : MonoBehaviour
     void OnDisable()
     {
         transform.localScale = Vector3.one;
-    }
-
-    // ── Animations ────────────────────────────────────────────────────────────
-    public void PlayTapAnimation()
-    {
-        StartCoroutine(UIAnimator.ScalePunch(transform, _originalScale));
-    }
-    public void PlayEntryAnimation()
-    {
-        StartCoroutine(UIAnimator.ScaleBounce(transform, _originalScale));
-    }
-    public void PlayErrorAnimation()
-    {
-        StartCoroutine(PlayErrorSequence());
-    }
-
-    private System.Collections.IEnumerator PlayErrorSequence()
-    {
-        // Pulse the cell background so the digit keeps its normal color.
-        Image pulseTarget = background != null ? background : numberImage;
-        if (pulseTarget == null) yield break;
-
-        yield return UIAnimator.Pulse(pulseTarget, Color.white, errorColor, 3, 0.15f);
-
-        if (isConflict)
-            pulseTarget.color = errorColor;
-        else
-            pulseTarget.color = isDimmed ? dimmedColor : baseColor;
-    }
-
-    public void PlayLockedAnimation()
-    {
-        StartCoroutine(UIAnimator.Wobble(transform, _originalRotation));
     }
 
     // ── Input ─────────────────────────────────────────────────────────────────
@@ -376,8 +375,6 @@ public class SudokuCell : MonoBehaviour
             return;
         }
 
-        PlayTapAnimation();
-
         if (NumberPicker.Instance != null)
             NumberPicker.Instance.SetSelectedCellTransform(GetComponent<RectTransform>());
 
@@ -399,7 +396,7 @@ public class SudokuCell : MonoBehaviour
 
     [Header("Responsive Number Size")]
     [SerializeField, Range(0.5f, 1.25f)]
-    private float numberFontSizeCellRatio = 0.86f;
+    private float numberFontSizeCellRatio = 0.72f;
 
     public void ResizeCellContent(float newCellSize)
     {

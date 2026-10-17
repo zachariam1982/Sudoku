@@ -55,6 +55,8 @@ public class RecordScript : MonoBehaviour
     [SerializeField] private GameObject DetailsPanel;
     [SerializeField] private TextMeshProUGUI DetailsText;
     [SerializeField] private Image ExpandArrow;
+    [SerializeField] private Sprite CollapsedArrowSprite;
+    [SerializeField] private Sprite ExpandedArrowSprite;
     [SerializeField] private GameObject RetakeButtonContainer;
 
     public void Setup(JourneyViewModel viewModel, GameRecord record)
@@ -160,6 +162,16 @@ public class RecordScript : MonoBehaviour
 
         if (ExpandArrow != null)
         {
+            _expandArrowButton = ExpandArrow.GetComponent<Button>();
+            if (_expandArrowButton == null)
+                _expandArrowButton = ExpandArrow.gameObject.AddComponent<Button>();
+
+            _expandArrowButton.transition = Selectable.Transition.None;
+            _expandArrowButton.targetGraphic = ExpandArrow;
+            Navigation arrowNavigation = _expandArrowButton.navigation;
+            arrowNavigation.mode = Navigation.Mode.None;
+            _expandArrowButton.navigation = arrowNavigation;
+            _expandArrowButton.onClick.RemoveListener(ToggleDetails);
             _expandArrowButton.onClick.AddListener(ToggleDetails);
         }
 
@@ -422,8 +434,12 @@ public class RecordScript : MonoBehaviour
 
     private void SetExpandedArrow(bool expanded)
     {
-        //if (ExpandArrow != null)
-            //ExpandArrow.Im = expanded ? "⌄" : ">";
+        if (ExpandArrow == null)
+            return;
+
+        Sprite sprite = expanded ? ExpandedArrowSprite : CollapsedArrowSprite;
+        if (sprite != null)
+            ExpandArrow.sprite = sprite;
     }
 
     private void OnDestroy()

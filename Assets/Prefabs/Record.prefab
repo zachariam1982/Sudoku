@@ -902,7 +902,9 @@ MonoBehaviour:
   LostSprite: {fileID: 109113094714238386, guid: 396f42a8e7b5e9b4abc19da2df506d83, type: 3}
   DetailsPanel: {fileID: 8278448853903316703}
   DetailsText: {fileID: 1336973239771672984}
-  ExpandArrow: {fileID: 0}
+  ExpandArrow: {fileID: 7458788383319781517}
+  CollapsedArrowSprite: {fileID: -8976925164850231935, guid: 396f42a8e7b5e9b4abc19da2df506d83, type: 3}
+  ExpandedArrowSprite: {fileID: 1177398860302499738, guid: 396f42a8e7b5e9b4abc19da2df506d83, type: 3}
   RetakeButtonContainer: {fileID: 8800000000000000005}
 --- !u!114 &566333342796223658
 MonoBehaviour:

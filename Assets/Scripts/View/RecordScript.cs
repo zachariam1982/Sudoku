@@ -54,7 +54,7 @@ public class RecordScript : MonoBehaviour
     [Header("Expanded Details")]
     [SerializeField] private GameObject DetailsPanel;
     [SerializeField] private TextMeshProUGUI DetailsText;
-    [SerializeField] private TextMeshProUGUI ExpandArrow;
+    [SerializeField] private Image ExpandArrow;
     [SerializeField] private GameObject RetakeButtonContainer;
 
     public void Setup(JourneyViewModel viewModel, GameRecord record)
@@ -155,26 +155,12 @@ public class RecordScript : MonoBehaviour
         {
             Transform arrowTransform = transform.Find("SummaryRow/Restart/ExpandArrow");
             if (arrowTransform != null)
-                ExpandArrow = arrowTransform.GetComponent<TextMeshProUGUI>();
+                ExpandArrow = arrowTransform.GetComponent<Image>();
         }
 
         if (ExpandArrow != null)
         {
-            ExpandArrow.raycastTarget = true;
-            _expandArrowButton = ExpandArrow.GetComponent<Button>();
-            if (_expandArrowButton == null)
-                _expandArrowButton = ExpandArrow.gameObject.AddComponent<Button>();
-
-            _expandArrowButton.transition = Selectable.Transition.None;
-            _expandArrowButton.targetGraphic = ExpandArrow;
-            Navigation arrowNavigation = _expandArrowButton.navigation;
-            arrowNavigation.mode = Navigation.Mode.None;
-            _expandArrowButton.navigation = arrowNavigation;
             _expandArrowButton.onClick.AddListener(ToggleDetails);
-
-            VerticalLayoutGroup restartLayout = ExpandArrow.GetComponentInParent<VerticalLayoutGroup>();
-            if (restartLayout != null)
-                restartLayout.childAlignment = TextAnchor.MiddleCenter;
         }
 
         if (DetailsPanel != null) DetailsPanel.SetActive(false);
@@ -436,8 +422,8 @@ public class RecordScript : MonoBehaviour
 
     private void SetExpandedArrow(bool expanded)
     {
-        if (ExpandArrow != null)
-            ExpandArrow.text = expanded ? "⌄" : ">";
+        //if (ExpandArrow != null)
+            //ExpandArrow.Im = expanded ? "⌄" : ">";
     }
 
     private void OnDestroy()

@@ -16,6 +16,7 @@ public class RecordScript : MonoBehaviour
     private const float PortraitResultIconGap = 12f;
     private const float RestartInlineGap = 8f;
     private const float RestartRowHeight = 76f;
+    private const float RetakeBelowRowVerticalPadding = 12f;
 
     private static RecordScript _expandedRecord;
 
@@ -249,13 +250,19 @@ public class RecordScript : MonoBehaviour
             : 1);
 
         LayoutElement rowElement = _retakeBelowRow.GetComponent<LayoutElement>();
-        rowElement.minHeight = RestartRowHeight;
-        rowElement.preferredHeight = RestartRowHeight;
+        float rowHeight = RestartRowHeight + RetakeBelowRowVerticalPadding * 2f;
+        rowElement.minHeight = rowHeight;
+        rowElement.preferredHeight = rowHeight;
         rowElement.flexibleHeight = 0f;
         rowElement.flexibleWidth = 1f;
 
         HorizontalLayoutGroup rowLayout = _retakeBelowRow.GetComponent<HorizontalLayoutGroup>();
         rowLayout.childAlignment = TextAnchor.MiddleCenter;
+        rowLayout.padding = new RectOffset(
+            0,
+            0,
+            Mathf.RoundToInt(RetakeBelowRowVerticalPadding),
+            Mathf.RoundToInt(RetakeBelowRowVerticalPadding));
         rowLayout.childControlWidth = true;
         rowLayout.childControlHeight = true;
         rowLayout.childForceExpandWidth = false;

@@ -112,6 +112,12 @@ public static class NewGameResultDatabase
         Save();
     }
 
+    public static int GetNextId()
+    {
+        Load();
+        return _results.Rows.Count == 0 ? 1 : _results.Rows.Max(row => row.Id) + 1;
+    }
+
     public static NewGameResult GetLatest()
     {
         Load();
@@ -301,6 +307,13 @@ public static class NewGameResultDatabase
                 );
             END;
         ");
+    }
+
+    public static int GetNextId()
+    {
+        if (_db == null) return 1;
+        NewGameResult latest = _db.Table<NewGameResult>().OrderByDescending(result => result.Id).FirstOrDefault();
+        return latest == null ? 1 : latest.Id + 1;
     }
 
     public static NewGameResult GetLatest() =>

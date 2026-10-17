@@ -9,6 +9,16 @@ public sealed class NewGameViewModel : BaseViewModel
 
     public bool HasActiveGame { get; private set; }
 
+    /// <summary>Row ID shown for the active game, or the latest saved game.</summary>
+    public int GetStatsRowId()
+    {
+        if (_replayResultId > 0) return _replayResultId;
+        if (HasActiveGame) return NewGameResultDatabase.GetNextId();
+
+        NewGameResult latest = NewGameResultDatabase.GetLatest();
+        return latest != null ? latest.Id : NewGameResultDatabase.GetNextId();
+    }
+
     public NewGameViewModel(IGameUsageStats usageStats, IScorePenalties penalties)
         : base(usageStats, penalties) { }
 

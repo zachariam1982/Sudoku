@@ -249,7 +249,7 @@ public sealed class NewGameStatsPanel : MonoBehaviour
     private void Refresh()
     {
         if (_viewModel == null) return;
-        Set(levelValue, _viewModel.GetLevel.ToString());
+        Set(levelValue, _viewModel.GetStatsRowId().ToString());
         Set(difficultyValue, ((SudokuDifficulty)_viewModel.GetDifficulty).ToString());
         Set(pencilUsesValue, _viewModel.UsageStats.PencilUses.ToString());
         Set(sosUsesValue, _viewModel.UsageStats.SOSUses.ToString());

@@ -9,7 +9,7 @@ public sealed class NewGameViewModel : BaseViewModel
 
     public bool HasActiveGame { get; private set; }
 
-    /// <summary>Row ID shown for the active game, or the latest saved game.</summary>
+    /// <summary>Row ID for the next fresh result, or the existing row during a retake.</summary>
     public int GetStatsRowId()
     {
         // A retake keeps the row identity of the result being replayed.

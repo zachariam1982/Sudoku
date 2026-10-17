@@ -9,7 +9,9 @@ public sealed class NewGameRecordRow : MonoBehaviour, IPointerClickHandler
 
     [SerializeField] private TextMeshProUGUI levelLabel;
     [SerializeField] private TextMeshProUGUI difficultyLabel;
-    [SerializeField] private TextMeshProUGUI statusLabel;
+    [SerializeField] private Image pointsResultIcon;
+    [SerializeField] private Sprite wonSprite;
+    [SerializeField] private Sprite lostSprite;
     [SerializeField] private TextMeshProUGUI retakeLabel;
     [SerializeField] private Button retakeButton;
     [SerializeField] private GameObject detailsPanel;
@@ -23,7 +25,6 @@ public sealed class NewGameRecordRow : MonoBehaviour, IPointerClickHandler
 
     private static readonly Color Gold = new Color32(242, 198, 108, 255);
     private static readonly Color White = new Color32(241, 244, 252, 255);
-    private static readonly Color IncompleteAmber = new Color32(232, 151, 83, 255);
 
     public void Setup(NewGameResultEntry entry, NewGameStatsPanel owner)
     {
@@ -43,11 +44,8 @@ public sealed class NewGameRecordRow : MonoBehaviour, IPointerClickHandler
             difficultyLabel.color = White;
         }
 
-        if (statusLabel != null)
-        {
-            statusLabel.text = entry.IsCompleted ? "COMPLETED" : "INCOMPLETE";
-            statusLabel.color = entry.IsCompleted ? Gold : IncompleteAmber;
-        }
+        if (pointsResultIcon != null)
+            pointsResultIcon.sprite = entry.IsCompleted ? wonSprite : lostSprite;
 
         if (retakeLabel != null)
         {

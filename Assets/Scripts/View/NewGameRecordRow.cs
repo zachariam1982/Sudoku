@@ -14,6 +14,9 @@ public sealed class NewGameRecordRow : MonoBehaviour, IPointerClickHandler
     [SerializeField] private Button retakeButton;
     [SerializeField] private GameObject detailsPanel;
     [SerializeField] private TextMeshProUGUI detailsText;
+    [SerializeField] private Image detailsToggleImage;
+    [SerializeField] private Sprite collapsedDetailsSprite;
+    [SerializeField] private Sprite expandedDetailsSprite;
 
     private NewGameStatsPanel _owner;
     private NewGameResult _result;
@@ -57,6 +60,8 @@ public sealed class NewGameRecordRow : MonoBehaviour, IPointerClickHandler
 
         if (detailsPanel != null)
             detailsPanel.SetActive(false);
+        if (detailsToggleImage != null)
+            detailsToggleImage.sprite = collapsedDetailsSprite;
 
         if (retakeButton != null)
         {
@@ -95,6 +100,8 @@ public sealed class NewGameRecordRow : MonoBehaviour, IPointerClickHandler
     {
         if (detailsPanel == null) return;
         detailsPanel.SetActive(visible);
+        if (detailsToggleImage != null)
+            detailsToggleImage.sprite = visible ? expandedDetailsSprite : collapsedDetailsSprite;
         LayoutRebuilder.MarkLayoutForRebuild(transform as RectTransform);
     }
 

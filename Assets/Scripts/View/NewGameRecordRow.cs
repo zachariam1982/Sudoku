@@ -49,7 +49,7 @@ public sealed class NewGameRecordRow : MonoBehaviour, IPointerClickHandler
 
         if (retakeLabel != null)
         {
-            retakeLabel.text = "  RETAKE";
+            retakeLabel.text = "RETAKE";
             retakeLabel.color = Gold;
         }
 

@@ -12,11 +12,12 @@ public sealed class NewGameViewModel : BaseViewModel
     /// <summary>Row ID shown for the active game, or the latest saved game.</summary>
     public int GetStatsRowId()
     {
-        if (_replayResultId > 0) return _replayResultId;
-        if (HasActiveGame) return NewGameResultDatabase.GetNextId();
-
-        NewGameResult latest = NewGameResultDatabase.GetLatest();
-        return latest != null ? latest.Id : NewGameResultDatabase.GetNextId();
+        // A retake keeps the row identity of the result being replayed.
+        // Every fresh game uses the next ID that RecordAttempt will assign,
+        // including the pre-game stats screen before HasActiveGame is set.
+        return _replayResultId > 0
+            ? _replayResultId
+            : NewGameResultDatabase.GetNextId();
     }
 
     public NewGameViewModel(IGameUsageStats usageStats, IScorePenalties penalties)

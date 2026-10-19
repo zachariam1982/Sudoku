@@ -8,6 +8,10 @@ public class HUD : MonoBehaviour
     private Action<bool>    hideHudAction;
     private Action<bool>    pencilModeChangedAction;
     private Button          pencilModeButton;
+    private Button          undoButton;
+    private Button          redoButton;
+    private bool            undoButtonWasInteractable;
+    private bool            redoButtonWasInteractable;
     private ColorBlock      defaultPencilButtonColors;
 
     public void Bind(BaseViewModel arg)
@@ -24,8 +28,12 @@ public class HUD : MonoBehaviour
         viewModel = arg;
         hideHudAction = (arg) => this.gameObject.SetActive(arg);
         pencilModeButton = transform.Find("PencilBlock")?.GetComponent<Button>();
+        undoButton = transform.Find("UndoBlock/Undo")?.GetComponent<Button>();
+        redoButton = transform.Find("RedoBlock/Redo")?.GetComponent<Button>();
         if (pencilModeButton != null)
             defaultPencilButtonColors = pencilModeButton.colors;
+        undoButtonWasInteractable = undoButton != null && undoButton.interactable;
+        redoButtonWasInteractable = redoButton != null && redoButton.interactable;
 
         viewModel.HideHUD.OnChanged     += hideHudAction;
         pencilModeChangedAction = UpdatePencilModeVisual;
@@ -37,9 +45,9 @@ public class HUD : MonoBehaviour
 
     private void UpdatePencilModeVisual(bool isActive)
     {
-        if (pencilModeButton == null) return;
-
-        ColorBlock colors = defaultPencilButtonColors;
+        if (pencilModeButton != null)
+        {
+            ColorBlock colors = defaultPencilButtonColors;
         if (isActive)
         {
             // Keep Pencil's active state visible after the button press ends.
@@ -48,7 +56,13 @@ public class HUD : MonoBehaviour
             colors.selectedColor = colors.highlightedColor;
             colors.pressedColor = new Color32(220, 151, 27, 255);
         }
-        pencilModeButton.colors = colors;
+            pencilModeButton.colors = colors;
+        }
+
+        if (undoButton != null)
+            undoButton.interactable = !isActive && undoButtonWasInteractable;
+        if (redoButton != null)
+            redoButton.interactable = !isActive && redoButtonWasInteractable;
     }
 
     public void EraseButtonPressed() => viewModel?.SetEraseModeCommand.Execute();

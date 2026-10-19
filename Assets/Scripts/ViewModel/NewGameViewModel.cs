@@ -4,16 +4,32 @@ using System.Collections.Generic;
 public sealed class NewGameViewModel : BaseViewModel
 {
     private NewGameStateMachine NewGameMachine => (NewGameStateMachine)StateMachine;
+    private bool _resultRecorded;
+    private int _replayResultId;
 
     public bool HasActiveGame { get; private set; }
+
+    /// <summary>Row ID for the next fresh result, or the existing row during a retake.</summary>
+    public int GetStatsRowId()
+    {
+        // A retake keeps the row identity of the result being replayed.
+        // Every fresh game uses the next ID that RecordAttempt will assign,
+        // including the pre-game stats screen before HasActiveGame is set.
+        return _replayResultId > 0
+            ? _replayResultId
+            : NewGameResultDatabase.GetNextId();
+    }
 
     public NewGameViewModel(IGameUsageStats usageStats, IScorePenalties penalties)
         : base(usageStats, penalties) { }
 
     public override void ResetPuzzle()
     {
-        HasActiveGame = true;
+        _resultRecorded = false;
+        _replayResultId = 0;
+        HasActiveGame = false;
         base.ResetPuzzle();
+        HasActiveGame = true;
     }
 
     public SaveGameData GetSaveData()
@@ -26,6 +42,12 @@ public sealed class NewGameViewModel : BaseViewModel
             Level = Model.CurrentLevel,
             Difficulty = (int)Model.CurrentDifficulty,
             PuzzleSeed = Model.PuzzleSeed,
+            NewGameReplayResultId = _replayResultId,
+            UndoUses = UsageStats.UndoUses,
+            PencilUses = UsageStats.PencilUses,
+            EraseUses = UsageStats.EraseUses,
+            SOSUses = UsageStats.SOSUses,
+            AutoFillUses = UsageStats.AutoFillUses,
             IsPencilMode = IsPencilMode.Value,
             HighlightedCandidateNumber = HighlightedCandidateNumber.Value,
             PauseRequested = PauseRequested.Value,
@@ -57,6 +79,9 @@ public sealed class NewGameViewModel : BaseViewModel
             data.PencilCandidateMasksFlat.Length != 81)
             return false;
 
+        HasActiveGame = false;
+        _resultRecorded = false;
+        _replayResultId = data.NewGameReplayResultId;
         Model.SetLevel(data.Level);
         Model.SetPuzzleSeed(data.PuzzleSeed > 0 ? data.PuzzleSeed : data.Level);
         Model.SetDifficulty((SudokuDifficulty)data.Difficulty);
@@ -71,6 +96,7 @@ public sealed class NewGameViewModel : BaseViewModel
                 Model.SetValue(row, col, data.BoardFlat[i]);
         }
         Model.LoadPencilCandidateMasks(data.PencilCandidateMasksFlat);
+        UsageStats.Load(data.UndoUses, data.PencilUses, data.EraseUses, data.SOSUses, data.AutoFillUses);
 
         UndoHistory.Clear();
         RedoHistory.Clear();
@@ -112,7 +138,70 @@ public sealed class NewGameViewModel : BaseViewModel
         return true;
     }
 
-    public void ClearActiveGame() => HasActiveGame = false;
+    public void ClearActiveGame()
+    {
+        HasActiveGame = false;
+        _replayResultId = 0;
+    }
+
+    public void RecordResult(bool completed)
+    {
+        if (_resultRecorded || !HasActiveGame) return;
+        _resultRecorded = true;
+        var result = new NewGameResult
+        {
+            Id = _replayResultId,
+            Level = Model.CurrentLevel,
+            Difficulty = (int)Model.CurrentDifficulty,
+            PuzzleSeed = Model.PuzzleSeed,
+            PencilUses = UsageStats.PencilUses,
+            SOSUses = UsageStats.SOSUses,
+            AutoFillUses = UsageStats.AutoFillUses,
+            RecordedAt = System.DateTime.UtcNow.ToString("o")
+        };
+
+        if (_replayResultId > 0)
+        {
+            // Match Journey: a successful retake replaces the original result;
+            // abandoning a retake leaves that result unchanged.
+            if (completed) NewGameResultDatabase.UpdateCompletedAttempt(result);
+        }
+        else
+        {
+            NewGameResultDatabase.RecordAttempt(result, completed);
+        }
+    }
+
+    public void ReplayResult(NewGameResult result)
+    {
+        if (result == null) return;
+        PauseRequested.Value = false;
+        ResumeRequested.Value = false;
+        IsPaused.Value = false;
+        IsWon.Value = false;
+        Model.SetLevel(result.Level);
+        Model.SetDifficulty((SudokuDifficulty)result.Difficulty);
+        Model.SetPuzzleSeed(result.PuzzleSeed > 0 ? result.PuzzleSeed : result.Level);
+        ResetPuzzle();
+        _replayResultId = result.Id;
+
+        IsWon.Value = false;
+        IsComplete.Value = false;
+        IsBoardValid.Value = true;
+        NewGameMachine.StartPlaying();
+        RequestSave();
+    }
+
+    public void RestartCurrentGame()
+    {
+        ReplayResult(new NewGameResult
+        {
+            Id = _replayResultId,
+            Level = Model.CurrentLevel,
+            Difficulty = (int)Model.CurrentDifficulty,
+            PuzzleSeed = Model.PuzzleSeed
+        });
+    }
 
     private static void AddHistoryToSave(
         Stack<SaveGameHistoryEntry> history,

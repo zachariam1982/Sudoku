@@ -29,7 +29,12 @@ public class User : MonoBehaviour
         Instance = this;
         DontDestroyOnLoad(gameObject);  // survive scene reloads
  
-        GameDatabase.Init(); 
+        GameDatabase.Init();
+#if UNITY_WEBGL && !UNITY_EDITOR
+        NewGameResultDatabase.Init();
+#else
+        NewGameResultDatabase.Init(GameDatabase.Connection);
+#endif 
         StartCoroutine(SaveLoop());
     }
     public bool TryLoadSave()

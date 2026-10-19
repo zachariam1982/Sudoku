@@ -1,16 +1,32 @@
 public sealed class NewGameUsageStats : IGameUsageStats
 {
-    public int UndoUses => 0;
-    public int PencilUses => 0;
-    public int EraseUses => 0;
-    public int SOSUses => 0;
-    public int AutoFillUses => 0;
+    public int UndoUses { get; private set; }
+    public int PencilUses { get; private set; }
+    public int EraseUses { get; private set; }
+    public int SOSUses { get; private set; }
+    public int AutoFillUses { get; private set; }
 
-    public void AddUndo() { }
-    public void AddPencil() { }
-    public void AddErase() { }
-    public void AddSOS() { }
-    public void AddAutoFill() { }
-    public void Reset() { }
-    public void Load(int undo, int pencil, int erase, int sos, int autoFill) { }
+    public void AddUndo() => UndoUses++;
+    public void AddPencil() => PencilUses++;
+    public void AddErase() => EraseUses++;
+    public void AddSOS() => SOSUses++;
+    public void AddAutoFill() => AutoFillUses++;
+
+    public void Reset()
+    {
+        UndoUses = 0;
+        PencilUses = 0;
+        EraseUses = 0;
+        SOSUses = 0;
+        AutoFillUses = 0;
+    }
+
+    public void Load(int undo, int pencil, int erase, int sos, int autoFill)
+    {
+        UndoUses = undo;
+        PencilUses = pencil;
+        EraseUses = erase;
+        SOSUses = sos;
+        AutoFillUses = autoFill;
+    }
 }

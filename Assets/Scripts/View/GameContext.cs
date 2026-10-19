@@ -14,9 +14,12 @@ public class GameContext : MonoBehaviour
     [SerializeField] private NewGameStateMachine _newGameStateMachine;
 
     private SudokuGrid _grid;
+    private GridBuilder _gridBuilder;
     private ErrorMessage _error;
     private NumberPicker _picker;
     private GameStateView _stateView;
+    private StatsPanel _statsPanel;
+    private NewGameStatsPanel _newGameStatsPanel;
     private bool _newGameActive;
 
     private void Awake()
@@ -29,14 +32,16 @@ public class GameContext : MonoBehaviour
             new NewGameScorePenalties());
 
         _grid = GetComponent<SudokuGrid>();
+        _gridBuilder = GetComponent<GridBuilder>();
         _error = GetComponent<ErrorMessage>();
         _picker = GetComponentInChildren<NumberPicker>();
         _stateView = GetComponentInChildren<GameStateView>();
 
+        _statsPanel = GetComponentInChildren<StatsPanel>(true);
+        _newGameStatsPanel = GetComponentInChildren<NewGameStatsPanel>(true);
         BindGameplay(JourneyViewModel);
-
-        StatsPanel stats = GetComponentInChildren<StatsPanel>();
-        if (stats != null) stats.Bind(JourneyViewModel);
+        _statsPanel?.Bind(JourneyViewModel);
+        _newGameStatsPanel?.Bind(NewGameViewModel);
 
         User.Instance.ViewModel = JourneyViewModel;
         User.Instance.NewGameViewModel = NewGameViewModel;
@@ -58,6 +63,9 @@ public class GameContext : MonoBehaviour
 
         _journeyStateMachine.SetSuspended(true);
         _homeScreen.Initialize(JourneyViewModel, this);
+        // Startup is the mode selector, not an active Journey session.
+        _gridBuilder?.SetVisible(false);
+        _stateView?.SetGameplayVisible(false);
     }
 
     public void ActivateJourney()
@@ -66,6 +74,8 @@ public class GameContext : MonoBehaviour
         _newGameActive = false;
         BindGameplay(JourneyViewModel);
         _journeyStateMachine.SetSuspended(false);
+        _gridBuilder?.SetVisible(true);
+        _stateView?.SetGameplayVisible(true);
     }
 
     public void ActivateNewGame(SudokuDifficulty difficulty)
@@ -75,6 +85,8 @@ public class GameContext : MonoBehaviour
         BindGameplay(NewGameViewModel);
         NewGameViewModel.StartRandomGame(difficulty);
         _newGameStateMachine.SetSuspended(false);
+        _gridBuilder?.SetVisible(true);
+        _stateView?.SetGameplayVisible(true);
     }
 
     public bool HasSavedNewGame => NewGameViewModel != null && NewGameViewModel.HasActiveGame;
@@ -86,17 +98,21 @@ public class GameContext : MonoBehaviour
         _newGameActive = true;
         BindGameplay(NewGameViewModel);
         _newGameStateMachine.SetSuspended(false);
+        _gridBuilder?.SetVisible(true);
+        _stateView?.SetGameplayVisible(true);
     }
 
     public void ExitNewGame()
     {
         if (!_newGameActive || NewGameViewModel == null) return;
 
+        NewGameViewModel.RecordResult(false);
         _newGameStateMachine.SetSuspended(true);
         _newGameActive = false;
         NewGameViewModel.ClearActiveGame();
         SaveSystem.Delete(SaveSlot.NewGame);
-        _stateView?.SetTopBarMode(false);
+        _gridBuilder?.SetVisible(false);
+        _stateView?.SetGameplayVisible(false);
         _newGameScreen.Show();
     }
 
@@ -108,16 +124,47 @@ public class GameContext : MonoBehaviour
             _stateView?.SetTopBarMode(false);
         }
         else _journeyStateMachine.SetSuspended(true);
+
+        _gridBuilder?.SetVisible(false);
+        _stateView?.SetGameplayVisible(false);
     }
 
     private void OnNewGameCompleted()
     {
+        NewGameViewModel.RecordResult(true);
         _newGameStateMachine.SetSuspended(true);
         _newGameActive = false;
         NewGameViewModel.ClearActiveGame();
         SaveSystem.Delete(SaveSlot.NewGame);
-        _stateView?.SetTopBarMode(false);
+        _gridBuilder?.SetVisible(false);
+        _stateView?.SetGameplayVisible(false);
         _newGameScreen.Show();
+    }
+
+    public void RetryLatestNewGameResult()
+    {
+        NewGameResult latest = NewGameResultDatabase.GetLatest();
+        if (latest != null)
+            RetryNewGameResult(latest);
+        else if (NewGameViewModel != null && NewGameViewModel.HasActiveGame)
+            NewGameViewModel.RestartCurrentGame();
+    }
+
+    public void RetryNewGameResult(NewGameResult result)
+    {
+        if (result == null) return;
+
+        if (_newGameActive && NewGameViewModel != null && NewGameViewModel.HasActiveGame)
+            NewGameViewModel.RecordResult(false);
+
+        _journeyStateMachine.SetSuspended(true);
+        _newGameActive = true;
+        BindGameplay(NewGameViewModel);
+        if (_newGameScreen != null) _newGameScreen.gameObject.SetActive(false);
+        NewGameViewModel.ReplayResult(result);
+        _newGameStateMachine.SetSuspended(false);
+        _gridBuilder?.SetVisible(true);
+        _stateView?.SetGameplayVisible(true);
     }
 
     private void BindGameplay(BaseViewModel viewModel)

@@ -4,6 +4,7 @@ using UnityEngine.UI;
 using TMPro;
 using System.Collections.Generic;
 using UnityEngine.InputSystem;
+using System.Globalization;
 
 public class StatsPanel : MonoBehaviour
 {
@@ -30,22 +31,30 @@ public class StatsPanel : MonoBehaviour
     [SerializeField] private Image[]         liveDots;
     [SerializeField] private TextMeshProUGUI mistakesValue;
     [SerializeField] private TextMeshProUGUI sosValue;
+    [SerializeField] private TextMeshProUGUI livesValue;
 
-    [Header("Win-rate bar")]
-    [SerializeField] private TextMeshProUGUI winRatePctLabel;
-    [SerializeField] private RectTransform   winRateBarFill;
+    [Header("All-time summary values")]
+    [SerializeField] private TextMeshProUGUI allTimeTitle;
+    [SerializeField] private TextMeshProUGUI allTimePlayedValue;
+    [SerializeField] private TextMeshProUGUI allTimeWonValue;
+    [SerializeField] private TextMeshProUGUI allTimeWinRateValue;
 
-    [Header("All-time stat cards — value labels")]
-    [SerializeField] private TextMeshProUGUI totalGamesValue;
-    [SerializeField] private TextMeshProUGUI winsValue;
-    [SerializeField] private TextMeshProUGUI bestTimeValue;
+    [Header("All-time difficulty table")]
+    [SerializeField] private TextMeshProUGUI allTimeTableHeader;
+    [SerializeField] private TextMeshProUGUI allTimeTableDetails;
+
+    [Header("All-time win-rate bar")]
+    [SerializeField] private RectTransform winRateBarFill;
 
     [Header("Streak chip")]
     [SerializeField] private TextMeshProUGUI streakNumber;
     [SerializeField] private TextMeshProUGUI streakDesc;
     [Header("Progression")]
     [SerializeField] private TextMeshProUGUI[] recentGameLabels;
+    [SerializeField] private TextMeshProUGUI currentDifficultyText;
     [SerializeField] private TextMeshProUGUI progressionText;
+    [SerializeField] private TextMeshProUGUI progressionCountText;
+    [SerializeField] private RectTransform progressionBarFill;
     [Header("Colors")]
     [SerializeField] private Color colorGold    = new Color(1.00f, 0.78f, 0.20f);
     [SerializeField] private Color colorRed     = new Color(0.88f, 0.27f, 0.27f);
@@ -63,15 +72,27 @@ public class StatsPanel : MonoBehaviour
     [SerializeField] private GameObject recordScroll;
     [Header("Responsive Layout")]
     [SerializeField] private RectTransform contentRT;
+    [SerializeField] private RectTransform currentJourneyColumns;
+    [SerializeField] private RectTransform[] allTimeSummaryIcons;
+    [SerializeField] private RectTransform[] allTimeSummaryLabels;
+    [SerializeField] private RectTransform[] allTimeSummaryValues;
+    [SerializeField] private float landscapeSummaryIconGap = 8f;
+    [SerializeField] private float landscapeSummaryTextShift = 0.06f;
+    [SerializeField] private float landscapeWinRateTextShift = 0.03f;
+    [SerializeField] private float landscapeSummaryValueFontSize = 34f;
+    [SerializeField] private float portraitSummaryTextShift = 0.04f;
+    [SerializeField] private float portraitWinRateTextShift = 0.02f;
     [Header("Gameplay UI")]
     [SerializeField] private GameObject gameplayTools;
+    [SerializeField] private GameObject gameplayGrid;
+    [SerializeField] private GameObject journeyTopBar;
 
     private bool _gameplayToolsWasActive;
+    private bool _gameplayGridWasActive;
+    private bool _journeyTopBarWasActive;
     private bool _tickerWasActive;
     private VerseTicker _verseTicker;
 
-    private const float StatsDesignWidth = 972f;
-    private const float StatsDesignHeight = 1920f;
 
     private JourneyViewModel _vm;
     private bool            _open;
@@ -84,21 +105,88 @@ public class StatsPanel : MonoBehaviour
     private List<GameObject> lstOfRecords = new List<GameObject>();
     private GameStats _gameStats;
     private int _totalPossiblePoints;
+    private int _lastScreenWidth = -1;
+    private int _lastScreenHeight = -1;
+    private Coroutine _responsiveLayoutRefresh;
     
     void Awake()
     {
-        _hiddenX = panelRT.sizeDelta.x;
+        _hiddenX = canvas != null ? canvas.rect.width : panelRT.rect.width;
         panelRT.anchoredPosition = new Vector2(_hiddenX, panelRT.anchoredPosition.y);
 
         panelCG.alpha          = 0f;
         panelCG.blocksRaycasts = false;
         panelCG.interactable   = false;
+        _lastScreenWidth = Screen.width;
+        _lastScreenHeight = Screen.height;
+        ApplyResponsiveStatsContentWidth();
 
         if (backdropButton != null) backdropButton.gameObject.SetActive(false);
 
         if (closeButton    != null) closeButton.onClick.AddListener(ClosePanel);
         if (backdropButton != null) backdropButton.onClick.AddListener(ClosePanel);
         if (scrollRect     != null) scrollRect.onValueChanged.AddListener(OnScroll);
+    }
+
+    private void LateUpdate()
+    {
+        if (_lastScreenWidth == Screen.width && _lastScreenHeight == Screen.height) return;
+
+        _lastScreenWidth = Screen.width;
+        _lastScreenHeight = Screen.height;
+
+        // Update anchors immediately, then let the canvas and parent layout settle
+        // before measuring the three columns.
+        ApplyResponsiveStatsContentWidth();
+        ScheduleResponsiveLayoutRefresh();
+    }
+
+    private void ScheduleResponsiveLayoutRefresh()
+    {
+        if (_responsiveLayoutRefresh == null)
+            _responsiveLayoutRefresh = StartCoroutine(RefreshResponsiveLayoutAfterCanvasResize());
+    }
+
+    private IEnumerator RefreshResponsiveLayoutAfterCanvasResize()
+    {
+        ApplyResponsiveStatsContentWidth();
+
+        float previousWidth = -1f;
+        float previousHeight = -1f;
+        int stableFrames = 0;
+        for (int frame = 0; frame < 8 && stableFrames < 2; frame++)
+        {
+            yield return null;
+            Canvas.ForceUpdateCanvases();
+
+            float width = currentJourneyColumns != null
+                ? currentJourneyColumns.rect.width
+                : canvas != null ? canvas.rect.width : 0f;
+            float height = currentJourneyColumns != null
+                ? currentJourneyColumns.rect.height
+                : canvas != null ? canvas.rect.height : 0f;
+
+            if (Mathf.Abs(width - previousWidth) < 0.5f &&
+                Mathf.Abs(height - previousHeight) < 0.5f)
+                stableFrames++;
+            else
+                stableFrames = 0;
+
+            previousWidth = width;
+            previousHeight = height;
+        }
+
+        // Re-read the actual resized RectTransform bounds after the canvas settles.
+        ApplyResponsiveStatsContentWidth();
+        Canvas.ForceUpdateCanvases();
+        ApplyCurrentJourneyResponsiveLayout();
+        ApplyAllTimeSummaryResponsiveLayout();
+        Canvas.ForceUpdateCanvases();
+
+        if (currentJourneyColumns != null)
+            LayoutRebuilder.ForceRebuildLayoutImmediate(currentJourneyColumns);
+
+        _responsiveLayoutRefresh = null;
     }
 
     private void Update()
@@ -145,32 +233,203 @@ public class StatsPanel : MonoBehaviour
     {
         if (canvas == null || panelRT == null) return;
 
-        float availableWidth = canvas.rect.width;
-        float availableHeight = canvas.rect.height;
+        _hiddenX = canvas.rect.width;
+        ApplyResponsiveStatsContentWidth();
+        ScheduleResponsiveLayoutRefresh();
+        if (!_open)
+            panelRT.anchoredPosition = new Vector2(_hiddenX, panelRT.anchoredPosition.y);
+    }
 
-        // Sidebar itself fills the available height,
-        // but never grows wider than its 972-unit design width.
-        float panelWidth = Mathf.Min(availableWidth, StatsDesignWidth);
+    private void ApplyResponsiveStatsContentWidth()
+    {
+        if (canvas == null) return;
 
-        panelRT.sizeDelta =  new Vector2( panelWidth, availableHeight);
+        bool landscape = Screen.width > Screen.height;
 
-        if (contentRT != null)
+        RectTransform viewport = scrollRect != null
+            ? scrollRect.transform as RectTransform
+            : null;
+        SetHorizontalAnchors(viewport,
+            landscape ? 0.175f : 0f,
+            landscape ? 0.825f : 1f);
+        if (viewport != null)
         {
-            // Scale the original 972x1920 layout down only when needed.
-            float widthScale = panelWidth / StatsDesignWidth;
-            float heightScale = availableHeight / StatsDesignHeight;
-            float scale = Mathf.Min( 1f, Mathf.Min(widthScale, heightScale));
-
-            contentRT.sizeDelta = new Vector2( StatsDesignWidth, StatsDesignHeight);
-            contentRT.localScale = new Vector3(scale, scale, 1f);
-            // Keep scaled content attached to top-right.
-            contentRT.anchoredPosition = Vector2.zero;
+            Vector2 viewportSize = viewport.sizeDelta;
+            viewportSize.x = landscape ? 0f : -20f;
+            viewport.sizeDelta = viewportSize;
+            Vector2 viewportPosition = viewport.anchoredPosition;
+            viewportPosition.x = 0f;
+            viewport.anchoredPosition = viewportPosition;
         }
 
-        // IMPORTANT: panel width can change after orientation changes.
-        _hiddenX = panelWidth;
+        SetHorizontalAnchors(parentScroll as RectTransform,
+            landscape ? 0.14f : 0.02f,
+            landscape ? 0.86f : 0.98f);
 
-        if (!_open) panelRT.anchoredPosition = new Vector2( _hiddenX, panelRT.anchoredPosition.y);
+        // Keep portrait cards close to the screen edges while preserving a visible
+        // margin for the glass border. Landscape retains the roomier authored inset.
+        VerticalLayoutGroup contentLayout = parentScroll != null
+            ? parentScroll.GetComponent<VerticalLayoutGroup>()
+            : null;
+        if (contentLayout != null)
+        {
+            int horizontalPadding = landscape ? 36 : 12;
+            RectOffset padding = contentLayout.padding;
+            padding.left = horizontalPadding;
+            padding.right = horizontalPadding;
+            contentLayout.padding = padding;
+        }
+
+        ApplyCurrentJourneyResponsiveLayout();
+        ApplyAllTimeSummaryResponsiveLayout();
+    }
+
+    private void ApplyAllTimeSummaryResponsiveLayout()
+    {
+        if (allTimeSummaryIcons == null || allTimeSummaryLabels == null || allTimeSummaryValues == null ||
+            allTimeSummaryIcons.Length < 3 || allTimeSummaryLabels.Length < 3 || allTimeSummaryValues.Length < 3)
+            return;
+
+        bool landscape = Screen.width > Screen.height;
+        for (int i = 0; i < 3; i++)
+        {
+            RectTransform icon = allTimeSummaryIcons[i];
+            RectTransform label = allTimeSummaryLabels[i];
+            RectTransform value = allTimeSummaryValues[i];
+            if (icon == null || label == null || value == null) continue;
+
+            if (!landscape)
+            {
+                // Keep the approved portrait presentation exactly as authored in the scene.
+                float portraitX = 0.075f + i * 0.33f;
+                icon.anchorMin = new Vector2(portraitX, 0.7825f);
+                icon.anchorMax = new Vector2(portraitX, 0.7825f);
+                icon.anchoredPosition = Vector2.zero;
+                icon.sizeDelta = new Vector2(50.4f, 50.4f);
+                float portraitTextShift = i == 2 ? portraitWinRateTextShift : portraitSummaryTextShift;
+                SetAllTimeSummaryTextAnchors(label, value, i, portraitTextShift);
+                SetAllTimeSummaryValueFontSize(i, 34f);
+                continue;
+            }
+
+            RectTransform summary = icon.parent as RectTransform;
+            if (summary == null || summary.rect.width <= 0f || summary.rect.height <= 0f) continue;
+
+            // Size the icon to span both text rows, including their inter-row gap.
+            float bottom = Mathf.Min(label.anchorMin.y, value.anchorMin.y);
+            float top = Mathf.Max(label.anchorMax.y, value.anchorMax.y);
+            float iconSize = (top - bottom) * summary.rect.height;
+            float centerY = (bottom + top) * 0.5f;
+            float originalTextLeft = 0.135f + i * 0.33f;
+            float centerX = originalTextLeft - (iconSize * 0.5f + landscapeSummaryIconGap) / summary.rect.width;
+
+            icon.anchorMin = new Vector2(centerX, centerY);
+            icon.anchorMax = new Vector2(centerX, centerY);
+            icon.anchoredPosition = Vector2.zero;
+            icon.sizeDelta = new Vector2(iconSize, iconSize);
+            float textShift = i == 2 ? landscapeWinRateTextShift : landscapeSummaryTextShift;
+            SetAllTimeSummaryTextAnchors(label, value, i, textShift);
+            SetAllTimeSummaryValueFontSize(i, landscapeSummaryValueFontSize);
+        }
+    }
+
+    private void SetAllTimeSummaryTextAnchors(RectTransform label, RectTransform value, int index, float shift)
+    {
+        float minX = 0.135f + index * 0.33f - shift;
+        float maxX = 0.315f + index * 0.33f - shift;
+        label.anchorMin = new Vector2(minX, label.anchorMin.y);
+        label.anchorMax = new Vector2(maxX, label.anchorMax.y);
+        value.anchorMin = new Vector2(minX, value.anchorMin.y);
+        value.anchorMax = new Vector2(maxX, value.anchorMax.y);
+    }
+
+    private void SetAllTimeSummaryValueFontSize(int index, float fontSize)
+    {
+        TextMeshProUGUI value = index == 0 ? allTimePlayedValue :
+            index == 1 ? allTimeWonValue : allTimeWinRateValue;
+        if (value != null) value.fontSize = fontSize;
+    }
+
+    private void ApplyCurrentJourneyResponsiveLayout()
+    {
+        if (currentJourneyColumns == null || currentJourneyColumns.childCount < 2) return;
+
+        var horizontal = currentJourneyColumns.GetComponent<HorizontalLayoutGroup>();
+        var vertical = currentJourneyColumns.GetComponent<VerticalLayoutGroup>();
+        if (horizontal != null)
+        {
+            horizontal.enabled = true;
+            horizontal.spacing = 12f;
+        }
+        if (vertical != null) vertical.enabled = false;
+
+        var bodyLayout = currentJourneyColumns.GetComponent<LayoutElement>();
+        if (bodyLayout != null) bodyLayout.preferredHeight = 250f;
+
+        var cardLayout = currentJourneyColumns.parent != null
+            ? currentJourneyColumns.parent.GetComponent<LayoutElement>()
+            : null;
+        if (cardLayout != null) cardLayout.preferredHeight = 330f;
+
+        var grid = currentJourneyColumns.GetChild(1).GetComponent<GridLayoutGroup>();
+        if (grid == null) return;
+
+        grid.constraintCount = 2;
+        grid.spacing = new Vector2(12f, 12f);
+        grid.cellSize = new Vector2(300f, 72f);
+
+        // Use the measured body width after its parent scroll content has resized.
+        // The orientation refresh waits for this RectTransform to settle before applying
+        // the equal-width columns.
+        float columnsWidth = currentJourneyColumns.rect.width;
+        if (columnsWidth <= 1f)
+            columnsWidth = canvas.rect.width * (Screen.width > Screen.height ? 0.72f : 0.96f);
+
+        float horizontalPadding = horizontal != null
+            ? horizontal.padding.left + horizontal.padding.right
+            : 0f;
+        float groupSpacing = horizontal != null ? horizontal.spacing : 0f;
+        float columnWidth = Mathf.Max(0f,
+            (columnsWidth - horizontalPadding - groupSpacing - grid.spacing.x) / 3f);
+
+        var ringLayout = currentJourneyColumns.GetChild(0).GetComponent<LayoutElement>();
+        if (ringLayout != null)
+        {
+            ringLayout.preferredWidth = columnWidth;
+            ringLayout.preferredHeight = 250f;
+            ringLayout.flexibleWidth = 0f;
+        }
+
+        var gridLayout = grid.GetComponent<LayoutElement>();
+        if (gridLayout != null)
+        {
+            gridLayout.preferredWidth = columnWidth * 2f + grid.spacing.x;
+            gridLayout.preferredHeight = grid.cellSize.y * 3f + grid.spacing.y * 2f;
+            gridLayout.flexibleWidth = 0f;
+        }
+
+        grid.cellSize = new Vector2(columnWidth, 72f);
+        LayoutRebuilder.MarkLayoutForRebuild(grid.GetComponent<RectTransform>());
+        LayoutRebuilder.MarkLayoutForRebuild(currentJourneyColumns);
+        RectTransform cardRect = currentJourneyColumns.parent as RectTransform;
+        if (cardRect != null)
+            LayoutRebuilder.MarkLayoutForRebuild(cardRect);
+    }
+
+    private static void SetHorizontalAnchors(RectTransform rect, float min, float max)
+    {
+        if (rect == null) return;
+
+        Vector2 anchorMin = rect.anchorMin;
+        Vector2 anchorMax = rect.anchorMax;
+        if (Mathf.Approximately(anchorMin.x, min) && Mathf.Approximately(anchorMax.x, max))
+            return;
+
+        anchorMin.x = min;
+        anchorMax.x = max;
+        rect.anchorMin = anchorMin;
+        rect.anchorMax = anchorMax;
+        LayoutRebuilder.MarkLayoutForRebuild(rect);
     }
 
     public void Bind(JourneyViewModel vm)
@@ -241,6 +500,9 @@ public class StatsPanel : MonoBehaviour
     private void OpenPanel()
     {
         _open = true;
+        ApplyResponsiveStatsContentWidth();
+        Canvas.ForceUpdateCanvases();
+        ApplyAllTimeSummaryResponsiveLayout();
 
         if (_verseTicker == null && canvas != null)
             _verseTicker = canvas.GetComponent<VerseTicker>();
@@ -251,6 +513,16 @@ public class StatsPanel : MonoBehaviour
         {
             _gameplayToolsWasActive = gameplayTools.activeSelf;
             gameplayTools.SetActive(false);
+        }
+        if (gameplayGrid != null)
+        {
+            _gameplayGridWasActive = gameplayGrid.activeSelf;
+            gameplayGrid.SetActive(false);
+        }
+        if (journeyTopBar != null)
+        {
+            _journeyTopBarWasActive = journeyTopBar.activeSelf;
+            journeyTopBar.SetActive(false);
         }
 
         if (backdropButton != null) backdropButton.gameObject.SetActive(true);
@@ -270,7 +542,6 @@ public class StatsPanel : MonoBehaviour
     {
         _open = false;
 
-        if (gameplayTools != null) gameplayTools.SetActive( _gameplayToolsWasActive );
         if (backdropButton != null) backdropButton.gameObject.SetActive(false);
         if (_slideAnim != null) StopCoroutine(_slideAnim);
         _slideAnim = StartCoroutine(SlideOut());
@@ -328,6 +599,7 @@ public class StatsPanel : MonoBehaviour
 
         // Lives dots
         int lives = _vm.LivesRemaining.Value;
+        Set(livesValue, lives.ToString());
         for (int i = 0; i < liveDots.Length; i++)
             if (liveDots[i] != null)
                 liveDots[i].color = i < lives ? colorDotOn : colorDotOff;
@@ -350,249 +622,167 @@ public class StatsPanel : MonoBehaviour
         int games = _gameStats?.TotalGames ?? 0;
         int wins = _gameStats?.TotalWins ?? 0;
         int streak = _gameStats?.CurrentStreak ?? 0;
-        float bestSecs = _gameStats?.FastestWinSeconds != null ? (float) _gameStats.FastestWinSeconds.Value : -1f;
         float rate     = games > 0 ? wins / (float)games : 0f;
-        string bestStr = bestSecs >= 0 ? $"{(int)bestSecs / 60:00}:{(int)bestSecs % 60:00}" : "--:--";
 
-        Set(totalGamesValue, $"{games}");
-        Set(winsValue, $"{wins}");
-        Set(bestTimeValue, bestStr);
+        ApplyAllTimeColorProfile();
+        Set(allTimePlayedValue, games.ToString(CultureInfo.InvariantCulture));
+        Set(allTimeWonValue, wins.ToString(CultureInfo.InvariantCulture));
+        Set(allTimeWinRateValue, (rate * 100f).ToString("0.0", CultureInfo.InvariantCulture) + "%");
 
-        if (winRatePctLabel != null)
-            winRatePctLabel.text = $"{rate * 100f:F1}%";
+        int[] gamesByDifficulty = new int[9];
+        int[] winsByDifficulty = new int[9];
+        List<GameRecord> records = GameDatabase.GetAll();
+        if (records != null)
+        {
+            foreach (GameRecord record in records)
+            {
+                if (record == null || record.Difficulty < 0 || record.Difficulty >= gamesByDifficulty.Length)
+                    continue;
 
-        // Animate the win-rate bar fill
-        if (_barAnim != null) StopCoroutine(_barAnim);
-        _barAnim = StartCoroutine(AnimateBar(rate));
+                gamesByDifficulty[record.Difficulty]++;
+                if (record.IsWon) winsByDifficulty[record.Difficulty]++;
+            }
+        }
+
+        Set(allTimeTableHeader, "<color=#AFC5E9>DIFFICULTY<pos=42%>PLAYED<pos=62%>WON<pos=79%>WIN RATE</color>");
+
+        string[] difficultyRows = new string[gamesByDifficulty.Length];
+        for (int i = 0; i < gamesByDifficulty.Length; i++)
+        {
+            float difficultyRate = gamesByDifficulty[i] > 0
+                ? winsByDifficulty[i] * 100f / gamesByDifficulty[i]
+                : 0f;
+            difficultyRows[i] = $"<color=#F3F6FF>{((SudokuDifficulty)i)}</color><pos=42%><color=#FFD66B>{gamesByDifficulty[i].ToString(CultureInfo.InvariantCulture)}</color>" +
+                $"<pos=62%><color=#FFD66B>{winsByDifficulty[i].ToString(CultureInfo.InvariantCulture)}</color>" +
+                $"<pos=79%><color=#FFD66B>{difficultyRate.ToString("0.#", CultureInfo.InvariantCulture)}%</color>";
+        }
+
+        Set(allTimeTableDetails, string.Join("\n", difficultyRows));
 
         // Streak chip
         if (streakNumber != null) streakNumber.text = $"{streak}";
-        if (streakDesc   != null) streakDesc.text   = streak > 1
-            ? $"Win streak — keep it up"
-            : streak == 1 ? "On a roll" : "Start a streak";
+        if (streakDesc   != null) streakDesc.text   = "GAME WIN STREAK";
     }
+
+    private void ApplyAllTimeColorProfile()
+    {
+        Color gold = new Color32(255, 214, 107, 255);       // #FFD66B
+        Color mutedBlue = new Color32(175, 197, 233, 255);  // #AFC5E9
+
+        if (allTimeTitle != null) allTimeTitle.color = gold;
+        if (allTimeTableHeader != null) allTimeTableHeader.color = mutedBlue;
+
+        if (allTimeSummaryLabels != null)
+        {
+            foreach (RectTransform labelTransform in allTimeSummaryLabels)
+            {
+                TextMeshProUGUI label = labelTransform != null
+                    ? labelTransform.GetComponent<TextMeshProUGUI>()
+                    : null;
+                if (label != null) label.color = mutedBlue;
+            }
+        }
+
+        if (allTimeSummaryValues != null)
+        {
+            foreach (RectTransform valueTransform in allTimeSummaryValues)
+            {
+                TextMeshProUGUI value = valueTransform != null
+                    ? valueTransform.GetComponent<TextMeshProUGUI>()
+                    : null;
+                if (value != null) value.color = gold;
+            }
+        }
+    }
+
     private void RefreshProgression()
-    {
-        const int ProgressionWindow = 5;
-
-        // SQLite database is the source of truth.
-        // Results are returned newest -> oldest.
-        List<GameRecord> recent = GameDatabase.GetLastNRecordByDate( ProgressionWindow);
-
-        RefreshRecentGameResults(recent);
-
-        if (progressionText != null)
-        {
-            SudokuDifficulty currentDifficulty = (SudokuDifficulty)_vm.GetDifficulty;            
-            progressionText.text = BuildProgressionText(recent, currentDifficulty);
-        }
-    }
-    private void RefreshRecentGameResults(List<GameRecord> recent)
-    {
-        if (recentGameLabels == null) return;
-
-        // Clear all five positions first.
-        for (int i = 0; i < recentGameLabels.Length; i++)
-        {
-            if (recentGameLabels[i] == null) continue;
-
-            recentGameLabels[i].text = "—";
-            recentGameLabels[i].color = colorDotOff;
-        }
-
-        if (recent == null || recent.Count == 0) return;
-
-        int count = Mathf.Min( recent.Count, recentGameLabels.Length);
-        int startPosition = recentGameLabels.Length - count;
-
-        for (int i = 0; i < count; i++)
-        {
-            GameRecord record = recent[count - 1 - i];
-
-            int uiIndex = startPosition + i;
-
-            TextMeshProUGUI label = recentGameLabels[uiIndex];
-
-            if (label == null) continue;
-
-            if (record.IsWon)
-            {
-                label.text = "W";
-                label.color = colorGreen;
-            }
-            else
-            {
-                label.text = "L";
-                label.color = colorRed;
-            }
-        }
-    }
-
-    private string BuildProgressionText( List<GameRecord> recent, SudokuDifficulty difficulty)
     {
         const int WindowSize = 5;
         const int RequiredWins = 4;
         const float RequiredEfficiency = 0.80f;
-        int requiredPercent = 0;
 
-        if (recent == null || recent.Count == 0) return "Complete games to begin your progression. Advancement requires 4 wins in 5 games with at least 80% average efficiency.";
+        List<GameRecord> recent = GameDatabase.GetLastNRecordByDate(WindowSize);
+        SudokuDifficulty currentDifficulty = (SudokuDifficulty)_vm.GetDifficulty;
 
-        if (difficulty == SudokuDifficulty.Hardest) return $"Current: {difficulty}\nYou are at the highest difficulty.";
-
-        SudokuDifficulty nextDifficulty = (SudokuDifficulty)( (int)difficulty + 1);
-        int maxScore = ScoringSystem.GetAbsoluteMaximumScore( difficulty);
-
-        if (maxScore <= 0) return $"Current: {difficulty}";
-
-        List<GameRecord> tierGames = new List<GameRecord>();
-
-        foreach (GameRecord record in recent)
+        if (currentDifficultyText != null)
         {
-            if (record.Difficulty != (int)difficulty) break;
-
-            tierGames.Add(record);
+            currentDifficultyText.text =
+                $"<color=#AFC5E9>Current:</color>\n" +
+                $"<size=140%><b><color=#F3F6FF>{currentDifficulty.ToString().ToUpperInvariant()}</color></b></size>";
         }
 
-        int gamesPlayed = tierGames.Count;
+        if (currentDifficulty == SudokuDifficulty.Hardest)
+        {
+            Set(progressionText, "<color=#FFD66B>TOP DIFFICULTY REACHED</color>");
+            Set(progressionCountText, "<color=#AFC5E9>MAX</color>");
+            SetProgressionBarFill(1f);
+            return;
+        }
+
+        SudokuDifficulty nextDifficulty = (SudokuDifficulty)((int)currentDifficulty + 1);
+        int maxScore = ScoringSystem.GetAbsoluteMaximumScore(currentDifficulty);
+        List<GameRecord> tierGames = new List<GameRecord>();
         int wins = 0;
         int totalPoints = 0;
 
-        foreach (GameRecord record in tierGames)
+        if (recent != null)
         {
-            if (record.IsWon) wins++;
-
-            totalPoints += record.Points;
-        }
-        if (gamesPlayed == 0)
-        {
-            return
-                $"Current: {difficulty}\n" +
-                $"You have reached {difficulty}! " +
-                $"Complete your first {difficulty} game " +
-                $"to begin progress toward " +
-                $"{nextDifficulty}.";
-        }
-        if (gamesPlayed < WindowSize)
-        {
-            int gamesRemaining = WindowSize - gamesPlayed;
-            int winsNeeded = Mathf.Max( 0, RequiredWins - wins );
-            int requiredTotalPoints = Mathf.CeilToInt( WindowSize * RequiredEfficiency * maxScore );
-            int pointsStillNeeded = Mathf.Max( 0, requiredTotalPoints - totalPoints );
-            float requiredAverage = pointsStillNeeded / (float)( gamesRemaining * maxScore );
-
-            if (winsNeeded > gamesRemaining || requiredAverage > 1f)
+            foreach (GameRecord record in recent)
             {
-                return
-                    $"Current: {difficulty}\n" +
-                    $"Progress: {wins}/{gamesPlayed} wins. " +
-                    $"This 5-game window can no longer " +
-                    $"reach the promotion target. " +
-                    $"Keep winning to build a stronger " +
-                    $"rolling window toward {nextDifficulty}.";
+                if (record == null || record.Difficulty != (int)currentDifficulty) break;
+                tierGames.Add(record);
+                if (record.IsWon) wins++;
+                totalPoints += record.Points;
             }
-
-            requiredPercent = Mathf.CeilToInt( requiredAverage * 100f);
-            string winRequirement;
-
-            if (winsNeeded == 0)
-            {
-                winRequirement ="You already have enough wins";
-            }
-            else if (winsNeeded == 1)
-            {
-                winRequirement = $"You need 1 more win";
-            }
-            else
-            {
-                winRequirement = $"You need {winsNeeded} more wins";
-            }
-
-            return
-                $"Current: {difficulty}\n" +
-                $"{gamesPlayed}/5 games completed • " +
-                $"{wins} win{(wins == 1 ? "" : "s")}.\n" +
-                $"To reach {nextDifficulty}: " +
-                $"{winRequirement}, with about " +
-                $"{requiredPercent}% average efficiency " +
-                $"across the remaining " +
-                $"{gamesRemaining} game" +
-                $"{(gamesRemaining == 1 ? "" : "s")}.";
         }
 
-        float averageEfficiency = totalPoints / (float)(WindowSize * maxScore);
+        int gamesPlayed = tierGames.Count;
+        int gamesRemaining = Mathf.Max(0, WindowSize - gamesPlayed);
+        int winsNeeded = Mathf.Max(0, RequiredWins - wins);
+        float averageEfficiency = maxScore > 0
+            ? totalPoints / (float)(WindowSize * maxScore)
+            : 0f;
 
-
-        if (wins >= RequiredWins && averageEfficiency >= RequiredEfficiency)
+        string status;
+        if (gamesPlayed == WindowSize && wins >= RequiredWins &&
+            averageEfficiency >= RequiredEfficiency)
         {
-            return
-                $"Current: {difficulty}\n" +
-                $"Last 5: {wins}/5 wins • " +
-                $"{averageEfficiency * 100f:F0}% efficiency.\n" +
-                $"Promotion target reached — " +
-                $"you qualify for {nextDifficulty}.";
+            status = "PROMOTION TARGET REACHED";
         }
-
-        int retainedWins = 0;
-        int retainedPoints = 0;
-        int gamesToRetain = Mathf.Min(4, tierGames.Count);
-
-        for (int i = 0; i < gamesToRetain; i++)
+        else if (winsNeeded > gamesRemaining)
         {
-            GameRecord record = tierGames[i];
-
-            if (record.IsWon) retainedWins++;
-
-            retainedPoints += record.Points;
+            status = "BUILD A NEW 5-GAME RUN";
         }
-
-        int requiredWinsFromNextGame = RequiredWins - retainedWins;
-        int promotionPointTarget = Mathf.CeilToInt( WindowSize * RequiredEfficiency * maxScore);
-        int pointsNeededNextGame = Mathf.Max( 0, promotionPointTarget - retainedPoints);
-
-        /*
-        * One game cannot fix this window.
-        */
-        if (requiredWinsFromNextGame > 1 || pointsNeededNextGame > maxScore)
+        else if (winsNeeded > 0)
         {
-            return
-                $"Current: {difficulty}\n" +
-                $"Last 5: {wins}/5 wins • " +
-                $"{averageEfficiency * 100f:F0}% efficiency.\n" +
-                $"To reach {nextDifficulty}, build toward " +
-                $"4 wins in a rolling 5-game window " +
-                $"while maintaining 80%+ average efficiency.";
+            status = $"{winsNeeded} MORE WIN{(winsNeeded == 1 ? "" : "S")} TO {nextDifficulty.ToString().ToUpperInvariant()}";
         }
-
-        requiredPercent = Mathf.CeilToInt( pointsNeededNextGame / (float)maxScore * 100f );
-
-        /*
-        * Next game must specifically be a win.
-        */
-        if (requiredWinsFromNextGame == 1)
+        else if (gamesPlayed < WindowSize)
         {
-            return
-                $"Current: {difficulty}\n" +
-                $"Last 5: {wins}/5 wins • " +
-                $"{averageEfficiency * 100f:F0}% efficiency.\n" +
-                $"To reach {nextDifficulty} on the next " +
-                $"evaluation, win your next game with at " +
-                $"least {pointsNeededNextGame} points " +
-                $"(~{requiredPercent}% efficiency).";
+            status = $"WIN TARGET MET • KEEP {RequiredEfficiency * 100f:0}%+ EFFICIENCY";
+        }
+        else
+        {
+            status = $"KEEP {RequiredEfficiency * 100f:0}%+ EFFICIENCY TO {nextDifficulty.ToString().ToUpperInvariant()}";
         }
 
-        /*
-        * The retained four already contain
-        * at least four wins.
-        */
-        return
-            $"Current: {difficulty}\n" +
-            $"Last 5: {wins}/5 wins • " +
-            $"{averageEfficiency * 100f:F0}% efficiency.\n" +
-            $"Your win requirement is already satisfied. " +
-            $"Score at least {pointsNeededNextGame} points " +
-            $"(~{requiredPercent}% efficiency) in your next game " +
-            $"to reach {nextDifficulty}.";
+        Set(progressionText, $"<color=#FFD66B>{status}</color>");
+        Set(progressionCountText,
+            $"<color=#FFD66B>{wins}</color><color=#AFC5E9>/{RequiredWins}</color>");
+        SetProgressionBarFill(wins / (float)RequiredWins);
     }
+
+    private void SetProgressionBarFill(float fillAmount)
+    {
+        if (progressionBarFill == null) return;
+
+        float fill = Mathf.Clamp01(fillAmount);
+        progressionBarFill.anchorMin = new Vector2(0f, 0f);
+        progressionBarFill.anchorMax = new Vector2(fill, 1f);
+        progressionBarFill.offsetMin = Vector2.zero;
+        progressionBarFill.offsetMax = Vector2.zero;
+    }
+
     // ── Animations ────────────────────────────────────────────────────────
 
     private IEnumerator SlideIn()
@@ -631,6 +821,9 @@ public class StatsPanel : MonoBehaviour
         }
         panelRT.anchoredPosition = new Vector2(_hiddenX, panelRT.anchoredPosition.y);
         panelCG.alpha = 0f;
+        if (gameplayTools != null) gameplayTools.SetActive(_gameplayToolsWasActive);
+        if (gameplayGrid != null) gameplayGrid.SetActive(_gameplayGridWasActive);
+        if (journeyTopBar != null) journeyTopBar.SetActive(_journeyTopBarWasActive);
         _vm.ResetHistoricalData.Execute();
         for(int i = 0; i < lstOfRecords.Count; i++)
             Destroy(lstOfRecords[i]);

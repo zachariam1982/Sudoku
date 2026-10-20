@@ -169,7 +169,7 @@ public sealed class HomeScreenController : MonoBehaviour
 
     public void CloseDailyChallenge()
     {
-        if (dailyChallengeScreen != null) dailyChallengeScreen.SetActive(false);
+        if (dailyChallengeScreen != null) dailyChallengeScreen.Hide();
         ShowHomeContents();
     }
 

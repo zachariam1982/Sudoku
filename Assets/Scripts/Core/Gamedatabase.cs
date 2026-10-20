@@ -501,6 +501,7 @@ public static class GameDatabase
             }
 
             CreateDailyGameChallengeTable();
+            CreateDailyGameChallengeStatsTable();
 
             _db.CreateTable<GameStats>();
 
@@ -627,6 +628,37 @@ public static class GameDatabase
                 AutofillUses INTEGER NOT NULL DEFAULT 0
             );
         ");
+    }
+
+    private static void CreateDailyGameChallengeStatsTable()
+    {
+        _db.Execute(@"
+            CREATE TABLE IF NOT EXISTS DailyGameChallengeStats
+            (
+                Id INTEGER PRIMARY KEY CHECK (Id = 1),
+                FirstStartedAt DATETIME,
+                CurrentStreakStartedAt DATETIME,
+                CurrentStreak INTEGER NOT NULL DEFAULT 0 CHECK (CurrentStreak >= 0),
+                LastPlayedAt DATETIME,
+                LastLostAt DATETIME,
+                GamesPlayed INTEGER NOT NULL DEFAULT 0 CHECK (GamesPlayed >= 0),
+                GamesWon INTEGER NOT NULL DEFAULT 0 CHECK (GamesWon >= 0 AND GamesWon <= GamesPlayed),
+                BestTimeSeconds FLOAT,
+                BestTimeGameId INTEGER,
+                SimpleBestTimeGameId INTEGER,
+                BeginnerBestTimeGameId INTEGER,
+                EasyBestTimeGameId INTEGER,
+                NoviceBestTimeGameId INTEGER,
+                ModerateBestTimeGameId INTEGER,
+                AdvancedBestTimeGameId INTEGER,
+                HardBestTimeGameId INTEGER,
+                ExpertBestTimeGameId INTEGER,
+                HardestBestTimeGameId INTEGER
+            );
+        ");
+
+        _db.Execute(
+            "INSERT OR IGNORE INTO DailyGameChallengeStats (Id) VALUES (1);");
     }
 
     private static int GetDatabaseVersion()

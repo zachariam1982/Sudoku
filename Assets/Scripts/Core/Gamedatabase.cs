@@ -466,7 +466,7 @@ public static class GameDatabase
      * the aggregate once.
      */
     private const int CurrentAggregateVersion = 1;
-    private const int CurrentDbVersion = 1;
+    private const int CurrentDbVersion = 2;
 
     private static string DbPath =>
         Path.Combine(
@@ -499,6 +499,8 @@ public static class GameDatabase
             {
                 MigrateDatabase();
             }
+
+            CreateDailyGameChallengeTable();
 
             _db.CreateTable<GameStats>();
 
@@ -543,9 +545,36 @@ public static class GameDatabase
             version = 1;
         }
 
+        if (version < 2)
+        {
+            MigrateToVersion2();
+
+            version = 2;
+        }
+
         Debug.Log(
             $"[GameDatabase] Database ready at version " +
             $"{version}.");
+    }
+
+    private static void MigrateToVersion2()
+    {
+        Debug.Log("[GameDatabase] Migrating DB v1 -> v2.");
+
+        _db.BeginTransaction();
+        try
+        {
+            CreateDailyGameChallengeTable();
+            SetDatabaseVersion(2);
+            _db.Commit();
+            Debug.Log("[GameDatabase] Migration v1 -> v2 complete.");
+        }
+        catch (Exception)
+        {
+            _db.Rollback();
+            Debug.LogError("[GameDatabase] Migration v1 -> v2 failed.");
+            throw;
+        }
     }
 
     private static void MigrateToVersion1()
@@ -578,6 +607,28 @@ public static class GameDatabase
         }
     }
     
+    private static void CreateDailyGameChallengeTable()
+    {
+        _db.Execute(@"
+            CREATE TABLE IF NOT EXISTS DailyGame_challenge
+            (
+                Id INTEGER PRIMARY KEY AUTOINCREMENT,
+                CurrentDate DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+                Difficulty INTEGER NOT NULL,
+                ElapsedSeconds FLOAT NOT NULL DEFAULT 0,
+                LivesRemaining INTEGER NOT NULL DEFAULT 0,
+                Stars INTEGER NOT NULL DEFAULT 0 CHECK (Stars BETWEEN 0 AND 3),
+                IsWon BOOLEAN NOT NULL DEFAULT 0,
+                CompletedAt VARCHAR,
+                UndoUses INTEGER NOT NULL DEFAULT 0,
+                PencilUses INTEGER NOT NULL DEFAULT 0,
+                EraseUses INTEGER NOT NULL DEFAULT 0,
+                SOSUses INTEGER NOT NULL DEFAULT 0,
+                AutofillUses INTEGER NOT NULL DEFAULT 0
+            );
+        ");
+    }
+
     private static int GetDatabaseVersion()
     {
         return _db.ExecuteScalar<int>("PRAGMA user_version;");

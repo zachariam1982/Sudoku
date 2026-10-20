@@ -1,3 +1,4 @@
+using System;
 using UnityEngine;
 
 /// <summary>Creates and connects the independent Journey and New Game flows.</summary>
@@ -6,12 +7,15 @@ public class GameContext : MonoBehaviour
     public JourneyViewModel ViewModel => JourneyViewModel;
     public JourneyViewModel JourneyViewModel { get; private set; }
     public NewGameViewModel NewGameViewModel { get; private set; }
+    public DailyChallengeViewModel DailyChallengeViewModel { get; private set; }
     public static int cnt = 0;
 
     [SerializeField] private HomeScreenController _homeScreen;
     [SerializeField] private NewGameScreenController _newGameScreen;
     [SerializeField] private JourneyStateMachine _journeyStateMachine;
     [SerializeField] private NewGameStateMachine _newGameStateMachine;
+    [SerializeField] private DailyChallengeStateMachine _dailyChallengeStateMachine;
+    [SerializeField] private DailyChallengeScreenController _dailyChallengeScreen;
 
     private SudokuGrid _grid;
     private GridBuilder _gridBuilder;
@@ -20,6 +24,8 @@ public class GameContext : MonoBehaviour
     private GameStateView _stateView;
     private StatsPanel _statsPanel;
     private NewGameStatsPanel _newGameStatsPanel;
+    private DailyChallengeGameStateView _dailyChallengeStateView;
+    private bool _dailyChallengeActive;
     private bool _newGameActive;
 
     private void Awake()
@@ -30,12 +36,18 @@ public class GameContext : MonoBehaviour
         NewGameViewModel = new NewGameViewModel(
             new NewGameUsageStats(),
             new NewGameScorePenalties());
+        DailyChallengeViewModel = new DailyChallengeViewModel(
+            new JourneyUsageStats(),
+            new JourneyScorePenalties());
 
         _grid = GetComponent<SudokuGrid>();
         _gridBuilder = GetComponent<GridBuilder>();
         _error = GetComponent<ErrorMessage>();
         _picker = GetComponentInChildren<NumberPicker>();
-        _stateView = GetComponentInChildren<GameStateView>();
+        _stateView = GetComponentInChildren<GameStateView>(true);
+        _dailyChallengeStateView = GetComponentInChildren<DailyChallengeGameStateView>(true);
+        if (_dailyChallengeScreen == null)
+            _dailyChallengeScreen = GetComponentInChildren<DailyChallengeScreenController>(true);
 
         _statsPanel = GetComponentInChildren<StatsPanel>(true);
         _newGameStatsPanel = GetComponentInChildren<NewGameStatsPanel>(true);
@@ -48,8 +60,15 @@ public class GameContext : MonoBehaviour
         NewGameViewModel.SaveRequested += User.Instance.SaveNewGameNow;
         _journeyStateMachine.Initialise(JourneyViewModel);
         _newGameStateMachine.Initialise(NewGameViewModel);
+        if (_dailyChallengeStateMachine == null)
+            _dailyChallengeStateMachine = GetComponent<DailyChallengeStateMachine>();
+        if (_dailyChallengeStateMachine == null)
+            _dailyChallengeStateMachine = gameObject.AddComponent<DailyChallengeStateMachine>();
+        _dailyChallengeStateMachine.Initialise(DailyChallengeViewModel);
+        _dailyChallengeStateMachine.SetSuspended(true);
         _newGameStateMachine.SetSuspended(true);
         NewGameViewModel.GameCompleted += OnNewGameCompleted;
+        DailyChallengeViewModel.GameCompleted += ExitDailyChallenge;
 
 #if UNITY_WEBGL && !UNITY_EDITOR
         User.Instance.TryLoadSave();
@@ -63,6 +82,9 @@ public class GameContext : MonoBehaviour
 
         _journeyStateMachine.SetSuspended(true);
         _homeScreen.Initialize(JourneyViewModel, this);
+        if (_dailyChallengeStateView != null)
+            _dailyChallengeStateView.gameObject.SetActive(false);
+        StartDailyChallengeBackgroundJobs();
         // Startup is the mode selector, not an active Journey session.
         _gridBuilder?.SetVisible(false);
         _stateView?.SetGameplayVisible(false);
@@ -70,6 +92,8 @@ public class GameContext : MonoBehaviour
 
     public void ActivateJourney()
     {
+        _dailyChallengeStateMachine.SetSuspended(true);
+        _dailyChallengeActive = false;
         _newGameStateMachine.SetSuspended(true);
         _newGameActive = false;
         BindGameplay(JourneyViewModel);
@@ -80,6 +104,8 @@ public class GameContext : MonoBehaviour
 
     public void ActivateNewGame(SudokuDifficulty difficulty)
     {
+        _dailyChallengeStateMachine.SetSuspended(true);
+        _dailyChallengeActive = false;
         _journeyStateMachine.SetSuspended(true);
         _newGameActive = true;
         BindGameplay(NewGameViewModel);
@@ -89,11 +115,19 @@ public class GameContext : MonoBehaviour
         _stateView?.SetGameplayVisible(true);
     }
 
+    private void StartDailyChallengeBackgroundJobs()
+    {
+        StartCoroutine(EnsureDailyChallengeForToday());
+        StartCoroutine(DeleteUnattemptedDailyChallenges());
+    }
+
     public bool HasSavedNewGame => NewGameViewModel != null && NewGameViewModel.HasActiveGame;
 
     public void ActivateSavedNewGame()
     {
         if (!HasSavedNewGame) return;
+        _dailyChallengeStateMachine.SetSuspended(true);
+        _dailyChallengeActive = false;
         _journeyStateMachine.SetSuspended(true);
         _newGameActive = true;
         BindGameplay(NewGameViewModel);
@@ -118,7 +152,11 @@ public class GameContext : MonoBehaviour
 
     public void SuspendActiveGame()
     {
-        if (_newGameActive)
+        if (_dailyChallengeActive)
+        {
+            _dailyChallengeStateMachine.SetSuspended(true);
+        }
+        else if (_newGameActive)
         {
             _newGameStateMachine.SetSuspended(true);
             _stateView?.SetTopBarMode(false);
@@ -127,6 +165,7 @@ public class GameContext : MonoBehaviour
 
         _gridBuilder?.SetVisible(false);
         _stateView?.SetGameplayVisible(false);
+        _dailyChallengeStateView?.SetGameplayVisible(false);
     }
 
     private void OnNewGameCompleted()
@@ -154,6 +193,8 @@ public class GameContext : MonoBehaviour
     {
         if (result == null) return;
 
+        _dailyChallengeStateMachine.SetSuspended(true);
+        _dailyChallengeActive = false;
         if (_newGameActive && NewGameViewModel != null && NewGameViewModel.HasActiveGame)
             NewGameViewModel.RecordResult(false);
 
@@ -167,6 +208,81 @@ public class GameContext : MonoBehaviour
         _stateView?.SetGameplayVisible(true);
     }
 
+    public void StartDailyChallenge()
+    {
+        StartCoroutine(StartDailyChallengeRoutine());
+    }
+
+    private System.Collections.IEnumerator StartDailyChallengeRoutine()
+    {
+        yield return StartCoroutine(EnsureDailyChallengeForToday());
+        DateTime today = DateTime.Today;
+        DailyChallengeRecord record = DailyChallengeRepository.GetForDate(today);
+        if (record == null)
+        {
+            DailyChallengeViewModel.ShowMessage.Value = ("Daily Challenge unavailable", "Today's challenge could not be loaded. Please try again.", "");
+            _error?.Bind(DailyChallengeViewModel);
+            yield break;
+        }
+        if (!string.IsNullOrEmpty(record.CompletedAt))
+        {
+            DailyChallengeViewModel.ShowMessage.Value = ("Challenge already attempted", "Today's challenge is already attempted.", "");
+            _error?.Bind(DailyChallengeViewModel);
+            yield break;
+        }
+        DailyChallengeRepository.MarkAttempted(record);
+        _dailyChallengeActive = true;
+        _newGameActive = false;
+        _journeyStateMachine.SetSuspended(true);
+        _newGameStateMachine.SetSuspended(true);
+        BindDailyGameplay(DailyChallengeViewModel);
+        DailyChallengeViewModel.Prepare(record);
+        _dailyChallengeStateMachine.SetSuspended(false);
+        _gridBuilder?.SetVisible(true);
+        _dailyChallengeStateView?.SetGameplayVisible(true);
+        _stateView?.SetGameplayVisible(false);
+        _dailyChallengeScreen?.Hide();
+    }
+
+    public void ExitDailyChallenge()
+    {
+        if (!_dailyChallengeActive) return;
+        _dailyChallengeStateMachine.SetSuspended(true);
+        _dailyChallengeActive = false;
+        _gridBuilder?.SetVisible(false);
+        _dailyChallengeStateView?.SetGameplayVisible(false);
+        _dailyChallengeScreen?.Show();
+        BindGameplay(JourneyViewModel);
+        _error?.Bind(JourneyViewModel);
+    }
+
+    private System.Collections.IEnumerator EnsureDailyChallengeForToday()
+    {
+        yield return null;
+        DateTime today = DateTime.Today;
+        int difficultyCount = System.Enum.GetValues(typeof(SudokuDifficulty)).Length;
+        int difficulty = difficultyCount == 0 ? 0 : (today.DayOfYear - 1) % difficultyCount;
+        DailyChallengeRepository.GetOrCreate(today, difficulty);
+    }
+
+    private System.Collections.IEnumerator DeleteUnattemptedDailyChallenges()
+    {
+        yield return null;
+        var interval = new WaitForSeconds(60f);
+        while (true)
+        {
+            DailyChallengeRepository.DeleteUnattemptedBefore(DateTime.Today);
+            yield return interval;
+        }
+    }
+
+    private void BindDailyGameplay(BaseViewModel viewModel)
+    {
+        _grid?.Bind(viewModel);
+        _error?.Bind(viewModel);
+        _picker?.Bind(viewModel);
+        _dailyChallengeStateView?.Bind(viewModel);
+    }
     private void BindGameplay(BaseViewModel viewModel)
     {
         _grid?.Bind(viewModel);
@@ -177,6 +293,8 @@ public class GameContext : MonoBehaviour
 
     private void OnDestroy()
     {
+        if (DailyChallengeViewModel != null)
+            DailyChallengeViewModel.GameCompleted -= ExitDailyChallenge;
         if (NewGameViewModel != null)
         {
             NewGameViewModel.GameCompleted -= OnNewGameCompleted;

@@ -47,6 +47,13 @@ public sealed class DailyChallengeScreenController : MonoBehaviour
 
     public void Hide() => gameObject.SetActive(false);
 
+    public void StartChallenge()
+    {
+        GameContext context = GetComponentInParent<GameContext>();
+        if (context == null) context = FindFirstObjectByType<GameContext>();
+        context?.StartDailyChallenge();
+    }
+
     public void SetLandscape(bool landscape)
     {
         _isLandscape = landscape;

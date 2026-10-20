@@ -18572,9 +18572,7 @@ MonoBehaviour:
   journeyLabel: {fileID: 2147000048}
   newGameScreen: {fileID: 2147100000}
   _gameContext: {fileID: 2027544917}
-  dailyChallengeScreen: {fileID: 9000000000000000331}
-  dailyChallengePortraitLayout: {fileID: 9000000000000000335}
-  dailyChallengeLandscapeLayout: {fileID: 9000000000000000503}
+  dailyChallengeScreen: {fileID: 9000000000000000673}
 --- !u!1 &2147000010
 GameObject:
   m_ObjectHideFlags: 0
@@ -37742,6 +37740,7 @@ GameObject:
   - component: {fileID: 9000000000000000332}
   - component: {fileID: 9000000000000000333}
   - component: {fileID: 9000000000000000334}
+  - component: {fileID: 9000000000000000673}
   m_Layer: 5
   m_Name: DailyChallengeScreen
   m_TagString: Untagged
@@ -37761,8 +37760,7 @@ RectTransform:
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children:
-  - {fileID: 9000000000000000336}
-  - {fileID: 9000000000000000504}
+  - {fileID: 9000000000000000672}
   m_Father: {fileID: 2147000001}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0, y: 0}
@@ -37836,7 +37834,7 @@ RectTransform:
   - {fileID: 9000000000000000359}
   - {fileID: 9000000000000000391}
   - {fileID: 9000000000000000487}
-  m_Father: {fileID: 9000000000000000332}
+  m_Father: {fileID: 9000000000000000672}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0, y: 0}
   m_AnchorMax: {x: 1, y: 1}
@@ -41705,7 +41703,7 @@ RectTransform:
   - {fileID: 9000000000000000527}
   - {fileID: 9000000000000000559}
   - {fileID: 9000000000000000655}
-  m_Father: {fileID: 9000000000000000332}
+  m_Father: {fileID: 9000000000000000672}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0, y: 0}
   m_AnchorMax: {x: 1, y: 1}
@@ -45563,6 +45561,59 @@ CanvasRenderer:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 9000000000000000654}
   m_CullTransparentMesh: 1
+--- !u!1 &9000000000000000671
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 9000000000000000672}
+  m_Layer: 5
+  m_Name: DailyChallengeReadyPage
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!224 &9000000000000000672
+RectTransform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 9000000000000000671}
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 0, y: 0, z: 0}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children:
+  - {fileID: 9000000000000000336}
+  - {fileID: 9000000000000000504}
+  m_Father: {fileID: 9000000000000000332}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+  m_AnchorMin: {x: 0, y: 0}
+  m_AnchorMax: {x: 1, y: 1}
+  m_AnchoredPosition: {x: 0, y: 0}
+  m_SizeDelta: {x: 0, y: 0}
+  m_Pivot: {x: 0.5, y: 0.5}
+--- !u!114 &9000000000000000673
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 9000000000000000331}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 855f9b55b00b451abbc9e08e489bd844, type: 3}
+  m_Name:
+  m_EditorClassIdentifier: Assembly-CSharp::DailyChallengeScreenController
+  readyPage: {fileID: 9000000000000000671}
+  portraitLayout: {fileID: 9000000000000000335}
+  landscapeLayout: {fileID: 9000000000000000503}
+
 --- !u!1660057539 &9223372036854775807
 SceneRoots:
   m_ObjectHideFlags: 0

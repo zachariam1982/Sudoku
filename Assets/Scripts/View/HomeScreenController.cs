@@ -32,9 +32,7 @@ public sealed class HomeScreenController : MonoBehaviour
     [Header("Screens")]
     [SerializeField] private GameObject newGameScreen;
     [SerializeField] private GameContext _gameContext;
-    [SerializeField] private GameObject dailyChallengeScreen;
-    [SerializeField] private GameObject dailyChallengePortraitLayout;
-    [SerializeField] private GameObject dailyChallengeLandscapeLayout;
+    [SerializeField] private DailyChallengeScreenController dailyChallengeScreen;
 
     private JourneyViewModel _viewModel;
     private bool _layoutApplied;
@@ -48,7 +46,8 @@ public sealed class HomeScreenController : MonoBehaviour
         {
             GameObject child = transform.GetChild(i).gameObject;
             // The screen is a serialized child of HomeScreen, but isn't home content.
-            if (child.name != "DailyChallengeReadyScreen") homeContents.Add(child);
+            if (dailyChallengeScreen == null || child != dailyChallengeScreen.gameObject)
+                homeContents.Add(child);
         }
         _homeContents = homeContents.ToArray();
     }
@@ -69,7 +68,7 @@ public sealed class HomeScreenController : MonoBehaviour
         _viewModel = viewModel;
         _gameContext = gameContext;
 
-        if (dailyChallengeScreen != null) dailyChallengeScreen.SetActive(false);
+        if (dailyChallengeScreen != null) dailyChallengeScreen.Hide();
 
         ApplyResponsiveLayout();
         RefreshJourneyStatus();
@@ -80,7 +79,7 @@ public sealed class HomeScreenController : MonoBehaviour
         if (dailyChallengeScreen == null) return;
 
         HideHomeContents();
-        dailyChallengeScreen.SetActive(true);
+        dailyChallengeScreen.Show();
     }
 
     public void RefreshJourneyStatus()
@@ -146,7 +145,7 @@ public sealed class HomeScreenController : MonoBehaviour
 
     public void OpenHome()
     {
-        if (dailyChallengeScreen != null) dailyChallengeScreen.SetActive(false);
+        if (dailyChallengeScreen != null) dailyChallengeScreen.Hide();
         SetVerseTickerVisible(false);
         _gameContext.SuspendActiveGame();
         RefreshJourneyStatus();
@@ -185,10 +184,8 @@ public sealed class HomeScreenController : MonoBehaviour
     {
         Rect rootRect = ((RectTransform)transform).rect;
         bool landscape = rootRect.width > rootRect.height;
-        if (dailyChallengePortraitLayout != null)
-            dailyChallengePortraitLayout.SetActive(!landscape);
-        if (dailyChallengeLandscapeLayout != null)
-            dailyChallengeLandscapeLayout.SetActive(landscape);
+        if (dailyChallengeScreen != null)
+            dailyChallengeScreen.SetLandscape(landscape);
 
         if (_layoutApplied && _lastLandscape == landscape) return;
 

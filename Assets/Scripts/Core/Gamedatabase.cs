@@ -621,6 +621,7 @@ public static class GameDatabase
                 Stars INTEGER NOT NULL DEFAULT 0 CHECK (Stars BETWEEN 0 AND 3),
                 IsWon BOOLEAN NOT NULL DEFAULT 0,
                 IsAttempted BOOLEAN NOT NULL DEFAULT 0,
+                Started BOOLEAN NOT NULL DEFAULT 0,
                 CompletedAt VARCHAR,
                 UndoUses INTEGER NOT NULL DEFAULT 0,
                 PencilUses INTEGER NOT NULL DEFAULT 0,

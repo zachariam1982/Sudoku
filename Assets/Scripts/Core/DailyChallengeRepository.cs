@@ -9,7 +9,7 @@ public static class DailyChallengeRepository
 {
 #if UNITY_WEBGL && !UNITY_EDITOR
     private const string StoreKey = "sudoku_daily_challenges";
-    [Serializable] private sealed class StoredRow { public int Id; public string CurrentDate; public int Difficulty; public float ElapsedSeconds; public int LivesRemaining; public int Stars; public bool IsWon; public string CompletedAt; public int UndoUses; public int PencilUses; public int EraseUses; public int SOSUses; public int AutofillUses; public bool IsAttempted; }
+    [Serializable] private sealed class StoredRow { public int Id; public string CurrentDate; public int Difficulty; public float ElapsedSeconds; public int LivesRemaining; public int Stars; public bool IsWon; public bool Started; public string CompletedAt; public int UndoUses; public int PencilUses; public int EraseUses; public int SOSUses; public int AutofillUses; public bool IsAttempted; }
     [Serializable] private sealed class Store { public List<StoredRow> Rows = new List<StoredRow>(); public int NextId=1; }
     private static Store _store;
     private static Store Data
@@ -67,6 +67,7 @@ public static class DailyChallengeRepository
     {
         if(record==null)return;
         record.IsAttempted=true;
+        record.Started=true;
         Update(record);
     }
 
@@ -100,18 +101,18 @@ public static class DailyChallengeRepository
     }
 
 #if UNITY_WEBGL && !UNITY_EDITOR
-    private static StoredRow ToStored(DailyChallengeRecord r) { return new StoredRow { Id=r.Id, CurrentDate=r.CurrentDate.ToString("o",CultureInfo.InvariantCulture), Difficulty=r.Difficulty, ElapsedSeconds=r.ElapsedSeconds, LivesRemaining=r.LivesRemaining, Stars=r.Stars, IsWon=r.IsWon, CompletedAt=r.CompletedAt, UndoUses=r.UndoUses, PencilUses=r.PencilUses, EraseUses=r.EraseUses, SOSUses=r.SOSUses, AutofillUses=r.AutofillUses, IsAttempted=r.IsAttempted }; }
-    private static DailyChallengeRecord FromStored(StoredRow r) { return new DailyChallengeRecord { Id=r.Id, CurrentDate=DateTime.Parse(r.CurrentDate,CultureInfo.InvariantCulture), Difficulty=r.Difficulty, ElapsedSeconds=r.ElapsedSeconds, LivesRemaining=r.LivesRemaining, Stars=r.Stars, IsWon=r.IsWon, CompletedAt=r.CompletedAt, UndoUses=r.UndoUses, PencilUses=r.PencilUses, EraseUses=r.EraseUses, SOSUses=r.SOSUses, AutofillUses=r.AutofillUses, IsAttempted=r.IsAttempted }; }
+    private static StoredRow ToStored(DailyChallengeRecord r) { return new StoredRow { Id=r.Id, CurrentDate=r.CurrentDate.ToString("o",CultureInfo.InvariantCulture), Difficulty=r.Difficulty, ElapsedSeconds=r.ElapsedSeconds, LivesRemaining=r.LivesRemaining, Stars=r.Stars, IsWon=r.IsWon, Started=r.Started, CompletedAt=r.CompletedAt, UndoUses=r.UndoUses, PencilUses=r.PencilUses, EraseUses=r.EraseUses, SOSUses=r.SOSUses, AutofillUses=r.AutofillUses, IsAttempted=r.IsAttempted }; }
+    private static DailyChallengeRecord FromStored(StoredRow r) { return new DailyChallengeRecord { Id=r.Id, CurrentDate=DateTime.Parse(r.CurrentDate,CultureInfo.InvariantCulture), Difficulty=r.Difficulty, ElapsedSeconds=r.ElapsedSeconds, LivesRemaining=r.LivesRemaining, Stars=r.Stars, IsWon=r.IsWon, Started=r.Started, CompletedAt=r.CompletedAt, UndoUses=r.UndoUses, PencilUses=r.PencilUses, EraseUses=r.EraseUses, SOSUses=r.SOSUses, AutofillUses=r.AutofillUses, IsAttempted=r.IsAttempted }; }
 
 #endif
 
     private static DailyChallengeRecord NewRecord(DateTime date,int difficulty)
     {
-        return new DailyChallengeRecord { CurrentDate=date, Difficulty=difficulty, IsAttempted=false, LivesRemaining=3 };
+        return new DailyChallengeRecord { CurrentDate=date, Difficulty=difficulty, IsAttempted=false, Started=false, LivesRemaining=3 };
     }
 }
 
-/// <summary>SQLite mapping for a single daily challenge row, including IsAttempted.</summary>
+/// <summary>SQLite mapping for a daily challenge row, including both lifecycle flags.</summary>
 [Table("DailyGame_challenge")]
 public sealed class DailyChallengeRecord
 {
@@ -122,6 +123,7 @@ public sealed class DailyChallengeRecord
     [NotNull] public int LivesRemaining { get; set; }
     [NotNull] public int Stars { get; set; }
     [NotNull] public bool IsWon { get; set; }
+    [NotNull] public bool Started { get; set; }
     public string CompletedAt { get; set; }
     [NotNull] public int UndoUses { get; set; }
     [NotNull] public int PencilUses { get; set; }

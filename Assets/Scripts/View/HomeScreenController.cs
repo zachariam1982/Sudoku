@@ -1,6 +1,5 @@
 using TMPro;
 using UnityEngine;
-using UnityEngine.UI;
 
 /// <summary>
 /// Controls the HomeScreen hierarchy configured in the Unity scene.
@@ -34,18 +33,10 @@ public sealed class HomeScreenController : MonoBehaviour
     [SerializeField] private GameObject newGameScreen;
     [SerializeField] private GameContext _gameContext;
 
+    
     private JourneyViewModel _viewModel;
     private bool _layoutApplied;
     private bool _lastLandscape;
-    private DailyChallengeReadyScreen _dailyChallengeScreen;
-    private GameObject[] _homeContents;
-
-    private void Awake()
-    {
-        _homeContents = new GameObject[transform.childCount];
-        for (int i = 0; i < transform.childCount; i++)
-            _homeContents[i] = transform.GetChild(i).gameObject;
-    }
 
     private void OnEnable()
     {
@@ -63,36 +54,8 @@ public sealed class HomeScreenController : MonoBehaviour
         _viewModel = viewModel;
         _gameContext = gameContext;
 
-        if (_dailyChallengeScreen == null)
-        {
-            TMP_FontAsset font = GetComponentInChildren<TMP_Text>(true)?.font;
-            _dailyChallengeScreen = new DailyChallengeReadyScreen(
-                (RectTransform)transform,
-                font,
-                FindSceneSprite("Golden home HUD icon_0"),
-                FindSceneSprite("StreakFireIcon"),
-                CloseDailyChallenge,
-                OpenNewGame);
-        }
-
-        Button dailyButton = dailyChallengeButton.GetComponent<Button>();
-        if (dailyButton != null)
-        {
-            dailyButton.interactable = true;
-            dailyButton.onClick.RemoveListener(OpenDailyChallenge);
-            dailyButton.onClick.AddListener(OpenDailyChallenge);
-        }
-
         ApplyResponsiveLayout();
         RefreshJourneyStatus();
-    }
-
-    public void OpenDailyChallenge()
-    {
-        if (_dailyChallengeScreen == null) return;
-
-        HideHomeContents();
-        _dailyChallengeScreen.Show();
     }
 
     public void RefreshJourneyStatus()
@@ -158,32 +121,10 @@ public sealed class HomeScreenController : MonoBehaviour
 
     public void OpenHome()
     {
-        _dailyChallengeScreen?.Hide();
         SetVerseTickerVisible(false);
         _gameContext.SuspendActiveGame();
         RefreshJourneyStatus();
         gameObject.SetActive(true);
-        ShowHomeContents();
-    }
-
-    private void HideHomeContents()
-    {
-        if (_homeContents == null) return;
-        foreach (GameObject child in _homeContents)
-            if (child != null) child.SetActive(false);
-    }
-
-    private void ShowHomeContents()
-    {
-        if (_homeContents == null) return;
-        foreach (GameObject child in _homeContents)
-            if (child != null) child.SetActive(true);
-    }
-
-    private void CloseDailyChallenge()
-    {
-        _dailyChallengeScreen?.Hide();
-        ShowHomeContents();
     }
 
     private void SetVerseTickerVisible(bool visible)
@@ -193,27 +134,10 @@ public sealed class HomeScreenController : MonoBehaviour
         if (ticker != null) ticker.SetGameActive(visible);
     }
 
-    private Sprite FindSceneSprite(string spriteName)
-    {
-        Canvas canvas = GetComponentInParent<Canvas>();
-        if (canvas == null) return null;
-
-        Image[] images = canvas.GetComponentsInChildren<Image>(true);
-        foreach (Image image in images)
-        {
-            if (image.sprite != null && image.sprite.name == spriteName)
-                return image.sprite;
-        }
-
-        Debug.LogWarning($"Could not find the scene sprite '{spriteName}'.", this);
-        return null;
-    }
-
     private void ApplyResponsiveLayout()
     {
         Rect rootRect = ((RectTransform)transform).rect;
         bool landscape = rootRect.width > rootRect.height;
-        _dailyChallengeScreen?.Layout(landscape);
 
         if (_layoutApplied && _lastLandscape == landscape) return;
 

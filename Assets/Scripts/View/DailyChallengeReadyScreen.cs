@@ -118,7 +118,9 @@ internal sealed class DailyChallengeReadyScreen
         if (iconSprite != null)
         {
             RectTransform iconRect = CreateRect(name + "Icon", parent);
-            Centered(iconRect, (x - 0.5f) * 500f, 42f, 52f, 52f);
+            iconRect.anchorMin = iconRect.anchorMax = new Vector2(x, 0.73f);
+            iconRect.anchoredPosition = Vector2.zero;
+            iconRect.sizeDelta = new Vector2(52f, 52f);
             Image iconImage = iconRect.gameObject.AddComponent<Image>();
             iconImage.sprite = iconSprite;
             iconImage.preserveAspect = true;
@@ -163,22 +165,22 @@ internal sealed class DailyChallengeReadyScreen
     private void LayoutPortrait()
     {
         // Position the panel around the moon, leaving visible sky above and lake below.
-        PlaceAtAnchor(Find(_safeArea, "DAILY CHALLENGE"), 0.5f, 0.94f, 900f, 86f);
-        PlaceAtAnchor(Find(_safeArea, "Oct 19, 2026"), 0.5f, 0.875f, 800f, 52f);
+        PlaceAtAnchor(Find(_safeArea, "DAILY CHALLENGE"), 0.5f, 0.94f, 780f, 86f);
+        PlaceAtAnchor(Find(_safeArea, "Oct 19, 2026"), 0.5f, 0.875f, 760f, 52f);
         RectTransform challenge = Find(_safeArea, "ChallengeCard");
         RectTransform stats = Find(_safeArea, "DailyStatsCard");
         RectTransform start = Find(_safeArea, "StartChallengeButton");
-        Centered(challenge, 0f, 0.57f, 920f, 340f);
-        Centered(stats, 0f, 0.32f, 920f, 255f);
-        Centered(start, 0f, 0.12f, 900f, 124f);
-        Find(challenge, "CHALLENGE #293").sizeDelta = new Vector2(860f, 68f);
-        Find(challenge, "TODAY’S PUZZLE").sizeDelta = new Vector2(860f, 64f);
-        Find(stats, "BEST TIME").sizeDelta = new Vector2(440f, 50f);
-        Find(stats, "--:--").sizeDelta = new Vector2(440f, 58f);
-        Find(stats, "DAILY STREAK").sizeDelta = new Vector2(440f, 50f);
-        Find(stats, "0").sizeDelta = new Vector2(440f, 58f);
+        PlaceAtAnchor(challenge, 0.5f, 0.60f, 800f, 340f);
+        PlaceAtAnchor(stats, 0.5f, 0.36f, 800f, 255f);
+        PlaceAtAnchor(start, 0.5f, 0.15f, 800f, 124f);
+        Find(challenge, "CHALLENGE #293").sizeDelta = new Vector2(740f, 68f);
+        Find(challenge, "TODAY’S PUZZLE").sizeDelta = new Vector2(740f, 64f);
+        Find(stats, "BEST TIME").sizeDelta = new Vector2(360f, 50f);
+        Find(stats, "--:--").sizeDelta = new Vector2(360f, 58f);
+        Find(stats, "DAILY STREAK").sizeDelta = new Vector2(360f, 50f);
+        Find(stats, "0").sizeDelta = new Vector2(360f, 58f);
         RectTransform inset = Find(start, "ButtonInset");
-        Find(inset, "START CHALLENGE").sizeDelta = new Vector2(860f, 118f);
+        Find(inset, "START CHALLENGE").sizeDelta = new Vector2(740f, 118f);
     }
 
     private void LayoutLandscape()
@@ -188,20 +190,20 @@ internal sealed class DailyChallengeReadyScreen
         RectTransform challenge = Find(_safeArea, "ChallengeCard");
         RectTransform stats = Find(_safeArea, "DailyStatsCard");
         RectTransform start = Find(_safeArea, "StartChallengeButton");
-        Centered(title, 0f, 0.86f, 840f, 76f);
-        Centered(date, 0f, 0.77f, 700f, 48f);
-        Centered(challenge, -280f, 0.49f, 500f, 340f);
-        Centered(stats, 280f, 0.49f, 500f, 255f);
-        Centered(start, 280f, 0.18f, 470f, 118f);
+        PlaceAtAnchor(title, 0.5f, 0.90f, 840f, 76f);
+        PlaceAtAnchor(date, 0.5f, 0.81f, 700f, 48f);
+        PlaceAtAnchor(challenge, 0.38f, 0.54f, 940f, 340f);
+        PlaceAtAnchor(stats, 0.62f, 0.54f, 650f, 255f);
+        PlaceAtAnchor(start, 0.5f, 0.16f, 1200f, 118f);
 
-        Find(challenge, "CHALLENGE #293").sizeDelta = new Vector2(460f, 68f);
-        Find(challenge, "TODAY’S PUZZLE").sizeDelta = new Vector2(460f, 64f);
-        Find(stats, "BEST TIME").sizeDelta = new Vector2(210f, 50f);
-        Find(stats, "--:--").sizeDelta = new Vector2(210f, 58f);
-        Find(stats, "DAILY STREAK").sizeDelta = new Vector2(210f, 50f);
-        Find(stats, "0").sizeDelta = new Vector2(210f, 58f);
+        Find(challenge, "CHALLENGE #293").sizeDelta = new Vector2(860f, 68f);
+        Find(challenge, "TODAY’S PUZZLE").sizeDelta = new Vector2(860f, 64f);
+        Find(stats, "BEST TIME").sizeDelta = new Vector2(260f, 50f);
+        Find(stats, "--:--").sizeDelta = new Vector2(260f, 58f);
+        Find(stats, "DAILY STREAK").sizeDelta = new Vector2(260f, 50f);
+        Find(stats, "0").sizeDelta = new Vector2(260f, 58f);
         RectTransform inset = Find(start, "ButtonInset");
-        Find(inset, "START CHALLENGE").sizeDelta = new Vector2(450f, 106f);
+        Find(inset, "START CHALLENGE").sizeDelta = new Vector2(1120f, 106f);
     }
 
     private RectTransform Card(string name, RectTransform parent)

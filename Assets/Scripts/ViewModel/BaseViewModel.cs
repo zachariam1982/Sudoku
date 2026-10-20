@@ -108,8 +108,20 @@ public class BaseViewModel
             {
                 (() => IsEraseMode.Value, () => ShowMessage.Value = ("", "Erase mode is set. Tap on Erase again to enable Pencil mode.", ""))
             });
-        UndoCommand = new RelayCommand(_ => Undo());
-        RedoCommand = new RelayCommand(_ => Redo());
+        UndoCommand = new RelayCommand(
+            _ => Undo(),
+            _ => !IsPencilMode.Value,
+            new (Func<bool> fn, Action showMessage)[]
+            {
+                (() => IsPencilMode.Value, () => ShowMessage.Value = ("", "Turn off Pencil mode to undo.", ""))
+            });
+        RedoCommand = new RelayCommand(
+            _ => Redo(),
+            _ => !IsPencilMode.Value,
+            new (Func<bool> fn, Action showMessage)[]
+            {
+                (() => IsPencilMode.Value, () => ShowMessage.Value = ("", "Turn off Pencil mode to redo.", ""))
+            });
         SOSCommand = new RelayCommand(
             _ => IsSOSMode.Value = !IsSOSMode.Value,
             _ => !IsPencilMode.Value && !IsEraseMode.Value && IsSelectedCellEmpty(),

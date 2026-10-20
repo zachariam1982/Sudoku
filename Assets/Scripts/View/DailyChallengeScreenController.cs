@@ -1,3 +1,4 @@
+using TMPro;
 using UnityEngine;
 
 /// <summary>
@@ -13,12 +14,19 @@ public sealed class DailyChallengeScreenController : MonoBehaviour
     private RectTransform _landscapeRoot;
     private RectTransform _challengeCard;
     private RectTransform _statsCard;
+    private TextMeshProUGUI _bestTimeLabel;
+    private TextMeshProUGUI _bestTimeValue;
+    private TextMeshProUGUI _streakLabel;
+    private TextMeshProUGUI _streakValue;
     private float _baseLandscapeCardWidth;
     private bool _isLandscape;
 
     private const float LandscapeCardSideMargin = 48f;
     private const float MinimumLandscapeCardGap = 48f;
     private const float MaximumLandscapeCardGap = 280f;
+    private const float LandscapeStatTextWidth = 320f;
+    private const float LandscapeStatLabelHeight = 76f;
+    private const float LandscapeStatValueHeight = 104f;
 
     private void Awake()
     {
@@ -63,6 +71,14 @@ public sealed class DailyChallengeScreenController : MonoBehaviour
                 _challengeCard = candidate;
             else if (candidate.name == "StatsCard_LandscapeLayout")
                 _statsCard = candidate;
+            else if (candidate.name == "BestTimeLabel_LandscapeLayout")
+                _bestTimeLabel = candidate.GetComponent<TextMeshProUGUI>();
+            else if (candidate.name == "BestTimeValue_LandscapeLayout")
+                _bestTimeValue = candidate.GetComponent<TextMeshProUGUI>();
+            else if (candidate.name == "StreakLabel_LandscapeLayout")
+                _streakLabel = candidate.GetComponent<TextMeshProUGUI>();
+            else if (candidate.name == "StreakValue_LandscapeLayout")
+                _streakValue = candidate.GetComponent<TextMeshProUGUI>();
         }
 
         if (_challengeCard != null && _statsCard != null)
@@ -105,6 +121,42 @@ public sealed class DailyChallengeScreenController : MonoBehaviour
         // on narrower landscape screens or tablets.
         SetCenteredHorizontally(_challengeCard, -((cardWidth + gap) * 0.5f), cardWidth);
         SetCenteredHorizontally(_statsCard, (cardWidth + gap) * 0.5f, cardWidth);
+        ApplyLandscapeStatsTypography();
+    }
+
+    private void ApplyLandscapeStatsTypography()
+    {
+        Canvas canvas = GetComponentInParent<Canvas>();
+        float canvasScale = canvas != null ? canvas.scaleFactor : 1f;
+        if (canvasScale <= 0f)
+            canvasScale = 1f;
+
+        SetLandscapeStatText(_bestTimeLabel, 30f / canvasScale,
+            LandscapeStatTextWidth, LandscapeStatLabelHeight);
+        SetLandscapeStatText(_streakLabel, 30f / canvasScale,
+            LandscapeStatTextWidth, LandscapeStatLabelHeight);
+        SetLandscapeStatText(_bestTimeValue, 42f / canvasScale,
+            LandscapeStatTextWidth, LandscapeStatValueHeight);
+        SetLandscapeStatText(_streakValue, 42f / canvasScale,
+            LandscapeStatTextWidth, LandscapeStatValueHeight);
+    }
+
+    private static void SetLandscapeStatText(
+        TextMeshProUGUI text, float fontSize, float width, float height)
+    {
+        if (text == null)
+            return;
+
+        text.enableAutoSizing = true;
+        text.fontSizeMin = fontSize * 0.85f;
+        text.fontSizeMax = fontSize;
+        text.fontSize = fontSize;
+
+        RectTransform rect = text.rectTransform;
+        Vector2 size = rect.sizeDelta;
+        size.x = width;
+        size.y = height;
+        rect.sizeDelta = size;
     }
 
     private static void SetCenteredHorizontally(RectTransform target, float x, float width)

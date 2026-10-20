@@ -31,6 +31,8 @@ public class DailyGameChallenge
     public bool IsWon { get; set; }
     [NotNull]
     public bool IsAttempted { get; set; }
+    [NotNull]
+    public bool Started { get; set; }
 
     public string CompletedAt { get; set; }
 

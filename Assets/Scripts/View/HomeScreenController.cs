@@ -1,6 +1,5 @@
 using TMPro;
 using UnityEngine;
-using UnityEngine.UI;
 
 /// <summary>
 /// Controls the HomeScreen hierarchy configured in the Unity scene.
@@ -33,11 +32,13 @@ public sealed class HomeScreenController : MonoBehaviour
     [Header("Screens")]
     [SerializeField] private GameObject newGameScreen;
     [SerializeField] private GameContext _gameContext;
+    [SerializeField] private GameObject dailyChallengeScreen;
+    [SerializeField] private GameObject dailyChallengePortraitLayout;
+    [SerializeField] private GameObject dailyChallengeLandscapeLayout;
 
     private JourneyViewModel _viewModel;
     private bool _layoutApplied;
     private bool _lastLandscape;
-    private DailyChallengeReadyScreen _dailyChallengeScreen;
     private GameObject[] _homeContents;
 
     private void Awake()
@@ -46,7 +47,7 @@ public sealed class HomeScreenController : MonoBehaviour
         for (int i = 0; i < transform.childCount; i++)
         {
             GameObject child = transform.GetChild(i).gameObject;
-            // Initialize may run before this Awake and add the overlay as a child.
+            // The screen is a serialized child of HomeScreen, but isn't home content.
             if (child.name != "DailyChallengeReadyScreen") homeContents.Add(child);
         }
         _homeContents = homeContents.ToArray();
@@ -68,26 +69,7 @@ public sealed class HomeScreenController : MonoBehaviour
         _viewModel = viewModel;
         _gameContext = gameContext;
 
-        if (_dailyChallengeScreen == null)
-        {
-            TMP_FontAsset font = GetComponentInChildren<TMP_Text>(true)?.font;
-            _dailyChallengeScreen = new DailyChallengeReadyScreen(
-                (RectTransform)transform,
-                font,
-                FindSceneSprite("Golden home HUD icon_0"),
-                FindSceneSprite("StreakFireIcon"),
-                FindSceneSprite("GridRoundedFrame_0"),
-                CloseDailyChallenge,
-                OpenNewGame);
-        }
-
-        Button dailyButton = dailyChallengeButton.GetComponent<Button>();
-        if (dailyButton != null)
-        {
-            dailyButton.interactable = true;
-            dailyButton.onClick.RemoveListener(OpenDailyChallenge);
-            dailyButton.onClick.AddListener(OpenDailyChallenge);
-        }
+        if (dailyChallengeScreen != null) dailyChallengeScreen.SetActive(false);
 
         ApplyResponsiveLayout();
         RefreshJourneyStatus();
@@ -95,10 +77,10 @@ public sealed class HomeScreenController : MonoBehaviour
 
     public void OpenDailyChallenge()
     {
-        if (_dailyChallengeScreen == null) return;
+        if (dailyChallengeScreen == null) return;
 
         HideHomeContents();
-        _dailyChallengeScreen.Show();
+        dailyChallengeScreen.SetActive(true);
     }
 
     public void RefreshJourneyStatus()
@@ -164,7 +146,7 @@ public sealed class HomeScreenController : MonoBehaviour
 
     public void OpenHome()
     {
-        _dailyChallengeScreen?.Hide();
+        if (dailyChallengeScreen != null) dailyChallengeScreen.SetActive(false);
         SetVerseTickerVisible(false);
         _gameContext.SuspendActiveGame();
         RefreshJourneyStatus();
@@ -186,9 +168,9 @@ public sealed class HomeScreenController : MonoBehaviour
             if (child != null) child.SetActive(true);
     }
 
-    private void CloseDailyChallenge()
+    public void CloseDailyChallenge()
     {
-        _dailyChallengeScreen?.Hide();
+        if (dailyChallengeScreen != null) dailyChallengeScreen.SetActive(false);
         ShowHomeContents();
     }
 
@@ -199,25 +181,14 @@ public sealed class HomeScreenController : MonoBehaviour
         if (ticker != null) ticker.SetGameActive(visible);
     }
 
-    private Sprite FindSceneSprite(string spriteName)
-    {
-        Canvas canvas = GetComponentInParent<Canvas>();
-        if (canvas == null) return null;
-
-        Image[] images = canvas.GetComponentsInChildren<Image>(true);
-        foreach (Image image in images)
-            if (image.sprite != null && image.sprite.name == spriteName)
-                return image.sprite;
-
-        Debug.LogWarning($"Could not find the scene sprite '{spriteName}'.", this);
-        return null;
-    }
-
     private void ApplyResponsiveLayout()
     {
         Rect rootRect = ((RectTransform)transform).rect;
         bool landscape = rootRect.width > rootRect.height;
-        _dailyChallengeScreen?.Layout(landscape);
+        if (dailyChallengePortraitLayout != null)
+            dailyChallengePortraitLayout.SetActive(!landscape);
+        if (dailyChallengeLandscapeLayout != null)
+            dailyChallengeLandscapeLayout.SetActive(landscape);
 
         if (_layoutApplied && _lastLandscape == landscape) return;
 

@@ -83,6 +83,32 @@ public static class DailyChallengeRepository
 #endif
     }
 
+    public static void FinalizeLatestPreviousChallenge(DateTime today)
+    {
+        DateTime day=today.Date;
+#if UNITY_WEBGL && !UNITY_EDITOR
+        StoredRow stored=Data.Rows
+            .FindAll(r=>DateTime.Parse(r.CurrentDate,CultureInfo.InvariantCulture).Date<day)
+            .OrderByDescending(r=>DateTime.Parse(r.CurrentDate,CultureInfo.InvariantCulture))
+            .ThenByDescending(r=>r.Id)
+            .Find(r=>true);
+        DailyChallengeRecord previous=stored==null?null:FromStored(stored);
+#else
+        string start=day.ToString("yyyy-MM-dd HH:mm:ss",CultureInfo.InvariantCulture);
+        List<DailyChallengeRecord> rows=Db.Query<DailyChallengeRecord>(
+            "SELECT * FROM DailyGame_challenge WHERE CurrentDate < ? ORDER BY CurrentDate DESC, Id DESC LIMIT 1",start);
+        DailyChallengeRecord previous=rows.Count==0?null:rows[0];
+#endif
+        if(previous==null || !string.IsNullOrEmpty(previous.CompletedAt)) return;
+
+        DateTime endOfPreviousDay=DateTime.SpecifyKind(
+            previous.CurrentDate.Date.AddDays(1).AddSeconds(-1),DateTimeKind.Local);
+        previous.CompletedAt=endOfPreviousDay.ToString("o",CultureInfo.InvariantCulture);
+        previous.IsWon=false;
+        previous.Stars=0;
+        Update(previous);
+    }
+
     public static void DeleteUnattemptedBefore(DateTime today)
     {
         DateTime day=today.Date;

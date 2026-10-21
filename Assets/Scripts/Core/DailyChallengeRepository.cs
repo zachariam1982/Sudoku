@@ -83,37 +83,39 @@ public static class DailyChallengeRepository
 #endif
     }
 
-    public static void FinalizeLatestPreviousChallenge(DateTime today)
+    public static void FinalizeUncompletedPreviousChallenges(DateTime today)
     {
         DateTime day=today.Date;
 #if UNITY_WEBGL && !UNITY_EDITOR
-        StoredRow stored=null;
-        DateTime latestDate=DateTime.MinValue;
-        foreach(StoredRow candidate in Data.Rows)
+        bool changed=false;
+        foreach(StoredRow row in Data.Rows)
         {
-            DateTime candidateDate=DateTime.Parse(candidate.CurrentDate,CultureInfo.InvariantCulture).Date;
-            if(candidateDate>=day) continue;
-            if(stored==null || candidateDate>latestDate || (candidateDate==latestDate && candidate.Id>stored.Id))
-            {
-                stored=candidate;
-                latestDate=candidateDate;
-            }
+            DateTime rowDate=DateTime.Parse(row.CurrentDate,CultureInfo.InvariantCulture).Date;
+            if(rowDate>=day || (!row.IsAttempted && !row.Started) || !string.IsNullOrEmpty(row.CompletedAt))
+                continue;
+
+            DateTime endOfRowDay=DateTime.SpecifyKind(
+                rowDate.AddDays(1).AddSeconds(-1),DateTimeKind.Local);
+            row.CompletedAt=endOfRowDay.ToString("o",CultureInfo.InvariantCulture);
+            row.IsWon=false;
+            row.Stars=0;
+            changed=true;
         }
-        DailyChallengeRecord previous=stored==null?null:FromStored(stored);
+        if(changed) Save();
 #else
         string start=day.ToString("yyyy-MM-dd HH:mm:ss",CultureInfo.InvariantCulture);
         List<DailyChallengeRecord> rows=Db.Query<DailyChallengeRecord>(
-            "SELECT * FROM DailyGame_challenge WHERE CurrentDate < ? ORDER BY CurrentDate DESC, Id DESC LIMIT 1",start);
-        DailyChallengeRecord previous=rows.Count==0?null:rows[0];
+            "SELECT * FROM DailyGame_challenge WHERE CurrentDate < ? AND (IsAttempted = 1 OR Started = 1) AND (CompletedAt IS NULL OR CompletedAt = '') ORDER BY CurrentDate, Id",start);
+        foreach(DailyChallengeRecord previous in rows)
+        {
+            DateTime endOfRowDay=DateTime.SpecifyKind(
+                previous.CurrentDate.Date.AddDays(1).AddSeconds(-1),DateTimeKind.Local);
+            previous.CompletedAt=endOfRowDay.ToString("o",CultureInfo.InvariantCulture);
+            previous.IsWon=false;
+            previous.Stars=0;
+            Update(previous);
+        }
 #endif
-        if(previous==null || !string.IsNullOrEmpty(previous.CompletedAt)) return;
-
-        DateTime endOfPreviousDay=DateTime.SpecifyKind(
-            previous.CurrentDate.Date.AddDays(1).AddSeconds(-1),DateTimeKind.Local);
-        previous.CompletedAt=endOfPreviousDay.ToString("o",CultureInfo.InvariantCulture);
-        previous.IsWon=false;
-        previous.Stars=0;
-        Update(previous);
     }
 
     public static void DeleteUnattemptedBefore(DateTime today)

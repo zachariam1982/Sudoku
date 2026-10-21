@@ -260,7 +260,7 @@ public class GameContext : MonoBehaviour
     {
         yield return null;
         DateTime today = DateTime.Today;
-        DailyChallengeRepository.FinalizeLatestPreviousChallenge(today);
+        DailyChallengeRepository.FinalizeUncompletedPreviousChallenges(today);
         int difficultyCount = System.Enum.GetValues(typeof(SudokuDifficulty)).Length;
         int difficulty = difficultyCount == 0 ? 0 : (today.DayOfYear - 1) % difficultyCount;
         DailyChallengeRepository.GetOrCreate(today, difficulty);

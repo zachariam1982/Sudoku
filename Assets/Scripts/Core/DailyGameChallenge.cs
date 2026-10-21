@@ -7,6 +7,8 @@ public class DailyGameChallenge
     public DailyGameChallenge()
     {
         CurrentDate = DateTime.UtcNow;
+        IsAttempted = false;
+        Started = false;
     }
 
     [PrimaryKey, AutoIncrement]

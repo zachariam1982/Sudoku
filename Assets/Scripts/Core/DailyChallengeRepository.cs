@@ -87,11 +87,18 @@ public static class DailyChallengeRepository
     {
         DateTime day=today.Date;
 #if UNITY_WEBGL && !UNITY_EDITOR
-        StoredRow stored=Data.Rows
-            .FindAll(r=>DateTime.Parse(r.CurrentDate,CultureInfo.InvariantCulture).Date<day)
-            .OrderByDescending(r=>DateTime.Parse(r.CurrentDate,CultureInfo.InvariantCulture))
-            .ThenByDescending(r=>r.Id)
-            .Find(r=>true);
+        StoredRow stored=null;
+        DateTime latestDate=DateTime.MinValue;
+        foreach(StoredRow candidate in Data.Rows)
+        {
+            DateTime candidateDate=DateTime.Parse(candidate.CurrentDate,CultureInfo.InvariantCulture).Date;
+            if(candidateDate>=day) continue;
+            if(stored==null || candidateDate>latestDate || (candidateDate==latestDate && candidate.Id>stored.Id))
+            {
+                stored=candidate;
+                latestDate=candidateDate;
+            }
+        }
         DailyChallengeRecord previous=stored==null?null:FromStored(stored);
 #else
         string start=day.ToString("yyyy-MM-dd HH:mm:ss",CultureInfo.InvariantCulture);

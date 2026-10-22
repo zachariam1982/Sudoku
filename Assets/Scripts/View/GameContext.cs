@@ -217,9 +217,8 @@ public class GameContext : MonoBehaviour
 
     private System.Collections.IEnumerator StartDailyChallengeRoutine()
     {
-        yield return StartCoroutine(EnsureDailyChallengeForToday());
-        DateTime today = DateTime.Today;
-        DailyChallengeRecord record = DailyChallengeRepository.GetForDate(today);
+        DailyChallengeRecord record = null;
+        yield return StartCoroutine(EnsureDailyChallengeForToday(created => record = created));
         if (record == null)
         {
             DailyChallengeViewModel.ShowMessage.Value = ("Daily Challenge unavailable", "Today's challenge could not be loaded. Please try again.", "");
@@ -258,14 +257,16 @@ public class GameContext : MonoBehaviour
         _error?.Bind(JourneyViewModel);
     }
 
-    private System.Collections.IEnumerator EnsureDailyChallengeForToday()
+    private System.Collections.IEnumerator EnsureDailyChallengeForToday(
+        Action<DailyChallengeRecord> onReady = null)
     {
         yield return null;
         DateTime today = DateTime.Today;
         DailyChallengeRepository.FinalizeUncompletedPreviousChallenges(today);
         int difficultyCount = System.Enum.GetValues(typeof(SudokuDifficulty)).Length;
         int difficulty = difficultyCount == 0 ? 0 : (today.DayOfYear - 1) % difficultyCount;
-        DailyChallengeRepository.GetOrCreate(today, difficulty);
+        DailyChallengeRecord record = DailyChallengeRepository.GetOrCreate(today, difficulty);
+        onReady?.Invoke(record);
     }
 
     private System.Collections.IEnumerator DeleteUnattemptedDailyChallenges()

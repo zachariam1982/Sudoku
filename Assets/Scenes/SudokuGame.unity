@@ -42846,9 +42846,9 @@ MonoBehaviour:
   m_OnClick:
     m_PersistentCalls:
       m_Calls:
-      - m_Target: {fileID: 2147000004}
-        m_TargetAssemblyTypeName: HomeScreenController, Assembly-CSharp
-        m_MethodName: OpenNewGame
+      - m_Target: {fileID: 9000000000000000673}
+        m_TargetAssemblyTypeName: DailyChallengeScreenController, Assembly-CSharp
+        m_MethodName: StartChallenge
         m_Mode: 1
         m_Arguments:
           m_ObjectArgument: {fileID: 0}
@@ -45055,9 +45055,9 @@ MonoBehaviour:
   m_OnClick:
     m_PersistentCalls:
       m_Calls:
-      - m_Target: {fileID: 2147000004}
-        m_TargetAssemblyTypeName: HomeScreenController, Assembly-CSharp
-        m_MethodName: OpenNewGame
+      - m_Target: {fileID: 9000000000000000673}
+        m_TargetAssemblyTypeName: DailyChallengeScreenController, Assembly-CSharp
+        m_MethodName: StartChallenge
         m_Mode: 1
         m_Arguments:
           m_ObjectArgument: {fileID: 0}

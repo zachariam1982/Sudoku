@@ -37,9 +37,6 @@ public sealed class HomeScreenController : MonoBehaviour
     private JourneyViewModel _viewModel;
     private bool _layoutApplied;
     private bool _lastLandscape;
-    private void Awake()
-    {
-    }
 
     private void OnEnable()
     {

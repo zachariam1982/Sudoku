@@ -43,9 +43,17 @@ public sealed class DailyChallengeScreenController : MonoBehaviour
     {
         gameObject.SetActive(true);
         if (readyPage != null) readyPage.SetActive(true);
+        SetLandscape(Screen.width > Screen.height);
     }
 
-    public void Hide() => gameObject.SetActive(false);
+    public void Hide()
+    {
+        // The controller and ready-page graphics may be separate objects in the
+        // scene hierarchy. Hide each referenced page object explicitly.
+        if (readyPage != null) readyPage.SetActive(false);
+        if (portraitLayout != null) portraitLayout.SetActive(false);
+        if (landscapeLayout != null) landscapeLayout.SetActive(false);
+    }
 
     public void StartChallenge()
     {

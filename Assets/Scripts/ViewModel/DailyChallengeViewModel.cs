@@ -156,20 +156,20 @@ public sealed class DailyChallengeViewModel : BaseViewModel
         switch (stateName)
         {
             case "DailyChallengeIdleState":
-                FirstCellTapped.Value = false;
                 DailyMachine.TransitionTo(DailyMachine.Idle);
+                FirstCellTapped.Value = false;
                 break;
             case "DailyChallengePausedState":
-                FirstCellTapped.Value = true;
                 DailyMachine.TransitionTo(DailyMachine.Paused);
+                FirstCellTapped.Value = true;
                 break;
             case "DailyChallengeValidatingState":
-                FirstCellTapped.Value = true;
                 DailyMachine.TransitionTo(DailyMachine.Validating);
+                FirstCellTapped.Value = true;
                 break;
             default:
-                FirstCellTapped.Value = true;
                 DailyMachine.TransitionTo(DailyMachine.Playing);
+                FirstCellTapped.Value = true;
                 break;
         }
 

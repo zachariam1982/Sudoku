@@ -7,6 +7,7 @@ public class User : MonoBehaviour
     public static User Instance { get; private set;}
     public JourneyViewModel ViewModel { get; set; }
     public NewGameViewModel NewGameViewModel { get; set; }
+    public DailyChallengeViewModel DailyChallengeViewModel { get; set; }
     // Start is called once before the first execution of Update after the MonoBehaviour is created
     #if UNITY_WEBGL && !UNITY_EDITOR
 
@@ -170,6 +171,8 @@ public class User : MonoBehaviour
         if (NewGameViewModel != null && NewGameViewModel.HasActiveGame)
             SaveSystem.Save(NewGameViewModel.GetSaveData(), SaveSlot.NewGame);
 
+        SaveDailyChallengeNow();
+
         #if UNITY_WEBGL && !UNITY_EDITOR
         YouTubePlatformManager.Instance?.SaveCloudData(data);
         #endif        
@@ -182,6 +185,17 @@ public class User : MonoBehaviour
 #endif
         if (NewGameViewModel == null || !NewGameViewModel.HasActiveGame) return;
         SaveSystem.Save(NewGameViewModel.GetSaveData(), SaveSlot.NewGame);
+    }
+
+    public void SaveDailyChallengeNow()
+    {
+#if UNITY_WEBGL && !UNITY_EDITOR
+        if (!_initialCloudLoadComplete) return;
+#endif
+        if (DailyChallengeViewModel == null || !DailyChallengeViewModel.HasActiveChallenge) return;
+        SaveGameData data = DailyChallengeViewModel.GetSaveData();
+        if (data != null)
+            SaveSystem.Save(data, SaveSlot.DailyChallenge);
     }
 
     private void OnApplicationPause(bool paused)

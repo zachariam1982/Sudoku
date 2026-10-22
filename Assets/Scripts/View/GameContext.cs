@@ -208,8 +208,10 @@ public class GameContext : MonoBehaviour
         _stateView?.SetGameplayVisible(true);
     }
 
-    public void StartDailyChallenge()
+    public void StartDailyChallenge(DailyChallengeScreenController screen = null)
     {
+        if (screen != null)
+            _dailyChallengeScreen = screen;
         StartCoroutine(StartDailyChallengeRoutine());
     }
 

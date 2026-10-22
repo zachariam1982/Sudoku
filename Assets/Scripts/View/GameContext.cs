@@ -82,8 +82,7 @@ public class GameContext : MonoBehaviour
 
         _journeyStateMachine.SetSuspended(true);
         _homeScreen.Initialize(JourneyViewModel, this);
-        if (_dailyChallengeStateView != null)
-            _dailyChallengeStateView.gameObject.SetActive(false);
+        _dailyChallengeStateView?.SetGameplayVisible(false);
         StartDailyChallengeBackgroundJobs();
         // Startup is the mode selector, not an active Journey session.
         _gridBuilder?.SetVisible(false);
@@ -241,8 +240,8 @@ public class GameContext : MonoBehaviour
         DailyChallengeViewModel.Prepare(record);
         _dailyChallengeStateMachine.SetSuspended(false);
         _gridBuilder?.SetVisible(true);
-        _dailyChallengeStateView?.SetGameplayVisible(true);
         _stateView?.SetGameplayVisible(false);
+        _dailyChallengeStateView?.SetGameplayVisible(true);
     }
 
     public void ExitDailyChallenge()

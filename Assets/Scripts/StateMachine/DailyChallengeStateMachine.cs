@@ -50,7 +50,7 @@ public sealed class DailyChallengeStateMachine : MonoBehaviour, ISudokuStateMach
     {
         private readonly DailyChallengeStateMachine m; private readonly DailyChallengeViewModel v;
         public DailyChallengeIdleState(DailyChallengeStateMachine machine, DailyChallengeViewModel vm) { m=machine; v=vm; }
-        public void Enter() { v.ResetPuzzle(); v.FirstCellTapped.OnChanged += OnTap; }
+        public void Enter() { v.FirstCellTapped.OnChanged += OnTap; }
         public void Update(float dt) { }
         public void Exit() { v.FirstCellTapped.OnChanged -= OnTap; v.FirstCellTapped.Value=false; }
         private void OnTap(bool tapped) { if(tapped) m.TransitionTo(m.Playing); }

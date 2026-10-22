@@ -501,7 +501,6 @@ public static class GameDatabase
             }
 
             CreateDailyGameChallengeTable();
-            EnsureDailyGameChallengeLifecycleColumns();
             CreateDailyGameChallengeStatsTable();
 
             _db.CreateTable<GameStats>();
@@ -631,33 +630,6 @@ public static class GameDatabase
                 AutofillUses INTEGER NOT NULL DEFAULT 0
             );
         ");
-    }
-
-    private static void EnsureDailyGameChallengeLifecycleColumns()
-    {
-        List<SQLiteConnection.ColumnInfo> columns = _db.GetTableInfo("DailyGame_challenge");
-        bool hasIsAttempted = false;
-        bool hasStarted = false;
-
-        foreach (SQLiteConnection.ColumnInfo column in columns)
-        {
-            if (string.Equals(column.Name, "IsAttempted", StringComparison.OrdinalIgnoreCase))
-                hasIsAttempted = true;
-            else if (string.Equals(column.Name, "Started", StringComparison.OrdinalIgnoreCase))
-                hasStarted = true;
-        }
-
-        if (!hasIsAttempted)
-        {
-            _db.Execute(@"ALTER TABLE DailyGame_challenge
-                ADD COLUMN IsAttempted BOOLEAN NOT NULL DEFAULT 0 CHECK (IsAttempted IN (0, 1));");
-        }
-
-        if (!hasStarted)
-        {
-            _db.Execute(@"ALTER TABLE DailyGame_challenge
-                ADD COLUMN Started BOOLEAN NOT NULL DEFAULT 0 CHECK (Started IN (0, 1));");
-        }
     }
 
     private static void CreateDailyGameChallengeStatsTable()

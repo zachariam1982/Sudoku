@@ -37,27 +37,8 @@ public sealed class HomeScreenController : MonoBehaviour
     private JourneyViewModel _viewModel;
     private bool _layoutApplied;
     private bool _lastLandscape;
-    private GameObject[] _homeContents;
-    private Transform _dailyChallengeOriginalParent;
-    private int _dailyChallengeOriginalSiblingIndex;
-
     private void Awake()
     {
-        if (dailyChallengeScreen != null)
-        {
-            _dailyChallengeOriginalParent = dailyChallengeScreen.transform.parent;
-            _dailyChallengeOriginalSiblingIndex = dailyChallengeScreen.transform.GetSiblingIndex();
-        }
-
-        var homeContents = new System.Collections.Generic.List<GameObject>(transform.childCount);
-        for (int i = 0; i < transform.childCount; i++)
-        {
-            GameObject child = transform.GetChild(i).gameObject;
-            // The screen is a serialized child of HomeScreen, but isn't home content.
-            if (dailyChallengeScreen == null || child != dailyChallengeScreen.gameObject)
-                homeContents.Add(child);
-        }
-        _homeContents = homeContents.ToArray();
     }
 
     private void OnEnable()
@@ -87,8 +68,6 @@ public sealed class HomeScreenController : MonoBehaviour
         if (dailyChallengeScreen == null) return;
 
         SetVerseTickerVisible(false);
-        HideHomeContents();
-        DetachDailyChallengeScreenFromHome();
         gameObject.SetActive(false);
         dailyChallengeScreen.SetLandscape(Screen.width > Screen.height);
         dailyChallengeScreen.Show();
@@ -158,62 +137,16 @@ public sealed class HomeScreenController : MonoBehaviour
     public void OpenHome()
     {
         if (dailyChallengeScreen != null) dailyChallengeScreen.Hide();
-        RestoreDailyChallengeScreenToHome();
         SetVerseTickerVisible(false);
         _gameContext.SuspendActiveGame();
         RefreshJourneyStatus();
         gameObject.SetActive(true);
-        ShowHomeContents();
-    }
-
-    private void HideHomeContents()
-    {
-        if (_homeContents == null) return;
-        foreach (GameObject child in _homeContents)
-            if (child != null) child.SetActive(false);
-    }
-
-    private void ShowHomeContents()
-    {
-        if (_homeContents == null) return;
-        foreach (GameObject child in _homeContents)
-            if (child != null) child.SetActive(true);
     }
 
     public void CloseDailyChallenge()
     {
         if (dailyChallengeScreen != null) dailyChallengeScreen.Hide();
-        RestoreDailyChallengeScreenToHome();
         gameObject.SetActive(true);
-        ShowHomeContents();
-    }
-
-    private void DetachDailyChallengeScreenFromHome()
-    {
-        if (dailyChallengeScreen == null || transform.parent == null)
-            return;
-
-        if (_dailyChallengeOriginalParent == null)
-            _dailyChallengeOriginalParent = dailyChallengeScreen.transform.parent;
-
-        if (dailyChallengeScreen.transform.IsChildOf(transform))
-            dailyChallengeScreen.transform.SetParent(transform.parent, true);
-
-        dailyChallengeScreen.transform.SetAsLastSibling();
-    }
-
-    private void RestoreDailyChallengeScreenToHome()
-    {
-        if (dailyChallengeScreen == null || _dailyChallengeOriginalParent == null)
-            return;
-
-        if (dailyChallengeScreen.transform.parent != _dailyChallengeOriginalParent)
-        {
-            dailyChallengeScreen.transform.SetParent(_dailyChallengeOriginalParent, true);
-            int lastSiblingIndex = Mathf.Max(0, _dailyChallengeOriginalParent.childCount - 1);
-            dailyChallengeScreen.transform.SetSiblingIndex(
-                Mathf.Clamp(_dailyChallengeOriginalSiblingIndex, 0, lastSiblingIndex));
-        }
     }
 
     private void SetVerseTickerVisible(bool visible)

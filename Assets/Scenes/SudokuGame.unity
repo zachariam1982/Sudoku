@@ -46592,7 +46592,7 @@ MonoBehaviour:
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 55782378bf124e47bd3555e0b139c44a, type: 3}
   m_Name: 
-  m_EditorClassIdentifier: Assembly-CSharp::ResponsiveTopBar
+  m_EditorClassIdentifier: Assembly-CSharp::DailyChallengeTopBar
   homeBlock: {fileID: 7000000000000000012}
   livesContainer: {fileID: 7000000000000000017}
   level: {fileID: 7000000000000000020}
@@ -46617,12 +46617,12 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: abe620a304084495a0a220f4e1b5fd52, type: 3}
   m_Name:
   m_EditorClassIdentifier: Assembly-CSharp::DailyChallengeGameStateView
-  Lives: {fileID: 898213587}
-  Timer: {fileID: 1480642198}
-  Settings: {fileID: 1326735268}
-  Level: {fileID: 1107887576}
-  newGameLevel: {fileID: 9000000000020}
-  timerLabel: {fileID: 1480642200}
+  Lives: {fileID: 7000000000000000002}
+  Timer: {fileID: 7000000000000000004}
+  Settings: {fileID: 7000000000000000006}
+  Level: {fileID: 7000000000000000023}
+  newGameLevel: {fileID: 7000000000000000023}
+  timerLabel: {fileID: 7000000000000000027}
   lifeIcons: []
   lifeActiveColor: {r: 0.92, g: 0.27, b: 0.38, a: 1}
   lifeEmptyColor: {r: 0.3, g: 0.3, b: 0.4, a: 1}

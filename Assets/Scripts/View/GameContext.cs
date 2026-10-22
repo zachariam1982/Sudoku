@@ -233,6 +233,7 @@ public class GameContext : MonoBehaviour
             yield break;
         }
         DailyChallengeRepository.MarkAttempted(record);
+        _dailyChallengeScreen?.Hide();
         _dailyChallengeActive = true;
         _newGameActive = false;
         _journeyStateMachine.SetSuspended(true);
@@ -243,7 +244,6 @@ public class GameContext : MonoBehaviour
         _gridBuilder?.SetVisible(true);
         _dailyChallengeStateView?.SetGameplayVisible(true);
         _stateView?.SetGameplayVisible(false);
-        _dailyChallengeScreen?.Hide();
     }
 
     public void ExitDailyChallenge()

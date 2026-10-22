@@ -51,7 +51,7 @@ public sealed class DailyChallengeScreenController : MonoBehaviour
     {
         GameContext context = GetComponentInParent<GameContext>();
         if (context == null) context = FindFirstObjectByType<GameContext>();
-        context?.StartDailyChallenge();
+        context?.StartDailyChallenge(this);
     }
 
     public void SetLandscape(bool landscape)

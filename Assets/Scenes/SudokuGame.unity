@@ -46620,9 +46620,9 @@ MonoBehaviour:
   Lives: {fileID: 7000000000000000002}
   Timer: {fileID: 7000000000000000004}
   Settings: {fileID: 7000000000000000006}
-  Level: {fileID: 7000000000000000023}
-  newGameLevel: {fileID: 7000000000000000023}
-  timerLabel: {fileID: 7000000000000000027}
+  Level: {fileID: 7000000000000000022}
+  newGameLevel: {fileID: 7000000000000000022}
+  timerLabel: {fileID: 7000000000000000026}
   lifeIcons: []
   lifeActiveColor: {r: 0.92, g: 0.27, b: 0.38, a: 1}
   lifeEmptyColor: {r: 0.3, g: 0.3, b: 0.4, a: 1}

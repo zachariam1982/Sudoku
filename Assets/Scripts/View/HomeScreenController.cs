@@ -66,8 +66,13 @@ public sealed class HomeScreenController : MonoBehaviour
 
         SetVerseTickerVisible(false);
         gameObject.SetActive(false);
-        dailyChallengeScreen.SetLandscape(Screen.width > Screen.height);
-        dailyChallengeScreen.Show();
+        if (_gameContext != null)
+            _gameContext.OpenDailyChallengeScreen(dailyChallengeScreen);
+        else
+        {
+            dailyChallengeScreen.SetLandscape(Screen.width > Screen.height);
+            dailyChallengeScreen.Show();
+        }
     }
 
     public void RefreshJourneyStatus()
@@ -133,7 +138,8 @@ public sealed class HomeScreenController : MonoBehaviour
 
     public void OpenHome()
     {
-        if (dailyChallengeScreen != null) dailyChallengeScreen.Hide();
+        if (_gameContext != null) _gameContext.CloseDailyChallengeScreen();
+        else if (dailyChallengeScreen != null) dailyChallengeScreen.Hide();
         SetVerseTickerVisible(false);
         _gameContext.SuspendActiveGame();
         RefreshJourneyStatus();
@@ -142,7 +148,8 @@ public sealed class HomeScreenController : MonoBehaviour
 
     public void CloseDailyChallenge()
     {
-        if (dailyChallengeScreen != null) dailyChallengeScreen.Hide();
+        if (_gameContext != null) _gameContext.CloseDailyChallengeScreen();
+        else if (dailyChallengeScreen != null) dailyChallengeScreen.Hide();
         gameObject.SetActive(true);
     }
 

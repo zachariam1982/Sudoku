@@ -353,7 +353,7 @@ public class DailyChallengeGameStateView : MonoBehaviour
             return;
         }
 
-        if (hudPanel != null) hudPanel.SetActive(false);
+        SetAllPanelsHidden();
         if (DailyChallengeTopBar != null) DailyChallengeTopBar.gameObject.SetActive(false);
     }
 

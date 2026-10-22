@@ -41,7 +41,11 @@ public class ErrorMessage : MonoBehaviour
                 Title.text = value.title;
                 Message.text = value.message;
                 Status.text = value.status;
-                errorDialog.SetActive(true);
+                if (errorDialog != null)
+                {
+                    errorDialog.transform.SetAsLastSibling();
+                    errorDialog.SetActive(true);
+                }
             };
         arg.ShowMessage.OnChanged += _showMessageHandler;
     }

@@ -1,4 +1,5 @@
 using System;
+using System.Globalization;
 using UnityEngine;
 
 /// <summary>Creates and connects the independent Journey and New Game flows.</summary>
@@ -57,7 +58,9 @@ public class GameContext : MonoBehaviour
 
         User.Instance.ViewModel = JourneyViewModel;
         User.Instance.NewGameViewModel = NewGameViewModel;
+        User.Instance.DailyChallengeViewModel = DailyChallengeViewModel;
         NewGameViewModel.SaveRequested += User.Instance.SaveNewGameNow;
+        DailyChallengeViewModel.SaveRequested += User.Instance.SaveDailyChallengeNow;
         _journeyStateMachine.Initialise(JourneyViewModel);
         _newGameStateMachine.Initialise(NewGameViewModel);
         if (_dailyChallengeStateMachine == null)
@@ -153,6 +156,7 @@ public class GameContext : MonoBehaviour
     {
         if (_dailyChallengeActive)
         {
+            User.Instance?.SaveDailyChallengeNow();
             _dailyChallengeStateMachine.SetSuspended(true);
         }
         else if (_newGameActive)
@@ -226,10 +230,19 @@ public class GameContext : MonoBehaviour
         }
         if (!string.IsNullOrEmpty(record.CompletedAt))
         {
+            SaveSystem.Delete(SaveSlot.DailyChallenge);
             DailyChallengeViewModel.ShowMessage.Value = ("Challenge already attempted", "Today's challenge is already attempted.", "");
             _error?.Bind(DailyChallengeViewModel);
             yield break;
         }
+        SaveGameData savedChallenge = SaveSystem.Load(SaveSlot.DailyChallenge);
+        bool resumeSavedChallenge = savedChallenge != null &&
+            savedChallenge.SaveMode == "DailyChallenge" &&
+            savedChallenge.DailyChallengeRecordId == record.Id &&
+            savedChallenge.DailyChallengeDate == record.CurrentDate.ToString("yyyy-MM-dd", CultureInfo.InvariantCulture);
+        if (savedChallenge != null && !resumeSavedChallenge)
+            SaveSystem.Delete(SaveSlot.DailyChallenge);
+
         DailyChallengeRepository.MarkAttempted(record);
         _dailyChallengeScreen?.Hide();
         _dailyChallengeActive = true;
@@ -238,6 +251,11 @@ public class GameContext : MonoBehaviour
         _newGameStateMachine.SetSuspended(true);
         BindDailyGameplay(DailyChallengeViewModel);
         DailyChallengeViewModel.Prepare(record);
+        if (resumeSavedChallenge && !DailyChallengeViewModel.LoadSaveData(savedChallenge, record))
+        {
+            SaveSystem.Delete(SaveSlot.DailyChallenge);
+            DailyChallengeViewModel.Prepare(record);
+        }
         _dailyChallengeStateMachine.SetSuspended(false);
         _gridBuilder?.SetVisible(true);
         _stateView?.SetGameplayVisible(false);
@@ -247,6 +265,7 @@ public class GameContext : MonoBehaviour
     public void ExitDailyChallenge()
     {
         if (!_dailyChallengeActive) return;
+        User.Instance?.SaveDailyChallengeNow();
         _dailyChallengeStateMachine.SetSuspended(true);
         _dailyChallengeActive = false;
         _gridBuilder?.SetVisible(false);
@@ -297,7 +316,11 @@ public class GameContext : MonoBehaviour
     private void OnDestroy()
     {
         if (DailyChallengeViewModel != null)
+        {
             DailyChallengeViewModel.GameCompleted -= ExitDailyChallenge;
+            if (User.Instance != null)
+                DailyChallengeViewModel.SaveRequested -= User.Instance.SaveDailyChallengeNow;
+        }
         if (NewGameViewModel != null)
         {
             NewGameViewModel.GameCompleted -= OnNewGameCompleted;

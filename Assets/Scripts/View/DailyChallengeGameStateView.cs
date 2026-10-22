@@ -91,12 +91,13 @@ public class DailyChallengeGameStateView : MonoBehaviour
 
         vm.CurrentStateName.OnChanged += OnStateChanged;
         vm.IsWon.OnChanged            += OnWonChanged;
-        DailyChallengeViewModel journey = vm as DailyChallengeViewModel;
-        if (journey != null)
+        DailyChallengeViewModel dailyChallenge = vm as DailyChallengeViewModel;
+        if (dailyChallenge != null)
         {
-            journey.ElapsedSeconds.OnChanged += OnTimerChanged;
-            journey.LivesRemaining.OnChanged += OnLivesChanged;
-            journey.IsLost.OnChanged += OnLostChanged;
+            dailyChallenge.ElapsedSeconds.OnChanged += OnTimerChanged;
+            dailyChallenge.LivesRemaining.OnChanged += OnLivesChanged;
+            dailyChallenge.IsLost.OnChanged += OnLostChanged;
+            OnTimerChanged(dailyChallenge.ElapsedSeconds.Value);
         }
         _hud = hudPanel != null
             ? hudPanel.GetComponent<HUD>()
@@ -125,12 +126,12 @@ public class DailyChallengeGameStateView : MonoBehaviour
 
         _vm.CurrentStateName.OnChanged -= OnStateChanged;
         _vm.IsWon.OnChanged            -= OnWonChanged;
-        DailyChallengeViewModel journey = _vm as DailyChallengeViewModel;
-        if (journey != null)
+        DailyChallengeViewModel dailyChallenge = _vm as DailyChallengeViewModel;
+        if (dailyChallenge != null)
         {
-            journey.ElapsedSeconds.OnChanged -= OnTimerChanged;
-            journey.LivesRemaining.OnChanged -= OnLivesChanged;
-            journey.IsLost.OnChanged -= OnLostChanged;
+            dailyChallenge.ElapsedSeconds.OnChanged -= OnTimerChanged;
+            dailyChallenge.LivesRemaining.OnChanged -= OnLivesChanged;
+            dailyChallenge.IsLost.OnChanged -= OnLostChanged;
         }
         _vm = null;
     }
@@ -140,12 +141,16 @@ public class DailyChallengeGameStateView : MonoBehaviour
     private void OnStateChanged(string stateName)
     {
         SetAllPanelsHidden();
+        if (_vm is DailyChallengeViewModel dailyChallenge)
+        {
+            SetLevelText(((SudokuDifficulty)dailyChallenge.GetDifficulty).ToString());
+            OnTimerChanged(dailyChallenge.ElapsedSeconds.Value);
+        }
 
         switch (stateName)
         {
             case "DailyChallengeIdleState":
                 if (hudPanel != null) hudPanel.SetActive(false);
-                SetLevelText("        ");
                 break;
 
             case "DailyChallengePlayingState":

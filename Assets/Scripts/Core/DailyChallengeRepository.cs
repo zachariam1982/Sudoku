@@ -38,10 +38,12 @@ public static class DailyChallengeRepository
         if(existing!=null) return existing;
         var created=NewRecord(day,difficulty); created.Id=Data.NextId++; Data.Rows.Add(ToStored(created)); Save(); return created;
 #else
-        string start=day.ToString("yyyy-MM-dd HH:mm:ss",CultureInfo.InvariantCulture);
-        string end=day.AddDays(1).ToString("yyyy-MM-dd HH:mm:ss",CultureInfo.InvariantCulture);
+        long start=day.Ticks;
+        long end=day.AddDays(1).Ticks;
+        // SQLite stores DateTime values as .NET ticks in this database.
+        // Passing formatted text dates makes the range miss existing rows.
         List<DailyChallengeRecord> rows=Db.Query<DailyChallengeRecord>(
-            "SELECT * FROM DailyGame_challenge WHERE CurrentDate >= ? AND CurrentDate < ? ORDER BY Id LIMIT 1",start,end);
+            "SELECT * FROM DailyGame_challenge WHERE CurrentDate >= ? AND CurrentDate < ? ORDER BY Id DESC LIMIT 1",start,end);
         if(rows.Count>0) return rows[0];
         var created=NewRecord(day,difficulty);
         Db.Insert(created);
@@ -55,10 +57,10 @@ public static class DailyChallengeRepository
 #if UNITY_WEBGL && !UNITY_EDITOR
         StoredRow stored=Data.Rows.Find(r=>DateTime.Parse(r.CurrentDate,CultureInfo.InvariantCulture).Date==day); return stored==null?null:FromStored(stored);
 #else
-        string start=day.ToString("yyyy-MM-dd HH:mm:ss",CultureInfo.InvariantCulture);
-        string end=day.AddDays(1).ToString("yyyy-MM-dd HH:mm:ss",CultureInfo.InvariantCulture);
+        long start=day.Ticks;
+        long end=day.AddDays(1).Ticks;
         List<DailyChallengeRecord> rows=Db.Query<DailyChallengeRecord>(
-            "SELECT * FROM DailyGame_challenge WHERE CurrentDate >= ? AND CurrentDate < ? ORDER BY Id LIMIT 1",start,end);
+            "SELECT * FROM DailyGame_challenge WHERE CurrentDate >= ? AND CurrentDate < ? ORDER BY Id DESC LIMIT 1",start,end);
         return rows.Count==0?null:rows[0];
 #endif
     }
@@ -103,7 +105,7 @@ public static class DailyChallengeRepository
         }
         if(changed) Save();
 #else
-        string start=day.ToString("yyyy-MM-dd HH:mm:ss",CultureInfo.InvariantCulture);
+        long start=day.Ticks;
         List<DailyChallengeRecord> rows=Db.Query<DailyChallengeRecord>(
             "SELECT * FROM DailyGame_challenge WHERE CurrentDate < ? AND (IsAttempted = 1 OR Started = 1) AND (CompletedAt IS NULL OR CompletedAt = '') ORDER BY CurrentDate, Id",start);
         foreach(DailyChallengeRecord previous in rows)
@@ -125,7 +127,7 @@ public static class DailyChallengeRepository
         Data.Rows.RemoveAll(r=>!r.IsAttempted && DateTime.Parse(r.CurrentDate,CultureInfo.InvariantCulture).Date<day);
         Save();
 #else
-        string start=day.ToString("yyyy-MM-dd HH:mm:ss",CultureInfo.InvariantCulture);
+        long start=day.Ticks;
         Db.Execute("DELETE FROM DailyGame_challenge WHERE IsAttempted = 0 AND CurrentDate < ?",start);
 #endif
     }

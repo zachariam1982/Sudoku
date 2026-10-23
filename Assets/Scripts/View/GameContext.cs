@@ -297,10 +297,22 @@ public class GameContext : MonoBehaviour
         Action<DailyChallengeRecord> onReady = null)
     {
         yield return null;
+        while (User.Instance != null && !User.Instance.InitialCloudLoadComplete)
+            yield return null;
+
         DateTime today = DateTime.Today;
         DailyChallengeRepository.FinalizeUncompletedPreviousChallenges(today);
         int difficultyCount = System.Enum.GetValues(typeof(SudokuDifficulty)).Length;
-        int difficulty = difficultyCount == 0 ? 0 : (today.DayOfYear - 1) % difficultyCount;
+        if (difficultyCount == 0)
+        {
+            Debug.LogError("Daily Challenge cannot be created because no Sudoku difficulties are defined.");
+            yield break;
+        }
+
+        int journeyDifficulty = Mathf.Clamp(JourneyViewModel.GetDifficulty, 0, difficultyCount - 1);
+        int minimumDailyDifficulty = Mathf.Max(0, journeyDifficulty - 2);
+        int dailyDifficultyCount = journeyDifficulty - minimumDailyDifficulty + 1;
+        int difficulty = minimumDailyDifficulty + ((today.DayOfYear - 1) % dailyDifficultyCount);
         DailyChallengeRecord record = DailyChallengeRepository.GetOrCreate(today, difficulty);
         onReady?.Invoke(record);
     }

@@ -503,6 +503,7 @@ public static class GameDatabase
             CreateDailyGameChallengeTable();
             CreateDailyGameChallengeStatsTable();
             CreateDailyGameChallengeCompletionTrigger();
+            CreateDailyGameChallengeFirstRowTrigger();
 
             _db.CreateTable<GameStats>();
 
@@ -778,6 +779,25 @@ public static class GameDatabase
                     CurrentStreak = 0,
                     CurrentStreakStartedAt = NULL
                 WHERE Id = 1;
+            END;
+        ");
+    }
+
+    private static void CreateDailyGameChallengeFirstRowTrigger()
+    {
+        _db.Execute("DROP TRIGGER IF EXISTS trg_daily_game_challenge_first_row;");
+
+        _db.Execute(@"
+            CREATE TRIGGER trg_daily_game_challenge_first_row
+            AFTER INSERT ON DailyGame_challenge
+            WHEN (SELECT COUNT(*) FROM DailyGame_challenge) = 1
+            BEGIN
+                UPDATE DailyGameChallengeStats
+                SET FirstStartedAt = CAST(
+                    (julianday(date('now', 'localtime')) - 1721425.5) * 864000000000
+                    AS INTEGER)
+                WHERE Id = 1
+                  AND FirstStartedAt IS NULL;
             END;
         ");
     }

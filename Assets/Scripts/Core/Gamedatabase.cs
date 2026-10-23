@@ -502,6 +502,7 @@ public static class GameDatabase
 
             CreateDailyGameChallengeTable();
             CreateDailyGameChallengeStatsTable();
+            CreateDailyGameChallengeCompletionTrigger();
 
             _db.CreateTable<GameStats>();
 
@@ -661,6 +662,117 @@ public static class GameDatabase
 
         _db.Execute(
             "INSERT OR IGNORE INTO DailyGameChallengeStats (Id) VALUES (1);");
+    }
+
+    private static void CreateDailyGameChallengeCompletionTrigger()
+    {
+        _db.Execute("DROP TRIGGER IF EXISTS trg_daily_game_challenge_complete;");
+
+        _db.Execute(@"
+            CREATE TRIGGER trg_daily_game_challenge_complete
+            AFTER UPDATE OF CompletedAt ON DailyGame_challenge
+            WHEN COALESCE(TRIM(OLD.CompletedAt), '') = ''
+             AND COALESCE(TRIM(NEW.CompletedAt), '') <> ''
+            BEGIN
+                UPDATE DailyGameChallengeStats
+                SET
+                    GamesPlayed = GamesPlayed + 1,
+                    LastPlayedAt = NEW.CompletedAt,
+                    LastLostAt = CASE
+                        WHEN NEW.IsWon = 0 THEN NEW.CompletedAt
+                        ELSE LastLostAt
+                    END,
+                    CurrentStreak = CASE
+                        WHEN NEW.IsWon = 1 THEN CurrentStreak + 1
+                        ELSE 0
+                    END,
+                    CurrentStreakStartedAt = CASE
+                        WHEN NEW.IsWon = 0 THEN NULL
+                        WHEN CurrentStreak = 0 THEN NEW.CompletedAt
+                        ELSE CurrentStreakStartedAt
+                    END,
+                    GamesWon = GamesWon + CASE
+                        WHEN NEW.IsWon = 1 THEN 1
+                        ELSE 0
+                    END,
+                    BestTimeSeconds = CASE
+                        WHEN NEW.IsWon = 1
+                         AND (BestTimeSeconds IS NULL OR NEW.ElapsedSeconds < BestTimeSeconds)
+                        THEN NEW.ElapsedSeconds
+                        ELSE BestTimeSeconds
+                    END,
+                    BestTimeGameId = CASE
+                        WHEN NEW.IsWon = 1
+                         AND (BestTimeSeconds IS NULL OR NEW.ElapsedSeconds < BestTimeSeconds)
+                        THEN NEW.Id
+                        ELSE BestTimeGameId
+                    END,
+                    SimpleBestTimeGameId = CASE
+                        WHEN NEW.IsWon = 1 AND NEW.Difficulty = 0
+                         AND (SimpleBestTimeGameId IS NULL OR NEW.ElapsedSeconds < COALESCE(
+                             (SELECT ElapsedSeconds FROM DailyGame_challenge WHERE Id = (SELECT SimpleBestTimeGameId FROM DailyGameChallengeStats WHERE Id = 1)),
+                             1.0e99))
+                        THEN NEW.Id ELSE SimpleBestTimeGameId
+                    END,
+                    BeginnerBestTimeGameId = CASE
+                        WHEN NEW.IsWon = 1 AND NEW.Difficulty = 1
+                         AND (BeginnerBestTimeGameId IS NULL OR NEW.ElapsedSeconds < COALESCE(
+                             (SELECT ElapsedSeconds FROM DailyGame_challenge WHERE Id = (SELECT BeginnerBestTimeGameId FROM DailyGameChallengeStats WHERE Id = 1)),
+                             1.0e99))
+                        THEN NEW.Id ELSE BeginnerBestTimeGameId
+                    END,
+                    EasyBestTimeGameId = CASE
+                        WHEN NEW.IsWon = 1 AND NEW.Difficulty = 2
+                         AND (EasyBestTimeGameId IS NULL OR NEW.ElapsedSeconds < COALESCE(
+                             (SELECT ElapsedSeconds FROM DailyGame_challenge WHERE Id = (SELECT EasyBestTimeGameId FROM DailyGameChallengeStats WHERE Id = 1)),
+                             1.0e99))
+                        THEN NEW.Id ELSE EasyBestTimeGameId
+                    END,
+                    NoviceBestTimeGameId = CASE
+                        WHEN NEW.IsWon = 1 AND NEW.Difficulty = 3
+                         AND (NoviceBestTimeGameId IS NULL OR NEW.ElapsedSeconds < COALESCE(
+                             (SELECT ElapsedSeconds FROM DailyGame_challenge WHERE Id = (SELECT NoviceBestTimeGameId FROM DailyGameChallengeStats WHERE Id = 1)),
+                             1.0e99))
+                        THEN NEW.Id ELSE NoviceBestTimeGameId
+                    END,
+                    ModerateBestTimeGameId = CASE
+                        WHEN NEW.IsWon = 1 AND NEW.Difficulty = 4
+                         AND (ModerateBestTimeGameId IS NULL OR NEW.ElapsedSeconds < COALESCE(
+                             (SELECT ElapsedSeconds FROM DailyGame_challenge WHERE Id = (SELECT ModerateBestTimeGameId FROM DailyGameChallengeStats WHERE Id = 1)),
+                             1.0e99))
+                        THEN NEW.Id ELSE ModerateBestTimeGameId
+                    END,
+                    AdvancedBestTimeGameId = CASE
+                        WHEN NEW.IsWon = 1 AND NEW.Difficulty = 5
+                         AND (AdvancedBestTimeGameId IS NULL OR NEW.ElapsedSeconds < COALESCE(
+                             (SELECT ElapsedSeconds FROM DailyGame_challenge WHERE Id = (SELECT AdvancedBestTimeGameId FROM DailyGameChallengeStats WHERE Id = 1)),
+                             1.0e99))
+                        THEN NEW.Id ELSE AdvancedBestTimeGameId
+                    END,
+                    HardBestTimeGameId = CASE
+                        WHEN NEW.IsWon = 1 AND NEW.Difficulty = 6
+                         AND (HardBestTimeGameId IS NULL OR NEW.ElapsedSeconds < COALESCE(
+                             (SELECT ElapsedSeconds FROM DailyGame_challenge WHERE Id = (SELECT HardBestTimeGameId FROM DailyGameChallengeStats WHERE Id = 1)),
+                             1.0e99))
+                        THEN NEW.Id ELSE HardBestTimeGameId
+                    END,
+                    ExpertBestTimeGameId = CASE
+                        WHEN NEW.IsWon = 1 AND NEW.Difficulty = 7
+                         AND (ExpertBestTimeGameId IS NULL OR NEW.ElapsedSeconds < COALESCE(
+                             (SELECT ElapsedSeconds FROM DailyGame_challenge WHERE Id = (SELECT ExpertBestTimeGameId FROM DailyGameChallengeStats WHERE Id = 1)),
+                             1.0e99))
+                        THEN NEW.Id ELSE ExpertBestTimeGameId
+                    END,
+                    HardestBestTimeGameId = CASE
+                        WHEN NEW.IsWon = 1 AND NEW.Difficulty = 8
+                         AND (HardestBestTimeGameId IS NULL OR NEW.ElapsedSeconds < COALESCE(
+                             (SELECT ElapsedSeconds FROM DailyGame_challenge WHERE Id = (SELECT HardestBestTimeGameId FROM DailyGameChallengeStats WHERE Id = 1)),
+                             1.0e99))
+                        THEN NEW.Id ELSE HardestBestTimeGameId
+                    END
+                WHERE Id = 1;
+            END;
+        ");
     }
 
     private static int GetDatabaseVersion()

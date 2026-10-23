@@ -197,7 +197,15 @@ public sealed class DailyChallengeViewModel : BaseViewModel
 
     public void Finish(bool won)
     {
-        if (ChallengeRecord == null || ChallengeRecord.CompletedAt != null) return;
+        if (ChallengeRecord == null) return;
+
+        if (!string.IsNullOrEmpty(ChallengeRecord.CompletedAt))
+        {
+            HasActiveChallenge = false;
+            SaveSystem.Delete(SaveSlot.DailyChallenge);
+            return;
+        }
+
         ChallengeRecord.IsWon = won;
         ChallengeRecord.ElapsedSeconds = ElapsedSeconds.Value;
         ChallengeRecord.LivesRemaining = LivesRemaining.Value;
@@ -208,9 +216,15 @@ public sealed class DailyChallengeViewModel : BaseViewModel
         ChallengeRecord.EraseUses = UsageStats.EraseUses;
         ChallengeRecord.SOSUses = UsageStats.SOSUses;
         ChallengeRecord.AutofillUses = UsageStats.AutoFillUses;
-        DailyChallengeRepository.Update(ChallengeRecord);
-        HasActiveChallenge = false;
-        SaveSystem.Delete(SaveSlot.DailyChallenge);
+        try
+        {
+            DailyChallengeRepository.Update(ChallengeRecord);
+        }
+        finally
+        {
+            HasActiveChallenge = false;
+            SaveSystem.Delete(SaveSlot.DailyChallenge);
+        }
     }
 
     private static void AddHistoryToSave(

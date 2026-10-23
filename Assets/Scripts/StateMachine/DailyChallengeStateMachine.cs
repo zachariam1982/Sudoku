@@ -1,3 +1,4 @@
+using System;
 using UnityEngine;
 
 /// <summary>Independent state machine for Daily Challenge play.</summary>
@@ -43,7 +44,19 @@ public sealed class DailyChallengeStateMachine : MonoBehaviour, ISudokuStateMach
 
     private void Update()
     {
-        if (!_suspended) CurrentState?.Update(Time.deltaTime);
+        if (_suspended) return;
+
+        bool isActivePlayState = CurrentState == Playing || CurrentState == Paused;
+        if (_viewModel != null &&
+            _viewModel.HasActiveChallenge &&
+            isActivePlayState &&
+            _viewModel.ChallengeRecord != null &&
+            DateTime.Today > _viewModel.ChallengeRecord.CurrentDate.Date)
+        {
+            TransitionTo(Lose);
+        }
+
+        CurrentState?.Update(Time.deltaTime);
     }
 
     private sealed class DailyChallengeIdleState : IGameState

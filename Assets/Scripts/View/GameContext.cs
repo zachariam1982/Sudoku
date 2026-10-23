@@ -212,6 +212,29 @@ public class GameContext : MonoBehaviour
         _stateView?.SetGameplayVisible(true);
     }
 
+    public void RefreshDailyChallengeScreen(DailyChallengeScreenController screen)
+    {
+        if (screen != null)
+            _dailyChallengeScreen = screen;
+
+        if (_dailyChallengeScreen != null)
+            StartCoroutine(RefreshDailyChallengeScreenRoutine(_dailyChallengeScreen));
+    }
+
+    private System.Collections.IEnumerator RefreshDailyChallengeScreenRoutine(
+        DailyChallengeScreenController screen)
+    {
+        DailyChallengeRecord today = null;
+        yield return StartCoroutine(EnsureDailyChallengeForToday(record => today = record));
+        if (today == null || screen == null)
+            yield break;
+
+        screen.SetChallengeData(
+            today,
+            DailyChallengeRepository.GetStatsSnapshot(),
+            DailyChallengeRepository.GetTotalChallengeCount());
+    }
+
     public void OpenDailyChallengeScreen(DailyChallengeScreenController screen)
     {
         if (screen != null)

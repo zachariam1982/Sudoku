@@ -18,6 +18,12 @@ public sealed class DailyChallengeScreenController : MonoBehaviour
     private TextMeshProUGUI _bestTimeValue;
     private TextMeshProUGUI _streakLabel;
     private TextMeshProUGUI _streakValue;
+    private TextMeshProUGUI _portraitChallengeNumber;
+    private TextMeshProUGUI _portraitDate;
+    private TextMeshProUGUI _portraitDifficulty;
+    private TextMeshProUGUI _landscapeChallengeNumber;
+    private TextMeshProUGUI _landscapeDate;
+    private TextMeshProUGUI _landscapeDifficulty;
     private float _baseLandscapeCardWidth;
     private bool _isLandscape;
 
@@ -30,6 +36,7 @@ public sealed class DailyChallengeScreenController : MonoBehaviour
 
     private void Awake()
     {
+        CacheReadyPageLabels();
         CacheLandscapeCards();
     }
 
@@ -43,6 +50,85 @@ public sealed class DailyChallengeScreenController : MonoBehaviour
     {
         gameObject.SetActive(true);
         if (readyPage != null) readyPage.SetActive(true);
+
+        GameContext context = GetComponentInParent<GameContext>();
+        if (context == null) context = FindFirstObjectByType<GameContext>();
+        context?.RefreshDailyChallengeScreen(this);
+    }
+
+    public void SetChallengeData(
+        DailyChallengeRecord today,
+        DailyChallengeStatsSnapshot stats,
+        int challengeCount)
+    {
+        if (today == null)
+            return;
+
+        if (stats == null)
+            stats = new DailyChallengeStatsSnapshot();
+
+        string number = $"CHALLENGE #{challengeCount}";
+        string date = today.CurrentDate.ToString("MMM dd, yyyy", System.Globalization.CultureInfo.InvariantCulture)
+            .ToUpperInvariant();
+        string difficulty = ((SudokuDifficulty)today.Difficulty).ToString().ToUpperInvariant();
+        string bestTime = FormatBestTime(stats.BestTimeSeconds);
+        string streak = stats.CurrentStreak.ToString(System.Globalization.CultureInfo.InvariantCulture);
+
+        SetText(_portraitChallengeNumber, number);
+        SetText(_landscapeChallengeNumber, number);
+        SetText(_portraitDate, date);
+        SetText(_landscapeDate, date);
+        SetText(_portraitDifficulty, difficulty);
+        SetText(_landscapeDifficulty, difficulty);
+        SetText(_bestTimeValue, bestTime);
+        SetText(_streakValue, streak);
+        ApplyLandscapeStatsTypography();
+    }
+
+    private static void SetText(TextMeshProUGUI text, string value)
+    {
+        if (text != null)
+            text.text = value;
+    }
+
+    private static string FormatBestTime(float seconds)
+    {
+        if (seconds < 0f || float.IsNaN(seconds) || float.IsInfinity(seconds))
+            return "--:--";
+
+        int totalSeconds = Mathf.Max(0, Mathf.FloorToInt(seconds));
+        int minutes = totalSeconds / 60;
+        int remainingSeconds = totalSeconds % 60;
+        return string.Format(
+            System.Globalization.CultureInfo.InvariantCulture,
+            "{0:00}:{1:00}",
+            minutes,
+            remainingSeconds);
+    }
+
+    private void CacheReadyPageLabels()
+    {
+        _portraitChallengeNumber = FindText(portraitLayout, "ChallengeNumber_PortraitLayout");
+        _portraitDate = FindText(portraitLayout, "Date_PortraitLayout");
+        _portraitDifficulty = FindText(portraitLayout, "Difficulty_PortraitLayout");
+        _landscapeChallengeNumber = FindText(landscapeLayout, "ChallengeNumber_LandscapeLayout");
+        _landscapeDate = FindText(landscapeLayout, "Date_LandscapeLayout");
+        _landscapeDifficulty = FindText(landscapeLayout, "DifficultyBadge_LandscapeLayout");
+        _bestTimeValue = FindText(portraitLayout, "BestTimeValue_PortraitLayout");
+        _streakValue = FindText(portraitLayout, "StreakValue_PortraitLayout");
+    }
+
+    private static TextMeshProUGUI FindText(GameObject root, string objectName)
+    {
+        if (root == null)
+            return null;
+
+        TextMeshProUGUI[] labels = root.GetComponentsInChildren<TextMeshProUGUI>(true);
+        foreach (TextMeshProUGUI label in labels)
+            if (label.gameObject.name == objectName)
+                return label;
+
+        return null;
     }
 
     public void Hide() => gameObject.SetActive(false);

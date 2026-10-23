@@ -48,6 +48,53 @@ public static class DailyChallengeRepository
 #endif
     }
 
+    public static int GetTotalChallengeCount()
+    {
+#if UNITY_WEBGL && !UNITY_EDITOR
+        return Data.Rows.Count;
+#else
+        return Db.ExecuteScalar<int>("SELECT COUNT(*) FROM DailyGame_challenge;");
+#endif
+    }
+
+    public static DailyChallengeStatsSnapshot GetStatsSnapshot()
+    {
+#if UNITY_WEBGL && !UNITY_EDITOR
+        float bestTime = -1f;
+        foreach (StoredRow row in Data.Rows)
+            if (row.IsWon && (bestTime < 0f || row.ElapsedSeconds < bestTime))
+                bestTime = row.ElapsedSeconds;
+
+        DateTime checkDate = DateTime.Today;
+        StoredRow today = Data.Rows.Find(r =>
+            DateTime.Parse(r.CurrentDate, CultureInfo.InvariantCulture).Date == checkDate);
+        if (today == null || !today.IsWon)
+            checkDate = checkDate.AddDays(-1);
+
+        int streak = 0;
+        while (true)
+        {
+            StoredRow row = Data.Rows.Find(r =>
+                DateTime.Parse(r.CurrentDate, CultureInfo.InvariantCulture).Date == checkDate);
+            if (row == null || !row.IsWon)
+                break;
+            streak++;
+            checkDate = checkDate.AddDays(-1);
+        }
+
+        return new DailyChallengeStatsSnapshot
+        {
+            CurrentStreak = streak,
+            BestTimeSeconds = bestTime
+        };
+#else
+        List<DailyChallengeStatsSnapshot> rows = Db.Query<DailyChallengeStatsSnapshot>(
+            "SELECT CurrentStreak, COALESCE(BestTimeSeconds, -1) AS BestTimeSeconds " +
+            "FROM DailyGameChallengeStats WHERE Id = 1 LIMIT 1");
+        return rows.Count == 0 ? new DailyChallengeStatsSnapshot() : rows[0];
+#endif
+    }
+
     public static DailyChallengeRecord GetForDate(DateTime date)
     {
         DateTime day=date.Date;
@@ -143,6 +190,13 @@ public static class DailyChallengeRepository
     {
         return new DailyChallengeRecord { CurrentDate=date, Difficulty=difficulty, IsAttempted=false, Started=false, LivesRemaining=3 };
     }
+}
+
+/// <summary>Snapshot of the single-row daily challenge statistics table.</summary>
+public sealed class DailyChallengeStatsSnapshot
+{
+    public int CurrentStreak { get; set; }
+    public float BestTimeSeconds { get; set; } = -1f;
 }
 
 /// <summary>SQLite mapping for a daily challenge row, including both lifecycle flags.</summary>

@@ -38,12 +38,9 @@ public static class DailyChallengeRepository
         if(existing!=null) return existing;
         var created=NewRecord(day,difficulty); created.Id=Data.NextId++; Data.Rows.Add(ToStored(created)); Save(); return created;
 #else
-        long start=day.Ticks;
-        long end=day.AddDays(1).Ticks;
-        // SQLite stores DateTime values as .NET ticks in this database.
-        // Passing formatted text dates makes the range miss existing rows.
+        string dateKey=day.ToString("yyyy-MM-dd",CultureInfo.InvariantCulture);
         List<DailyChallengeRecord> rows=Db.Query<DailyChallengeRecord>(
-            "SELECT * FROM DailyGame_challenge WHERE CurrentDate >= ? AND CurrentDate < ? ORDER BY Id DESC LIMIT 1",start,end);
+            "SELECT * FROM DailyGame_challenge WHERE CurrentDate = ? ORDER BY Id DESC LIMIT 1",dateKey);
         if(rows.Count>0) return rows[0];
         var created=NewRecord(day,difficulty);
         Db.Insert(created);
@@ -57,10 +54,9 @@ public static class DailyChallengeRepository
 #if UNITY_WEBGL && !UNITY_EDITOR
         StoredRow stored=Data.Rows.Find(r=>DateTime.Parse(r.CurrentDate,CultureInfo.InvariantCulture).Date==day); return stored==null?null:FromStored(stored);
 #else
-        long start=day.Ticks;
-        long end=day.AddDays(1).Ticks;
+        string dateKey=day.ToString("yyyy-MM-dd",CultureInfo.InvariantCulture);
         List<DailyChallengeRecord> rows=Db.Query<DailyChallengeRecord>(
-            "SELECT * FROM DailyGame_challenge WHERE CurrentDate >= ? AND CurrentDate < ? ORDER BY Id DESC LIMIT 1",start,end);
+            "SELECT * FROM DailyGame_challenge WHERE CurrentDate = ? ORDER BY Id DESC LIMIT 1",dateKey);
         return rows.Count==0?null:rows[0];
 #endif
     }
@@ -105,9 +101,9 @@ public static class DailyChallengeRepository
         }
         if(changed) Save();
 #else
-        long start=day.Ticks;
+        string dateKey=day.ToString("yyyy-MM-dd",CultureInfo.InvariantCulture);
         List<DailyChallengeRecord> rows=Db.Query<DailyChallengeRecord>(
-            "SELECT * FROM DailyGame_challenge WHERE CurrentDate < ? AND (IsAttempted = 1 OR Started = 1) AND (CompletedAt IS NULL OR CompletedAt = '') ORDER BY CurrentDate, Id",start);
+            "SELECT * FROM DailyGame_challenge WHERE CurrentDate < ? AND (IsAttempted = 1 OR Started = 1) AND (CompletedAt IS NULL OR CompletedAt = '') ORDER BY CurrentDate, Id",dateKey);
         foreach(DailyChallengeRecord previous in rows)
         {
             DateTime endOfRowDay=DateTime.SpecifyKind(
@@ -127,8 +123,8 @@ public static class DailyChallengeRepository
         Data.Rows.RemoveAll(r=>!r.IsAttempted && DateTime.Parse(r.CurrentDate,CultureInfo.InvariantCulture).Date<day);
         Save();
 #else
-        long start=day.Ticks;
-        Db.Execute("DELETE FROM DailyGame_challenge WHERE IsAttempted = 0 AND CurrentDate < ?",start);
+        string dateKey=day.ToString("yyyy-MM-dd",CultureInfo.InvariantCulture);
+        Db.Execute("DELETE FROM DailyGame_challenge WHERE IsAttempted = 0 AND CurrentDate < ?",dateKey);
 #endif
     }
 
@@ -138,7 +134,7 @@ public static class DailyChallengeRepository
     }
 
 #if UNITY_WEBGL && !UNITY_EDITOR
-    private static StoredRow ToStored(DailyChallengeRecord r) { return new StoredRow { Id=r.Id, CurrentDate=r.CurrentDate.ToString("o",CultureInfo.InvariantCulture), Difficulty=r.Difficulty, ElapsedSeconds=r.ElapsedSeconds, LivesRemaining=r.LivesRemaining, Stars=r.Stars, IsWon=r.IsWon, Started=r.Started, CompletedAt=r.CompletedAt, UndoUses=r.UndoUses, PencilUses=r.PencilUses, EraseUses=r.EraseUses, SOSUses=r.SOSUses, AutofillUses=r.AutofillUses, IsAttempted=r.IsAttempted }; }
+    private static StoredRow ToStored(DailyChallengeRecord r) { return new StoredRow { Id=r.Id, CurrentDate=r.CurrentDate.ToString("yyyy-MM-dd",CultureInfo.InvariantCulture), Difficulty=r.Difficulty, ElapsedSeconds=r.ElapsedSeconds, LivesRemaining=r.LivesRemaining, Stars=r.Stars, IsWon=r.IsWon, Started=r.Started, CompletedAt=r.CompletedAt, UndoUses=r.UndoUses, PencilUses=r.PencilUses, EraseUses=r.EraseUses, SOSUses=r.SOSUses, AutofillUses=r.AutofillUses, IsAttempted=r.IsAttempted }; }
     private static DailyChallengeRecord FromStored(StoredRow r) { return new DailyChallengeRecord { Id=r.Id, CurrentDate=DateTime.Parse(r.CurrentDate,CultureInfo.InvariantCulture), Difficulty=r.Difficulty, ElapsedSeconds=r.ElapsedSeconds, LivesRemaining=r.LivesRemaining, Stars=r.Stars, IsWon=r.IsWon, Started=r.Started, CompletedAt=r.CompletedAt, UndoUses=r.UndoUses, PencilUses=r.PencilUses, EraseUses=r.EraseUses, SOSUses=r.SOSUses, AutofillUses=r.AutofillUses, IsAttempted=r.IsAttempted }; }
 
 #endif
@@ -154,7 +150,19 @@ public static class DailyChallengeRepository
 public sealed class DailyChallengeRecord
 {
     [PrimaryKey, AutoIncrement] public int Id { get; set; }
-    [NotNull] public DateTime CurrentDate { get; set; }
+    [Ignore] public DateTime CurrentDate
+    {
+        get
+        {
+            if (DateTime.TryParseExact(CurrentDateText, "yyyy-MM-dd", CultureInfo.InvariantCulture,
+                DateTimeStyles.None, out DateTime parsed))
+                return parsed;
+
+            return DateTime.Parse(CurrentDateText, CultureInfo.InvariantCulture).Date;
+        }
+        set { CurrentDateText = value.ToString("yyyy-MM-dd", CultureInfo.InvariantCulture); }
+    }
+    [NotNull, Column("CurrentDate")] public string CurrentDateText { get; set; }
     [NotNull] public int Difficulty { get; set; }
     [NotNull] public float ElapsedSeconds { get; set; }
     [NotNull] public int LivesRemaining { get; set; }

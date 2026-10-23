@@ -502,6 +502,7 @@ public static class GameDatabase
 
             CreateDailyGameChallengeTable();
             CreateDailyGameChallengeStatsTable();
+            NormalizeDailyChallengeDateStorage();
             CreateDailyGameChallengeCompletionTrigger();
             CreateDailyGameChallengeFirstRowTrigger();
 
@@ -616,7 +617,7 @@ public static class GameDatabase
             CREATE TABLE IF NOT EXISTS DailyGame_challenge
             (
                 Id INTEGER PRIMARY KEY AUTOINCREMENT,
-                CurrentDate DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+                CurrentDate TEXT NOT NULL DEFAULT (date('now', 'localtime')),
                 Difficulty INTEGER NOT NULL,
                 ElapsedSeconds FLOAT NOT NULL DEFAULT 0,
                 LivesRemaining INTEGER NOT NULL DEFAULT 0,
@@ -640,7 +641,7 @@ public static class GameDatabase
             CREATE TABLE IF NOT EXISTS DailyGameChallengeStats
             (
                 Id INTEGER PRIMARY KEY CHECK (Id = 1),
-                FirstStartedAt DATETIME,
+                FirstStartedAt TEXT,
                 CurrentStreakStartedAt DATETIME,
                 CurrentStreak INTEGER NOT NULL DEFAULT 0 CHECK (CurrentStreak >= 0),
                 LastPlayedAt DATETIME,
@@ -663,6 +664,22 @@ public static class GameDatabase
 
         _db.Execute(
             "INSERT OR IGNORE INTO DailyGameChallengeStats (Id) VALUES (1);");
+    }
+
+    private static void NormalizeDailyChallengeDateStorage()
+    {
+        // Older SQLite builds stored DateTime fields as .NET ticks. Convert those
+        // values to ISO date text without changing the database version.
+        _db.Execute(@"
+            UPDATE DailyGame_challenge
+            SET CurrentDate = date((CAST(CurrentDate AS REAL) / 864000000000.0) + 1721425.5)
+            WHERE typeof(CurrentDate) IN ('integer', 'real');
+        ");
+        _db.Execute(@"
+            UPDATE DailyGameChallengeStats
+            SET FirstStartedAt = date((CAST(FirstStartedAt AS REAL) / 864000000000.0) + 1721425.5)
+            WHERE typeof(FirstStartedAt) IN ('integer', 'real');
+        ");
     }
 
     private static void CreateDailyGameChallengeCompletionTrigger()
@@ -793,9 +810,7 @@ public static class GameDatabase
             WHEN (SELECT COUNT(*) FROM DailyGame_challenge) = 1
             BEGIN
                 UPDATE DailyGameChallengeStats
-                SET FirstStartedAt = CAST(
-                    (julianday(date('now', 'localtime')) - 1721425.5) * 864000000000
-                    AS INTEGER)
+                SET FirstStartedAt = date('now', 'localtime')
                 WHERE Id = 1
                   AND FirstStartedAt IS NULL;
             END;

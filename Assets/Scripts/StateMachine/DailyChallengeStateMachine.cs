@@ -1,4 +1,5 @@
 using System;
+using System.Collections;
 using UnityEngine;
 
 /// <summary>Independent state machine for Daily Challenge play.</summary>
@@ -15,6 +16,7 @@ public sealed class DailyChallengeStateMachine : MonoBehaviour, ISudokuStateMach
     public IGameState Lose { get; private set; }
 
     private DailyChallengeViewModel _viewModel;
+    private Coroutine _dayBoundaryTimer;
     private bool _suspended = true;
 
     public void Initialise(DailyChallengeViewModel viewModel)
@@ -36,27 +38,78 @@ public sealed class DailyChallengeStateMachine : MonoBehaviour, ISudokuStateMach
 
     public void TransitionTo(IGameState next)
     {
+        if (IsPlayOrPauseState(next) && IsChallengePastItsDate())
+            next = Lose;
+
+        StopDayBoundaryTimer();
         CurrentState?.Exit();
         CurrentState = next;
         CurrentState.Enter();
         _viewModel.CurrentStateName.Value = next.GetType().Name;
+
+        if (IsPlayOrPauseState(CurrentState))
+            ScheduleDayBoundaryTimer();
     }
 
     private void Update()
     {
-        if (_suspended) return;
+        if (!_suspended) CurrentState?.Update(Time.deltaTime);
+    }
 
-        bool isActivePlayState = CurrentState == Playing || CurrentState == Paused;
-        if (_viewModel != null &&
-            _viewModel.HasActiveChallenge &&
-            isActivePlayState &&
-            _viewModel.ChallengeRecord != null &&
-            DateTime.Today > _viewModel.ChallengeRecord.CurrentDate.Date)
+    private bool IsPlayOrPauseState(IGameState state)
+    {
+        return state == Playing || state == Paused;
+    }
+
+    private bool IsChallengePastItsDate()
+    {
+        return _viewModel != null &&
+               _viewModel.HasActiveChallenge &&
+               _viewModel.ChallengeRecord != null &&
+               DateTime.Today > _viewModel.ChallengeRecord.CurrentDate.Date;
+    }
+
+    private void ScheduleDayBoundaryTimer()
+    {
+        if (!IsPlayOrPauseState(CurrentState) ||
+            _viewModel == null ||
+            !_viewModel.HasActiveChallenge)
+            return;
+
+        if (IsChallengePastItsDate())
         {
             TransitionTo(Lose);
+            return;
         }
 
-        CurrentState?.Update(Time.deltaTime);
+        DateTime nextLocalDay = DateTime.Today.AddDays(1);
+        float secondsUntilBoundary = Mathf.Max(
+            0.01f,
+            (float)(nextLocalDay - DateTime.Now).TotalSeconds);
+        _dayBoundaryTimer = StartCoroutine(WaitForDayBoundary(secondsUntilBoundary));
+    }
+
+    private IEnumerator WaitForDayBoundary(float secondsUntilBoundary)
+    {
+        yield return new WaitForSecondsRealtime(secondsUntilBoundary);
+        _dayBoundaryTimer = null;
+
+        if (!IsPlayOrPauseState(CurrentState) ||
+            _viewModel == null ||
+            !_viewModel.HasActiveChallenge)
+            yield break;
+
+        if (IsChallengePastItsDate())
+            TransitionTo(Lose);
+        else
+            ScheduleDayBoundaryTimer();
+    }
+
+    private void StopDayBoundaryTimer()
+    {
+        if (_dayBoundaryTimer == null) return;
+        StopCoroutine(_dayBoundaryTimer);
+        _dayBoundaryTimer = null;
     }
 
     private sealed class DailyChallengeIdleState : IGameState

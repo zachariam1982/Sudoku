@@ -32,7 +32,8 @@ public sealed class DailyChallengeViewModel : BaseViewModel
     {
         if (record == null) throw new ArgumentNullException(nameof(record));
         ChallengeRecord = record;
-        HasActiveChallenge = true;
+        // Suppress bindable-property autosaves until the puzzle is fully prepared.
+        HasActiveChallenge = false;
         _dateSeed = DailyChallengeRepository.GetPuzzleSeed(record.CurrentDate);
         SetGameLevelAndDifficulty(_dateSeed, (SudokuDifficulty)record.Difficulty);
         Model.SetPuzzleSeed(_dateSeed);
@@ -44,6 +45,7 @@ public sealed class DailyChallengeViewModel : BaseViewModel
         ResumeRequested.Value = false;
         ResetPuzzle();
         DailyMachine.StartChallenge();
+        HasActiveChallenge = true;
         RequestSave();
     }
 

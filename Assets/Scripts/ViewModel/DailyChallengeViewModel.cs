@@ -220,6 +220,10 @@ public sealed class DailyChallengeViewModel : BaseViewModel
         {
             DailyChallengeRepository.Update(ChallengeRecord);
         }
+        catch (Exception ex)
+        {
+            Debug.LogError($"[DailyChallenge] Could not save the completed challenge: {ex}");
+        }
         finally
         {
             HasActiveChallenge = false;

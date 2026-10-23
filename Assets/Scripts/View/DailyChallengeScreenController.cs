@@ -28,6 +28,7 @@ public sealed class DailyChallengeScreenController : MonoBehaviour
     private TextMeshProUGUI _portraitStreakValue;
     private float _baseLandscapeCardWidth;
     private bool _isLandscape;
+    private bool _orientationInitialized;
 
     private const float LandscapeCardSideMargin = 48f;
     private const float MinimumLandscapeCardGap = 48f;
@@ -40,6 +41,29 @@ public sealed class DailyChallengeScreenController : MonoBehaviour
     {
         CacheReadyPageLabels();
         CacheLandscapeCards();
+    }
+
+    private void OnEnable()
+    {
+        RefreshOrientation();
+    }
+
+    private void Update()
+    {
+        // Unlike a screen opened from the home menu, this page can stay open
+        // while the device rotates. Detect the dimension change and swap the
+        // paired layouts immediately.
+        RefreshOrientation();
+    }
+
+    private void RefreshOrientation()
+    {
+        if (Screen.width <= 0 || Screen.height <= 0)
+            return;
+
+        bool landscape = Screen.width > Screen.height;
+        if (!_orientationInitialized || landscape != _isLandscape)
+            SetLandscape(landscape);
     }
 
     private void OnRectTransformDimensionsChange()
@@ -146,6 +170,7 @@ public sealed class DailyChallengeScreenController : MonoBehaviour
 
     public void SetLandscape(bool landscape)
     {
+        _orientationInitialized = true;
         _isLandscape = landscape;
 
         if (portraitLayout != null) portraitLayout.SetActive(!landscape);

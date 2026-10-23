@@ -27,7 +27,6 @@ public class GameContext : MonoBehaviour
     private NewGameStatsPanel _newGameStatsPanel;
     private DailyChallengeGameStateView _dailyChallengeStateView;
     private bool _dailyChallengeActive;
-    private bool _dailyChallengeScreenRequested;
     private bool _newGameActive;
 
     private void Awake()
@@ -69,7 +68,6 @@ public class GameContext : MonoBehaviour
         if (_dailyChallengeStateMachine == null)
             _dailyChallengeStateMachine = gameObject.AddComponent<DailyChallengeStateMachine>();
         _dailyChallengeStateMachine.Initialise(DailyChallengeViewModel);
-        DailyChallengeViewModel.CurrentStateName.OnChanged += OnDailyChallengeStateChanged;
         _dailyChallengeStateView?.Bind(DailyChallengeViewModel);
         _dailyChallengeStateMachine.SetSuspended(true);
         _newGameStateMachine.SetSuspended(true);
@@ -161,8 +159,6 @@ public class GameContext : MonoBehaviour
         {
             User.Instance?.SaveDailyChallengeNow();
             _dailyChallengeStateMachine.SetSuspended(true);
-            _dailyChallengeScreenRequested = false;
-            _dailyChallengeStateMachine.TransitionTo(_dailyChallengeStateMachine.Idle);
         }
         else if (_newGameActive)
         {
@@ -221,36 +217,16 @@ public class GameContext : MonoBehaviour
         if (screen != null)
             _dailyChallengeScreen = screen;
 
-        if (_dailyChallengeScreen == null ||
-            _dailyChallengeStateMachine == null ||
-            !_dailyChallengeStateMachine.IsIdle)
-        {
-            _dailyChallengeScreen?.Hide();
+        if (_dailyChallengeScreen == null)
             return;
-        }
 
-        _dailyChallengeScreenRequested = true;
         _dailyChallengeScreen.SetLandscape(Screen.width > Screen.height);
         _dailyChallengeScreen.Show();
     }
 
     public void CloseDailyChallengeScreen()
     {
-        _dailyChallengeScreenRequested = false;
         _dailyChallengeScreen?.Hide();
-    }
-
-    private void OnDailyChallengeStateChanged(string stateName)
-    {
-        if (stateName != "DailyChallengeIdleState")
-        {
-            _dailyChallengeScreenRequested = false;
-            _dailyChallengeScreen?.Hide();
-            return;
-        }
-
-        if (_dailyChallengeScreenRequested)
-            _dailyChallengeScreen?.Show();
     }
 
     public void StartDailyChallenge(DailyChallengeScreenController screen = null)
@@ -286,7 +262,6 @@ public class GameContext : MonoBehaviour
             SaveSystem.Delete(SaveSlot.DailyChallenge);
 
         DailyChallengeRepository.MarkAttempted(record);
-        _dailyChallengeScreenRequested = false;
         _dailyChallengeScreen?.Hide();
         _dailyChallengeActive = true;
         _newGameActive = false;
@@ -312,8 +287,6 @@ public class GameContext : MonoBehaviour
         _dailyChallengeStateMachine.SetSuspended(true);
         _dailyChallengeActive = false;
         _gridBuilder?.SetVisible(false);
-        _dailyChallengeScreenRequested = true;
-        _dailyChallengeStateMachine.StartChallenge();
         _dailyChallengeStateView?.SetGameplayVisible(false);
         _dailyChallengeScreen?.Show();
         BindGameplay(JourneyViewModel);
@@ -362,7 +335,6 @@ public class GameContext : MonoBehaviour
     {
         if (DailyChallengeViewModel != null)
         {
-            DailyChallengeViewModel.CurrentStateName.OnChanged -= OnDailyChallengeStateChanged;
             DailyChallengeViewModel.GameCompleted -= ExitDailyChallenge;
             if (User.Instance != null)
                 DailyChallengeViewModel.SaveRequested -= User.Instance.SaveDailyChallengeNow;

@@ -502,7 +502,6 @@ public static class GameDatabase
 
             CreateDailyGameChallengeTable();
             CreateDailyGameChallengeStatsTable();
-            NormalizeDailyChallengeDateStorage();
             CreateDailyGameChallengeCompletionTrigger();
             CreateDailyGameChallengeFirstRowTrigger();
 
@@ -664,22 +663,6 @@ public static class GameDatabase
 
         _db.Execute(
             "INSERT OR IGNORE INTO DailyGameChallengeStats (Id) VALUES (1);");
-    }
-
-    private static void NormalizeDailyChallengeDateStorage()
-    {
-        // Older SQLite builds stored DateTime fields as .NET ticks. Convert those
-        // values to ISO date text without changing the database version.
-        _db.Execute(@"
-            UPDATE DailyGame_challenge
-            SET CurrentDate = date((CAST(CurrentDate AS REAL) / 864000000000.0) + 1721425.5)
-            WHERE typeof(CurrentDate) IN ('integer', 'real');
-        ");
-        _db.Execute(@"
-            UPDATE DailyGameChallengeStats
-            SET FirstStartedAt = date((CAST(FirstStartedAt AS REAL) / 864000000000.0) + 1721425.5)
-            WHERE typeof(FirstStartedAt) IN ('integer', 'real');
-        ");
     }
 
     private static void CreateDailyGameChallengeCompletionTrigger()

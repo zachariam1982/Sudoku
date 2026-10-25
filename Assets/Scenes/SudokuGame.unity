@@ -37772,8 +37772,8 @@ MonoBehaviour:
   hudPanel: {fileID: 1023807773}
   overlay: {fileID: 1121516640}
   winPanel: {fileID: 3001000001}
-  winLandscapeSprite: {fileID: 7321262264834883218, guid: 161d0e2fec4da8744b5b6b472ef59b0c, type: 3}
-  winPortraitSprite: {fileID: -9180741335299010615, guid: c685a9911609183b434c432efac11c5dbd9862b2, type: 3}
+  winLandscapeSprite: {fileID: 7321262264834883218, guid: 1a81068218787a64b8d3ee28cac456ea, type: 3}
+  winPortraitSprite: {fileID: -9180741335299010615, guid: 161d0e2fec4da8744b5b6b472ef59b0c, type: 3}
   losePanel: {fileID: 3001000011}
   loseLandscapeSprite: {fileID: -1537736550304964301, guid: 68167689833ab8f489509e512b0ccf26, type: 3}
   losePortraitSprite: {fileID: -939070217431959006, guid: f0920ec9d3314de46ac6aa995968677d, type: 3}
@@ -45959,7 +45959,7 @@ MonoBehaviour:
   m_OnCullStateChanged:
     m_PersistentCalls:
       m_Calls: []
-  m_Sprite: {fileID: 7321262264834883218, guid: 161d0e2fec4da8744b5b6b472ef59b0c, type: 3}
+  m_Sprite: {fileID: 7321262264834883218, guid: 1a81068218787a64b8d3ee28cac456ea, type: 3}
   m_Type: 0
   m_PreserveAspect: 0
   m_FillCenter: 1

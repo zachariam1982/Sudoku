@@ -66,6 +66,24 @@ public class DailyChallengeGameStateView : MonoBehaviour
     private HUD _hud;
     private VerseTicker _verseTicker;
     private Button _pauseResumeButton;
+    private DailyChallengeResultArt _resultArt;
+    private bool _lastResultLandscape;
+    private bool _hasResultOrientation;
+
+    private void Update()
+    {
+        bool landscape = Screen.width > Screen.height;
+        if (_hasResultOrientation && landscape == _lastResultLandscape) return;
+
+        _hasResultOrientation = true;
+        _lastResultLandscape = landscape;
+        if (_vm == null) return;
+
+        if (_vm.IsWon.Value)
+            ShowResultArt(true);
+        else if (_vm is DailyChallengeViewModel dailyChallenge && dailyChallenge.IsLost.Value)
+            ShowResultArt(false);
+    }
 
     // ── Binding ───────────────────────────────────────────────────────────────
 
@@ -174,13 +192,18 @@ public class DailyChallengeGameStateView : MonoBehaviour
                 {
                     if (overlay != null) overlay.SetActive(true);
                     winPanel.SetActive(true);
+                    ShowResultArt(true);
                     UpdateWinPanel();
                 }
                 break;
 
             case "DailyChallengeLoseState":
                 if (overlay != null) overlay.SetActive(true);
-                if (losePanel != null) losePanel.SetActive(true);
+                if (losePanel != null)
+                {
+                    losePanel.SetActive(true);
+                    ShowResultArt(false);
+                }
                 break;
 
             case "NewGameWinState":
@@ -250,6 +273,7 @@ public class DailyChallengeGameStateView : MonoBehaviour
         if (overlay != null) overlay.SetActive(isWon);
         if (winPanel != null) winPanel.SetActive(isWon);
         if(isWon == false) return;
+        ShowResultArt(true);
         DailyChallengeViewModel journey = _vm as DailyChallengeViewModel;
         if (journey == null) return;
         if (winTimeLabel != null)
@@ -272,6 +296,51 @@ public class DailyChallengeGameStateView : MonoBehaviour
     {
         if (overlay != null) overlay.SetActive(isLost);
         if (losePanel != null) losePanel.SetActive(isLost);
+        if (isLost) ShowResultArt(false);
+    }
+
+    private void ShowResultArt(bool won)
+    {
+        GameObject panel = won ? winPanel : losePanel;
+        if (panel == null) return;
+
+        Image panelImage = panel.GetComponent<Image>();
+        if (panelImage == null) return;
+
+        if (_resultArt == null)
+            _resultArt = Resources.Load<DailyChallengeResultArt>("DailyChallengeResultArt");
+
+        if (_resultArt == null)
+        {
+            Debug.LogError("[DailyChallenge] Could not load Resources/DailyChallengeResultArt.asset.");
+            return;
+        }
+
+        bool landscape = Screen.width > Screen.height;
+        panelImage.sprite = won
+            ? (landscape ? _resultArt.winLandscape : _resultArt.winPortrait)
+            : (landscape ? _resultArt.loseLandscape : _resultArt.losePortrait);
+        if (panelImage.sprite == null)
+        {
+            Debug.LogError($"[DailyChallenge] Missing {(won ? "victory" : "failed")} artwork for {(landscape ? "landscape" : "portrait")} orientation.");
+            return;
+        }
+        panelImage.type = Image.Type.Simple;
+        panelImage.preserveAspect = false;
+
+        RectTransform rect = panel.transform as RectTransform;
+        if (rect != null)
+        {
+            rect.anchorMin = Vector2.zero;
+            rect.anchorMax = Vector2.one;
+            rect.anchoredPosition = Vector2.zero;
+            rect.sizeDelta = Vector2.zero;
+        }
+
+        // These sprites contain the entire result screen, so the old modal's
+        // labels, icons, and buttons must not render over them.
+        for (int i = 0; i < panel.transform.childCount; i++)
+            panel.transform.GetChild(i).gameObject.SetActive(false);
     }
 
     private void UpdateWinPanel()

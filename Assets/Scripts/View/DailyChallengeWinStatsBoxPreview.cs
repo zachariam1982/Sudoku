@@ -75,10 +75,10 @@ public sealed class DailyChallengeWinStatsBoxPreview : MonoBehaviour
 
         AddText(visualRoot, "Time Label", "TIME", 20f, TextAlignmentOptions.Left,
             new Vector2(0f, 0.5f), new Vector2(0f, 0.5f), new Vector2(150f, 34f),
-            Vector2.zero, new Color32(244, 218, 151, 255), new Vector2(30f, 0f));
+            new Vector2(0f, 62f), new Color32(244, 218, 151, 255), new Vector2(30f, 0f));
         AddText(visualRoot, "Time Value", "08:42", 22f, TextAlignmentOptions.Right,
             new Vector2(1f, 0.5f), new Vector2(1f, 0.5f), new Vector2(150f, 34f),
-            Vector2.zero, new Color32(255, 229, 167, 255), new Vector2(-30f, 0f));
+            new Vector2(0f, 62f), new Color32(255, 229, 167, 255), new Vector2(-30f, 0f));
 
         AddText(visualRoot, "Stars Label", "STARS", 20f, TextAlignmentOptions.Left,
             new Vector2(0f, 0.5f), new Vector2(0f, 0.5f), new Vector2(150f, 34f),
@@ -99,7 +99,8 @@ public sealed class DailyChallengeWinStatsBoxPreview : MonoBehaviour
     {
         if (_root == null)
             _root = transform as RectTransform;
-        if (_root == null || transform.parent is not RectTransform parent)
+        RectTransform parent = transform.parent as RectTransform;
+        if (_root == null || parent == null)
             return;
 
         Vector2 parentSize = parent.rect.size;

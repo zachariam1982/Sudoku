@@ -47,12 +47,13 @@ public class DailyChallengeGameStateView : MonoBehaviour
     [SerializeField] private GameObject      overlay;
     [Header("Win Panel")]
     [SerializeField] private GameObject      winPanel;
-    [SerializeField] private TextMeshProUGUI winTimeLabel;
-    [SerializeField] private TextMeshProUGUI winPointsLabel;
+    [SerializeField] private Sprite           winLandscapeSprite;
+    [SerializeField] private Sprite           winPortraitSprite;
 
     [Header("Lose Panel")]
     [SerializeField] private GameObject      losePanel;
-    [SerializeField] private TextMeshProUGUI loseMistakesLabel;
+    [SerializeField] private Sprite           loseLandscapeSprite;
+    [SerializeField] private Sprite           losePortraitSprite;
 
     [Header("Pause Panel")]
     [SerializeField] private GameObject      pausePanel;
@@ -66,16 +67,18 @@ public class DailyChallengeGameStateView : MonoBehaviour
     private HUD _hud;
     private VerseTicker _verseTicker;
     private Button _pauseResumeButton;
-    private DailyChallengeResultArt _resultArt;
     private bool _lastResultLandscape;
-    private bool _hasResultOrientation;
+
+    private void Start()
+    {
+        _lastResultLandscape = Screen.width > Screen.height;
+    }
 
     private void Update()
     {
         bool landscape = Screen.width > Screen.height;
-        if (_hasResultOrientation && landscape == _lastResultLandscape) return;
+        if (landscape == _lastResultLandscape) return;
 
-        _hasResultOrientation = true;
         _lastResultLandscape = landscape;
         if (_vm == null) return;
 
@@ -108,13 +111,11 @@ public class DailyChallengeGameStateView : MonoBehaviour
             _pauseResumeButton.onClick.AddListener(OnPlayPressed);
 
         vm.CurrentStateName.OnChanged += OnStateChanged;
-        vm.IsWon.OnChanged            += OnWonChanged;
         DailyChallengeViewModel dailyChallenge = vm as DailyChallengeViewModel;
         if (dailyChallenge != null)
         {
             dailyChallenge.ElapsedSeconds.OnChanged += OnTimerChanged;
             dailyChallenge.LivesRemaining.OnChanged += OnLivesChanged;
-            dailyChallenge.IsLost.OnChanged += OnLostChanged;
             OnTimerChanged(dailyChallenge.ElapsedSeconds.Value);
         }
         _hud = hudPanel != null
@@ -143,13 +144,11 @@ public class DailyChallengeGameStateView : MonoBehaviour
         }
 
         _vm.CurrentStateName.OnChanged -= OnStateChanged;
-        _vm.IsWon.OnChanged            -= OnWonChanged;
         DailyChallengeViewModel dailyChallenge = _vm as DailyChallengeViewModel;
         if (dailyChallenge != null)
         {
             dailyChallenge.ElapsedSeconds.OnChanged -= OnTimerChanged;
             dailyChallenge.LivesRemaining.OnChanged -= OnLivesChanged;
-            dailyChallenge.IsLost.OnChanged -= OnLostChanged;
         }
         _vm = null;
     }
@@ -193,7 +192,6 @@ public class DailyChallengeGameStateView : MonoBehaviour
                     if (overlay != null) overlay.SetActive(true);
                     winPanel.SetActive(true);
                     ShowResultArt(true);
-                    UpdateWinPanel();
                 }
                 break;
 
@@ -267,38 +265,6 @@ public class DailyChallengeGameStateView : MonoBehaviour
 
     // ── Win / Lose Panels ─────────────────────────────────────────────────────
 
-    private void OnWonChanged(bool isWon)
-    {
-        if (!(_vm is DailyChallengeViewModel)) return;
-        if (overlay != null) overlay.SetActive(isWon);
-        if (winPanel != null) winPanel.SetActive(isWon);
-        if(isWon == false) return;
-        ShowResultArt(true);
-        DailyChallengeViewModel journey = _vm as DailyChallengeViewModel;
-        if (journey == null) return;
-        if (winTimeLabel != null)
-        {
-            int minutes = (int)(journey.ElapsedSeconds.Value / 60f);
-            int secs    = (int)(journey.ElapsedSeconds.Value % 60f);
-            winTimeLabel.text = $"{minutes:00}:{secs:00}";
-        }
-        if (winPointsLabel != null)
-        {
-            var total = ScoringSystem.Calculate(
-                (SudokuDifficulty)_vm.GetDifficulty,
-                journey.ElapsedSeconds.Value,
-                journey.Penalties);
-            winPointsLabel.text = $"Points: {total}/200";
-        }
-    }
-
-    private void OnLostChanged(bool isLost)
-    {
-        if (overlay != null) overlay.SetActive(isLost);
-        if (losePanel != null) losePanel.SetActive(isLost);
-        if (isLost) ShowResultArt(false);
-    }
-
     private void ShowResultArt(bool won)
     {
         GameObject panel = won ? winPanel : losePanel;
@@ -307,45 +273,10 @@ public class DailyChallengeGameStateView : MonoBehaviour
         Image panelImage = panel.GetComponent<Image>();
         if (panelImage == null) return;
 
-        if (_resultArt == null)
-            _resultArt = Resources.Load<DailyChallengeResultArt>("DailyChallengeResultArt");
-
-        if (_resultArt == null)
-        {
-            Debug.LogError("[DailyChallenge] Could not load Resources/DailyChallengeResultArt.asset.");
-            return;
-        }
-
         bool landscape = Screen.width > Screen.height;
         panelImage.sprite = won
-            ? (landscape ? _resultArt.winLandscape : _resultArt.winPortrait)
-            : (landscape ? _resultArt.loseLandscape : _resultArt.losePortrait);
-        if (panelImage.sprite == null)
-        {
-            Debug.LogError($"[DailyChallenge] Missing {(won ? "victory" : "failed")} artwork for {(landscape ? "landscape" : "portrait")} orientation.");
-            return;
-        }
-        panelImage.type = Image.Type.Simple;
-        panelImage.preserveAspect = false;
-
-        RectTransform rect = panel.transform as RectTransform;
-        if (rect != null)
-        {
-            rect.anchorMin = Vector2.zero;
-            rect.anchorMax = Vector2.one;
-            rect.anchoredPosition = Vector2.zero;
-            rect.sizeDelta = Vector2.zero;
-        }
-
-        // These sprites contain the entire result screen, so the old modal's
-        // labels, icons, and buttons must not render over them.
-        for (int i = 0; i < panel.transform.childCount; i++)
-            panel.transform.GetChild(i).gameObject.SetActive(false);
-    }
-
-    private void UpdateWinPanel()
-    {
-
+            ? (landscape ? winLandscapeSprite : winPortraitSprite)
+            : (landscape ? loseLandscapeSprite : losePortraitSprite);
     }
 
     public void OnNewGamePressed() 
@@ -400,9 +331,6 @@ public class DailyChallengeGameStateView : MonoBehaviour
         if (Lives != null) Lives.SetActive(journeyMode && !hideStatus);
         if (Timer != null) Timer.SetActive(journeyMode && !hideStatus);
         if (Settings != null) Settings.SetActive(journeyMode);
-        if (winTimeLabel != null) winTimeLabel.gameObject.SetActive(journeyMode);
-        if (winPointsLabel != null) winPointsLabel.gameObject.SetActive(journeyMode);
-
         SetTopBarMode(_vm is DailyChallengeViewModel);
     }
 

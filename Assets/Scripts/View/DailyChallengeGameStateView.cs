@@ -49,11 +49,13 @@ public class DailyChallengeGameStateView : MonoBehaviour
     [SerializeField] private GameObject      winPanel;
     [SerializeField] private Sprite           winLandscapeSprite;
     [SerializeField] private Sprite           winPortraitSprite;
+    [SerializeField] private Button           winBackButton;
 
     [Header("Lose Panel")]
     [SerializeField] private GameObject      losePanel;
     [SerializeField] private Sprite           loseLandscapeSprite;
     [SerializeField] private Sprite           losePortraitSprite;
+    [SerializeField] private Button           loseBackButton;
 
     [Header("Pause Panel")]
     [SerializeField] private GameObject      pausePanel;
@@ -66,17 +68,27 @@ public class DailyChallengeGameStateView : MonoBehaviour
     private VerseTicker _verseTicker;
     private Button _pauseResumeButton;
     private bool _lastResultLandscape;
+    private int _lastResultScreenWidth = -1;
+    private int _lastResultScreenHeight = -1;
 
     private void Start()
     {
         _lastResultLandscape = Screen.width > Screen.height;
+        ApplyResultBackButtonSizing();
     }
 
     private void Update()
     {
         bool landscape = Screen.width > Screen.height;
-        if (landscape == _lastResultLandscape) return;
+        bool screenSizeChanged = Screen.width != _lastResultScreenWidth ||
+                                 Screen.height != _lastResultScreenHeight;
+        if (!screenSizeChanged) return;
 
+        _lastResultScreenWidth = Screen.width;
+        _lastResultScreenHeight = Screen.height;
+        ApplyResultBackButtonSizing();
+
+        if (landscape == _lastResultLandscape) return;
         _lastResultLandscape = landscape;
         if (_vm == null) return;
 
@@ -107,6 +119,8 @@ public class DailyChallengeGameStateView : MonoBehaviour
             : null;
         if (_pauseResumeButton != null)
             _pauseResumeButton.onClick.AddListener(OnPlayPressed);
+        winBackButton?.onClick.AddListener(OnBackToDailyChallengePressed);
+        loseBackButton?.onClick.AddListener(OnBackToDailyChallengePressed);
 
         vm.CurrentStateName.OnChanged += OnStateChanged;
         DailyChallengeViewModel dailyChallenge = vm as DailyChallengeViewModel;
@@ -142,6 +156,8 @@ public class DailyChallengeGameStateView : MonoBehaviour
             _pauseResumeButton.onClick.RemoveListener(OnPlayPressed);
             _pauseResumeButton = null;
         }
+        winBackButton?.onClick.RemoveListener(OnBackToDailyChallengePressed);
+        loseBackButton?.onClick.RemoveListener(OnBackToDailyChallengePressed);
 
         _vm.CurrentStateName.OnChanged -= OnStateChanged;
         DailyChallengeViewModel dailyChallenge = _vm as DailyChallengeViewModel;
@@ -291,6 +307,38 @@ public class DailyChallengeGameStateView : MonoBehaviour
         resultPanel.SetActive(true);
         resultPanel.transform.SetAsLastSibling();
         ShowResultArt(won);
+    }
+
+    private void ApplyResultBackButtonSizing()
+    {
+        FitResultBackButton(winBackButton);
+        FitResultBackButton(loseBackButton);
+    }
+
+    private static void FitResultBackButton(Button button)
+    {
+        if (button == null) return;
+
+        RectTransform buttonRect = button.transform as RectTransform;
+        RectTransform screenRect = button.transform.parent as RectTransform;
+        if (buttonRect == null || screenRect == null) return;
+
+        Image image = button.targetGraphic as Image;
+        Rect spriteRect = image != null && image.sprite != null
+            ? image.sprite.rect
+            : new Rect(0f, 0f, 5f, 1f);
+        float aspect = spriteRect.height > 0f ? spriteRect.width / spriteRect.height : 5f;
+        float width = Mathf.Min(screenRect.rect.width * 0.66f, screenRect.rect.height * 0.5f);
+        float height = width / aspect;
+
+        buttonRect.SetSizeWithCurrentAnchors(RectTransform.Axis.Horizontal, width);
+        buttonRect.SetSizeWithCurrentAnchors(RectTransform.Axis.Vertical, height);
+    }
+
+    public void OnBackToDailyChallengePressed()
+    {
+        // GameContext handles the mode exit and reopens DailyChallengeReadyPage.
+        _vm?.NotifyGameCompleted();
     }
 
     public void OnNewGamePressed() 

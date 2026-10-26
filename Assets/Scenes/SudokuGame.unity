@@ -38202,9 +38202,11 @@ MonoBehaviour:
   winPanel: {fileID: 3001000001}
   winLandscapeSprite: {fileID: 7321262264834883218, guid: 1a81068218787a64b8d3ee28cac456ea, type: 3}
   winPortraitSprite: {fileID: -9180741335299010615, guid: 161d0e2fec4da8744b5b6b472ef59b0c, type: 3}
+  winBackButton: {fileID: 684947586}
   losePanel: {fileID: 3001000011}
   loseLandscapeSprite: {fileID: -1537736550304964301, guid: 68167689833ab8f489509e512b0ccf26, type: 3}
   losePortraitSprite: {fileID: -939070217431959006, guid: f0920ec9d3314de46ac6aa995968677d, type: 3}
+  loseBackButton: {fileID: 1358734461}
   pausePanel: {fileID: 1030801303}
   DailyChallengeTopBar: {fileID: 7000000000000000055}
 --- !u!1 &8200000000000000000

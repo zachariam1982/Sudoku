@@ -381,7 +381,9 @@ public class DailyChallengeGameStateView : MonoBehaviour
         if (Lives != null) Lives.SetActive(journeyMode && !hideStatus);
         if (Timer != null) Timer.SetActive(journeyMode && !hideStatus);
         if (Settings != null) Settings.SetActive(journeyMode);
-        SetTopBarMode(_vm is DailyChallengeViewModel);
+        bool dailyResultVisible = stateName == "DailyChallengeWinState" ||
+                                  stateName == "DailyChallengeLoseState";
+        SetTopBarMode(journeyMode && !dailyResultVisible);
     }
 
     public void SetTopBarMode(bool isDailyChallenge)

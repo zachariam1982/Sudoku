@@ -307,11 +307,16 @@ public class DailyChallengeGameStateView : MonoBehaviour
 
     private void ApplyResultBackButtonSizing()
     {
-        FitResultBackButton(winBackButton);
-        FitResultBackButton(loseBackButton);
+        // Screen dimensions can change before stretched RectTransforms have
+        // recalculated. Flush the layout first so each rotation uses the new
+        // result-panel dimensions instead of the previous orientation's.
+        Canvas.ForceUpdateCanvases();
+        bool landscape = Screen.width > Screen.height;
+        FitResultBackButton(winBackButton, landscape);
+        FitResultBackButton(loseBackButton, landscape);
     }
 
-    private static void FitResultBackButton(Button button)
+    private static void FitResultBackButton(Button button, bool landscape)
     {
         if (button == null) return;
 
@@ -324,7 +329,6 @@ public class DailyChallengeGameStateView : MonoBehaviour
             ? image.sprite.rect
             : new Rect(0f, 0f, 5f, 1f);
         float aspect = spriteRect.height > 0f ? spriteRect.width / spriteRect.height : 5f;
-        bool landscape = screenRect.rect.width > screenRect.rect.height;
         float width = screenRect.rect.width * (landscape ? 0.24f : 0.52f);
         float height = width / aspect;
 

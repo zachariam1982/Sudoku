@@ -50,6 +50,10 @@ public class DailyChallengeGameStateView : MonoBehaviour
     [SerializeField] private Sprite           winLandscapeSprite;
     [SerializeField] private Sprite           winPortraitSprite;
     [SerializeField] private Button           winBackButton;
+    [SerializeField] private RectTransform     winStats;
+    [SerializeField] private TextMeshProUGUI   winStarsText;
+    [SerializeField] private TextMeshProUGUI   winTimeText;
+    [SerializeField] private TextMeshProUGUI   winDifficultyText;
 
     [Header("Lose Panel")]
     [SerializeField] private GameObject      losePanel;
@@ -268,13 +272,6 @@ public class DailyChallengeGameStateView : MonoBehaviour
             ShowDailyResult(false);
     }
 
-    // ── Stars ─────────────────────────────────────────────────────────────────
-
-    private void OnStarRatingChanged(int stars)
-    {
-
-    }
-
     // ── Win / Lose Panels ─────────────────────────────────────────────────────
 
     private void ShowResultArt(bool won)
@@ -303,6 +300,19 @@ public class DailyChallengeGameStateView : MonoBehaviour
         resultPanel.SetActive(true);
         resultPanel.transform.SetAsLastSibling();
         ShowResultArt(won);
+        if (won) RefreshWinStats();
+    }
+
+    private void RefreshWinStats()
+    {
+        if (!(_vm is DailyChallengeViewModel daily) || daily.ChallengeRecord == null) return;
+        if (winStarsText != null) winStarsText.text = $"{daily.ChallengeRecord.Stars} Stars";
+        if (winTimeText != null)
+        {
+            int seconds = Mathf.Max(0, Mathf.FloorToInt(daily.ChallengeRecord.ElapsedSeconds));
+            winTimeText.text = $"{seconds / 60:00}:{seconds % 60:00}";
+        }
+        if (winDifficultyText != null) winDifficultyText.text = ((SudokuDifficulty)daily.ChallengeRecord.Difficulty).ToString();
     }
 
     private void ApplyResultBackButtonSizing()
@@ -314,6 +324,15 @@ public class DailyChallengeGameStateView : MonoBehaviour
         bool landscape = Screen.width > Screen.height;
         FitResultBackButton(winBackButton, landscape);
         FitResultBackButton(loseBackButton, landscape);
+
+        if (winStats == null) return;
+        RectTransform screen = winStats.parent as RectTransform;
+        if (screen == null) return;
+        winStats.anchoredPosition = new Vector2(0f, -screen.rect.height * (landscape ? 0.30f : 0.27f));
+        float referenceWidth = landscape ? 1920f : 1080f;
+        float referenceHeight = landscape ? 1080f : 1920f;
+        float scale = Mathf.Min(screen.rect.width / referenceWidth, screen.rect.height / referenceHeight);
+        winStats.localScale = Vector3.one * Mathf.Clamp(scale, 0.65f, 1.35f);
     }
 
     private static void FitResultBackButton(Button button, bool landscape)

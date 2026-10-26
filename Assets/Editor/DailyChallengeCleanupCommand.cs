@@ -100,30 +100,17 @@ public static class DailyChallengeCleanupCommand
                 return;
             }
 
-            string backupPath = CreateBackupPath(databasePath);
-            database.Backup(backupPath);
-
-            try
+            database.RunInTransaction(() =>
             {
-                database.RunInTransaction(() =>
-                {
-                    database.Execute("DELETE FROM DailyGame_challenge WHERE Id = ?", newest.Id);
-                    RebuildStats(database);
-                });
-            }
-            catch
-            {
-                if (File.Exists(backupPath))
-                    File.Delete(backupPath);
-                throw;
-            }
+                database.Execute("DELETE FROM DailyGame_challenge WHERE Id = ?", newest.Id);
+                RebuildStats(database);
+            });
 
             Debug.Log("[DailyChallengeCleanup] Deleted latest row Id=" + newest.Id +
                       " (CurrentDate=" + newest.CurrentDateText +
                       ", Difficulty=" + newest.Difficulty +
                       ", CompletedAt=" + (newest.CompletedAt ?? "null") + ").");
             Debug.Log("[DailyChallengeCleanup] DailyGameChallengeStats rebuilt from remaining completed rows.");
-            Debug.Log("[DailyChallengeCleanup] Database backup: " + backupPath);
         }
     }
 
@@ -257,15 +244,6 @@ public static class DailyChallengeCleanupCommand
     private static string ApplicationDatabasePath()
     {
         return Path.Combine(Application.persistentDataPath, "game_history.db");
-    }
-
-    private static string CreateBackupPath(string databasePath)
-    {
-        string directory = Path.GetDirectoryName(databasePath);
-        string fileName = Path.GetFileNameWithoutExtension(databasePath);
-        string extension = Path.GetExtension(databasePath);
-        string timestamp = DateTime.Now.ToString("yyyyMMdd_HHmmss_fff", CultureInfo.InvariantCulture);
-        return Path.Combine(directory, fileName + ".before_daily_challenge_cleanup_" + timestamp + extension);
     }
 
     private static string GetArgumentValue(string[] arguments, string name)

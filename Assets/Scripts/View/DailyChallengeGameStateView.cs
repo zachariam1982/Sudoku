@@ -119,8 +119,6 @@ public class DailyChallengeGameStateView : MonoBehaviour
             : null;
         if (_pauseResumeButton != null)
             _pauseResumeButton.onClick.AddListener(OnPlayPressed);
-        winBackButton?.onClick.AddListener(OnBackToDailyChallengePressed);
-        loseBackButton?.onClick.AddListener(OnBackToDailyChallengePressed);
 
         vm.CurrentStateName.OnChanged += OnStateChanged;
         DailyChallengeViewModel dailyChallenge = vm as DailyChallengeViewModel;
@@ -156,8 +154,6 @@ public class DailyChallengeGameStateView : MonoBehaviour
             _pauseResumeButton.onClick.RemoveListener(OnPlayPressed);
             _pauseResumeButton = null;
         }
-        winBackButton?.onClick.RemoveListener(OnBackToDailyChallengePressed);
-        loseBackButton?.onClick.RemoveListener(OnBackToDailyChallengePressed);
 
         _vm.CurrentStateName.OnChanged -= OnStateChanged;
         DailyChallengeViewModel dailyChallenge = _vm as DailyChallengeViewModel;

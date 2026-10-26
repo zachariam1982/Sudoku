@@ -324,7 +324,8 @@ public class DailyChallengeGameStateView : MonoBehaviour
             ? image.sprite.rect
             : new Rect(0f, 0f, 5f, 1f);
         float aspect = spriteRect.height > 0f ? spriteRect.width / spriteRect.height : 5f;
-        float width = Mathf.Min(screenRect.rect.width * 0.66f, screenRect.rect.height * 0.5f);
+        bool landscape = screenRect.rect.width > screenRect.rect.height;
+        float width = screenRect.rect.width * (landscape ? 0.24f : 0.52f);
         float height = width / aspect;
 
         buttonRect.SetSizeWithCurrentAnchors(RectTransform.Axis.Horizontal, width);

@@ -243,6 +243,11 @@ public class GameContext : MonoBehaviour
         if (_dailyChallengeScreen == null)
             return;
 
+        // The ready page is a standalone screen. Binding another mode's view
+        // can reactivate its top bar, so keep both gameplay views hidden here.
+        _gridBuilder?.SetVisible(false);
+        _stateView?.SetGameplayVisible(false);
+        _dailyChallengeStateView?.SetGameplayVisible(false);
         _dailyChallengeScreen.SetLandscape(Screen.width > Screen.height);
         _dailyChallengeScreen.Show();
     }
@@ -311,9 +316,9 @@ public class GameContext : MonoBehaviour
         _dailyChallengeActive = false;
         _gridBuilder?.SetVisible(false);
         _dailyChallengeStateView?.SetGameplayVisible(false);
-        _dailyChallengeScreen?.Show();
         BindGameplay(JourneyViewModel);
         _error?.Bind(JourneyViewModel);
+        OpenDailyChallengeScreen(_dailyChallengeScreen);
     }
 
     private System.Collections.IEnumerator EnsureDailyChallengeForToday(

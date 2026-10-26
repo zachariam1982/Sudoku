@@ -58,8 +58,6 @@ public class DailyChallengeGameStateView : MonoBehaviour
     [Header("Pause Panel")]
     [SerializeField] private GameObject      pausePanel;
 
-    [Header("New Game Win Panel")]
-    [SerializeField] private GameObject      newGameWinPanel;
     [Header("Top Bar")]
     [SerializeField] private DailyChallengeTopBar      DailyChallengeTopBar;
 
@@ -116,6 +114,8 @@ public class DailyChallengeGameStateView : MonoBehaviour
         {
             dailyChallenge.ElapsedSeconds.OnChanged += OnTimerChanged;
             dailyChallenge.LivesRemaining.OnChanged += OnLivesChanged;
+            dailyChallenge.IsWon.OnChanged += OnDailyWonChanged;
+            dailyChallenge.IsLost.OnChanged += OnDailyLostChanged;
             OnTimerChanged(dailyChallenge.ElapsedSeconds.Value);
         }
         _hud = hudPanel != null
@@ -149,6 +149,8 @@ public class DailyChallengeGameStateView : MonoBehaviour
         {
             dailyChallenge.ElapsedSeconds.OnChanged -= OnTimerChanged;
             dailyChallenge.LivesRemaining.OnChanged -= OnLivesChanged;
+            dailyChallenge.IsWon.OnChanged -= OnDailyWonChanged;
+            dailyChallenge.IsLost.OnChanged -= OnDailyLostChanged;
         }
         _vm = null;
     }
@@ -187,27 +189,13 @@ public class DailyChallengeGameStateView : MonoBehaviour
                 break;
 
             case "DailyChallengeWinState":
-                if (winPanel != null)
-                {
-                    if (overlay != null) overlay.SetActive(true);
-                    winPanel.SetActive(true);
-                    ShowResultArt(true);
-                }
+                ShowDailyResult(true);
                 break;
 
             case "DailyChallengeLoseState":
-                if (overlay != null) overlay.SetActive(true);
-                if (losePanel != null)
-                {
-                    losePanel.SetActive(true);
-                    ShowResultArt(false);
-                }
+                ShowDailyResult(false);
                 break;
 
-            case "NewGameWinState":
-                if (overlay != null) overlay.SetActive(true);
-                if (newGameWinPanel != null) newGameWinPanel.SetActive(true);
-                break;
         }
 
         ApplyModeVisibility(stateName);
@@ -256,6 +244,18 @@ public class DailyChallengeGameStateView : MonoBehaviour
         }
     }
 
+    private void OnDailyWonChanged(bool isWon)
+    {
+        if (isWon && _vm is DailyChallengeViewModel)
+            ShowDailyResult(true);
+    }
+
+    private void OnDailyLostChanged(bool isLost)
+    {
+        if (isLost && _vm is DailyChallengeViewModel)
+            ShowDailyResult(false);
+    }
+
     // ── Stars ─────────────────────────────────────────────────────────────────
 
     private void OnStarRatingChanged(int stars)
@@ -279,6 +279,20 @@ public class DailyChallengeGameStateView : MonoBehaviour
             : (landscape ? loseLandscapeSprite : losePortraitSprite);
     }
 
+    private void ShowDailyResult(bool won)
+    {
+        if (overlay != null) overlay.SetActive(true);
+
+        GameObject resultPanel = won ? winPanel : losePanel;
+        GameObject otherPanel = won ? losePanel : winPanel;
+        if (otherPanel != null) otherPanel.SetActive(false);
+        if (resultPanel == null) return;
+
+        resultPanel.SetActive(true);
+        resultPanel.transform.SetAsLastSibling();
+        ShowResultArt(won);
+    }
+
     public void OnNewGamePressed() 
     {
         if (winPanel != null) winPanel.SetActive(false);
@@ -300,13 +314,6 @@ public class DailyChallengeGameStateView : MonoBehaviour
     }
     public void OnResumePressed()   => _vm?.ResumeCommand.Execute();
 
-    public void OnNewGameWinAcknowledged()
-    {
-        if (newGameWinPanel != null) newGameWinPanel.SetActive(false);
-        if (overlay != null) overlay.SetActive(false);
-        _vm?.NotifyGameCompleted();
-    }
-
     // ── Helper ────────────────────────────────────────────────────────────────
 
     private void SetAllPanelsHidden()
@@ -315,7 +322,6 @@ public class DailyChallengeGameStateView : MonoBehaviour
         if (winPanel   != null) winPanel.SetActive(false);
         if (losePanel  != null) losePanel.SetActive(false);
         if (pausePanel != null) pausePanel.SetActive(false);
-        if (newGameWinPanel != null) newGameWinPanel.SetActive(false);
         if (overlay    != null) overlay.SetActive(false);
     }
 

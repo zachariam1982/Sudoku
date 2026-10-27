@@ -197,10 +197,10 @@ public sealed class DailyChallengeScreenController : MonoBehaviour
         if (homeButton == null)
             return;
 
-        settingsButton.anchorMin = new Vector2(1f, homeButton.anchorMin.y);
-        settingsButton.anchorMax = new Vector2(1f, homeButton.anchorMax.y);
+        settingsButton.anchorMin = new Vector2(1f - homeButton.anchorMin.x, homeButton.anchorMin.y);
+        settingsButton.anchorMax = new Vector2(1f - homeButton.anchorMax.x, homeButton.anchorMax.y);
         settingsButton.anchoredPosition = new Vector2(
-            settingsButton.anchoredPosition.x,
+            -homeButton.anchoredPosition.x,
             homeButton.anchoredPosition.y);
     }
 

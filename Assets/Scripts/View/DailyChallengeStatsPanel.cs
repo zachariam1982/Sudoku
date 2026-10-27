@@ -271,19 +271,19 @@ public sealed class DailyChallengeStatsPanel : MonoBehaviour
             Place(difficultyNames[i].rectTransform, new Vector2(.045f, bottom), new Vector2(nameRight, top));
             Place(difficultyDates[i].rectTransform, new Vector2(nameRight, bottom), new Vector2(dateRight, top));
             Place(difficultyTimes[i].rectTransform, new Vector2(dateRight, bottom), new Vector2(.96f, top));
-            SetRowFontSize(difficultyNames[i], (landscape ? 34 : 24) * typographyScale,
-                (landscape ? 30 : 20) * typographyScale);
-            SetRowFontSize(difficultyDates[i], (landscape ? 31 : 20) * typographyScale,
-                (landscape ? 27 : 16) * typographyScale);
-            SetRowFontSize(difficultyTimes[i], (landscape ? 34 : 24) * typographyScale,
-                (landscape ? 30 : 20) * typographyScale);
+            SetRowFontSize(difficultyNames[i], (landscape ? 34 : 30) * typographyScale,
+                (landscape ? 30 : 26) * typographyScale);
+            SetRowFontSize(difficultyDates[i], (landscape ? 31 : 26) * typographyScale,
+                (landscape ? 27 : 22) * typographyScale);
+            SetRowFontSize(difficultyTimes[i], (landscape ? 34 : 30) * typographyScale,
+                (landscape ? 30 : 26) * typographyScale);
         }
 
         Place(difficultyHeading.rectTransform, new Vector2(.04f, .88f), new Vector2(.96f, .98f));
         if (landscape)
             SetRowFontSize(difficultyHeading, 34 * typographyScale, 30 * typographyScale);
         else
-            difficultyHeading.fontSize = 25;
+            SetRowFontSize(difficultyHeading, 31, 28);
     }
 
     private float GetCanvasScale()

@@ -13,6 +13,7 @@ public sealed class DailyChallengeStatsPanel : MonoBehaviour
     [SerializeField] private Sprite landscapeBackground;
     [SerializeField] private GameObject gameplayTools;
     [SerializeField] private GameObject dailyChallengeTopBar;
+    [SerializeField] private Button backButton;
 
     private readonly Color _gold = new Color(1f, .76f, .30f, 1f);
     private readonly Color _panel = new Color(.018f, .055f, .105f, .96f);
@@ -28,7 +29,6 @@ public sealed class DailyChallengeStatsPanel : MonoBehaviour
     private RectTransform _overlay;
     private Image _background;
     private TextMeshProUGUI _title;
-    private Button _backButton;
     private readonly TextMeshProUGUI[] _summary = new TextMeshProUGUI[3];
     private TextMeshProUGUI _personalBest;
     private TextMeshProUGUI _played;
@@ -49,6 +49,7 @@ public sealed class DailyChallengeStatsPanel : MonoBehaviour
         _lastLandscape = Screen.width > Screen.height;
         ApplyLayout(_lastLandscape);
         _overlay.gameObject.SetActive(false);
+        if (backButton != null) backButton.gameObject.SetActive(false);
     }
 
     private void Update()
@@ -71,6 +72,7 @@ public sealed class DailyChallengeStatsPanel : MonoBehaviour
         if (!_open) return;
         _open = false;
         _overlay.gameObject.SetActive(false);
+        if (backButton != null) backButton.gameObject.SetActive(false);
         if (gameplayTools != null) gameplayTools.SetActive(_toolsWereActive);
         if (dailyChallengeTopBar != null) dailyChallengeTopBar.SetActive(_topBarWasActive);
         if (_verseTicker != null) _verseTicker.SetGameActive(_tickerWasActive);
@@ -93,6 +95,11 @@ public sealed class DailyChallengeStatsPanel : MonoBehaviour
         Refresh();
         _overlay.gameObject.SetActive(true);
         _overlay.SetAsLastSibling();
+        if (backButton != null)
+        {
+            backButton.gameObject.SetActive(true);
+            backButton.transform.SetAsLastSibling();
+        }
     }
 
     private void Refresh()
@@ -186,7 +193,6 @@ public sealed class DailyChallengeStatsPanel : MonoBehaviour
         Transform difficultyContent = FindOrCreateCard("BestTimesCard").Find("Inner");
         Transform playedContent = FindOrCreateCard("PlayedCard").Find("Inner");
 
-        _backButton = MakeButton("Back", _overlay, "‹", ClosePanel);
         _title = MakeText("Title", _overlay, "DAILY CHALLENGE STATS", 50, _gold, TextAlignmentOptions.Center);
         for (int i = 0; i < _summary.Length; i++)
             _summary[i] = MakeText("Summary " + i, summaryContent, string.Empty, 34, Color.white, TextAlignmentOptions.Center);
@@ -209,7 +215,8 @@ public sealed class DailyChallengeStatsPanel : MonoBehaviour
     {
         if (_overlay == null) return;
         _background.sprite = landscape ? landscapeBackground : portraitBackground;
-        Place(_backButton.transform as RectTransform, new Vector2(.025f, .905f), new Vector2(.12f, .985f));
+        if (backButton != null)
+            Place(backButton.transform as RectTransform, new Vector2(.025f, .905f), new Vector2(.12f, .985f));
         Place(_title.rectTransform, landscape ? new Vector2(.15f, .89f) : new Vector2(.14f, .90f),
             landscape ? new Vector2(.85f, .985f) : new Vector2(.92f, .98f));
 
@@ -278,19 +285,6 @@ public sealed class DailyChallengeStatsPanel : MonoBehaviour
         fill.color = _panel;
         fill.raycastTarget = false;
         return card;
-    }
-
-    private Button MakeButton(string name, Transform parent, string text, Action onClick)
-    {
-        RectTransform rect = MakeRect(name, parent);
-        Image image = rect.gameObject.AddComponent<Image>();
-        image.color = new Color(.02f, .07f, .13f, .94f);
-        Button button = rect.gameObject.AddComponent<Button>();
-        button.targetGraphic = image;
-        button.onClick.AddListener(() => onClick());
-        TextMeshProUGUI label = MakeText("Label", rect, text, 62, _gold, TextAlignmentOptions.Center);
-        Stretch(label.rectTransform);
-        return button;
     }
 
     private TextMeshProUGUI MakeText(string name, Transform parent, string value, float size, Color color, TextAlignmentOptions alignment)

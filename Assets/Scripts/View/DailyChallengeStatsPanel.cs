@@ -17,7 +17,7 @@ public sealed class DailyChallengeStatsPanel : MonoBehaviour
 
     [Header("Scene UI")]
     [SerializeField] private RectTransform overlay;
-    [SerializeField] private Image background;
+    [SerializeField] private Image overlayBackground;
     [SerializeField] private TextMeshProUGUI title;
     [SerializeField] private RectTransform summaryCard;
     [SerializeField] private RectTransform personalBestCard;
@@ -219,8 +219,8 @@ public sealed class DailyChallengeStatsPanel : MonoBehaviour
 
     private void ApplyLayout(bool landscape)
     {
-        if (overlay == null || background == null) return;
-        background.sprite = landscape ? landscapeBackground : portraitBackground;
+        if (overlay == null || overlayBackground == null) return;
+        overlayBackground.sprite = landscape ? landscapeBackground : portraitBackground;
         if (backButton != null)
             Place(backButton.transform as RectTransform, new Vector2(.025f, .905f), new Vector2(.12f, .985f));
         Place(title.rectTransform, landscape ? new Vector2(.15f, .89f) : new Vector2(.14f, .90f),

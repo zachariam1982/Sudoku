@@ -328,11 +328,38 @@ public class DailyChallengeGameStateView : MonoBehaviour
         if (winStats == null) return;
         RectTransform screen = winStats.parent as RectTransform;
         if (screen == null) return;
-        winStats.anchoredPosition = new Vector2(0f, -screen.rect.height * (landscape ? 0.30f : 0.24f));
+        winStats.sizeDelta = landscape ? new Vector2(560f, 320f) : new Vector2(900f, 300f);
+        winStats.anchoredPosition = landscape
+            ? new Vector2(screen.rect.width * 0.30f, 0f)
+            : new Vector2(0f, -screen.rect.height * 0.24f);
         float referenceWidth = landscape ? 1920f : 1080f;
         float referenceHeight = landscape ? 1080f : 1920f;
         float scale = Mathf.Min(screen.rect.width / referenceWidth, screen.rect.height / referenceHeight);
         winStats.localScale = Vector3.one * Mathf.Clamp(scale, 0.65f, 1.35f);
+
+        string[] iconNames = { "StarsIcon", "TimeIcon", "DifficultyIcon" };
+        TextMeshProUGUI[] labels = { winStarsText, winTimeText, winDifficultyText };
+        for (int i = 0; i < labels.Length; i++)
+        {
+            RectTransform icon = winStats.Find(iconNames[i]) as RectTransform;
+            if (icon == null || labels[i] == null) continue;
+
+            float rowY = landscape ? 100f - i * 100f : 48f;
+            icon.sizeDelta = landscape ? new Vector2(60f, 60f) : new Vector2(70f, 70f);
+            icon.anchoredPosition = landscape
+                ? new Vector2(-205f, rowY)
+                : new Vector2((i - 1) * 290f, rowY);
+            labels[i].rectTransform.sizeDelta = landscape
+                ? new Vector2(330f, 70f)
+                : new Vector2(250f, 68f);
+            labels[i].rectTransform.anchoredPosition = landscape
+                ? new Vector2(25f, rowY)
+                : new Vector2((i - 1) * 290f, -58f);
+            labels[i].fontSize = landscape ? 38f : 48f;
+            labels[i].alignment = landscape
+                ? TextAlignmentOptions.Left
+                : TextAlignmentOptions.Center;
+        }
     }
 
     private static void FitResultBackButton(Button button, bool landscape)

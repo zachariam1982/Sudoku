@@ -26,6 +26,8 @@ public sealed class DailyChallengeScreenController : MonoBehaviour
     private TextMeshProUGUI _landscapeDifficulty;
     private TextMeshProUGUI _portraitBestTimeValue;
     private TextMeshProUGUI _portraitStreakValue;
+    private TextMeshProUGUI _portraitStartChallengeLabel;
+    private TextMeshProUGUI _landscapeStartChallengeLabel;
     private float _baseLandscapeCardWidth;
     private bool _isLandscape;
     private bool _orientationInitialized;
@@ -110,6 +112,13 @@ public sealed class DailyChallengeScreenController : MonoBehaviour
         SetText(_portraitStreakValue, streak);
         SetText(_bestTimeValue, bestTime);
         SetText(_streakValue, streak);
+        string challengeAction = !string.IsNullOrWhiteSpace(today.CompletedAt)
+            ? "CHALLENGE COMPLETED"
+            : today.Started || today.IsAttempted
+                ? "RESUME CHALLENGE"
+                : "START CHALLENGE";
+        SetText(_portraitStartChallengeLabel, challengeAction);
+        SetText(_landscapeStartChallengeLabel, challengeAction);
         ApplyLandscapeStatsTypography();
     }
 
@@ -144,6 +153,8 @@ public sealed class DailyChallengeScreenController : MonoBehaviour
         _landscapeDifficulty = FindText(landscapeLayout, "DifficultyBadge_LandscapeLayout");
         _portraitBestTimeValue = FindText(portraitLayout, "BestTimeValue_PortraitLayout");
         _portraitStreakValue = FindText(portraitLayout, "StreakValue_PortraitLayout");
+        _portraitStartChallengeLabel = FindText(portraitLayout, "StartChallengeLabel_PortraitLayout");
+        _landscapeStartChallengeLabel = FindText(landscapeLayout, "StartChallengeLabel_LandscapeLayout");
     }
 
     private static TextMeshProUGUI FindText(GameObject root, string objectName)

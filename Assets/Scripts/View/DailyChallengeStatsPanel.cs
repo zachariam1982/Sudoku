@@ -14,6 +14,10 @@ public sealed class DailyChallengeStatsPanel : MonoBehaviour
     [SerializeField] private GameObject gameplayTools;
     [SerializeField] private GameObject dailyChallengeTopBar;
     [SerializeField] private Button backButton;
+    [SerializeField] private Sprite currentStreakIcon;
+    [SerializeField] private Sprite bestStreakIcon;
+    [SerializeField] private Sprite gamesWonIcon;
+    [SerializeField] private Sprite bestTimeIcon;
 
     private readonly Color _gold = new Color(1f, .76f, .30f, 1f);
     private readonly Color _panel = new Color(.018f, .055f, .105f, .96f);
@@ -30,7 +34,9 @@ public sealed class DailyChallengeStatsPanel : MonoBehaviour
     private Image _background;
     private TextMeshProUGUI _title;
     private readonly TextMeshProUGUI[] _summary = new TextMeshProUGUI[3];
+    private readonly Image[] _summaryIcons = new Image[3];
     private TextMeshProUGUI _personalBest;
+    private Image _personalBestIcon;
     private TextMeshProUGUI _played;
     private TextMeshProUGUI _difficultyHeading;
     private TextMeshProUGUI[] _difficultyNames;
@@ -147,7 +153,7 @@ public sealed class DailyChallengeStatsPanel : MonoBehaviour
     {
         string number = value.ToString(CultureInfo.InvariantCulture);
         if (!string.IsNullOrEmpty(suffix)) number += " " + suffix;
-        return "<color=#F7C96B>✦</color>\n<size=82%>" + label + "</size>\n<size=145%><b>" + number + "</b></size>";
+        return "<size=82%>" + label + "</size>\n<size=145%><b>" + number + "</b></size>";
     }
 
     private static string FormatTime(float seconds)
@@ -194,9 +200,20 @@ public sealed class DailyChallengeStatsPanel : MonoBehaviour
         Transform playedContent = FindOrCreateCard("PlayedCard").Find("Inner");
 
         _title = MakeText("Title", _overlay, "DAILY CHALLENGE STATS", 50, _gold, TextAlignmentOptions.Center);
+        Sprite[] summarySprites = { currentStreakIcon, bestStreakIcon, gamesWonIcon };
         for (int i = 0; i < _summary.Length; i++)
+        {
             _summary[i] = MakeText("Summary " + i, summaryContent, string.Empty, 34, Color.white, TextAlignmentOptions.Center);
-        _personalBest = MakeText("Personal Best", bestContent, string.Empty, 39, Color.white, TextAlignmentOptions.Center);
+            _summaryIcons[i] = MakeImage("Summary Icon " + i, summaryContent, Color.white);
+            _summaryIcons[i].sprite = summarySprites[i];
+            _summaryIcons[i].preserveAspect = true;
+            _summaryIcons[i].raycastTarget = false;
+        }
+        _personalBest = MakeText("Personal Best", bestContent, string.Empty, 39, Color.white, TextAlignmentOptions.Left);
+        _personalBestIcon = MakeImage("Personal Best Icon", bestContent, Color.white);
+        _personalBestIcon.sprite = bestTimeIcon;
+        _personalBestIcon.preserveAspect = true;
+        _personalBestIcon.raycastTarget = false;
         _played = MakeText("Challenges Played", playedContent, string.Empty, 34, _gold, TextAlignmentOptions.Center);
         _difficultyHeading = MakeText("BestTimesHeading", difficultyContent, "BEST TIMES BY DIFFICULTY", 29, _gold, TextAlignmentOptions.Center);
 
@@ -243,11 +260,13 @@ public sealed class DailyChallengeStatsPanel : MonoBehaviour
         {
             float left = i / 3f;
             float right = (i + 1) / 3f;
-            Place(_summary[i].rectTransform, new Vector2(left + .01f, .08f), new Vector2(right - .01f, .93f));
+            Place(_summaryIcons[i].rectTransform, new Vector2(left + .37f, .62f), new Vector2(right - .37f, .94f));
+            Place(_summary[i].rectTransform, new Vector2(left + .01f, .07f), new Vector2(right - .01f, .60f));
             _summary[i].fontSize = landscape ? 31 : 33;
         }
 
-        Place(_personalBest.rectTransform, new Vector2(.035f, .05f), new Vector2(.965f, .95f));
+        Place(_personalBestIcon.rectTransform, new Vector2(.035f, .18f), new Vector2(.23f, .82f));
+        Place(_personalBest.rectTransform, new Vector2(.25f, .05f), new Vector2(.965f, .95f));
         _personalBest.fontSize = landscape ? 36 : 35;
         Place(_played.rectTransform, new Vector2(.04f, .08f), new Vector2(.96f, .92f));
         _played.fontSize = landscape ? 31 : 30;

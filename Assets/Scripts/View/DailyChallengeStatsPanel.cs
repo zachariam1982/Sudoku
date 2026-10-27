@@ -14,13 +14,31 @@ public sealed class DailyChallengeStatsPanel : MonoBehaviour
     [SerializeField] private GameObject gameplayTools;
     [SerializeField] private GameObject dailyChallengeTopBar;
     [SerializeField] private Button backButton;
+
+    [Header("Scene UI")]
+    [SerializeField] private RectTransform overlay;
+    [SerializeField] private Image background;
+    [SerializeField] private TextMeshProUGUI title;
+    [SerializeField] private RectTransform summaryCard;
+    [SerializeField] private RectTransform personalBestCard;
+    [SerializeField] private RectTransform bestTimesCard;
+    [SerializeField] private RectTransform playedCard;
+    [SerializeField] private TextMeshProUGUI[] summaryLabels;
+    [SerializeField] private Image[] summaryIcons;
+    [SerializeField] private TextMeshProUGUI personalBest;
+    [SerializeField] private Image personalBestIcon;
+    [SerializeField] private TextMeshProUGUI played;
+    [SerializeField] private TextMeshProUGUI difficultyHeading;
+    [SerializeField] private TextMeshProUGUI[] difficultyNames;
+    [SerializeField] private TextMeshProUGUI[] difficultyDates;
+    [SerializeField] private TextMeshProUGUI[] difficultyTimes;
+
     [SerializeField] private Sprite currentStreakIcon;
     [SerializeField] private Sprite bestStreakIcon;
     [SerializeField] private Sprite gamesWonIcon;
     [SerializeField] private Sprite bestTimeIcon;
 
     private readonly Color _gold = new Color(1f, .76f, .30f, 1f);
-    private readonly Color _panel = new Color(.018f, .055f, .105f, .96f);
     private readonly Color[] _difficultyColors =
     {
         new Color(.72f, .89f, .42f), new Color(.38f, .72f, 1f),
@@ -30,18 +48,6 @@ public sealed class DailyChallengeStatsPanel : MonoBehaviour
         new Color(.94f, .86f, .52f)
     };
 
-    private RectTransform _overlay;
-    private Image _background;
-    private TextMeshProUGUI _title;
-    private readonly TextMeshProUGUI[] _summary = new TextMeshProUGUI[3];
-    private readonly Image[] _summaryIcons = new Image[3];
-    private TextMeshProUGUI _personalBest;
-    private Image _personalBestIcon;
-    private TextMeshProUGUI _played;
-    private TextMeshProUGUI _difficultyHeading;
-    private TextMeshProUGUI[] _difficultyNames;
-    private TextMeshProUGUI[] _difficultyDates;
-    private TextMeshProUGUI[] _difficultyTimes;
     private VerseTicker _verseTicker;
     private bool _open;
     private bool _toolsWereActive;
@@ -51,10 +57,29 @@ public sealed class DailyChallengeStatsPanel : MonoBehaviour
 
     private void Awake()
     {
-        BuildScreen();
+        if (summaryIcons != null)
+        {
+            Sprite[] icons = { currentStreakIcon, bestStreakIcon, gamesWonIcon };
+            for (int i = 0; i < summaryIcons.Length && i < icons.Length; i++)
+                if (summaryIcons[i] != null) summaryIcons[i].sprite = icons[i];
+        }
+        if (personalBestIcon != null) personalBestIcon.sprite = bestTimeIcon;
+        ApplyTextStyle(title, _gold, TextAlignmentOptions.Center);
+        ApplyTextStyle(personalBest, Color.white, TextAlignmentOptions.Left);
+        ApplyTextStyle(played, _gold, TextAlignmentOptions.Center);
+        ApplyTextStyle(difficultyHeading, _gold, TextAlignmentOptions.Center);
+        for (int i = 0; i < summaryLabels.Length; i++)
+            ApplyTextStyle(summaryLabels[i], Color.white, TextAlignmentOptions.Center);
+        for (int i = 0; i < difficultyDates.Length; i++)
+            ApplyTextStyle(difficultyDates[i], new Color(.81f, .84f, .9f), TextAlignmentOptions.Center);
+        for (int i = 0; i < difficultyNames.Length; i++)
+            ApplyTextStyle(difficultyNames[i], _difficultyColors[i], TextAlignmentOptions.Left);
+        for (int i = 0; i < difficultyTimes.Length; i++)
+            ApplyTextStyle(difficultyTimes[i], Color.white, TextAlignmentOptions.Right);
+
         _lastLandscape = Screen.width > Screen.height;
         ApplyLayout(_lastLandscape);
-        _overlay.gameObject.SetActive(false);
+        if (overlay != null) overlay.gameObject.SetActive(false);
         if (backButton != null) backButton.gameObject.SetActive(false);
     }
 
@@ -77,7 +102,7 @@ public sealed class DailyChallengeStatsPanel : MonoBehaviour
     {
         if (!_open) return;
         _open = false;
-        _overlay.gameObject.SetActive(false);
+        if (overlay != null) overlay.gameObject.SetActive(false);
         if (backButton != null) backButton.gameObject.SetActive(false);
         if (gameplayTools != null) gameplayTools.SetActive(_toolsWereActive);
         if (dailyChallengeTopBar != null) dailyChallengeTopBar.SetActive(_topBarWasActive);
@@ -99,8 +124,11 @@ public sealed class DailyChallengeStatsPanel : MonoBehaviour
         if (_verseTicker != null) _verseTicker.SetGameActive(false);
 
         Refresh();
-        _overlay.gameObject.SetActive(true);
-        _overlay.SetAsLastSibling();
+        if (overlay != null)
+        {
+            overlay.gameObject.SetActive(true);
+            overlay.SetAsLastSibling();
+        }
         if (backButton != null)
         {
             backButton.gameObject.SetActive(true);
@@ -118,34 +146,34 @@ public sealed class DailyChallengeStatsPanel : MonoBehaviour
             .FirstOrDefault(record => !stats.BestTimeGameId.HasValue || record.Id == stats.BestTimeGameId.Value)
             ?? records.Where(record => record.IsWon).OrderBy(record => record.ElapsedSeconds).FirstOrDefault();
 
-        _summary[0].text = Metric("CURRENT STREAK", stats.CurrentStreak, "days");
-        _summary[1].text = Metric("BEST STREAK", GetBestStreak(records), "days");
-        _summary[2].text = Metric("GAMES WON", stats.GamesWon, "");
+        summaryLabels[0].text = Metric("CURRENT STREAK", stats.CurrentStreak, "days");
+        summaryLabels[1].text = Metric("BEST STREAK", GetBestStreak(records), "days");
+        summaryLabels[2].text = Metric("GAMES WON", stats.GamesWon, "");
 
         if (bestOverall == null)
         {
-            _personalBest.text = "PERSONAL BEST\n<size=115%>--:--</size>\nComplete a challenge to set a record";
+            personalBest.text = "PERSONAL BEST\n<size=115%>--:--</size>\nComplete a challenge to set a record";
         }
         else
         {
-            _personalBest.text = "PERSONAL BEST\n<size=145%>" + FormatTime(bestOverall.ElapsedSeconds) +
+            personalBest.text = "PERSONAL BEST\n<size=145%>" + FormatTime(bestOverall.ElapsedSeconds) +
                 "</size>   " + (SudokuDifficulty)bestOverall.Difficulty + "\n" +
                 bestOverall.CurrentDate.ToString("MMM dd, yyyy", CultureInfo.InvariantCulture);
         }
 
-        _played.text = "CHALLENGES PLAYED     <b>" + stats.GamesPlayed.ToString(CultureInfo.InvariantCulture) + "</b>";
-        for (int difficulty = 0; difficulty < _difficultyNames.Length; difficulty++)
+        played.text = "CHALLENGES PLAYED     <b>" + stats.GamesPlayed.ToString(CultureInfo.InvariantCulture) + "</b>";
+        for (int difficulty = 0; difficulty < difficultyNames.Length; difficulty++)
         {
             DailyChallengeRecord best = records
                 .Where(record => record.IsWon && record.Difficulty == difficulty)
                 .OrderBy(record => record.ElapsedSeconds)
                 .FirstOrDefault();
-            _difficultyNames[difficulty].text = ((SudokuDifficulty)difficulty).ToString();
-            _difficultyNames[difficulty].color = _difficultyColors[difficulty];
-            _difficultyDates[difficulty].text = best == null
+            difficultyNames[difficulty].text = ((SudokuDifficulty)difficulty).ToString();
+            difficultyNames[difficulty].color = _difficultyColors[difficulty];
+            difficultyDates[difficulty].text = best == null
                 ? "No win yet"
                 : best.CurrentDate.ToString("MMM dd, yyyy", CultureInfo.InvariantCulture);
-            _difficultyTimes[difficulty].text = best == null ? "--:--" : FormatTime(best.ElapsedSeconds);
+            difficultyTimes[difficulty].text = best == null ? "--:--" : FormatTime(best.ElapsedSeconds);
         }
     }
 
@@ -160,6 +188,17 @@ public sealed class DailyChallengeStatsPanel : MonoBehaviour
     {
         int total = Mathf.Max(0, Mathf.FloorToInt(seconds));
         return string.Format(CultureInfo.InvariantCulture, "{0:00}:{1:00}", total / 60, total % 60);
+    }
+
+    private static void ApplyTextStyle(
+        TextMeshProUGUI label,
+        Color color,
+        TextAlignmentOptions alignment)
+    {
+        if (label == null) return;
+        label.color = color;
+        label.alignment = alignment;
+        label.raycastTarget = false;
     }
 
     private static int GetBestStreak(List<DailyChallengeRecord> records)
@@ -178,81 +217,27 @@ public sealed class DailyChallengeStatsPanel : MonoBehaviour
         return best;
     }
 
-    private void BuildScreen()
-    {
-        _overlay = MakeRect("DailyChallengeStatsOverlay", transform as RectTransform);
-        Stretch(_overlay);
-        Image overlayImage = _overlay.gameObject.AddComponent<Image>();
-        overlayImage.color = Color.black;
-        overlayImage.raycastTarget = true;
-
-        _background = MakeImage("Background", _overlay, Color.white);
-        Stretch(_background.rectTransform);
-        _background.preserveAspect = false;
-
-        Image shade = MakeImage("NightTint", _overlay, new Color(.005f, .025f, .07f, .62f));
-        Stretch(shade.rectTransform);
-        shade.raycastTarget = false;
-
-        Transform summaryContent = FindOrCreateCard("SummaryCard").Find("Inner");
-        Transform bestContent = FindOrCreateCard("PersonalBestCard").Find("Inner");
-        Transform difficultyContent = FindOrCreateCard("BestTimesCard").Find("Inner");
-        Transform playedContent = FindOrCreateCard("PlayedCard").Find("Inner");
-
-        _title = MakeText("Title", _overlay, "DAILY CHALLENGE STATS", 50, _gold, TextAlignmentOptions.Center);
-        Sprite[] summarySprites = { currentStreakIcon, bestStreakIcon, gamesWonIcon };
-        for (int i = 0; i < _summary.Length; i++)
-        {
-            _summary[i] = MakeText("Summary " + i, summaryContent, string.Empty, 34, Color.white, TextAlignmentOptions.Center);
-            _summaryIcons[i] = MakeImage("Summary Icon " + i, summaryContent, Color.white);
-            _summaryIcons[i].sprite = summarySprites[i];
-            _summaryIcons[i].preserveAspect = true;
-            _summaryIcons[i].raycastTarget = false;
-        }
-        _personalBest = MakeText("Personal Best", bestContent, string.Empty, 39, Color.white, TextAlignmentOptions.Left);
-        _personalBestIcon = MakeImage("Personal Best Icon", bestContent, Color.white);
-        _personalBestIcon.sprite = bestTimeIcon;
-        _personalBestIcon.preserveAspect = true;
-        _personalBestIcon.raycastTarget = false;
-        _played = MakeText("Challenges Played", playedContent, string.Empty, 34, _gold, TextAlignmentOptions.Center);
-        _difficultyHeading = MakeText("BestTimesHeading", difficultyContent, "BEST TIMES BY DIFFICULTY", 29, _gold, TextAlignmentOptions.Center);
-
-        _difficultyNames = new TextMeshProUGUI[9];
-        _difficultyDates = new TextMeshProUGUI[9];
-        _difficultyTimes = new TextMeshProUGUI[9];
-        for (int i = 0; i < 9; i++)
-        {
-            _difficultyNames[i] = MakeText("Difficulty " + i, difficultyContent, string.Empty, 27, Color.white, TextAlignmentOptions.Left);
-            _difficultyDates[i] = MakeText("Record Date " + i, difficultyContent, string.Empty, 22, new Color(.81f, .84f, .9f), TextAlignmentOptions.Center);
-            _difficultyTimes[i] = MakeText("Record Time " + i, difficultyContent, string.Empty, 29, Color.white, TextAlignmentOptions.Right);
-        }
-    }
-
     private void ApplyLayout(bool landscape)
     {
-        if (_overlay == null) return;
-        _background.sprite = landscape ? landscapeBackground : portraitBackground;
+        if (overlay == null || background == null) return;
+        background.sprite = landscape ? landscapeBackground : portraitBackground;
         if (backButton != null)
             Place(backButton.transform as RectTransform, new Vector2(.025f, .905f), new Vector2(.12f, .985f));
-        Place(_title.rectTransform, landscape ? new Vector2(.15f, .89f) : new Vector2(.14f, .90f),
+        Place(title.rectTransform, landscape ? new Vector2(.15f, .89f) : new Vector2(.14f, .90f),
             landscape ? new Vector2(.85f, .985f) : new Vector2(.92f, .98f));
 
-        RectTransform summaryCard = FindOrCreateCard("SummaryCard");
-        RectTransform bestCard = FindOrCreateCard("PersonalBestCard");
-        RectTransform difficultyCard = FindOrCreateCard("BestTimesCard");
-        RectTransform playedCard = FindOrCreateCard("PlayedCard");
         if (landscape)
         {
             Place(summaryCard, new Vector2(.035f, .59f), new Vector2(.49f, .85f));
-            Place(bestCard, new Vector2(.035f, .31f), new Vector2(.49f, .56f));
+            Place(personalBestCard, new Vector2(.035f, .31f), new Vector2(.49f, .56f));
             Place(playedCard, new Vector2(.035f, .18f), new Vector2(.49f, .28f));
-            Place(difficultyCard, new Vector2(.52f, .18f), new Vector2(.965f, .85f));
+            Place(bestTimesCard, new Vector2(.52f, .18f), new Vector2(.965f, .85f));
         }
         else
         {
             Place(summaryCard, new Vector2(.04f, .72f), new Vector2(.96f, .865f));
-            Place(bestCard, new Vector2(.04f, .55f), new Vector2(.96f, .695f));
-            Place(difficultyCard, new Vector2(.04f, .13f), new Vector2(.96f, .52f));
+            Place(personalBestCard, new Vector2(.04f, .55f), new Vector2(.96f, .695f));
+            Place(bestTimesCard, new Vector2(.04f, .13f), new Vector2(.96f, .52f));
             Place(playedCard, new Vector2(.04f, .045f), new Vector2(.96f, .11f));
         }
 
@@ -261,87 +246,31 @@ public sealed class DailyChallengeStatsPanel : MonoBehaviour
             float left = i / 3f;
             float right = (i + 1) / 3f;
             float iconCenter = (left + right) * .5f;
-            Place(_summaryIcons[i].rectTransform, new Vector2(iconCenter - .07f, .62f), new Vector2(iconCenter + .07f, .94f));
-            Place(_summary[i].rectTransform, new Vector2(left + .01f, .07f), new Vector2(right - .01f, .60f));
-            _summary[i].fontSize = landscape ? 31 : 33;
+            Place(summaryIcons[i].rectTransform, new Vector2(iconCenter - .07f, .62f), new Vector2(iconCenter + .07f, .94f));
+            Place(summaryLabels[i].rectTransform, new Vector2(left + .01f, .07f), new Vector2(right - .01f, .60f));
+            summaryLabels[i].fontSize = landscape ? 31 : 33;
         }
 
-        Place(_personalBestIcon.rectTransform, new Vector2(.035f, .18f), new Vector2(.23f, .82f));
-        Place(_personalBest.rectTransform, new Vector2(.25f, .05f), new Vector2(.965f, .95f));
-        _personalBest.fontSize = landscape ? 36 : 35;
-        Place(_played.rectTransform, new Vector2(.04f, .08f), new Vector2(.96f, .92f));
-        _played.fontSize = landscape ? 31 : 30;
+        Place(personalBestIcon.rectTransform, new Vector2(.035f, .18f), new Vector2(.23f, .82f));
+        Place(personalBest.rectTransform, new Vector2(.25f, .05f), new Vector2(.965f, .95f));
+        personalBest.fontSize = landscape ? 36 : 35;
+        Place(played.rectTransform, new Vector2(.04f, .08f), new Vector2(.96f, .92f));
+        played.fontSize = landscape ? 31 : 30;
 
         for (int i = 0; i < 9; i++)
         {
             float top = .86f - i * .092f;
             float bottom = top - .078f;
-            Place(_difficultyNames[i].rectTransform, new Vector2(.045f, bottom), new Vector2(.39f, top));
-            Place(_difficultyDates[i].rectTransform, new Vector2(.39f, bottom), new Vector2(.72f, top));
-            Place(_difficultyTimes[i].rectTransform, new Vector2(.72f, bottom), new Vector2(.96f, top));
-            _difficultyNames[i].fontSize = landscape ? 25 : 24;
-            _difficultyDates[i].fontSize = landscape ? 21 : 20;
-            _difficultyTimes[i].fontSize = landscape ? 27 : 24;
+            Place(difficultyNames[i].rectTransform, new Vector2(.045f, bottom), new Vector2(.39f, top));
+            Place(difficultyDates[i].rectTransform, new Vector2(.39f, bottom), new Vector2(.72f, top));
+            Place(difficultyTimes[i].rectTransform, new Vector2(.72f, bottom), new Vector2(.96f, top));
+            difficultyNames[i].fontSize = landscape ? 25 : 24;
+            difficultyDates[i].fontSize = landscape ? 21 : 20;
+            difficultyTimes[i].fontSize = landscape ? 27 : 24;
         }
 
-        // Add a small section heading as the first row above the records.
-        Place(_difficultyHeading.rectTransform, new Vector2(.04f, .88f), new Vector2(.96f, .98f));
-        _difficultyHeading.fontSize = landscape ? 27 : 25;
-    }
-
-    private RectTransform FindOrCreateCard(string name)
-    {
-        Transform existing = _overlay.Find(name);
-        if (existing != null) return existing as RectTransform;
-        RectTransform card = MakeRect(name, _overlay);
-        Image border = card.gameObject.AddComponent<Image>();
-        border.color = _gold;
-        RectTransform inner = MakeRect("Inner", card);
-        inner.anchorMin = Vector2.zero;
-        inner.anchorMax = Vector2.one;
-        inner.offsetMin = new Vector2(2f, 2f);
-        inner.offsetMax = new Vector2(-2f, -2f);
-        Image fill = inner.gameObject.AddComponent<Image>();
-        fill.color = _panel;
-        fill.raycastTarget = false;
-        return card;
-    }
-
-    private TextMeshProUGUI MakeText(string name, Transform parent, string value, float size, Color color, TextAlignmentOptions alignment)
-    {
-        RectTransform rect = MakeRect(name, parent);
-        TextMeshProUGUI text = rect.gameObject.AddComponent<TextMeshProUGUI>();
-        text.text = value;
-        text.fontSize = size;
-        text.color = color;
-        text.alignment = alignment;
-        text.enableWordWrapping = true;
-        text.raycastTarget = false;
-        return text;
-    }
-
-    private static Image MakeImage(string name, Transform parent, Color color)
-    {
-        RectTransform rect = MakeRect(name, parent);
-        Image image = rect.gameObject.AddComponent<Image>();
-        image.color = color;
-        return image;
-    }
-
-    private static RectTransform MakeRect(string name, Transform parent)
-    {
-        GameObject child = new GameObject(name, typeof(RectTransform));
-        RectTransform rect = child.GetComponent<RectTransform>();
-        rect.SetParent(parent, false);
-        return rect;
-    }
-
-    private static void Stretch(RectTransform rect)
-    {
-        rect.anchorMin = Vector2.zero;
-        rect.anchorMax = Vector2.one;
-        rect.offsetMin = Vector2.zero;
-        rect.offsetMax = Vector2.zero;
+        Place(difficultyHeading.rectTransform, new Vector2(.04f, .88f), new Vector2(.96f, .98f));
+        difficultyHeading.fontSize = landscape ? 27 : 25;
     }
 
     private static void Place(RectTransform rect, Vector2 min, Vector2 max)

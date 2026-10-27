@@ -73,13 +73,21 @@ public class GameStateView : MonoBehaviour
 
     public void Bind(BaseViewModel vm)
     {
+        if (_hud == null && hudPanel != null)
+            _hud = hudPanel.GetComponent<HUD>();
+
         if (ReferenceEquals(_vm, vm))
         {
             // The game can be suspended while the Home screen is shown and then
             // resumed with the same view model. Reapply its current UI state so
             // mode-specific controls (including the top bar) become visible again.
             if (vm != null)
+            {
+                // Journey and Daily Challenge share this HUD. The other view can
+                // bind it to its own model while Journey remains unchanged.
+                _hud?.Bind(vm);
                 OnStateChanged(vm.CurrentStateName.Value);
+            }
             return;
         }
         Unbind();
@@ -100,10 +108,6 @@ public class GameStateView : MonoBehaviour
             journey.LivesRemaining.OnChanged += OnLivesChanged;
             journey.IsLost.OnChanged += OnLostChanged;
         }
-        _hud = hudPanel != null
-            ? hudPanel.GetComponent<HUD>()
-            : null;
-
         _hud?.Bind(vm);
 
         SetAllPanelsHidden();

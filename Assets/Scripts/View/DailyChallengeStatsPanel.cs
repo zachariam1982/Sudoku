@@ -260,7 +260,8 @@ public sealed class DailyChallengeStatsPanel : MonoBehaviour
         {
             float left = i / 3f;
             float right = (i + 1) / 3f;
-            Place(_summaryIcons[i].rectTransform, new Vector2(left + .37f, .62f), new Vector2(right - .37f, .94f));
+            float iconCenter = (left + right) * .5f;
+            Place(_summaryIcons[i].rectTransform, new Vector2(iconCenter - .07f, .62f), new Vector2(iconCenter + .07f, .94f));
             Place(_summary[i].rectTransform, new Vector2(left + .01f, .07f), new Vector2(right - .01f, .60f));
             _summary[i].fontSize = landscape ? 31 : 33;
         }

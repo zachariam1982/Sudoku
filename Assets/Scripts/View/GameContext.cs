@@ -296,12 +296,17 @@ public class GameContext : MonoBehaviour
         _journeyStateMachine.SetSuspended(true);
         _newGameStateMachine.SetSuspended(true);
         BindDailyGameplay(DailyChallengeViewModel);
-        DailyChallengeViewModel.Prepare(record);
-        if (resumeSavedChallenge && !DailyChallengeViewModel.LoadSaveData(savedChallenge, record))
+        bool restoredSavedChallenge = resumeSavedChallenge &&
+            DailyChallengeViewModel.LoadSaveData(savedChallenge, record);
+        if (resumeSavedChallenge && !restoredSavedChallenge)
         {
             SaveSystem.Delete(SaveSlot.DailyChallenge);
-            DailyChallengeViewModel.Prepare(record);
         }
+        // Prepare generates a Sudoku puzzle. Only call it for a new challenge
+        // (or if a saved challenge is invalid); a valid save already contains
+        // the original puzzle, solution, and current board state.
+        if (!restoredSavedChallenge)
+            DailyChallengeViewModel.Prepare(record);
         _dailyChallengeStateMachine.SetSuspended(false);
         _gridBuilder?.SetVisible(true);
         _stateView?.SetGameplayVisible(false);

@@ -61,9 +61,16 @@ public static class DailyChallengeRepository
     {
 #if UNITY_WEBGL && !UNITY_EDITOR
         float bestTime = -1f;
+        int gamesPlayed = 0;
+        int gamesWon = 0;
         foreach (StoredRow row in Data.Rows)
-            if (row.IsWon && (bestTime < 0f || row.ElapsedSeconds < bestTime))
+        {
+            if (!string.IsNullOrEmpty(row.CompletedAt)) gamesPlayed++;
+            if (!row.IsWon) continue;
+            gamesWon++;
+            if (bestTime < 0f || row.ElapsedSeconds < bestTime)
                 bestTime = row.ElapsedSeconds;
+        }
 
         DateTime checkDate = DateTime.Today;
         StoredRow today = Data.Rows.Find(r =>
@@ -85,13 +92,28 @@ public static class DailyChallengeRepository
         return new DailyChallengeStatsSnapshot
         {
             CurrentStreak = streak,
-            BestTimeSeconds = bestTime
+            BestTimeSeconds = bestTime,
+            GamesPlayed = gamesPlayed,
+            GamesWon = gamesWon
         };
 #else
         List<DailyChallengeStatsSnapshot> rows = Db.Query<DailyChallengeStatsSnapshot>(
-            "SELECT CurrentStreak, COALESCE(BestTimeSeconds, -1) AS BestTimeSeconds " +
+            "SELECT CurrentStreak, COALESCE(BestTimeSeconds, -1) AS BestTimeSeconds, " +
+            "GamesPlayed, GamesWon, BestTimeGameId " +
             "FROM DailyGameChallengeStats WHERE Id = 1 LIMIT 1");
         return rows.Count == 0 ? new DailyChallengeStatsSnapshot() : rows[0];
+#endif
+    }
+
+    public static List<DailyChallengeRecord> GetAllRecords()
+    {
+#if UNITY_WEBGL && !UNITY_EDITOR
+        List<DailyChallengeRecord> records = new List<DailyChallengeRecord>(Data.Rows.Count);
+        foreach (StoredRow row in Data.Rows) records.Add(FromStored(row));
+        return records;
+#else
+        return Db.Query<DailyChallengeRecord>(
+            "SELECT * FROM DailyGame_challenge ORDER BY CurrentDate DESC, Id DESC");
 #endif
     }
 
@@ -197,6 +219,9 @@ public sealed class DailyChallengeStatsSnapshot
 {
     public int CurrentStreak { get; set; }
     public float BestTimeSeconds { get; set; } = -1f;
+    public int GamesPlayed { get; set; }
+    public int GamesWon { get; set; }
+    public int? BestTimeGameId { get; set; }
 }
 
 /// <summary>SQLite mapping for a daily challenge row, including both lifecycle flags.</summary>

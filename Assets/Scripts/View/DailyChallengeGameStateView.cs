@@ -330,7 +330,7 @@ public class DailyChallengeGameStateView : MonoBehaviour
         if (screen == null) return;
         winStats.sizeDelta = landscape ? new Vector2(560f, 320f) : new Vector2(900f, 300f);
         winStats.anchoredPosition = landscape
-            ? new Vector2(screen.rect.width * 0.30f, 0f)
+            ? new Vector2(screen.rect.width * 0.30f, screen.rect.height * 0.14f)
             : new Vector2(0f, -screen.rect.height * 0.24f);
         float referenceWidth = landscape ? 1920f : 1080f;
         float referenceHeight = landscape ? 1080f : 1920f;

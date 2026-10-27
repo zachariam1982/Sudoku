@@ -236,7 +236,7 @@ public sealed class DailyChallengeStatsPanel : MonoBehaviour
             Place(summaryCard, new Vector2(.035f, .59f), new Vector2(.49f, .85f));
             Place(personalBestCard, new Vector2(.035f, .31f), new Vector2(.49f, .56f));
             Place(playedCard, new Vector2(.035f, .18f), new Vector2(.49f, .28f));
-            Place(bestTimesCard, new Vector2(.52f, .18f), new Vector2(.965f, .85f));
+            Place(bestTimesCard, new Vector2(.50f, .12f), new Vector2(.975f, .91f));
         }
         else
         {
@@ -264,22 +264,24 @@ public sealed class DailyChallengeStatsPanel : MonoBehaviour
 
         for (int i = 0; i < 9; i++)
         {
-            float top = .86f - i * .092f;
-            float bottom = top - .078f;
-            Place(difficultyNames[i].rectTransform, new Vector2(.045f, bottom), new Vector2(.39f, top));
-            Place(difficultyDates[i].rectTransform, new Vector2(.39f, bottom), new Vector2(.72f, top));
-            Place(difficultyTimes[i].rectTransform, new Vector2(.72f, bottom), new Vector2(.96f, top));
-            SetRowFontSize(difficultyNames[i], (landscape ? 22 : 24) * typographyScale,
-                (landscape ? 19 : 20) * typographyScale);
-            SetRowFontSize(difficultyDates[i], 20 * typographyScale,
-                (landscape ? 17 : 16) * typographyScale);
-            SetRowFontSize(difficultyTimes[i], (landscape ? 22 : 24) * typographyScale,
-                (landscape ? 19 : 20) * typographyScale);
+            float top = (landscape ? .85f : .86f) - i * (landscape ? .09f : .092f);
+            float bottom = top - (landscape ? .082f : .078f);
+            float nameRight = landscape ? .34f : .39f;
+            float dateRight = landscape ? .76f : .72f;
+            Place(difficultyNames[i].rectTransform, new Vector2(.045f, bottom), new Vector2(nameRight, top));
+            Place(difficultyDates[i].rectTransform, new Vector2(nameRight, bottom), new Vector2(dateRight, top));
+            Place(difficultyTimes[i].rectTransform, new Vector2(dateRight, bottom), new Vector2(.96f, top));
+            SetRowFontSize(difficultyNames[i], (landscape ? 34 : 24) * typographyScale,
+                (landscape ? 30 : 20) * typographyScale);
+            SetRowFontSize(difficultyDates[i], (landscape ? 31 : 20) * typographyScale,
+                (landscape ? 27 : 16) * typographyScale);
+            SetRowFontSize(difficultyTimes[i], (landscape ? 34 : 24) * typographyScale,
+                (landscape ? 30 : 20) * typographyScale);
         }
 
         Place(difficultyHeading.rectTransform, new Vector2(.04f, .88f), new Vector2(.96f, .98f));
         if (landscape)
-            SetRowFontSize(difficultyHeading, 22 * typographyScale, 20 * typographyScale);
+            SetRowFontSize(difficultyHeading, 34 * typographyScale, 30 * typographyScale);
         else
             difficultyHeading.fontSize = 25;
     }

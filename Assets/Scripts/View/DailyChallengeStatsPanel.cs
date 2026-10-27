@@ -54,6 +54,7 @@ public sealed class DailyChallengeStatsPanel : MonoBehaviour
     private bool _topBarWasActive;
     private bool _tickerWasActive;
     private bool _lastLandscape;
+    private float _lastCanvasScale;
 
     private void Awake()
     {
@@ -86,7 +87,8 @@ public sealed class DailyChallengeStatsPanel : MonoBehaviour
     private void Update()
     {
         bool landscape = Screen.width > Screen.height;
-        if (landscape == _lastLandscape) return;
+        float canvasScale = GetCanvasScale();
+        if (landscape == _lastLandscape && Mathf.Approximately(canvasScale, _lastCanvasScale)) return;
         _lastLandscape = landscape;
         ApplyLayout(landscape);
         if (_open) Refresh();
@@ -220,6 +222,9 @@ public sealed class DailyChallengeStatsPanel : MonoBehaviour
     private void ApplyLayout(bool landscape)
     {
         if (overlay == null || overlayBackground == null) return;
+        float canvasScale = GetCanvasScale();
+        _lastCanvasScale = canvasScale;
+        float typographyScale = landscape ? 1f / canvasScale : 1f;
         overlayBackground.sprite = landscape ? landscapeBackground : portraitBackground;
         if (backButton != null)
             Place(backButton.transform as RectTransform, new Vector2(.025f, .905f), new Vector2(.12f, .985f));
@@ -264,13 +269,26 @@ public sealed class DailyChallengeStatsPanel : MonoBehaviour
             Place(difficultyNames[i].rectTransform, new Vector2(.045f, bottom), new Vector2(.39f, top));
             Place(difficultyDates[i].rectTransform, new Vector2(.39f, bottom), new Vector2(.72f, top));
             Place(difficultyTimes[i].rectTransform, new Vector2(.72f, bottom), new Vector2(.96f, top));
-            SetRowFontSize(difficultyNames[i], landscape ? 31 : 24, landscape ? 26 : 20);
-            SetRowFontSize(difficultyDates[i], landscape ? 27 : 20, landscape ? 22 : 16);
-            SetRowFontSize(difficultyTimes[i], landscape ? 31 : 24, landscape ? 26 : 20);
+            SetRowFontSize(difficultyNames[i], (landscape ? 22 : 24) * typographyScale,
+                (landscape ? 19 : 20) * typographyScale);
+            SetRowFontSize(difficultyDates[i], 20 * typographyScale,
+                (landscape ? 17 : 16) * typographyScale);
+            SetRowFontSize(difficultyTimes[i], (landscape ? 22 : 24) * typographyScale,
+                (landscape ? 19 : 20) * typographyScale);
         }
 
         Place(difficultyHeading.rectTransform, new Vector2(.04f, .88f), new Vector2(.96f, .98f));
-        difficultyHeading.fontSize = landscape ? 27 : 25;
+        if (landscape)
+            SetRowFontSize(difficultyHeading, 22 * typographyScale, 20 * typographyScale);
+        else
+            difficultyHeading.fontSize = 25;
+    }
+
+    private float GetCanvasScale()
+    {
+        Canvas canvas = GetComponentInParent<Canvas>();
+        float scale = canvas != null ? canvas.scaleFactor : 1f;
+        return scale > 0f ? scale : 1f;
     }
 
     private static void SetRowFontSize(TextMeshProUGUI label, float maxSize, float minSize)

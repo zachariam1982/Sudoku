@@ -13,10 +13,16 @@ public class HUD : MonoBehaviour
     private bool            undoButtonWasInteractable;
     private bool            redoButtonWasInteractable;
     private ColorBlock      defaultPencilButtonColors;
+    private bool            controlDefaultsCaptured;
 
     public void Bind(BaseViewModel arg)
     {
-        if (ReferenceEquals(viewModel, arg)) return;
+        if (ReferenceEquals(viewModel, arg))
+        {
+            if (arg != null)
+                UpdatePencilModeVisual(arg.IsPencilMode.Value);
+            return;
+        }
         if (viewModel != null)
         {
             if (hideHudAction != null)
@@ -30,10 +36,14 @@ public class HUD : MonoBehaviour
         pencilModeButton = transform.Find("PencilBlock")?.GetComponent<Button>();
         undoButton = transform.Find("UndoBlock/Undo")?.GetComponent<Button>();
         redoButton = transform.Find("RedoBlock/Redo")?.GetComponent<Button>();
-        if (pencilModeButton != null)
-            defaultPencilButtonColors = pencilModeButton.colors;
-        undoButtonWasInteractable = undoButton != null && undoButton.interactable;
-        redoButtonWasInteractable = redoButton != null && redoButton.interactable;
+        if (!controlDefaultsCaptured)
+        {
+            if (pencilModeButton != null)
+                defaultPencilButtonColors = pencilModeButton.colors;
+            undoButtonWasInteractable = undoButton != null && undoButton.interactable;
+            redoButtonWasInteractable = redoButton != null && redoButton.interactable;
+            controlDefaultsCaptured = true;
+        }
 
         viewModel.HideHUD.OnChanged     += hideHudAction;
         pencilModeChangedAction = UpdatePencilModeVisual;

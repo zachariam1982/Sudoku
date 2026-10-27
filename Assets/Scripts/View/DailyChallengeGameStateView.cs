@@ -328,7 +328,7 @@ public class DailyChallengeGameStateView : MonoBehaviour
         if (winStats == null) return;
         RectTransform screen = winStats.parent as RectTransform;
         if (screen == null) return;
-        winStats.anchoredPosition = new Vector2(0f, -screen.rect.height * (landscape ? 0.30f : 0.27f));
+        winStats.anchoredPosition = new Vector2(0f, -screen.rect.height * (landscape ? 0.30f : 0.24f));
         float referenceWidth = landscape ? 1920f : 1080f;
         float referenceHeight = landscape ? 1080f : 1920f;
         float scale = Mathf.Min(screen.rect.width / referenceWidth, screen.rect.height / referenceHeight);

@@ -264,13 +264,21 @@ public sealed class DailyChallengeStatsPanel : MonoBehaviour
             Place(difficultyNames[i].rectTransform, new Vector2(.045f, bottom), new Vector2(.39f, top));
             Place(difficultyDates[i].rectTransform, new Vector2(.39f, bottom), new Vector2(.72f, top));
             Place(difficultyTimes[i].rectTransform, new Vector2(.72f, bottom), new Vector2(.96f, top));
-            difficultyNames[i].fontSize = landscape ? 25 : 24;
-            difficultyDates[i].fontSize = landscape ? 21 : 20;
-            difficultyTimes[i].fontSize = landscape ? 27 : 24;
+            SetRowFontSize(difficultyNames[i], landscape ? 31 : 24, landscape ? 26 : 20);
+            SetRowFontSize(difficultyDates[i], landscape ? 27 : 20, landscape ? 22 : 16);
+            SetRowFontSize(difficultyTimes[i], landscape ? 31 : 24, landscape ? 26 : 20);
         }
 
         Place(difficultyHeading.rectTransform, new Vector2(.04f, .88f), new Vector2(.96f, .98f));
         difficultyHeading.fontSize = landscape ? 27 : 25;
+    }
+
+    private static void SetRowFontSize(TextMeshProUGUI label, float maxSize, float minSize)
+    {
+        label.enableAutoSizing = true;
+        label.fontSizeMax = maxSize;
+        label.fontSizeMin = minSize;
+        label.fontSize = maxSize;
     }
 
     private static void Place(RectTransform rect, Vector2 min, Vector2 max)

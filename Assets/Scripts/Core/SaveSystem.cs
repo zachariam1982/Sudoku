@@ -6,24 +6,37 @@ using UnityEngine;
 public enum SaveSlot
 {
     Journey,
-    NewGame
+    NewGame,
+    DailyChallenge
 }
 
 public static class SaveSystem
 {
     private const string JourneyFileName = "save.json";
     private const string NewGameFileName = "new_game_save.json";
+    private const string DailyChallengeFileName = "daily_challenge_save.json";
 #if UNITY_WEBGL && !UNITY_EDITOR
     private const string JourneyKey = "sudoku_current_game";
     private const string NewGameKey = "sudoku_new_game";
+    private const string DailyChallengeKey = "sudoku_daily_challenge";
 #endif
 
-    private static string GetFilePath(SaveSlot slot) => Path.Combine(
-        Application.persistentDataPath,
-        slot == SaveSlot.NewGame ? NewGameFileName : JourneyFileName);
+    private static string GetFilePath(SaveSlot slot)
+    {
+        string fileName = slot == SaveSlot.NewGame
+            ? NewGameFileName
+            : slot == SaveSlot.DailyChallenge
+                ? DailyChallengeFileName
+                : JourneyFileName;
+        return Path.Combine(Application.persistentDataPath, fileName);
+    }
 
-    private static string GetMode(SaveSlot slot) =>
-        slot == SaveSlot.NewGame ? "NewGame" : "Journey";
+    private static string GetMode(SaveSlot slot)
+    {
+        if (slot == SaveSlot.NewGame) return "NewGame";
+        if (slot == SaveSlot.DailyChallenge) return "DailyChallenge";
+        return "Journey";
+    }
 
     public static void Save(SaveGameData data) => Save(data, SaveSlot.Journey);
 
@@ -148,6 +161,9 @@ public static class SaveSystem
             data.ElapsedSeconds < 0f || data.LivesRemaining < 0)
             return false;
         if (slot == SaveSlot.NewGame && data.SaveMode != "NewGame") return false;
+        if (slot == SaveSlot.DailyChallenge &&
+            (data.SaveMode != "DailyChallenge" || data.DailyChallengeRecordId <= 0 ||
+             string.IsNullOrEmpty(data.DailyChallengeDate))) return false;
         if (!string.IsNullOrEmpty(data.SaveMode) && data.SaveMode != GetMode(slot)) return false;
 
         for (int i = 0; i < 81; i++)
@@ -270,7 +286,11 @@ public static class SaveSystem
     }
 
 #if UNITY_WEBGL && !UNITY_EDITOR
-    private static string GetPlayerPrefsKey(SaveSlot slot) =>
-        slot == SaveSlot.NewGame ? NewGameKey : JourneyKey;
+    private static string GetPlayerPrefsKey(SaveSlot slot)
+    {
+        if (slot == SaveSlot.NewGame) return NewGameKey;
+        if (slot == SaveSlot.DailyChallenge) return DailyChallengeKey;
+        return JourneyKey;
+    }
 #endif
 }

@@ -1,0 +1,347 @@
+fileFormatVersion: 2
+guid: bdd7d861b1016fe48842b9c00a53baf4
+TextureImporter:
+  internalIDToNameTable:
+  - first:
+      213: -3769871939622721100
+    second: Golden trophy_0
+  - first:
+      213: 6106052591282848912
+    second: Golden trophy_1
+  - first:
+      213: -5655183613810084603
+    second: Golden trophy_2
+  - first:
+      213: -5390935338409084922
+    second: Golden trophy_3
+  - first:
+      213: -977916080365618273
+    second: Golden trophy_4
+  - first:
+      213: -2789744616275495826
+    second: Golden trophy_5
+  - first:
+      213: 7441855116566270720
+    second: Golden trophy_6
+  - first:
+      213: -7238341804119561060
+    second: Golden trophy_7
+  - first:
+      213: -8737877857166033521
+    second: Golden trophy_8
+  - first:
+      213: 1099796899161767838
+    second: Golden trophy_9
+  - first:
+      213: 4024429971433657296
+    second: Golden trophy_10
+  - first:
+      213: 7442043074072181809
+    second: Golden trophy_11
+  - first:
+      213: -3009946516569187772
+    second: Golden trophy_12
+  - first:
+      213: -8629388634009027645
+    second: Golden trophy_13
+  - first:
+      213: -4009820457623306657
+    second: Golden trophy_14
+  - first:
+      213: -1833412724971765034
+    second: Golden trophy_15
+  - first:
+      213: 3978632794752294603
+    second: Golden trophy_16
+  - first:
+      213: -6395870173085823889
+    second: Golden trophy_17
+  - first:
+      213: 2481918364829896177
+    second: Golden trophy_18
+  - first:
+      213: -4993059511246344749
+    second: Golden trophy_19
+  - first:
+      213: 6026301038255650380
+    second: Golden trophy_20
+  - first:
+      213: -2670971233962863176
+    second: Golden trophy_21
+  - first:
+      213: 7466856112462730957
+    second: Golden trophy_22
+  - first:
+      213: -5773774925462765106
+    second: Golden trophy_23
+  - first:
+      213: 780427251936636434
+    second: Golden trophy_24
+  - first:
+      213: -6078314023067474191
+    second: Golden trophy_25
+  - first:
+      213: -1555210691930064335
+    second: Golden trophy_26
+  - first:
+      213: -8482665620463243611
+    second: Golden trophy_27
+  - first:
+      213: -8702854304471447428
+    second: Golden trophy_28
+  - first:
+      213: 5827803353142156324
+    second: Golden trophy_29
+  - first:
+      213: 3390475922914841061
+    second: Golden trophy_30
+  - first:
+      213: -6567059930645649895
+    second: Golden trophy_31
+  - first:
+      213: 3938321496037110078
+    second: Golden trophy_32
+  - first:
+      213: -3957512735151857806
+    second: Golden trophy_33
+  - first:
+      213: -1534045442185042092
+    second: Golden trophy_34
+  - first:
+      213: 8797447879127997706
+    second: Golden trophy_35
+  - first:
+      213: -2791010965050335426
+    second: Golden trophy_36
+  - first:
+      213: -4244611089219799371
+    second: Golden trophy_37
+  - first:
+      213: 7012606062805818743
+    second: Golden trophy_38
+  - first:
+      213: 3512186793009070778
+    second: Golden trophy_39
+  - first:
+      213: 2670774004593545318
+    second: Golden trophy_40
+  - first:
+      213: 501414985895625632
+    second: Golden trophy_41
+  - first:
+      213: 1652691275912624177
+    second: Golden trophy_42
+  - first:
+      213: -1539059587109760129
+    second: Golden trophy_43
+  - first:
+      213: 599807497157485825
+    second: Golden trophy_44
+  - first:
+      213: -33026772215924226
+    second: Golden trophy_45
+  - first:
+      213: 1167566961177128060
+    second: Golden trophy_46
+  - first:
+      213: 2759190100064537685
+    second: Golden trophy_47
+  - first:
+      213: 1004582135585796230
+    second: Golden trophy_48
+  - first:
+      213: 2126997494464821893
+    second: Golden trophy_49
+  - first:
+      213: 4611603068565127079
+    second: Golden trophy_50
+  externalObjects: {}
+  serializedVersion: 13
+  mipmaps:
+    mipMapMode: 0
+    enableMipMap: 0
+    sRGBTexture: 1
+    linearTexture: 0
+    fadeOut: 0
+    borderMipMap: 0
+    mipMapsPreserveCoverage: 0
+    alphaTestReferenceValue: 0.5
+    mipMapFadeDistanceStart: 1
+    mipMapFadeDistanceEnd: 3
+  bumpmap:
+    convertToNormalMap: 0
+    externalNormalMap: 0
+    heightScale: 0.25
+    normalMapFilter: 0
+    flipGreenChannel: 0
+  isReadable: 0
+  streamingMipmaps: 0
+  streamingMipmapsPriority: 0
+  vTOnly: 0
+  ignoreMipmapLimit: 0
+  grayScaleToAlpha: 0
+  generateCubemap: 6
+  cubemapConvolution: 0
+  seamlessCubemap: 0
+  textureFormat: 1
+  maxTextureSize: 2048
+  textureSettings:
+    serializedVersion: 2
+    filterMode: 1
+    aniso: 1
+    mipBias: 0
+    wrapU: 1
+    wrapV: 1
+    wrapW: 1
+  nPOTScale: 0
+  lightmap: 0
+  compressionQuality: 50
+  spriteMode: 2
+  spriteExtrude: 1
+  spriteMeshType: 1
+  alignment: 0
+  spritePivot: {x: 0.5, y: 0.5}
+  spritePixelsToUnits: 100
+  spriteBorder: {x: 0, y: 0, z: 0, w: 0}
+  spriteGenerateFallbackPhysicsShape: 1
+  alphaUsage: 1
+  alphaIsTransparency: 1
+  spriteTessellationDetail: -1
+  textureType: 8
+  textureShape: 1
+  singleChannelComponent: 0
+  flipbookRows: 1
+  flipbookColumns: 1
+  maxTextureSizeSet: 0
+  compressionQualitySet: 0
+  textureFormatSet: 0
+  ignorePngGamma: 0
+  applyGammaDecoding: 0
+  swizzle: 50462976
+  cookieLightType: 0
+  platformSettings:
+  - serializedVersion: 4
+    buildTarget: DefaultTexturePlatform
+    maxTextureSize: 128
+    resizeAlgorithm: 0
+    textureFormat: -1
+    textureCompression: 1
+    compressionQuality: 50
+    crunchedCompression: 0
+    allowsAlphaSplitting: 0
+    overridden: 0
+    ignorePlatformSupport: 0
+    androidETC2FallbackOverride: 0
+    forceMaximumCompressionQuality_BC6H_BC7: 0
+  - serializedVersion: 4
+    buildTarget: Standalone
+    maxTextureSize: 2048
+    resizeAlgorithm: 0
+    textureFormat: -1
+    textureCompression: 1
+    compressionQuality: 50
+    crunchedCompression: 0
+    allowsAlphaSplitting: 0
+    overridden: 0
+    ignorePlatformSupport: 0
+    androidETC2FallbackOverride: 0
+    forceMaximumCompressionQuality_BC6H_BC7: 0
+  - serializedVersion: 4
+    buildTarget: Android
+    maxTextureSize: 2048
+    resizeAlgorithm: 0
+    textureFormat: -1
+    textureCompression: 1
+    compressionQuality: 50
+    crunchedCompression: 0
+    allowsAlphaSplitting: 0
+    overridden: 0
+    ignorePlatformSupport: 0
+    androidETC2FallbackOverride: 0
+    forceMaximumCompressionQuality_BC6H_BC7: 0
+  - serializedVersion: 4
+    buildTarget: WebGL
+    maxTextureSize: 2048
+    resizeAlgorithm: 0
+    textureFormat: -1
+    textureCompression: 1
+    compressionQuality: 50
+    crunchedCompression: 0
+    allowsAlphaSplitting: 0
+    overridden: 0
+    ignorePlatformSupport: 0
+    androidETC2FallbackOverride: 0
+    forceMaximumCompressionQuality_BC6H_BC7: 0
+  spriteSheet:
+    serializedVersion: 2
+    sprites: []
+    outline: []
+    customData: 
+    physicsShape: []
+    bones: []
+    spriteID: 84756aad688e8804385736e39116d398
+    internalID: 0
+    vertices: []
+    indices: 
+    edges: []
+    weights: []
+    secondaryTextures: []
+    spriteCustomMetadata:
+      entries: []
+    nameFileIdTable:
+      Golden trophy_0: -3769871939622721100
+      Golden trophy_1: 6106052591282848912
+      Golden trophy_10: 4024429971433657296
+      Golden trophy_11: 7442043074072181809
+      Golden trophy_12: -3009946516569187772
+      Golden trophy_13: -8629388634009027645
+      Golden trophy_14: -4009820457623306657
+      Golden trophy_15: -1833412724971765034
+      Golden trophy_16: 3978632794752294603
+      Golden trophy_17: -6395870173085823889
+      Golden trophy_18: 2481918364829896177
+      Golden trophy_19: -4993059511246344749
+      Golden trophy_2: -5655183613810084603
+      Golden trophy_20: 6026301038255650380
+      Golden trophy_21: -2670971233962863176
+      Golden trophy_22: 7466856112462730957
+      Golden trophy_23: -5773774925462765106
+      Golden trophy_24: 780427251936636434
+      Golden trophy_25: -6078314023067474191
+      Golden trophy_26: -1555210691930064335
+      Golden trophy_27: -8482665620463243611
+      Golden trophy_28: -8702854304471447428
+      Golden trophy_29: 5827803353142156324
+      Golden trophy_3: -5390935338409084922
+      Golden trophy_30: 3390475922914841061
+      Golden trophy_31: -6567059930645649895
+      Golden trophy_32: 3938321496037110078
+      Golden trophy_33: -3957512735151857806
+      Golden trophy_34: -1534045442185042092
+      Golden trophy_35: 8797447879127997706
+      Golden trophy_36: -2791010965050335426
+      Golden trophy_37: -4244611089219799371
+      Golden trophy_38: 7012606062805818743
+      Golden trophy_39: 3512186793009070778
+      Golden trophy_4: -977916080365618273
+      Golden trophy_40: 2670774004593545318
+      Golden trophy_41: 501414985895625632
+      Golden trophy_42: 1652691275912624177
+      Golden trophy_43: -1539059587109760129
+      Golden trophy_44: 599807497157485825
+      Golden trophy_45: -33026772215924226
+      Golden trophy_46: 1167566961177128060
+      Golden trophy_47: 2759190100064537685
+      Golden trophy_48: 1004582135585796230
+      Golden trophy_49: 2126997494464821893
+      Golden trophy_5: -2789744616275495826
+      Golden trophy_50: 4611603068565127079
+      Golden trophy_6: 7441855116566270720
+      Golden trophy_7: -7238341804119561060
+      Golden trophy_8: -8737877857166033521
+      Golden trophy_9: 1099796899161767838
+  mipmapLimitGroupName: 
+  pSDRemoveMatte: 0
+  userData: 
+  assetBundleName: 
+  assetBundleVariant: 

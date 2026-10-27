@@ -175,9 +175,33 @@ public sealed class DailyChallengeScreenController : MonoBehaviour
 
         if (portraitLayout != null) portraitLayout.SetActive(!landscape);
         if (landscapeLayout != null) landscapeLayout.SetActive(landscape);
+        AlignSettingsButtonWithHome(landscape);
 
         if (landscape)
             ApplyLandscapeCardLayout();
+    }
+
+    private void AlignSettingsButtonWithHome(bool landscape)
+    {
+        RectTransform settingsButton = transform.Find("SettingsButton_DailyChallengeScreen") as RectTransform;
+        if (settingsButton == null)
+            return;
+
+        GameObject layout = landscape ? landscapeLayout : portraitLayout;
+        string homeButtonName = landscape
+            ? "HomeButton_LandscapeLayout"
+            : "HomeButton_PortraitLayout";
+        RectTransform homeButton = layout != null
+            ? layout.transform.Find(homeButtonName) as RectTransform
+            : null;
+        if (homeButton == null)
+            return;
+
+        settingsButton.anchorMin = new Vector2(1f, homeButton.anchorMin.y);
+        settingsButton.anchorMax = new Vector2(1f, homeButton.anchorMax.y);
+        settingsButton.anchoredPosition = new Vector2(
+            settingsButton.anchoredPosition.x,
+            homeButton.anchoredPosition.y);
     }
 
     private void CacheLandscapeCards()

@@ -67,6 +67,7 @@ public class GameStateView : MonoBehaviour
     private HUD _hud;
     private VerseTicker _verseTicker;
     private Button _pauseResumeButton;
+    private bool _gameplayVisible;
 
     // ── Binding ───────────────────────────────────────────────────────────────
 
@@ -335,6 +336,11 @@ public class GameStateView : MonoBehaviour
 
     public void SetTopBarMode(bool isNewGame)
     {
+        // This view remains subscribed to the Journey view model while other
+        // modes are on screen. Ignore its state changes until gameplay is shown
+        // again so it cannot reactivate the Journey top bar over Daily Challenge.
+        if (!_gameplayVisible) return;
+
         JourneyTopBar.SetNewGameMode(isNewGame);
         newGameTopBar.SetNewGameMode(isNewGame);
     }
@@ -342,6 +348,7 @@ public class GameStateView : MonoBehaviour
     /// <summary>Shows gameplay HUD only while a game mode is active.</summary>
     public void SetGameplayVisible(bool visible)
     {
+        _gameplayVisible = visible;
         if (visible)
         {
             if (_vm != null)

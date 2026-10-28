@@ -171,8 +171,8 @@ public class NumberPicker : MonoBehaviour
 
                 if (cell != null && !cell.IsGiven && cell.Value == 0) return;
 
-                // SOS and Erase operate on the selected cell. Dismiss only
-                // the picker UI so their click handlers retain that selection.
+                // Let SOS receive its Button.onClick on pointer-up. Closing
+                // the picker here on pointer-down can cancel that click.
                 bool isSOSButton =
                     sosButton != null &&
                     (topHit == sosButton.gameObject ||
@@ -182,7 +182,10 @@ public class NumberPicker : MonoBehaviour
                     (topHit == eraseButton.gameObject ||
                      topHit.transform.IsChildOf(eraseButton.transform));
 
-                if (isSOSButton || isEraseButton)
+                if (isSOSButton)
+                    return;
+
+                if (isEraseButton)
                 {
                     viewModel.IsPickerOpen.Value = false;
                     return;
@@ -252,6 +255,15 @@ public class NumberPicker : MonoBehaviour
     {
         if (viewModel != null)
             viewModel.IsPickerOpen.Value = false;
+    }
+
+    /// <summary>
+    /// Uses the picker’s active gameplay binding, so the shared SOS button
+    /// works for Journey, New Game, and Daily Challenge.
+    /// </summary>
+    public void OnSOSButtonPressed()
+    {
+        viewModel?.SOSCommand.Execute();
     }
 
     private void OnSelectedCellTransformChanged( object cellTransform)

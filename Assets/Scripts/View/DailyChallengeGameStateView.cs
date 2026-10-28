@@ -109,10 +109,13 @@ public class DailyChallengeGameStateView : MonoBehaviour
         if (ReferenceEquals(_vm, vm))
         {
             // The game can be suspended while the Home screen is shown and then
-            // resumed with the same view model. Reapply its current UI state so
-            // mode-specific controls (including the top bar) become visible again.
+            // resumed with the same view model. Rebind the HUD in case the SOS
+            // dialog initialized after the first binding, then restore the UI.
             if (vm != null)
+            {
+                _hud?.Bind(vm);
                 OnStateChanged(vm.CurrentStateName.Value);
+            }
             return;
         }
         Unbind();

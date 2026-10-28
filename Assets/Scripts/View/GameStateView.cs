@@ -41,7 +41,8 @@ public class GameStateView : MonoBehaviour
     [SerializeField] private Image[]         lifeIcons;       // 3 heart images
     [SerializeField] private Color           lifeActiveColor  = new Color(0.92f, 0.27f, 0.38f, 1f);
     [SerializeField] private Color           lifeEmptyColor   = new Color(0.3f,  0.3f,  0.4f,  1f);
-    [SerializeField] private GameObject      hudPanel;
+    [SerializeField] private GameObject      journeyHudPanel;
+    [SerializeField] private GameObject      newGameHudPanel;
 
     [Header("Blocker dialog")]
     [SerializeField] private GameObject      overlay;
@@ -65,6 +66,7 @@ public class GameStateView : MonoBehaviour
 
     private BaseViewModel _vm;
     private HUD _hud;
+    private GameObject _activeHudPanel;
     private VerseTicker _verseTicker;
     private Button _pauseResumeButton;
     private bool _gameplayVisible;
@@ -73,8 +75,7 @@ public class GameStateView : MonoBehaviour
 
     public void Bind(BaseViewModel vm)
     {
-        if (_hud == null && hudPanel != null)
-            _hud = hudPanel.GetComponent<HUD>();
+        SelectHud(vm);
 
         if (ReferenceEquals(_vm, vm))
         {
@@ -83,8 +84,6 @@ public class GameStateView : MonoBehaviour
             // mode-specific controls (including the top bar) become visible again.
             if (vm != null)
             {
-                // Journey and Daily Challenge share this HUD. The other view can
-                // bind it to its own model while Journey remains unchanged.
                 _hud?.Bind(vm);
                 OnStateChanged(vm.CurrentStateName.Value);
             }
@@ -117,6 +116,7 @@ public class GameStateView : MonoBehaviour
     private void OnDestroy()
     {
         Unbind();
+        _hud?.Unbind();
     }
 
     private void Unbind()
@@ -141,6 +141,17 @@ public class GameStateView : MonoBehaviour
         _vm = null;
     }
 
+    private void SelectHud(BaseViewModel vm)
+    {
+        GameObject panel = vm is NewGameViewModel ? newGameHudPanel : journeyHudPanel;
+        if (_activeHudPanel == panel)
+            return;
+
+        _hud?.Unbind();
+        _activeHudPanel = panel;
+        _hud = panel != null ? panel.GetComponent<HUD>() : null;
+    }
+
     // ── State Change Handlers ─────────────────────────────────────────────────
 
     private void OnStateChanged(string stateName)
@@ -150,13 +161,14 @@ public class GameStateView : MonoBehaviour
         switch (stateName)
         {
             case "JourneyIdleState":
-                if (hudPanel != null) hudPanel.SetActive(false);
+                if (_activeHudPanel != null) _activeHudPanel.SetActive(false);
                 SetLevelText("        ");
                 break;
 
             case "JourneyPlayingState":
             case "NewGamePlayingState":
-                if (hudPanel != null) hudPanel.SetActive(true);
+                if (_gameplayVisible && _activeHudPanel != null)
+                    _activeHudPanel.SetActive(true);
                 if(_vm != null) SetLevelText(((SudokuDifficulty)_vm.GetDifficulty).ToString());
                 break;
 
@@ -167,7 +179,7 @@ public class GameStateView : MonoBehaviour
 
             case "JourneyValidatingState":
             case "NewGameValidatingState":
-                if(hudPanel != null ) hudPanel.SetActive(false);
+                if (_activeHudPanel != null) _activeHudPanel.SetActive(false);
                 break;
 
             case "JourneyWinState":
@@ -312,7 +324,8 @@ public class GameStateView : MonoBehaviour
 
     private void SetAllPanelsHidden()
     {
-        if (hudPanel   != null) hudPanel.SetActive(false);
+        if (journeyHudPanel != null) journeyHudPanel.SetActive(false);
+        if (newGameHudPanel != null) newGameHudPanel.SetActive(false);
         if (winPanel   != null) winPanel.SetActive(false);
         if (losePanel  != null) losePanel.SetActive(false);
         if (pausePanel != null) pausePanel.SetActive(false);
@@ -360,7 +373,8 @@ public class GameStateView : MonoBehaviour
             return;
         }
 
-        if (hudPanel != null) hudPanel.SetActive(false);
+        if (journeyHudPanel != null) journeyHudPanel.SetActive(false);
+        if (newGameHudPanel != null) newGameHudPanel.SetActive(false);
         if (JourneyTopBar != null) JourneyTopBar.gameObject.SetActive(false);
         if (newGameTopBar != null) newGameTopBar.gameObject.SetActive(false);
     }

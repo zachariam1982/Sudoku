@@ -23,15 +23,12 @@ public class HUD : MonoBehaviour
                 UpdatePencilModeVisual(arg.IsPencilMode.Value);
             return;
         }
-        if (viewModel != null)
-        {
-            if (hideHudAction != null)
-                viewModel.HideHUD.OnChanged -= hideHudAction;
-            if (pencilModeChangedAction != null)
-                viewModel.IsPencilMode.OnChanged -= pencilModeChangedAction;
-        }
+        Unbind();
 
         viewModel = arg;
+        if (viewModel == null)
+            return;
+
         hideHudAction = (arg) => this.gameObject.SetActive(arg);
         pencilModeButton = transform.Find("PencilBlock")?.GetComponent<Button>();
         undoButton = transform.Find("UndoBlock/Undo")?.GetComponent<Button>();
@@ -51,6 +48,21 @@ public class HUD : MonoBehaviour
         UpdatePencilModeVisual(viewModel.IsPencilMode.Value);
 
         if(SOSAdDialog.Instance != null) SOSAdDialog.Instance.Bind(viewModel);
+    }
+
+    public void Unbind()
+    {
+        if (viewModel == null)
+            return;
+
+        if (hideHudAction != null)
+            viewModel.HideHUD.OnChanged -= hideHudAction;
+        if (pencilModeChangedAction != null)
+            viewModel.IsPencilMode.OnChanged -= pencilModeChangedAction;
+
+        viewModel = null;
+        hideHudAction = null;
+        pencilModeChangedAction = null;
     }
 
     private void UpdatePencilModeVisual(bool isActive)
@@ -82,13 +94,5 @@ public class HUD : MonoBehaviour
     public void UndoButtonPressed() => viewModel?.UndoCommand.Execute();
     public void RedoButtonPressed() => viewModel?.RedoCommand.Execute();
     public void PauseButtonPressed() => viewModel?.PauseCommand.Execute();
-    private void OnDestroy()
-    {
-        if (viewModel == null) return;
-
-        if (hideHudAction != null)
-            viewModel.HideHUD.OnChanged -= hideHudAction;
-        if (pencilModeChangedAction != null)
-            viewModel.IsPencilMode.OnChanged -= pencilModeChangedAction;
-    }
+    private void OnDestroy() => Unbind();
 }

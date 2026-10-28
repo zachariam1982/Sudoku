@@ -32,8 +32,8 @@ public sealed class HomeScreenController : MonoBehaviour
     [Header("Screens")]
     [SerializeField] private GameObject newGameScreen;
     [SerializeField] private GameContext _gameContext;
+    [SerializeField] private DailyChallengeScreenController dailyChallengeScreen;
 
-    
     private JourneyViewModel _viewModel;
     private bool _layoutApplied;
     private bool _lastLandscape;
@@ -54,8 +54,25 @@ public sealed class HomeScreenController : MonoBehaviour
         _viewModel = viewModel;
         _gameContext = gameContext;
 
+        if (dailyChallengeScreen != null) dailyChallengeScreen.Hide();
+
         ApplyResponsiveLayout();
         RefreshJourneyStatus();
+    }
+
+    public void OpenDailyChallenge()
+    {
+        if (dailyChallengeScreen == null) return;
+
+        SetVerseTickerVisible(false);
+        gameObject.SetActive(false);
+        if (_gameContext != null)
+            _gameContext.OpenDailyChallengeScreen(dailyChallengeScreen);
+        else
+        {
+            dailyChallengeScreen.SetLandscape(Screen.width > Screen.height);
+            dailyChallengeScreen.Show();
+        }
     }
 
     public void RefreshJourneyStatus()
@@ -121,9 +138,18 @@ public sealed class HomeScreenController : MonoBehaviour
 
     public void OpenHome()
     {
+        if (_gameContext != null) _gameContext.CloseDailyChallengeScreen();
+        else if (dailyChallengeScreen != null) dailyChallengeScreen.Hide();
         SetVerseTickerVisible(false);
         _gameContext.SuspendActiveGame();
         RefreshJourneyStatus();
+        gameObject.SetActive(true);
+    }
+
+    public void CloseDailyChallenge()
+    {
+        if (_gameContext != null) _gameContext.CloseDailyChallengeScreen();
+        else if (dailyChallengeScreen != null) dailyChallengeScreen.Hide();
         gameObject.SetActive(true);
     }
 
@@ -138,6 +164,8 @@ public sealed class HomeScreenController : MonoBehaviour
     {
         Rect rootRect = ((RectTransform)transform).rect;
         bool landscape = rootRect.width > rootRect.height;
+        if (dailyChallengeScreen != null)
+            dailyChallengeScreen.SetLandscape(landscape);
 
         if (_layoutApplied && _lastLandscape == landscape) return;
 

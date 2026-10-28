@@ -1,0 +1,321 @@
+fileFormatVersion: 2
+guid: dd1e3f8ec723562428c181209e2fb140
+TextureImporter:
+  internalIDToNameTable:
+  - first:
+      213: 3968166806705271346
+    second: Gold back to home button_0
+  - first:
+      213: -8428841057171946973
+    second: Gold back to home button_1
+  - first:
+      213: -4709222632595237069
+    second: Gold back to home button_2
+  - first:
+      213: -2987958266587640351
+    second: Gold back to home button_3
+  - first:
+      213: 693057623072256675
+    second: Gold back to home button_4
+  - first:
+      213: 558697078663334525
+    second: Gold back to home button_5
+  - first:
+      213: 3831795811357374357
+    second: Gold back to home button_6
+  - first:
+      213: 2083222894296297823
+    second: Gold back to home button_7
+  - first:
+      213: 4773487289614354375
+    second: Gold back to home button_8
+  - first:
+      213: -3106084112134250502
+    second: Gold back to home button_9
+  - first:
+      213: -1286574177288556374
+    second: Gold back to home button_10
+  - first:
+      213: -7537157929799265051
+    second: Gold back to home button_11
+  - first:
+      213: 4850952503374784604
+    second: Gold back to home button_12
+  - first:
+      213: 6174052374294353153
+    second: Gold back to home button_13
+  - first:
+      213: -2842892313844179586
+    second: Gold back to home button_14
+  - first:
+      213: -413153025342614663
+    second: Gold back to home button_15
+  - first:
+      213: -6202540950519612685
+    second: Gold back to home button_16
+  - first:
+      213: -4235897744668137726
+    second: Gold back to home button_17
+  - first:
+      213: -7813909094712703144
+    second: Gold back to home button_18
+  - first:
+      213: -2466047361861819866
+    second: Gold back to home button_19
+  - first:
+      213: -938509216179013058
+    second: Gold back to home button_20
+  - first:
+      213: -1917665781786870751
+    second: Gold back to home button_21
+  - first:
+      213: 5723425600180343320
+    second: Gold back to home button_22
+  - first:
+      213: -964749392986275734
+    second: Gold back to home button_23
+  - first:
+      213: 2587207442391746905
+    second: Gold back to home button_24
+  - first:
+      213: -4610372232323784079
+    second: Gold back to home button_25
+  - first:
+      213: 6889171375511309175
+    second: Gold back to home button_26
+  - first:
+      213: -3205825812248481164
+    second: Gold back to home button_27
+  - first:
+      213: -3466199283339429580
+    second: Gold back to home button_28
+  - first:
+      213: 5839818129387327745
+    second: Gold back to home button_29
+  - first:
+      213: 6954151679198443989
+    second: Gold back to home button_30
+  - first:
+      213: 2876869809773164685
+    second: Gold back to home button_31
+  - first:
+      213: -3612852335304887893
+    second: Gold back to home button_32
+  - first:
+      213: -6639419618658168023
+    second: Gold back to home button_33
+  - first:
+      213: 2716558951533052069
+    second: Gold back to home button_34
+  - first:
+      213: -7125209786191217442
+    second: Gold back to home button_35
+  - first:
+      213: 3879014100807153838
+    second: Gold back to home button_36
+  - first:
+      213: -3936509659400843493
+    second: Gold back to home button_37
+  - first:
+      213: 6778936740755400993
+    second: Gold back to home button_38
+  externalObjects: {}
+  serializedVersion: 13
+  mipmaps:
+    mipMapMode: 0
+    enableMipMap: 0
+    sRGBTexture: 1
+    linearTexture: 0
+    fadeOut: 0
+    borderMipMap: 0
+    mipMapsPreserveCoverage: 0
+    alphaTestReferenceValue: 0.5
+    mipMapFadeDistanceStart: 1
+    mipMapFadeDistanceEnd: 3
+  bumpmap:
+    convertToNormalMap: 0
+    externalNormalMap: 0
+    heightScale: 0.25
+    normalMapFilter: 0
+    flipGreenChannel: 0
+  isReadable: 0
+  streamingMipmaps: 0
+  streamingMipmapsPriority: 0
+  vTOnly: 0
+  ignoreMipmapLimit: 0
+  grayScaleToAlpha: 0
+  generateCubemap: 6
+  cubemapConvolution: 0
+  seamlessCubemap: 0
+  textureFormat: 1
+  maxTextureSize: 2048
+  textureSettings:
+    serializedVersion: 2
+    filterMode: 1
+    aniso: 1
+    mipBias: 0
+    wrapU: 1
+    wrapV: 1
+    wrapW: 1
+  nPOTScale: 0
+  lightmap: 0
+  compressionQuality: 50
+  spriteMode: 2
+  spriteExtrude: 1
+  spriteMeshType: 1
+  alignment: 0
+  spritePivot: {x: 0.5, y: 0.5}
+  spritePixelsToUnits: 100
+  spriteBorder: {x: 0, y: 0, z: 0, w: 0}
+  spriteGenerateFallbackPhysicsShape: 1
+  alphaUsage: 1
+  alphaIsTransparency: 1
+  spriteTessellationDetail: -1
+  textureType: 8
+  textureShape: 1
+  singleChannelComponent: 0
+  flipbookRows: 1
+  flipbookColumns: 1
+  maxTextureSizeSet: 0
+  compressionQualitySet: 0
+  textureFormatSet: 0
+  ignorePngGamma: 0
+  applyGammaDecoding: 0
+  swizzle: 50462976
+  cookieLightType: 0
+  platformSettings:
+  - serializedVersion: 4
+    buildTarget: DefaultTexturePlatform
+    maxTextureSize: 512
+    resizeAlgorithm: 0
+    textureFormat: -1
+    textureCompression: 1
+    compressionQuality: 50
+    crunchedCompression: 0
+    allowsAlphaSplitting: 0
+    overridden: 0
+    ignorePlatformSupport: 0
+    androidETC2FallbackOverride: 0
+    forceMaximumCompressionQuality_BC6H_BC7: 0
+  - serializedVersion: 4
+    buildTarget: Standalone
+    maxTextureSize: 2048
+    resizeAlgorithm: 0
+    textureFormat: -1
+    textureCompression: 1
+    compressionQuality: 50
+    crunchedCompression: 0
+    allowsAlphaSplitting: 0
+    overridden: 0
+    ignorePlatformSupport: 0
+    androidETC2FallbackOverride: 0
+    forceMaximumCompressionQuality_BC6H_BC7: 0
+  - serializedVersion: 4
+    buildTarget: Android
+    maxTextureSize: 2048
+    resizeAlgorithm: 0
+    textureFormat: -1
+    textureCompression: 1
+    compressionQuality: 50
+    crunchedCompression: 0
+    allowsAlphaSplitting: 0
+    overridden: 0
+    ignorePlatformSupport: 0
+    androidETC2FallbackOverride: 0
+    forceMaximumCompressionQuality_BC6H_BC7: 0
+  - serializedVersion: 4
+    buildTarget: WebGL
+    maxTextureSize: 2048
+    resizeAlgorithm: 0
+    textureFormat: -1
+    textureCompression: 1
+    compressionQuality: 50
+    crunchedCompression: 0
+    allowsAlphaSplitting: 0
+    overridden: 0
+    ignorePlatformSupport: 0
+    androidETC2FallbackOverride: 0
+    forceMaximumCompressionQuality_BC6H_BC7: 0
+  spriteSheet:
+    serializedVersion: 2
+    sprites:
+    - serializedVersion: 2
+      name: Gold back to home button_0
+      rect:
+        serializedVersion: 2
+        x: 10
+        y: 146
+        width: 2151
+        height: 440
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: e9e3ce62aff875546a19a57606b67948
+      internalID: 3968166806705271346
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    outline: []
+    customData: 
+    physicsShape: []
+    bones: []
+    spriteID: 14b511408844c27489d3695df42b248d
+    internalID: 0
+    vertices: []
+    indices: 
+    edges: []
+    weights: []
+    secondaryTextures: []
+    spriteCustomMetadata:
+      entries: []
+    nameFileIdTable:
+      Gold back to home button_0: 3968166806705271346
+      Gold back to home button_1: -8428841057171946973
+      Gold back to home button_10: -1286574177288556374
+      Gold back to home button_11: -7537157929799265051
+      Gold back to home button_12: 4850952503374784604
+      Gold back to home button_13: 6174052374294353153
+      Gold back to home button_14: -2842892313844179586
+      Gold back to home button_15: -413153025342614663
+      Gold back to home button_16: -6202540950519612685
+      Gold back to home button_17: -4235897744668137726
+      Gold back to home button_18: -7813909094712703144
+      Gold back to home button_19: -2466047361861819866
+      Gold back to home button_2: -4709222632595237069
+      Gold back to home button_20: -938509216179013058
+      Gold back to home button_21: -1917665781786870751
+      Gold back to home button_22: 5723425600180343320
+      Gold back to home button_23: -964749392986275734
+      Gold back to home button_24: 2587207442391746905
+      Gold back to home button_25: -4610372232323784079
+      Gold back to home button_26: 6889171375511309175
+      Gold back to home button_27: -3205825812248481164
+      Gold back to home button_28: -3466199283339429580
+      Gold back to home button_29: 5839818129387327745
+      Gold back to home button_3: -2987958266587640351
+      Gold back to home button_30: 6954151679198443989
+      Gold back to home button_31: 2876869809773164685
+      Gold back to home button_32: -3612852335304887893
+      Gold back to home button_33: -6639419618658168023
+      Gold back to home button_34: 2716558951533052069
+      Gold back to home button_35: -7125209786191217442
+      Gold back to home button_36: 3879014100807153838
+      Gold back to home button_37: -3936509659400843493
+      Gold back to home button_38: 6778936740755400993
+      Gold back to home button_4: 693057623072256675
+      Gold back to home button_5: 558697078663334525
+      Gold back to home button_6: 3831795811357374357
+      Gold back to home button_7: 2083222894296297823
+      Gold back to home button_8: 4773487289614354375
+      Gold back to home button_9: -3106084112134250502
+  mipmapLimitGroupName: 
+  pSDRemoveMatte: 0
+  userData: 
+  assetBundleName: 
+  assetBundleVariant: 

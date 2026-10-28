@@ -13,27 +13,34 @@ public class HUD : MonoBehaviour
     private bool            undoButtonWasInteractable;
     private bool            redoButtonWasInteractable;
     private ColorBlock      defaultPencilButtonColors;
+    private bool            controlDefaultsCaptured;
 
     public void Bind(BaseViewModel arg)
     {
-        if (ReferenceEquals(viewModel, arg)) return;
-        if (viewModel != null)
+        if (ReferenceEquals(viewModel, arg))
         {
-            if (hideHudAction != null)
-                viewModel.HideHUD.OnChanged -= hideHudAction;
-            if (pencilModeChangedAction != null)
-                viewModel.IsPencilMode.OnChanged -= pencilModeChangedAction;
+            if (arg != null)
+                UpdatePencilModeVisual(arg.IsPencilMode.Value);
+            return;
         }
+        Unbind();
 
         viewModel = arg;
+        if (viewModel == null)
+            return;
+
         hideHudAction = (arg) => this.gameObject.SetActive(arg);
         pencilModeButton = transform.Find("PencilBlock")?.GetComponent<Button>();
         undoButton = transform.Find("UndoBlock/Undo")?.GetComponent<Button>();
         redoButton = transform.Find("RedoBlock/Redo")?.GetComponent<Button>();
-        if (pencilModeButton != null)
-            defaultPencilButtonColors = pencilModeButton.colors;
-        undoButtonWasInteractable = undoButton != null && undoButton.interactable;
-        redoButtonWasInteractable = redoButton != null && redoButton.interactable;
+        if (!controlDefaultsCaptured)
+        {
+            if (pencilModeButton != null)
+                defaultPencilButtonColors = pencilModeButton.colors;
+            undoButtonWasInteractable = undoButton != null && undoButton.interactable;
+            redoButtonWasInteractable = redoButton != null && redoButton.interactable;
+            controlDefaultsCaptured = true;
+        }
 
         viewModel.HideHUD.OnChanged     += hideHudAction;
         pencilModeChangedAction = UpdatePencilModeVisual;
@@ -41,6 +48,21 @@ public class HUD : MonoBehaviour
         UpdatePencilModeVisual(viewModel.IsPencilMode.Value);
 
         if(SOSAdDialog.Instance != null) SOSAdDialog.Instance.Bind(viewModel);
+    }
+
+    public void Unbind()
+    {
+        if (viewModel == null)
+            return;
+
+        if (hideHudAction != null)
+            viewModel.HideHUD.OnChanged -= hideHudAction;
+        if (pencilModeChangedAction != null)
+            viewModel.IsPencilMode.OnChanged -= pencilModeChangedAction;
+
+        viewModel = null;
+        hideHudAction = null;
+        pencilModeChangedAction = null;
     }
 
     private void UpdatePencilModeVisual(bool isActive)
@@ -72,13 +94,5 @@ public class HUD : MonoBehaviour
     public void UndoButtonPressed() => viewModel?.UndoCommand.Execute();
     public void RedoButtonPressed() => viewModel?.RedoCommand.Execute();
     public void PauseButtonPressed() => viewModel?.PauseCommand.Execute();
-    private void OnDestroy()
-    {
-        if (viewModel == null) return;
-
-        if (hideHudAction != null)
-            viewModel.HideHUD.OnChanged -= hideHudAction;
-        if (pencilModeChangedAction != null)
-            viewModel.IsPencilMode.OnChanged -= pencilModeChangedAction;
-    }
+    private void OnDestroy() => Unbind();
 }

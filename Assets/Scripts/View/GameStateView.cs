@@ -41,7 +41,8 @@ public class GameStateView : MonoBehaviour
     [SerializeField] private Image[]         lifeIcons;       // 3 heart images
     [SerializeField] private Color           lifeActiveColor  = new Color(0.92f, 0.27f, 0.38f, 1f);
     [SerializeField] private Color           lifeEmptyColor   = new Color(0.3f,  0.3f,  0.4f,  1f);
-    [SerializeField] private GameObject      hudPanel;
+    [SerializeField] private GameObject      journeyHudPanel;
+    [SerializeField] private GameObject      newGameHudPanel;
 
     [Header("Blocker dialog")]
     [SerializeField] private GameObject      overlay;
@@ -65,20 +66,27 @@ public class GameStateView : MonoBehaviour
 
     private BaseViewModel _vm;
     private HUD _hud;
+    private GameObject _activeHudPanel;
     private VerseTicker _verseTicker;
     private Button _pauseResumeButton;
+    private bool _gameplayVisible;
 
     // ── Binding ───────────────────────────────────────────────────────────────
 
     public void Bind(BaseViewModel vm)
     {
+        SelectHud(vm);
+
         if (ReferenceEquals(_vm, vm))
         {
             // The game can be suspended while the Home screen is shown and then
             // resumed with the same view model. Reapply its current UI state so
             // mode-specific controls (including the top bar) become visible again.
             if (vm != null)
+            {
+                _hud?.Bind(vm);
                 OnStateChanged(vm.CurrentStateName.Value);
+            }
             return;
         }
         Unbind();
@@ -99,10 +107,6 @@ public class GameStateView : MonoBehaviour
             journey.LivesRemaining.OnChanged += OnLivesChanged;
             journey.IsLost.OnChanged += OnLostChanged;
         }
-        _hud = hudPanel != null
-            ? hudPanel.GetComponent<HUD>()
-            : null;
-
         _hud?.Bind(vm);
 
         SetAllPanelsHidden();
@@ -112,6 +116,7 @@ public class GameStateView : MonoBehaviour
     private void OnDestroy()
     {
         Unbind();
+        _hud?.Unbind();
     }
 
     private void Unbind()
@@ -136,6 +141,17 @@ public class GameStateView : MonoBehaviour
         _vm = null;
     }
 
+    private void SelectHud(BaseViewModel vm)
+    {
+        GameObject panel = vm is NewGameViewModel ? newGameHudPanel : journeyHudPanel;
+        if (_activeHudPanel == panel)
+            return;
+
+        _hud?.Unbind();
+        _activeHudPanel = panel;
+        _hud = panel != null ? panel.GetComponent<HUD>() : null;
+    }
+
     // ── State Change Handlers ─────────────────────────────────────────────────
 
     private void OnStateChanged(string stateName)
@@ -145,13 +161,14 @@ public class GameStateView : MonoBehaviour
         switch (stateName)
         {
             case "JourneyIdleState":
-                if (hudPanel != null) hudPanel.SetActive(false);
+                if (_activeHudPanel != null) _activeHudPanel.SetActive(false);
                 SetLevelText("        ");
                 break;
 
             case "JourneyPlayingState":
             case "NewGamePlayingState":
-                if (hudPanel != null) hudPanel.SetActive(true);
+                if (_gameplayVisible && _activeHudPanel != null)
+                    _activeHudPanel.SetActive(true);
                 if(_vm != null) SetLevelText(((SudokuDifficulty)_vm.GetDifficulty).ToString());
                 break;
 
@@ -162,7 +179,7 @@ public class GameStateView : MonoBehaviour
 
             case "JourneyValidatingState":
             case "NewGameValidatingState":
-                if(hudPanel != null ) hudPanel.SetActive(false);
+                if (_activeHudPanel != null) _activeHudPanel.SetActive(false);
                 break;
 
             case "JourneyWinState":
@@ -307,7 +324,8 @@ public class GameStateView : MonoBehaviour
 
     private void SetAllPanelsHidden()
     {
-        if (hudPanel   != null) hudPanel.SetActive(false);
+        if (journeyHudPanel != null) journeyHudPanel.SetActive(false);
+        if (newGameHudPanel != null) newGameHudPanel.SetActive(false);
         if (winPanel   != null) winPanel.SetActive(false);
         if (losePanel  != null) losePanel.SetActive(false);
         if (pausePanel != null) pausePanel.SetActive(false);
@@ -335,6 +353,11 @@ public class GameStateView : MonoBehaviour
 
     public void SetTopBarMode(bool isNewGame)
     {
+        // This view remains subscribed to the Journey view model while other
+        // modes are on screen. Ignore its state changes until gameplay is shown
+        // again so it cannot reactivate the Journey top bar over Daily Challenge.
+        if (!_gameplayVisible) return;
+
         JourneyTopBar.SetNewGameMode(isNewGame);
         newGameTopBar.SetNewGameMode(isNewGame);
     }
@@ -342,6 +365,7 @@ public class GameStateView : MonoBehaviour
     /// <summary>Shows gameplay HUD only while a game mode is active.</summary>
     public void SetGameplayVisible(bool visible)
     {
+        _gameplayVisible = visible;
         if (visible)
         {
             if (_vm != null)
@@ -349,7 +373,8 @@ public class GameStateView : MonoBehaviour
             return;
         }
 
-        if (hudPanel != null) hudPanel.SetActive(false);
+        if (journeyHudPanel != null) journeyHudPanel.SetActive(false);
+        if (newGameHudPanel != null) newGameHudPanel.SetActive(false);
         if (JourneyTopBar != null) JourneyTopBar.gameObject.SetActive(false);
         if (newGameTopBar != null) newGameTopBar.gameObject.SetActive(false);
     }

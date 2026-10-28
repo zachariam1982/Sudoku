@@ -90,7 +90,7 @@ public class HUD : MonoBehaviour
     public void EraseButtonPressed() => viewModel?.SetEraseModeCommand.Execute();
     public void PencilButtonPressed() => viewModel?.SetPencilModeCommand.Execute();
     public void AutoFillCandidatesButtonPressed() => viewModel?.AutoFillCandidatesCommand.Execute();
-    public void OnSOSPressed() => viewModel?.SOSCommand.Execute();
+    public void OnSOSPressed() => NumberPicker.Instance?.OnSOSButtonPressed();
     public void UndoButtonPressed() => viewModel?.UndoCommand.Execute();
     public void RedoButtonPressed() => viewModel?.RedoCommand.Execute();
     public void PauseButtonPressed() => viewModel?.PauseCommand.Execute();

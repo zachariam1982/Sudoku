@@ -19,6 +19,9 @@ public class HUD : MonoBehaviour
     {
         if (ReferenceEquals(viewModel, arg))
         {
+            // The dialog singleton may Awake after the initial Journey bind.
+            // Rebind even when the gameplay view model itself has not changed.
+            if (SOSAdDialog.Instance != null) SOSAdDialog.Instance.Bind(arg);
             if (arg != null)
                 UpdatePencilModeVisual(arg.IsPencilMode.Value);
             return;

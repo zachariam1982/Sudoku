@@ -254,6 +254,15 @@ public class NumberPicker : MonoBehaviour
             viewModel.IsPickerOpen.Value = false;
     }
 
+    /// <summary>
+    /// Uses the picker’s active gameplay binding, so the shared SOS button
+    /// works for Journey, New Game, and Daily Challenge.
+    /// </summary>
+    public void OnSOSButtonPressed()
+    {
+        viewModel?.SOSCommand.Execute();
+    }
+
     private void OnSelectedCellTransformChanged( object cellTransform)
     {
         selectedCellRT = cellTransform as RectTransform;

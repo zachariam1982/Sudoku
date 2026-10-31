@@ -186,6 +186,19 @@ using UnityEngine;
 
 public static class NewGameResultDatabase
 {
+    public sealed class RecentEntryRow
+    {
+        public int Id { get; set; }
+        public int Level { get; set; }
+        public int Difficulty { get; set; }
+        public int PuzzleSeed { get; set; }
+        public int PencilUses { get; set; }
+        public int SOSUses { get; set; }
+        public int AutoFillUses { get; set; }
+        public string RecordedAt { get; set; }
+        public int IsCompleted { get; set; }
+    }
+
     private static SQLiteConnection _db;
     private static string DbPath =>
         Path.Combine(Application.persistentDataPath, "game_history.db");
@@ -325,14 +338,26 @@ public static class NewGameResultDatabase
     public static List<NewGameResultEntry> GetRecentEntries(int offset, int count)
     {
         if (_db == null) return new List<NewGameResultEntry>();
-        List<NewGameResult> results = _db.Table<NewGameResult>()
-            .OrderByDescending(result => result.Id)
-            .Skip(offset)
-            .Take(count)
-            .ToList();
-        var completedIds = new System.Collections.Generic.HashSet<int>(
-            _db.Table<NewGameResultCompletion>().ToList().Select(completion => completion.ResultId));
-        return results.Select(result => new NewGameResultEntry(result, completedIds.Contains(result.Id))).ToList();
+        List<RecentEntryRow> rows = _db.Query<RecentEntryRow>(
+            "SELECT results.Id, results.Level, results.Difficulty, results.PuzzleSeed, " +
+            "results.PencilUses, results.SOSUses, results.AutoFillUses, results.RecordedAt, " +
+            "CASE WHEN completions.ResultId IS NULL THEN 0 ELSE 1 END AS IsCompleted " +
+            "FROM new_game_results AS results " +
+            "LEFT JOIN new_game_result_completions AS completions " +
+            "ON completions.ResultId = results.Id " +
+            "ORDER BY results.Id DESC LIMIT ? OFFSET ?", count, offset);
+
+        return rows.Select(row => new NewGameResultEntry(new NewGameResult
+        {
+            Id = row.Id,
+            Level = row.Level,
+            Difficulty = row.Difficulty,
+            PuzzleSeed = row.PuzzleSeed,
+            PencilUses = row.PencilUses,
+            SOSUses = row.SOSUses,
+            AutoFillUses = row.AutoFillUses,
+            RecordedAt = row.RecordedAt
+        }, row.IsCompleted != 0)).ToList();
     }
 
     public static List<NewGameResultEntry> GetRecentEntries(int count) =>

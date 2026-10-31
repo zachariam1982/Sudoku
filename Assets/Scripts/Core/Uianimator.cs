@@ -1,7 +1,5 @@
-using System;
 using System.Collections;
 using UnityEngine;
-using UnityEngine.UI;
 
 /// <summary>
 /// Reusable UI animation library for Bold & Playful Sudoku.
@@ -12,62 +10,6 @@ public static class UIAnimator
     // ── Easing functions ──────────────────────────────────────────────────────
 
     private static float EaseOut(float t)         => 1f - Mathf.Pow(1f - t, 3f);
-    // ── Shake ─────────────────────────────────────────────────────────────────
-
-    /// <summary>
-    /// Horizontal shake. Use on wrong number entry.
-    /// </summary>
-    public static IEnumerator Shake(Transform target,
-                                     Vector3 originalPosition,
-                                     float magnitude = 18f,
-                                     float duration  = 0.45f,
-                                     int   vibrato   = 5)
-    {
-        float   elapsed  = 0f;
-
-        while (elapsed < duration)
-        {
-            elapsed += Time.deltaTime;
-            float progress  = elapsed / duration;
-            float dampen    = 1f - EaseOut(progress);   // gets weaker over time
-            float offsetX   = Mathf.Sin(progress * Mathf.PI * vibrato * 2f)
-                              * magnitude * dampen;
-            target.localPosition = originalPosition + new Vector3(offsetX, 0f, 0f);
-            yield return null;
-        }
-
-        target.localPosition = originalPosition;
-    }
-
-    // ── Color Flash ───────────────────────────────────────────────────────────
-
-    /// <summary>
-    /// Flashes an Image to a color then fades back.
-    /// Use on wrong number entry (flash red).
-    /// </summary>
-    public static IEnumerator Flash(Image image,
-                                     Color flashColor,
-                                     Color returnColor,
-                                     float duration = 0.4f)
-    {
-        if (image == null) yield break;
-
-        // Flash to error color instantly
-        image.color = flashColor;
-
-        // Fade back to return color
-        float elapsed = 0f;
-        while (elapsed < duration)
-        {
-            elapsed    += Time.deltaTime;
-            float t     = Mathf.Clamp01(elapsed / duration);
-            image.color = Color.Lerp(flashColor, returnColor, EaseOut(t));
-            yield return null;
-        }
-
-        image.color = returnColor;
-    }
-
     // ── Slide ─────────────────────────────────────────────────────────────────
 
     /// <summary>
@@ -133,32 +75,6 @@ public static class UIAnimator
         target.gameObject.SetActive(false);
         cg.alpha = 1f; // reset for next show
     }
-
-    // ── Wobble ────────────────────────────────────────────────────────────────
-
-    /// <summary>
-    /// Small rotation wobble. Use on given cell tap (can't be edited feedback).
-    /// </summary>
-    public static IEnumerator Wobble(Transform target,
-                                      Quaternion originalRotation,
-                                      float angle    = 6f,
-                                      float duration = 0.25f)
-    {
-        float      elapsed  = 0f;
-
-        while (elapsed < duration)
-        {
-            elapsed  += Time.deltaTime;
-            float t   = elapsed / duration;
-            float rot = Mathf.Sin(t * Mathf.PI * 3f) * angle * (1f - t);
-            target.localRotation = originalRotation * Quaternion.Euler(0f, 0f, rot);
-            yield return null;
-        }
-
-        target.localRotation = originalRotation;
-    }
-
-    // ── Overlay Fade ──────────────────────────────────────────────────────────
 
     // ── Helper ────────────────────────────────────────────────────────────────
 

@@ -181,7 +181,7 @@ public class DailyChallengeGameStateView : MonoBehaviour
             if (winPanel != null) winPanel.SetActive(false);
             if (losePanel != null) losePanel.SetActive(false);
             if (DailyChallengeTopBar != null) DailyChallengeTopBar.gameObject.SetActive(false);
-            UpdateVerseTicker(false);
+            UpdateVerseTicker(string.Empty);
             return;
         }
 

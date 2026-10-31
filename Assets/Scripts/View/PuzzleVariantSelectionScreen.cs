@@ -73,9 +73,9 @@ public sealed class PuzzleVariantSelectionScreen : MonoBehaviour
             if (variantIcons != null && i < variantIcons.Length && variantIcons[i] != null)
             {
                 if (landscape)
-                    SetStretched(variantIcons[i], 0.015f, 0.05f, 0.45f, 0.95f);
+                    SetStretched(variantIcons[i], 0.015f, 0.10f, 0.45f, 0.90f);
                 else
-                    SetStretched(variantIcons[i], 0.02f, 0.05f, 0.25f, 0.95f);
+                    SetStretched(variantIcons[i], 0.02f, 0.10f, 0.25f, 0.90f);
             }
 
             if (variantLabels != null && i < variantLabels.Length && variantLabels[i] != null)

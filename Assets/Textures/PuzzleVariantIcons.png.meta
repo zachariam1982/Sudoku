@@ -144,9 +144,9 @@ TextureImporter:
       rect:
         serializedVersion: 2
         x: 123
-        y: 620
+        y: 565
         width: 357
-        height: 358
+        height: 357
       alignment: 0
       pivot: {x: 0.5, y: 0.5}
       border: {x: 0, y: 0, z: 0, w: 0}
@@ -165,10 +165,10 @@ TextureImporter:
       name: Diagonal
       rect:
         serializedVersion: 2
-        x: 589
-        y: 620
-        width: 359
-        height: 358
+        x: 590
+        y: 565
+        width: 357
+        height: 357
       alignment: 0
       pivot: {x: 0.5, y: 0.5}
       border: {x: 0, y: 0, z: 0, w: 0}
@@ -188,9 +188,9 @@ TextureImporter:
       rect:
         serializedVersion: 2
         x: 1057
-        y: 620
+        y: 564
         width: 358
-        height: 372
+        height: 358
       alignment: 0
       pivot: {x: 0.5, y: 0.5}
       border: {x: 0, y: 0, z: 0, w: 0}
@@ -210,9 +210,9 @@ TextureImporter:
       rect:
         serializedVersion: 2
         x: 123
-        y: 53
+        y: 108
         width: 357
-        height: 357
+        height: 358
       alignment: 0
       pivot: {x: 0.5, y: 0.5}
       border: {x: 0, y: 0, z: 0, w: 0}
@@ -231,10 +231,10 @@ TextureImporter:
       name: Hyper
       rect:
         serializedVersion: 2
-        x: 590
-        y: 53
-        width: 357
-        height: 357
+        x: 589
+        y: 108
+        width: 359
+        height: 358
       alignment: 0
       pivot: {x: 0.5, y: 0.5}
       border: {x: 0, y: 0, z: 0, w: 0}
@@ -254,9 +254,9 @@ TextureImporter:
       rect:
         serializedVersion: 2
         x: 1057
-        y: 52
+        y: 108
         width: 358
-        height: 358
+        height: 372
       alignment: 0
       pivot: {x: 0.5, y: 0.5}
       border: {x: 0, y: 0, z: 0, w: 0}

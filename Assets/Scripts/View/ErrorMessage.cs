@@ -27,7 +27,11 @@ public class ErrorMessage : MonoBehaviour
         Message.text = "";
         Status.text = "";
 
-        closeButton.onClick.AddListener(() => errorDialog.SetActive(false)); 
+    }
+
+    public void CloseDialog()
+    {
+        if (errorDialog != null) errorDialog.SetActive(false);
     }
 
     public void Bind(BaseViewModel arg)

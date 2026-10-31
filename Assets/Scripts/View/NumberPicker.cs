@@ -140,11 +140,6 @@ public class NumberPicker : MonoBehaviour
             }
         }
 
-        if (sosButton != null)
-            sosButton.onClick.AddListener(ClosePickerAfterUtilityAction);
-        if (eraseButton != null)
-            eraseButton.onClick.AddListener(ClosePickerAfterUtilityAction);
-
         if (pickerPanel != null) pickerPanel.gameObject.SetActive(false);
     }
 
@@ -240,18 +235,13 @@ public class NumberPicker : MonoBehaviour
 
     private void OnDestroy()
     {
-        if (sosButton != null)
-            sosButton.onClick.RemoveListener(ClosePickerAfterUtilityAction);
-        if (eraseButton != null)
-            eraseButton.onClick.RemoveListener(ClosePickerAfterUtilityAction);
-
         if (viewModel == null) return;
 
         viewModel.IsPickerOpen.OnChanged -= OnPickerOpenChanged;
         viewModel.SelectedCellTransform.OnChanged -= OnSelectedCellTransformChanged;
     }
 
-    private void ClosePickerAfterUtilityAction()
+    public void ClosePickerAfterUtilityAction()
     {
         if (viewModel != null)
             viewModel.IsPickerOpen.Value = false;

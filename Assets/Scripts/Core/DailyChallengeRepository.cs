@@ -117,6 +117,28 @@ public static class DailyChallengeRepository
 #endif
     }
 
+    public static DailyChallengeRecord GetBestOverallRecord(int? preferredGameId)
+    {
+#if UNITY_WEBGL && !UNITY_EDITOR
+        StoredRow fastest = null;
+        foreach (StoredRow row in Data.Rows)
+        {
+            if (!row.IsWon) continue;
+            if (preferredGameId.HasValue && row.Id == preferredGameId.Value)
+                return FromStored(row);
+            if (fastest == null || row.ElapsedSeconds < fastest.ElapsedSeconds)
+                fastest = row;
+        }
+        return fastest == null ? null : FromStored(fastest);
+#else
+        List<DailyChallengeRecord> rows = Db.Query<DailyChallengeRecord>(
+            "SELECT * FROM DailyGame_challenge WHERE IsWon = 1 " +
+            "ORDER BY CASE WHEN Id = ? THEN 0 ELSE 1 END, ElapsedSeconds, Id LIMIT 1",
+            preferredGameId ?? -1);
+        return rows.Count == 0 ? null : rows[0];
+#endif
+    }
+
     public static void MarkAttempted(DailyChallengeRecord record)
     {
         if(record==null)return;

@@ -142,11 +142,8 @@ public sealed class DailyChallengeStatsPanel : MonoBehaviour
     {
         List<DailyChallengeRecord> records = DailyChallengeRepository.GetAllRecords();
         DailyChallengeStatsSnapshot stats = DailyChallengeRepository.GetStatsSnapshot();
-        DailyChallengeRecord bestOverall = records
-            .Where(record => record.IsWon)
-            .OrderBy(record => record.ElapsedSeconds)
-            .FirstOrDefault(record => !stats.BestTimeGameId.HasValue || record.Id == stats.BestTimeGameId.Value)
-            ?? records.Where(record => record.IsWon).OrderBy(record => record.ElapsedSeconds).FirstOrDefault();
+        DailyChallengeRecord bestOverall =
+            DailyChallengeRepository.GetBestOverallRecord(stats.BestTimeGameId);
 
         summaryLabels[0].text = Metric("CURRENT STREAK", stats.CurrentStreak, "days");
         summaryLabels[1].text = Metric("BEST STREAK", GetBestStreak(records), "days");

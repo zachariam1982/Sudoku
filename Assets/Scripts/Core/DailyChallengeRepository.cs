@@ -61,15 +61,28 @@ public static class DailyChallengeRepository
     {
 #if UNITY_WEBGL && !UNITY_EDITOR
         float bestTime = -1f;
+        int? bestTimeGameId = null;
         int gamesPlayed = 0;
         int gamesWon = 0;
+        int?[] difficultyBestIds = new int?[9];
+        float[] difficultyBestTimes = new float[9];
+        for (int i = 0; i < difficultyBestTimes.Length; i++) difficultyBestTimes[i] = float.MaxValue;
         foreach (StoredRow row in Data.Rows)
         {
             if (!string.IsNullOrEmpty(row.CompletedAt)) gamesPlayed++;
             if (!row.IsWon) continue;
             gamesWon++;
             if (bestTime < 0f || row.ElapsedSeconds < bestTime)
+            {
                 bestTime = row.ElapsedSeconds;
+                bestTimeGameId = row.Id;
+            }
+            if (row.Difficulty >= 0 && row.Difficulty < difficultyBestTimes.Length &&
+                row.ElapsedSeconds < difficultyBestTimes[row.Difficulty])
+            {
+                difficultyBestTimes[row.Difficulty] = row.ElapsedSeconds;
+                difficultyBestIds[row.Difficulty] = row.Id;
+            }
         }
 
         DateTime checkDate = DateTime.Today;
@@ -93,13 +106,22 @@ public static class DailyChallengeRepository
         {
             CurrentStreak = streak,
             BestTimeSeconds = bestTime,
+            BestTimeGameId = bestTimeGameId,
             GamesPlayed = gamesPlayed,
-            GamesWon = gamesWon
+            GamesWon = gamesWon,
+            SimpleBestTimeGameId = difficultyBestIds[0], BeginnerBestTimeGameId = difficultyBestIds[1],
+            EasyBestTimeGameId = difficultyBestIds[2], NoviceBestTimeGameId = difficultyBestIds[3],
+            ModerateBestTimeGameId = difficultyBestIds[4], AdvancedBestTimeGameId = difficultyBestIds[5],
+            HardBestTimeGameId = difficultyBestIds[6], ExpertBestTimeGameId = difficultyBestIds[7],
+            HardestBestTimeGameId = difficultyBestIds[8]
         };
 #else
         List<DailyChallengeStatsSnapshot> rows = Db.Query<DailyChallengeStatsSnapshot>(
             "SELECT CurrentStreak, COALESCE(BestTimeSeconds, -1) AS BestTimeSeconds, " +
-            "GamesPlayed, GamesWon, BestTimeGameId " +
+            "GamesPlayed, GamesWon, BestTimeGameId, SimpleBestTimeGameId, " +
+            "BeginnerBestTimeGameId, EasyBestTimeGameId, NoviceBestTimeGameId, " +
+            "ModerateBestTimeGameId, AdvancedBestTimeGameId, HardBestTimeGameId, " +
+            "ExpertBestTimeGameId, HardestBestTimeGameId " +
             "FROM DailyGameChallengeStats WHERE Id = 1 LIMIT 1");
         return rows.Count == 0 ? new DailyChallengeStatsSnapshot() : rows[0];
 #endif
@@ -136,6 +158,52 @@ public static class DailyChallengeRepository
             "ORDER BY CASE WHEN Id = ? THEN 0 ELSE 1 END, ElapsedSeconds, Id LIMIT 1",
             preferredGameId ?? -1);
         return rows.Count == 0 ? null : rows[0];
+#endif
+    }
+
+    public static List<DailyChallengeRecord> GetBestTimeRecordsByDifficulty(DailyChallengeStatsSnapshot stats)
+    {
+        if (stats == null) return new List<DailyChallengeRecord>();
+        int?[] ids = stats.GetDifficultyBestGameIds();
+#if UNITY_WEBGL && !UNITY_EDITOR
+        List<DailyChallengeRecord> records = new List<DailyChallengeRecord>(ids.Length);
+        foreach (int? id in ids)
+        {
+            if (!id.HasValue) continue;
+            StoredRow row = Data.Rows.Find(candidate => candidate.Id == id.Value && candidate.IsWon);
+            if (row != null) records.Add(FromStored(row));
+        }
+        return records;
+#else
+        List<object> args = new List<object>(ids.Length);
+        foreach (int? id in ids) if (id.HasValue) args.Add(id.Value);
+        if (args.Count == 0) return new List<DailyChallengeRecord>();
+        string[] placeholders = new string[args.Count];
+        for (int i = 0; i < placeholders.Length; i++) placeholders[i] = "?";
+        return Db.Query<DailyChallengeRecord>(
+            "SELECT * FROM DailyGame_challenge WHERE IsWon = 1 AND Id IN (" +
+            string.Join(",", placeholders) + ")", args.ToArray());
+#endif
+    }
+
+    public static List<DateTime> GetWinningChallengeDates()
+    {
+#if UNITY_WEBGL && !UNITY_EDITOR
+        HashSet<DateTime> dates = new HashSet<DateTime>();
+        foreach (StoredRow row in Data.Rows)
+            if (row.IsWon) dates.Add(DateTime.Parse(row.CurrentDate, CultureInfo.InvariantCulture).Date);
+        List<DateTime> ordered = new List<DateTime>(dates);
+        ordered.Sort();
+        return ordered;
+#else
+        List<DailyChallengeDateRow> rows = Db.Query<DailyChallengeDateRow>(
+            "SELECT CurrentDate FROM DailyGame_challenge WHERE IsWon = 1 " +
+            "GROUP BY CurrentDate ORDER BY CurrentDate");
+        List<DateTime> dates = new List<DateTime>(rows.Count);
+        foreach (DailyChallengeDateRow row in rows)
+            if (DateTime.TryParse(row.CurrentDate, CultureInfo.InvariantCulture, DateTimeStyles.None, out DateTime date))
+                dates.Add(date.Date);
+        return dates;
 #endif
     }
 
@@ -231,6 +299,27 @@ public sealed class DailyChallengeStatsSnapshot
     public int GamesPlayed { get; set; }
     public int GamesWon { get; set; }
     public int? BestTimeGameId { get; set; }
+    public int? SimpleBestTimeGameId { get; set; }
+    public int? BeginnerBestTimeGameId { get; set; }
+    public int? EasyBestTimeGameId { get; set; }
+    public int? NoviceBestTimeGameId { get; set; }
+    public int? ModerateBestTimeGameId { get; set; }
+    public int? AdvancedBestTimeGameId { get; set; }
+    public int? HardBestTimeGameId { get; set; }
+    public int? ExpertBestTimeGameId { get; set; }
+    public int? HardestBestTimeGameId { get; set; }
+
+    public int?[] GetDifficultyBestGameIds() => new[]
+    {
+        SimpleBestTimeGameId, BeginnerBestTimeGameId, EasyBestTimeGameId,
+        NoviceBestTimeGameId, ModerateBestTimeGameId, AdvancedBestTimeGameId,
+        HardBestTimeGameId, ExpertBestTimeGameId, HardestBestTimeGameId
+    };
+}
+
+internal sealed class DailyChallengeDateRow
+{
+    public string CurrentDate { get; set; }
 }
 
 /// <summary>SQLite mapping for a daily challenge row, including both lifecycle flags.</summary>

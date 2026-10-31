@@ -1,7 +1,6 @@
 using System;
 using System.Collections.Generic;
 using System.Globalization;
-using System.Linq;
 using TMPro;
 using UnityEngine;
 using UnityEngine.UI;
@@ -140,13 +139,19 @@ public sealed class DailyChallengeStatsPanel : MonoBehaviour
 
     private void Refresh()
     {
-        List<DailyChallengeRecord> records = DailyChallengeRepository.GetAllRecords();
         DailyChallengeStatsSnapshot stats = DailyChallengeRepository.GetStatsSnapshot();
         DailyChallengeRecord bestOverall =
             DailyChallengeRepository.GetBestOverallRecord(stats.BestTimeGameId);
+        List<DailyChallengeRecord> bestDifficultyRecords =
+            DailyChallengeRepository.GetBestTimeRecordsByDifficulty(stats);
+        DailyChallengeRecord[] bestByDifficulty = new DailyChallengeRecord[difficultyNames.Length];
+        foreach (DailyChallengeRecord record in bestDifficultyRecords)
+            if (record.Difficulty >= 0 && record.Difficulty < bestByDifficulty.Length)
+                bestByDifficulty[record.Difficulty] = record;
 
         summaryLabels[0].text = Metric("CURRENT STREAK", stats.CurrentStreak, "days");
-        summaryLabels[1].text = Metric("BEST STREAK", GetBestStreak(records), "days");
+        summaryLabels[1].text = Metric("BEST STREAK",
+            GetBestStreak(DailyChallengeRepository.GetWinningChallengeDates()), "days");
         summaryLabels[2].text = Metric("GAMES WON", stats.GamesWon, "");
 
         if (bestOverall == null)
@@ -163,10 +168,7 @@ public sealed class DailyChallengeStatsPanel : MonoBehaviour
         played.text = "CHALLENGES PLAYED     <b>" + stats.GamesPlayed.ToString(CultureInfo.InvariantCulture) + "</b>";
         for (int difficulty = 0; difficulty < difficultyNames.Length; difficulty++)
         {
-            DailyChallengeRecord best = records
-                .Where(record => record.IsWon && record.Difficulty == difficulty)
-                .OrderBy(record => record.ElapsedSeconds)
-                .FirstOrDefault();
+            DailyChallengeRecord best = bestByDifficulty[difficulty];
             difficultyNames[difficulty].text = ((SudokuDifficulty)difficulty).ToString();
             difficultyNames[difficulty].color = _difficultyColors[difficulty];
             difficultyDates[difficulty].text = best == null
@@ -200,10 +202,8 @@ public sealed class DailyChallengeStatsPanel : MonoBehaviour
         label.raycastTarget = false;
     }
 
-    private static int GetBestStreak(List<DailyChallengeRecord> records)
+    private static int GetBestStreak(List<DateTime> wins)
     {
-        List<DateTime> wins = records.Where(record => record.IsWon)
-            .Select(record => record.CurrentDate.Date).Distinct().OrderBy(date => date).ToList();
         int best = 0;
         int current = 0;
         DateTime previous = DateTime.MinValue;

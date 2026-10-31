@@ -9,6 +9,7 @@ public sealed class PuzzleVariantSelectionScreen : MonoBehaviour
 {
     [SerializeField] private TextMeshProUGUI headerText;
     [SerializeField] private RectTransform[] variantCards;
+    [SerializeField] private RectTransform[] variantIcons;
     [SerializeField] private TextMeshProUGUI[] variantLabels;
     [SerializeField] private GameObject classicHomeScreen;
 
@@ -61,17 +62,31 @@ public sealed class PuzzleVariantSelectionScreen : MonoBehaviour
 
         for (int i = 0; i < variantCards.Length; i++)
         {
-            int column = landscape ? i % 3 : i % 2;
-            int row = landscape ? i / 3 : i / 2;
-
-            float xMin = landscape ? 0.03f + column * 0.32f : 0.035f + column * 0.48f;
-            float xMax = landscape ? xMin + 0.30f : xMin + 0.45f;
-            float yMin = landscape ? (row == 0 ? 0.37f : 0.04f) : 0.52f - row * 0.24f;
-            float yMax = landscape ? yMin + 0.30f : yMin + 0.23f;
+            float xMin = landscape ? 0.03f + (i % 3) * 0.32f : 0.05f;
+            float xMax = landscape ? xMin + 0.30f : 0.95f;
+            float yMin = landscape
+                ? (i < 3 ? 0.37f : 0.04f)
+                : 0.05f + (5 - i) * 0.115f;
+            float yMax = landscape ? yMin + 0.30f : yMin + 0.105f;
             SetStretched(variantCards[i], xMin, yMin, xMax, yMax);
 
+            if (variantIcons != null && i < variantIcons.Length && variantIcons[i] != null)
+            {
+                if (landscape)
+                    SetStretched(variantIcons[i], 0.015f, 0.05f, 0.45f, 0.95f);
+                else
+                    SetStretched(variantIcons[i], 0.02f, 0.05f, 0.25f, 0.95f);
+            }
+
             if (variantLabels != null && i < variantLabels.Length && variantLabels[i] != null)
-                variantLabels[i].fontSizeMax = landscape ? 44f : 38f;
+            {
+                SetStretched(variantLabels[i].rectTransform,
+                    landscape ? 0.46f : 0.28f,
+                    0.04f,
+                    0.98f,
+                    0.96f);
+                variantLabels[i].fontSizeMax = landscape ? 58f : 52f;
+            }
         }
     }
 

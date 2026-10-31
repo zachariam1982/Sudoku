@@ -35,12 +35,8 @@ public class DailyChallengeGameStateView : MonoBehaviour
     [SerializeField] private GameObject Timer;
     [SerializeField] private GameObject Settings;
     [SerializeField] private TextMeshProUGUI Level;
-    [SerializeField] private TextMeshProUGUI newGameLevel;
     [Header("HUD — always visible during play")]
     [SerializeField] private TextMeshProUGUI timerLabel;
-    [SerializeField] private Image[]         lifeIcons;       // 3 heart images
-    [SerializeField] private Color           lifeActiveColor  = new Color(0.92f, 0.27f, 0.38f, 1f);
-    [SerializeField] private Color           lifeEmptyColor   = new Color(0.3f,  0.3f,  0.4f,  1f);
     [SerializeField] private GameObject      hudPanel;
 
     [Header("Blocker dialog")]
@@ -74,6 +70,7 @@ public class DailyChallengeGameStateView : MonoBehaviour
     private bool _lastResultLandscape;
     private int _lastResultScreenWidth = -1;
     private int _lastResultScreenHeight = -1;
+    private bool _gameplayVisible;
 
     private void Start()
     {
@@ -178,6 +175,16 @@ public class DailyChallengeGameStateView : MonoBehaviour
 
     private void OnStateChanged(string stateName)
     {
+        if (!_gameplayVisible)
+        {
+            if (hudPanel != null) hudPanel.SetActive(false);
+            if (winPanel != null) winPanel.SetActive(false);
+            if (losePanel != null) losePanel.SetActive(false);
+            if (DailyChallengeTopBar != null) DailyChallengeTopBar.gameObject.SetActive(false);
+            UpdateVerseTicker(false);
+            return;
+        }
+
         SetAllPanelsHidden();
         if (_vm is DailyChallengeViewModel dailyChallenge)
         {
@@ -198,12 +205,10 @@ public class DailyChallengeGameStateView : MonoBehaviour
                 break;
 
             case "DailyChallengePausedState":
-            case "NewGamePausedState":
                 if(pausePanel != null)pausePanel.SetActive(true);                
                 break;
 
             case "DailyChallengeValidatingState":
-            case "NewGameValidatingState":
                 if(hudPanel != null ) hudPanel.SetActive(false);
                 break;
 
@@ -231,9 +236,7 @@ public class DailyChallengeGameStateView : MonoBehaviour
         }
 
         bool gameActive = stateName == "DailyChallengePlayingState" ||
-                          stateName == "NewGamePlayingState" ||
-                          stateName == "DailyChallengePausedState" ||
-                          stateName == "NewGamePausedState";
+                          stateName == "DailyChallengePausedState";
 
         if (_verseTicker != null)
             _verseTicker.SetGameActive(gameActive);
@@ -265,13 +268,13 @@ public class DailyChallengeGameStateView : MonoBehaviour
 
     private void OnDailyWonChanged(bool isWon)
     {
-        if (isWon && _vm is DailyChallengeViewModel)
+        if (isWon && _gameplayVisible && _vm is DailyChallengeViewModel)
             ShowDailyResult(true);
     }
 
     private void OnDailyLostChanged(bool isLost)
     {
-        if (isLost && _vm is DailyChallengeViewModel)
+        if (isLost && _gameplayVisible && _vm is DailyChallengeViewModel)
             ShowDailyResult(false);
     }
 
@@ -391,27 +394,12 @@ public class DailyChallengeGameStateView : MonoBehaviour
         _vm?.NotifyGameCompleted();
     }
 
-    public void OnNewGamePressed() 
-    {
-        if (winPanel != null) winPanel.SetActive(false);
-        if (losePanel != null) losePanel.SetActive(false);
-        if (overlay != null) overlay.SetActive(false);
-        (_vm as DailyChallengeViewModel)?.NewGameCommand.Execute();
-    }
-    public void OnRetryPressed()    
-    {
-        if (winPanel != null) winPanel.SetActive(false);
-        if (losePanel != null) losePanel.SetActive(false);
-        if (overlay != null) overlay.SetActive(false);
-        (_vm as DailyChallengeViewModel)?.RetryCommand.Execute();
-    }
     public void OnPlayPressed()
     {
+        if (!_gameplayVisible) return;
         if (pausePanel != null) pausePanel.SetActive(false);
         _vm?.ResumeCommand.Execute();
     }
-    public void OnResumePressed()   => _vm?.ResumeCommand.Execute();
-
     // ── Helper ────────────────────────────────────────────────────────────────
 
     private void SetAllPanelsHidden()
@@ -425,30 +413,24 @@ public class DailyChallengeGameStateView : MonoBehaviour
 
     private void ApplyModeVisibility(string stateName)
     {
-        bool journeyMode = _vm is DailyChallengeViewModel;
+        bool dailyChallengeMode = _vm is DailyChallengeViewModel;
         bool hideStatus = stateName == "DailyChallengeValidatingState" ||
-                          stateName == "NewGameValidatingState" ||
                           stateName == "DailyChallengeWinState" ||
-                          stateName == "NewGameWinState" ||
                           stateName == "DailyChallengeLoseState";
 
-        if (Lives != null) Lives.SetActive(journeyMode && !hideStatus);
-        if (Timer != null) Timer.SetActive(journeyMode && !hideStatus);
-        if (Settings != null) Settings.SetActive(journeyMode);
+        if (Lives != null) Lives.SetActive(dailyChallengeMode && !hideStatus);
+        if (Timer != null) Timer.SetActive(dailyChallengeMode && !hideStatus);
+        if (Settings != null) Settings.SetActive(dailyChallengeMode);
         bool dailyResultVisible = stateName == "DailyChallengeWinState" ||
                                   stateName == "DailyChallengeLoseState";
-        SetTopBarMode(journeyMode && !dailyResultVisible);
-    }
-
-    public void SetTopBarMode(bool isDailyChallenge)
-    {
         if (DailyChallengeTopBar != null)
-            DailyChallengeTopBar.SetDailyMode(isDailyChallenge);
+            DailyChallengeTopBar.SetDailyMode(dailyChallengeMode && !dailyResultVisible);
     }
 
     /// <summary>Shows gameplay HUD only while a game mode is active.</summary>
     public void SetGameplayVisible(bool visible)
     {
+        _gameplayVisible = visible;
         if (visible)
         {
             if (_vm != null)
@@ -458,11 +440,11 @@ public class DailyChallengeGameStateView : MonoBehaviour
 
         SetAllPanelsHidden();
         if (DailyChallengeTopBar != null) DailyChallengeTopBar.gameObject.SetActive(false);
+        UpdateVerseTicker(string.Empty);
     }
 
     private void SetLevelText(string text)
     {
         if (Level != null) Level.text = text;
-        if (newGameLevel != null) newGameLevel.text = text;
     }
 }

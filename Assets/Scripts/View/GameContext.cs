@@ -2,7 +2,7 @@ using System;
 using System.Globalization;
 using UnityEngine;
 
-/// <summary>Creates and connects the independent Journey and New Game flows.</summary>
+/// <summary>Creates and connects the independent gameplay modes.</summary>
 public class GameContext : MonoBehaviour
 {
     public JourneyViewModel ViewModel => JourneyViewModel;
@@ -22,7 +22,8 @@ public class GameContext : MonoBehaviour
     private GridBuilder _gridBuilder;
     private ErrorMessage _error;
     private NumberPicker _picker;
-    private GameStateView _stateView;
+    private JourneyGameStateView _journeyStateView;
+    private NewGameGameStateView _newGameStateView;
     private StatsPanel _statsPanel;
     private NewGameStatsPanel _newGameStatsPanel;
     private DailyChallengeGameStateView _dailyChallengeStateView;
@@ -45,7 +46,8 @@ public class GameContext : MonoBehaviour
         _gridBuilder = GetComponent<GridBuilder>();
         _error = GetComponent<ErrorMessage>();
         _picker = GetComponentInChildren<NumberPicker>();
-        _stateView = GetComponentInChildren<GameStateView>(true);
+        _journeyStateView = GetComponentInChildren<JourneyGameStateView>(true);
+        _newGameStateView = GetComponentInChildren<NewGameGameStateView>(true);
         _dailyChallengeStateView = GetComponentInChildren<DailyChallengeGameStateView>(true);
         if (_dailyChallengeScreen == null)
             _dailyChallengeScreen = GetComponentInChildren<DailyChallengeScreenController>(true);
@@ -90,7 +92,8 @@ public class GameContext : MonoBehaviour
         StartDailyChallengeBackgroundJobs();
         // Startup is the mode selector, not an active Journey session.
         _gridBuilder?.SetVisible(false);
-        _stateView?.SetGameplayVisible(false);
+        _journeyStateView?.SetGameplayVisible(false);
+        _newGameStateView?.SetGameplayVisible(false);
     }
 
     public void ActivateJourney()
@@ -102,7 +105,9 @@ public class GameContext : MonoBehaviour
         BindGameplay(JourneyViewModel);
         _journeyStateMachine.SetSuspended(false);
         _gridBuilder?.SetVisible(true);
-        _stateView?.SetGameplayVisible(true);
+        _dailyChallengeStateView?.SetGameplayVisible(false);
+        _newGameStateView?.SetGameplayVisible(false);
+        _journeyStateView?.SetGameplayVisible(true);
     }
 
     public void ActivateNewGame(SudokuDifficulty difficulty)
@@ -115,7 +120,9 @@ public class GameContext : MonoBehaviour
         NewGameViewModel.StartRandomGame(difficulty);
         _newGameStateMachine.SetSuspended(false);
         _gridBuilder?.SetVisible(true);
-        _stateView?.SetGameplayVisible(true);
+        _dailyChallengeStateView?.SetGameplayVisible(false);
+        _journeyStateView?.SetGameplayVisible(false);
+        _newGameStateView?.SetGameplayVisible(true);
     }
 
     private void StartDailyChallengeBackgroundJobs()
@@ -136,7 +143,9 @@ public class GameContext : MonoBehaviour
         BindGameplay(NewGameViewModel);
         _newGameStateMachine.SetSuspended(false);
         _gridBuilder?.SetVisible(true);
-        _stateView?.SetGameplayVisible(true);
+        _dailyChallengeStateView?.SetGameplayVisible(false);
+        _journeyStateView?.SetGameplayVisible(false);
+        _newGameStateView?.SetGameplayVisible(true);
     }
 
     public void ExitNewGame()
@@ -149,7 +158,8 @@ public class GameContext : MonoBehaviour
         NewGameViewModel.ClearActiveGame();
         SaveSystem.Delete(SaveSlot.NewGame);
         _gridBuilder?.SetVisible(false);
-        _stateView?.SetGameplayVisible(false);
+        _journeyStateView?.SetGameplayVisible(false);
+        _newGameStateView?.SetGameplayVisible(false);
         _newGameScreen.Show();
     }
 
@@ -163,12 +173,12 @@ public class GameContext : MonoBehaviour
         else if (_newGameActive)
         {
             _newGameStateMachine.SetSuspended(true);
-            _stateView?.SetTopBarMode(false);
         }
         else _journeyStateMachine.SetSuspended(true);
 
         _gridBuilder?.SetVisible(false);
-        _stateView?.SetGameplayVisible(false);
+        _journeyStateView?.SetGameplayVisible(false);
+        _newGameStateView?.SetGameplayVisible(false);
         _dailyChallengeStateView?.SetGameplayVisible(false);
     }
 
@@ -180,7 +190,8 @@ public class GameContext : MonoBehaviour
         NewGameViewModel.ClearActiveGame();
         SaveSystem.Delete(SaveSlot.NewGame);
         _gridBuilder?.SetVisible(false);
-        _stateView?.SetGameplayVisible(false);
+        _journeyStateView?.SetGameplayVisible(false);
+        _newGameStateView?.SetGameplayVisible(false);
         _newGameScreen.Show();
     }
 
@@ -200,7 +211,9 @@ public class GameContext : MonoBehaviour
         NewGameViewModel.ReplayResult(result);
         _newGameStateMachine.SetSuspended(false);
         _gridBuilder?.SetVisible(true);
-        _stateView?.SetGameplayVisible(true);
+        _dailyChallengeStateView?.SetGameplayVisible(false);
+        _journeyStateView?.SetGameplayVisible(false);
+        _newGameStateView?.SetGameplayVisible(true);
     }
 
     public void RefreshDailyChallengeScreen(DailyChallengeScreenController screen)
@@ -234,10 +247,10 @@ public class GameContext : MonoBehaviour
         if (_dailyChallengeScreen == null)
             return;
 
-        // The ready page is a standalone screen. Binding another mode's view
-        // can reactivate its top bar, so keep both gameplay views hidden here.
+        // The ready page is standalone. Keep every gameplay view hidden here.
         _gridBuilder?.SetVisible(false);
-        _stateView?.SetGameplayVisible(false);
+        _journeyStateView?.SetGameplayVisible(false);
+        _newGameStateView?.SetGameplayVisible(false);
         _dailyChallengeStateView?.SetGameplayVisible(false);
         _dailyChallengeScreen.SetLandscape(Screen.width > Screen.height);
         _dailyChallengeScreen.Show();
@@ -300,7 +313,8 @@ public class GameContext : MonoBehaviour
             DailyChallengeViewModel.Prepare(record);
         _dailyChallengeStateMachine.SetSuspended(false);
         _gridBuilder?.SetVisible(true);
-        _stateView?.SetGameplayVisible(false);
+        _journeyStateView?.SetGameplayVisible(false);
+        _newGameStateView?.SetGameplayVisible(false);
         _dailyChallengeStateView?.SetGameplayVisible(true);
     }
 
@@ -364,7 +378,10 @@ public class GameContext : MonoBehaviour
         _grid?.Bind(viewModel);
         _error?.Bind(viewModel);
         _picker?.Bind(viewModel);
-        _stateView?.Bind(viewModel);
+        if (viewModel is NewGameViewModel newGameViewModel)
+            _newGameStateView?.Bind(newGameViewModel);
+        else if (viewModel is JourneyViewModel journeyViewModel)
+            _journeyStateView?.Bind(journeyViewModel);
     }
 
     private void OnDestroy()

@@ -5096,7 +5096,7 @@ MonoBehaviour:
     m_PersistentCalls:
       m_Calls:
       - m_Target: {fileID: 648528822}
-        m_TargetAssemblyTypeName: GameStateView, Assembly-CSharp
+        m_TargetAssemblyTypeName: JourneyGameStateView, Assembly-CSharp
         m_MethodName: OnNewGamePressed
         m_Mode: 1
         m_Arguments:
@@ -5156,8 +5156,9 @@ GameObject:
   - component: {fileID: 648528821}
   - component: {fileID: 648528822}
   - component: {fileID: 7000000000000001000}
+  - component: {fileID: 8120000000000000002}
   m_Layer: 5
-  m_Name: GameStateView
+  m_Name: GameplayStateViews
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -5178,6 +5179,7 @@ RectTransform:
   - {fileID: 1023807774}
   - {fileID: 8600000000000000040}
   - {fileID: 8600000000000000098}
+  - {fileID: 8120000000000000001}
   m_Father: {fileID: 2027544913}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0, y: 0}
@@ -5196,28 +5198,74 @@ MonoBehaviour:
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 7073925472320514c9bb3293f047bd93, type: 3}
   m_Name: 
-  m_EditorClassIdentifier: Assembly-CSharp::GameStateView
+  m_EditorClassIdentifier: Assembly-CSharp::JourneyGameStateView
   Lives: {fileID: 898213587}
   Timer: {fileID: 1480642198}
   Settings: {fileID: 1326735268}
   Level: {fileID: 1107887576}
-  newGameLevel: {fileID: 9000000000020}
   timerLabel: {fileID: 1480642200}
-  lifeIcons: []
-  lifeActiveColor: {r: 0.92, g: 0.27, b: 0.38, a: 1}
-  lifeEmptyColor: {r: 0.3, g: 0.3, b: 0.4, a: 1}
   journeyHudPanel: {fileID: 1023807773}
-  newGameHudPanel: {fileID: 8600000000000000000}
+  journeyTopBar: {fileID: 1515388385}
   overlay: {fileID: 1121516640}
   winPanel: {fileID: 1948213038}
   winTimeLabel: {fileID: 762410680}
   winPointsLabel: {fileID: 1505283163}
   losePanel: {fileID: 928078431}
-  loseMistakesLabel: {fileID: 0}
   pausePanel: {fileID: 1030801303}
-  newGameWinPanel: {fileID: 2147300000}
-  newGameTopBar: {fileID: 9000000000006}
-  JourneyTopBar: {fileID: 1515388385}
+--- !u!1 &8120000000000000000
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 8120000000000000001}
+  - component: {fileID: 8120000000000000002}
+  m_Layer: 5
+  m_Name: NewGameGameStateView
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!224 &8120000000000000001
+RectTransform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 8120000000000000000}
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 0, y: 0, z: 0}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 648528821}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+  m_AnchorMin: {x: 0, y: 0}
+  m_AnchorMax: {x: 0, y: 0}
+  m_AnchoredPosition: {x: 0, y: 0}
+  m_SizeDelta: {x: 0, y: 0}
+  m_Pivot: {x: 0.5, y: 0.5}
+--- !u!114 &8120000000000000002
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 8120000000000000000}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: a2beee8b6c95488ebd7b197f03c1a02d, type: 3}
+  m_Name:
+  m_EditorClassIdentifier: Assembly-CSharp::NewGameGameStateView
+  levelLabel: {fileID: 9000000000020}
+  hudPanel: {fileID: 8600000000000000000}
+  overlay: {fileID: 1121516640}
+  winPanel: {fileID: 2147300000}
+  pausePanel: {fileID: 1030801303}
+  topBar: {fileID: 9000000000006}
 --- !u!1 &649014147
 GameObject:
   m_ObjectHideFlags: 0
@@ -10159,7 +10207,7 @@ MonoBehaviour:
     m_PersistentCalls:
       m_Calls:
       - m_Target: {fileID: 648528822}
-        m_TargetAssemblyTypeName: GameStateView, Assembly-CSharp
+        m_TargetAssemblyTypeName: JourneyGameStateView, Assembly-CSharp
         m_MethodName: OnRetryPressed
         m_Mode: 1
         m_Arguments:
@@ -11627,7 +11675,7 @@ MonoBehaviour:
     m_PersistentCalls:
       m_Calls:
       - m_Target: {fileID: 648528822}
-        m_TargetAssemblyTypeName: GameStateView, Assembly-CSharp
+        m_TargetAssemblyTypeName: JourneyGameStateView, Assembly-CSharp
         m_MethodName: OnNewGamePressed
         m_Mode: 1
         m_Arguments:
@@ -25708,9 +25756,9 @@ MonoBehaviour:
   m_OnClick:
     m_PersistentCalls:
       m_Calls:
-      - m_Target: {fileID: 648528822}
-        m_TargetAssemblyTypeName: GameStateView, Assembly-CSharp
-        m_MethodName: OnNewGameWinAcknowledged
+      - m_Target: {fileID: 8120000000000000002}
+        m_TargetAssemblyTypeName: NewGameGameStateView, Assembly-CSharp
+        m_MethodName: OnWinAcknowledged
         m_Mode: 1
         m_Arguments:
           m_ObjectArgument: {fileID: 0}
@@ -37975,11 +38023,7 @@ MonoBehaviour:
   Timer: {fileID: 7000000000000000004}
   Settings: {fileID: 7000000000000000006}
   Level: {fileID: 7000000000000000022}
-  newGameLevel: {fileID: 7000000000000000022}
   timerLabel: {fileID: 7000000000000000026}
-  lifeIcons: []
-  lifeActiveColor: {r: 0.92, g: 0.27, b: 0.38, a: 1}
-  lifeEmptyColor: {r: 0.3, g: 0.3, b: 0.4, a: 1}
   hudPanel: {fileID: 8600000000000000058}
   overlay: {fileID: 3001000021}
   winPanel: {fileID: 3001000001}

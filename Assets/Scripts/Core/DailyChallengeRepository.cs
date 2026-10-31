@@ -117,19 +117,6 @@ public static class DailyChallengeRepository
 #endif
     }
 
-    public static DailyChallengeRecord GetForDate(DateTime date)
-    {
-        DateTime day=date.Date;
-#if UNITY_WEBGL && !UNITY_EDITOR
-        StoredRow stored=Data.Rows.Find(r=>DateTime.Parse(r.CurrentDate,CultureInfo.InvariantCulture).Date==day); return stored==null?null:FromStored(stored);
-#else
-        string dateKey=day.ToString("yyyy-MM-dd",CultureInfo.InvariantCulture);
-        List<DailyChallengeRecord> rows=Db.Query<DailyChallengeRecord>(
-            "SELECT * FROM DailyGame_challenge WHERE CurrentDate = ? ORDER BY Id DESC LIMIT 1",dateKey);
-        return rows.Count==0?null:rows[0];
-#endif
-    }
-
     public static void MarkAttempted(DailyChallengeRecord record)
     {
         if(record==null)return;

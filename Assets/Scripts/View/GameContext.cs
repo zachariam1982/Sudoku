@@ -184,15 +184,6 @@ public class GameContext : MonoBehaviour
         _newGameScreen.Show();
     }
 
-    public void RetryLatestNewGameResult()
-    {
-        NewGameResult latest = NewGameResultDatabase.GetLatest();
-        if (latest != null)
-            RetryNewGameResult(latest);
-        else if (NewGameViewModel != null && NewGameViewModel.HasActiveGame)
-            NewGameViewModel.RestartCurrentGame();
-    }
-
     public void RetryNewGameResult(NewGameResult result)
     {
         if (result == null) return;

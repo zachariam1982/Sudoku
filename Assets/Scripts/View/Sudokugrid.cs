@@ -301,6 +301,4 @@ public class SudokuGrid : MonoBehaviour
             OnCandidateHighlightChanged(viewModel.HighlightedCandidateNumber.Value);
         }
     }
-
-    public void SaveCurrentState() { }
 }

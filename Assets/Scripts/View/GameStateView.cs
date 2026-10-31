@@ -250,11 +250,6 @@ public class GameStateView : MonoBehaviour
 
     // ── Stars ─────────────────────────────────────────────────────────────────
 
-    private void OnStarRatingChanged(int stars)
-    {
-
-    }
-
     // ── Win / Lose Panels ─────────────────────────────────────────────────────
 
     private void OnWonChanged(bool isWon)

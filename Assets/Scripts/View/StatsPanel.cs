@@ -43,9 +43,6 @@ public class StatsPanel : MonoBehaviour
     [SerializeField] private TextMeshProUGUI allTimeTableHeader;
     [SerializeField] private TextMeshProUGUI allTimeTableDetails;
 
-    [Header("All-time win-rate bar")]
-    [SerializeField] private RectTransform winRateBarFill;
-
     [Header("Streak chip")]
     [SerializeField] private TextMeshProUGUI streakNumber;
     [SerializeField] private TextMeshProUGUI streakDesc;
@@ -64,7 +61,6 @@ public class StatsPanel : MonoBehaviour
 
     [Header("Animation")]
     [SerializeField] private float slideDuration = 0.26f;
-    [SerializeField] private float barDuration   = 0.80f;
 
     [Header("ScrollView")]
     [SerializeField] private ScrollRect scrollRect;
@@ -842,23 +838,6 @@ public class StatsPanel : MonoBehaviour
 
         if (_verseTicker != null)
             _verseTicker.SetGameActive(_tickerWasActive && !anotherScreenIsOpen);
-    }
-
-    private IEnumerator AnimateBar(float targetRate)
-    {
-        if (winRateBarFill == null) yield break;
-        float parentWidth = winRateBarFill.parent.GetComponent<RectTransform>().rect.width;
-        float fromW  = winRateBarFill.sizeDelta.x;
-        float toW    = parentWidth * targetRate;
-        float t = 0f;
-        while (t < 1f)
-        {
-            t += Time.deltaTime / barDuration;
-            float e = EaseOut(Mathf.Clamp01(t));
-            winRateBarFill.sizeDelta = new Vector2(Mathf.Lerp(fromW, toW, e), winRateBarFill.sizeDelta.y);
-            yield return null;
-        }
-        winRateBarFill.sizeDelta = new Vector2(toW, winRateBarFill.sizeDelta.y);
     }
 
     // ── Helpers ───────────────────────────────────────────────────────────

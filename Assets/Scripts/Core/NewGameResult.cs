@@ -52,11 +52,6 @@ public sealed class NewGameResultStats
     public int CompletedGames;
     public int IncompleteGames;
 
-    public int GamesForDifficulty(SudokuDifficulty difficulty) =>
-        NewGameResultDatabase.GetDifficultyStats(difficulty).GamesStarted;
-
-    public int WinsForDifficulty(SudokuDifficulty difficulty) =>
-        NewGameResultDatabase.GetDifficultyStats(difficulty).GamesCompleted;
 }
 
 public sealed class NewGameResultEntry

@@ -12,88 +12,6 @@ public static class UIAnimator
     // ── Easing functions ──────────────────────────────────────────────────────
 
     private static float EaseOut(float t)         => 1f - Mathf.Pow(1f - t, 3f);
-    private static float EaseOutElastic(float t)
-    {
-        if (t <= 0f) return 0f;
-        if (t >= 1f) return 1f;
-        float p = 0.3f;
-        return Mathf.Pow(2f, -10f * t)
-               * Mathf.Sin((t - p / 4f) * (2f * Mathf.PI) / p) + 1f;
-    }
-
-    // ── Scale Punch ───────────────────────────────────────────────────────────
-
-    /// <summary>
-    /// Tap feedback: 1 → shrink → overshoot → settle.
-    /// Use on empty cell tap.
-    /// </summary>
-    public static IEnumerator ScalePunch(Transform target,
-                                          Vector3 originalScale,
-                                          float shrink    = 0.88f,
-                                          float overshoot = 1.14f,
-                                          float duration  = 2.0f)
-    {
-        // Phase 1 — shrink down
-        float elapsed = 0f;
-        float phase1  = duration * 0.35f;
-        while (elapsed < phase1)
-        {
-            elapsed += Time.deltaTime;
-            float t  = Mathf.Clamp01(elapsed / phase1);
-            target.localScale = Vector3.LerpUnclamped(originalScale, originalScale * shrink, EaseOut(t));
-            yield return null;
-        }
-
-        // Phase 2 — elastic overshoot back to original
-        elapsed = 0f;
-        float phase2 = duration * 0.65f;
-        Vector3 from = target.localScale;
-        while (elapsed < phase2)
-        {
-            elapsed += Time.deltaTime;
-            float t  = Mathf.Clamp01(elapsed / phase2);
-            target.localScale = Vector3.LerpUnclamped(from, originalScale, EaseOutElastic(t));
-            yield return null;
-        }
-
-        target.localScale = originalScale;
-    }
-
-    /// <summary>
-    /// Number entry bounce: 1 → grow → settle.
-    /// Use when a correct number is entered into a cell.
-    /// </summary>
-    public static IEnumerator ScaleBounce(Transform target,
-                                           Vector3 originalScale,
-                                           float peak     = 1.2f,
-                                           float duration = 0.22f)
-    {
-        // Phase 1 — grow
-        float elapsed = 0f;
-        float phase1  = duration * 0.4f;
-        while (elapsed < phase1)
-        {
-            elapsed += Time.deltaTime;
-            float t  = Mathf.Clamp01(elapsed / phase1);
-            target.localScale = Vector3.LerpUnclamped(originalScale, originalScale * peak, EaseOut(t));
-            yield return null;
-        }
-
-        // Phase 2 — elastic settle
-        elapsed = 0f;
-        float phase2 = duration * 0.6f;
-        Vector3 from = target.localScale;
-        while (elapsed < phase2)
-        {
-            elapsed += Time.deltaTime;
-            float t  = Mathf.Clamp01(elapsed / phase2);
-            target.localScale = Vector3.LerpUnclamped(from, originalScale, EaseOutElastic(t));
-            yield return null;
-        }
-
-        target.localScale = originalScale;
-    }
-
     // ── Shake ─────────────────────────────────────────────────────────────────
 
     /// <summary>
@@ -149,39 +67,6 @@ public static class UIAnimator
 
         image.color = returnColor;
     }
-
-    /// <summary>
-    /// Pulses between two colors multiple times — much more visible than a single flash.
-    /// Use for error feedback on wrong number entry.
-    /// </summary>
-    public static IEnumerator Pulse(Image image,
-                                    Color pulseColor,
-                                    Color baseColor,
-                                    int   pulseCount = 3,
-                                    float pulseDuration = 0.15f)
-    {
-        if (image == null) yield break;
-
-        for (int i = 0; i < pulseCount; i++)
-        {
-            // Flash to pulse color
-            image.color = pulseColor;
-            yield return new WaitForSeconds(pulseDuration * 0.4f);
-
-            // Fade back to base
-            float elapsed = 0f;
-            float fadeDur = pulseDuration * 0.6f;
-            while (elapsed < fadeDur)
-            {
-                elapsed    += Time.deltaTime;
-                float t     = Mathf.Clamp01(elapsed / fadeDur);
-                image.color = Color.Lerp(pulseColor, baseColor, EaseOut(t));
-                yield return null;
-            }
-
-            image.color = baseColor;
-        }
-    }    
 
     // ── Slide ─────────────────────────────────────────────────────────────────
 
@@ -274,35 +159,6 @@ public static class UIAnimator
     }
 
     // ── Overlay Fade ──────────────────────────────────────────────────────────
-
-    /// <summary>
-    /// Fades an Image alpha from 0 to target alpha.
-    /// Use for overlay appear.
-    /// </summary>
-    public static IEnumerator FadeIn(Image image,
-                                      float targetAlpha = 0.45f,
-                                      float duration    = 0.2f)
-    {
-        if (image == null) yield break;
-
-        Color c   = image.color;
-        c.a       = 0f;
-        image.color = c;
-        image.gameObject.SetActive(true);
-
-        float elapsed = 0f;
-        while (elapsed < duration)
-        {
-            elapsed += Time.deltaTime;
-            float t  = Mathf.Clamp01(elapsed / duration);
-            c.a      = Mathf.Lerp(0f, targetAlpha, EaseOut(t));
-            image.color = c;
-            yield return null;
-        }
-
-        c.a         = targetAlpha;
-        image.color = c;
-    }
 
     // ── Helper ────────────────────────────────────────────────────────────────
 

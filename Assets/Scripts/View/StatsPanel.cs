@@ -119,8 +119,6 @@ public class StatsPanel : MonoBehaviour
 
         if (backdropButton != null) backdropButton.gameObject.SetActive(false);
 
-        if (closeButton    != null) closeButton.onClick.AddListener(ClosePanel);
-        if (backdropButton != null) backdropButton.onClick.AddListener(ClosePanel);
         if (scrollRect     != null) scrollRect.onValueChanged.AddListener(OnScroll);
     }
 
@@ -534,7 +532,7 @@ public class StatsPanel : MonoBehaviour
         _slideAnim = StartCoroutine(SlideIn());
     }
 
-    private void ClosePanel()
+    public void ClosePanel()
     {
         _open = false;
 

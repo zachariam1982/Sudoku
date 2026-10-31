@@ -36,13 +36,9 @@ public class JourneyTopBar : MonoBehaviour
         _topBar = GetComponent<RectTransform>();
         _layout = GetComponent<HorizontalLayoutGroup>();
 
-        if (exitButton != null)
-            exitButton.onClick.AddListener(ExitNewGame);
 
         if (_layout != null)
         {
-            _layout.childScaleWidth = true;
-            _layout.childScaleHeight = true;
             _originalSpacing = _layout.spacing;
             _originalAlignment = _layout.childAlignment;
             _originalExpandWidth = _layout.childForceExpandWidth;
@@ -63,8 +59,7 @@ public class JourneyTopBar : MonoBehaviour
                 if (items[i] == null) continue;
 
                 _itemLayouts[i] = items[i].GetComponent<LayoutElement>();
-                if (_itemLayouts[i] == null)
-                    _itemLayouts[i] = items[i].gameObject.AddComponent<LayoutElement>();
+                if (_itemLayouts[i] == null) continue;
 
                 _originalMinWidths[i] = _itemLayouts[i].minWidth;
                 _originalPreferredWidths[i] = _itemLayouts[i].preferredWidth;
@@ -255,16 +250,5 @@ public class JourneyTopBar : MonoBehaviour
             LayoutRebuilder.ForceRebuildLayoutImmediate(_topBar);
     }
 
-    private void ExitNewGame()
-    {
-        GameContext context = FindFirstObjectByType<GameContext>();
-        if (context != null)
-            context.ExitNewGame();
-    }
 
-    private void OnDestroy()
-    {
-        if (exitButton != null)
-            exitButton.onClick.RemoveListener(ExitNewGame);
-    }
 }

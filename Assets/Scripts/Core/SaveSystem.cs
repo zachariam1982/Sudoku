@@ -185,7 +185,7 @@ public static class SaveSystem
             IsAllZero(data.OriginalPuzzleFlat) && IsAllZero(data.SolutionFlat))
             return true;
 
-        return SudokuModel.IsValidSavedPuzzle(data.OriginalPuzzleFlat, data.SolutionFlat);
+        return ClassicSudokuModel.IsValidSavedPuzzle(data.OriginalPuzzleFlat, data.SolutionFlat);
     }
 
     private static bool IsAllZero(int[] values)

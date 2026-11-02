@@ -32,7 +32,7 @@ public class SudokuViewModel {
  public Observable<float> ElapsedSeconds = new();
  public (int id,int level,int difficulty,int points) RetryGameData = (-1,-1,-1,-1);
  public Command NextLevel, IncreaseDifficulty, DecreaseDifficulty;
- public SudokuViewModel(SudokuModel model) {
+ public SudokuViewModel(ClassicSudokuModel model) {
   NextLevel = new(() => model.SetLevel((GameDatabase.Records.FirstOrDefault()?.Level ?? model.CurrentLevel)+1));
   IncreaseDifficulty = new(() => model.increaseDifficulty());
   DecreaseDifficulty = new(() => model.decreaseDifficulty());

@@ -6,8 +6,8 @@ Run with .NET 8 from the repository root:
 dotnet run --project Tests/Progression/Progression.csproj
 ```
 
-This dependency-free console harness compiles the production SudokuModel,
-SudokuSolver, SudokuDifficultyAnalyzer, ScoringSystem, and GameRecord. Unity, database, view model, state machine and persistence
+This dependency-free console harness compiles the production ClassicSudokuModel,
+ClassicSudokuSolver, ClassicSudokuDifficultyAnalyzer, ScoringSystem, and GameRecord. Unity, database, view model, state machine and persistence
 infrastructure are substitutes. It does not test Unity lifecycle, state transitions, SQLite, WebGL persistence
 or actual save recovery.
 The project stays outside Assets and adds nothing to game builds.

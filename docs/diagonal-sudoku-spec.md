@@ -9,7 +9,7 @@ This document defines gameplay, generation, difficulty, presentation, persistenc
 ## 2. Current project baseline
 
 - `SudokuDifficulty` already defines nine tiers: Simple, Beginner, Easy, Novice, Moderate, Advanced, Hard, Expert, and Hardest.
-- `SudokuGenerator`, `SudokuSolver`, `SudokuDifficultyAnalyzer`, and `SudokuModel` currently apply Classic rules only.
+- `ClassicSudokuGenerator`, `ClassicSudokuSolver`, `ClassicSudokuDifficultyAnalyzer`, and `ClassicSudokuModel` currently apply Classic rules only.
 - The generator searches by requested tier and can return a lower tier when it cannot create the requested one. The returned `SudokuResult.Difficulty` is the actual tier.
 - `SudokuGrid` and `SudokuCell` are shared by the game modes. The board UI can remain shared, with a variant-aware overlay for the diagonals.
 - `SaveGameData` stores the puzzle, solution, board, seed, and difficulty, but does not store a puzzle variant.
@@ -85,10 +85,10 @@ Introduce a stable variant identifier with Classic as value `0` and Diagonal as 
 
 The variant must be passed into or owned by:
 
-- `SudokuGenerator` and `SudokuResult`;
-- `SudokuSolver` solution counting and candidate validation;
-- `SudokuDifficultyAnalyzer` candidate state and techniques;
-- `SudokuModel` conflict detection, validation, candidate calculation, and saved-puzzle validation;
+- `ClassicSudokuGenerator` and `SudokuResult`;
+- `ClassicSudokuSolver` solution counting and candidate validation;
+- `ClassicSudokuDifficultyAnalyzer` candidate state and techniques;
+- `ClassicSudokuModel` conflict detection, validation, candidate calculation, and saved-puzzle validation;
 - New Game view model, save/load, replay, and results.
 
 ### 5.2 Saves and records

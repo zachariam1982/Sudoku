@@ -6,7 +6,7 @@ void Equal<T>(T expected,T actual,string name) {
 List<GameRecord> Window(SudokuDifficulty tier,int wins,int total) {
  return Enumerable.Range(0,5).Select(i => new GameRecord { Id=100-i,Level=20-i,Difficulty=(int)tier,IsWon=i<wins,Points=total/5+(i<total%5?1:0) }).ToList();
 }
-SudokuDifficulty Next(List<GameRecord> r,SudokuDifficulty fallback=SudokuDifficulty.Moderate) => SudokuModel.CalculateNextDifficulty(r,fallback);
+SudokuDifficulty Next(List<GameRecord> r,SudokuDifficulty fallback=SudokuDifficulty.Moderate) => ClassicSudokuModel.CalculateNextDifficulty(r,fallback);
 // Exhaust all tiers, win counts, and attainable score totals against the rules.
 foreach (SudokuDifficulty tier in Enum.GetValues<SudokuDifficulty>()) {
  int possible=ScoringSystem.GetAbsoluteMaximumScore(tier)*5;
@@ -44,26 +44,26 @@ int[,] knownUniquePuzzle = {
  {0,0,0,0,8,0,0,7,9}
 };
 var knownPuzzleBeforeSolve=(int[,])knownUniquePuzzle.Clone();
-Equal(1,SudokuSolver.CountSolutions(knownUniquePuzzle),"known puzzle has one solution");
-Equal(true,SudokuSolver.HasUniqueSolution(knownUniquePuzzle),"known puzzle uniqueness");
+Equal(1,ClassicSudokuSolver.CountSolutions(knownUniquePuzzle),"known puzzle has one solution");
+Equal(true,ClassicSudokuSolver.HasUniqueSolution(knownUniquePuzzle),"known puzzle uniqueness");
 for(int r=0;r<9;r++) for(int c=0;c<9;c++)
  Equal(knownPuzzleBeforeSolve[r,c],knownUniquePuzzle[r,c],"solver preserves input board");
 var emptyPuzzle=new int[9,9];
-Equal(2,SudokuSolver.CountSolutions(emptyPuzzle,2),"empty board count capped at two");
-Equal(1,SudokuSolver.CountSolutions(emptyPuzzle,1),"solution count respects limit one");
-Equal(0,SudokuSolver.CountSolutions(emptyPuzzle,0),"zero solution limit");
-Equal(false,SudokuSolver.HasUniqueSolution(emptyPuzzle),"empty board is not unique");
+Equal(2,ClassicSudokuSolver.CountSolutions(emptyPuzzle,2),"empty board count capped at two");
+Equal(1,ClassicSudokuSolver.CountSolutions(emptyPuzzle,1),"solution count respects limit one");
+Equal(0,ClassicSudokuSolver.CountSolutions(emptyPuzzle,0),"zero solution limit");
+Equal(false,ClassicSudokuSolver.HasUniqueSolution(emptyPuzzle),"empty board is not unique");
 var duplicateRow=new int[9,9];
 duplicateRow[0,0]=4; duplicateRow[0,1]=4;
-Equal(0,SudokuSolver.CountSolutions(duplicateRow),"duplicate row givens are contradictory");
+Equal(0,ClassicSudokuSolver.CountSolutions(duplicateRow),"duplicate row givens are contradictory");
 var duplicateColumn=new int[9,9];
 duplicateColumn[0,0]=4; duplicateColumn[1,0]=4;
-Equal(0,SudokuSolver.CountSolutions(duplicateColumn),"duplicate column givens are contradictory");
+Equal(0,ClassicSudokuSolver.CountSolutions(duplicateColumn),"duplicate column givens are contradictory");
 var duplicateBox=new int[9,9];
 duplicateBox[0,0]=4; duplicateBox[1,1]=4;
-Equal(0,SudokuSolver.CountSolutions(duplicateBox),"duplicate box givens are contradictory");
+Equal(0,ClassicSudokuSolver.CountSolutions(duplicateBox),"duplicate box givens are contradictory");
 // Candidate removals must be written back to the analyzer's candidate grid.
-var analyzerState=new SudokuDifficultyAnalyzer.SolverState(new int[9,9]);
+var analyzerState=new ClassicSudokuDifficultyAnalyzer.SolverState(new int[9,9]);
 Equal(9,analyzerState.Candidates[0,0].Count,"empty analyzer cell has all candidates");
 Equal(true,analyzerState.RemoveCandidate(0,0,5),"first candidate removal changes state");
 Equal(false,analyzerState.Candidates[0,0].Contains(5),"candidate removal persists in state");
@@ -81,7 +81,7 @@ int[,] solvedReference = {
  {2,8,7,4,1,9,6,3,5},
  {3,4,5,2,8,6,1,7,9}
 };
-var solvedRating=SudokuDifficultyAnalyzer.Analyze(solvedReference);
+var solvedRating=ClassicSudokuDifficultyAnalyzer.Analyze(solvedReference);
 Equal(SudokuDifficulty.Simple,solvedRating.Difficulty,"solved board analyzer tier");
 Equal(SudokuTechnique.NakedSingle,solvedRating.HardestTechnique,"solved board analyzer technique");
 Equal(0,solvedRating.SolveSteps,"solved board analyzer steps");
@@ -89,7 +89,7 @@ Equal(true,solvedRating.SolvedLogically,"solved board analyzer completion");
 var oneHole=(int[,])solvedReference.Clone();
 oneHole[0,0]=0;
 var oneHoleBefore=(int[,])oneHole.Clone();
-var oneHoleRating=SudokuDifficultyAnalyzer.Analyze(oneHole);
+var oneHoleRating=ClassicSudokuDifficultyAnalyzer.Analyze(oneHole);
 Equal(SudokuDifficulty.Simple,oneHoleRating.Difficulty,"single-hole analyzer tier");
 Equal(SudokuTechnique.NakedSingle,oneHoleRating.HardestTechnique,"single-hole analyzer technique");
 Equal(1,oneHoleRating.SolveSteps,"single-hole analyzer steps");
@@ -115,10 +115,10 @@ bool IsSolvedBoard(int[,] board) {
  return true;
 }
 foreach(SudokuDifficulty tier in Enum.GetValues<SudokuDifficulty>()) {
- var generated=SudokuGenerator.GenerateSudoku(1,tier);
+ var generated=ClassicSudokuGenerator.GenerateSudoku(1,tier);
  Equal(true,(int)generated.Difficulty<=(int)tier,$"generated difficulty does not exceed requested {tier}");
- Equal(generated.Difficulty,SudokuDifficultyAnalyzer.Analyze(generated.Puzzle).Difficulty,$"generated rating matches recorded tier {tier}");
- Equal(true,SudokuSolver.HasUniqueSolution(generated.Puzzle),$"unique solution {tier}");
+ Equal(generated.Difficulty,ClassicSudokuDifficultyAnalyzer.Analyze(generated.Puzzle).Difficulty,$"generated rating matches recorded tier {tier}");
+ Equal(true,ClassicSudokuSolver.HasUniqueSolution(generated.Puzzle),$"unique solution {tier}");
  Equal(true,IsSolvedBoard(generated.Solution),$"valid complete solution {tier}");
  for(int row=0;row<9;row++) for(int col=0;col<9;col++)
   if(generated.Puzzle[row,col]!=0)
@@ -126,7 +126,7 @@ foreach(SudokuDifficulty tier in Enum.GetValues<SudokuDifficulty>()) {
 }
 // Requested tiers are tried in descending order and stop at the first available tier.
 var fallbackOrder=new List<SudokuDifficulty>();
-var fallbackResult=SudokuGenerator.GenerateWithDifficultyFallback(
+var fallbackResult=ClassicSudokuGenerator.GenerateWithDifficultyFallback(
  SudokuDifficulty.Expert,
  tier => {
   fallbackOrder.Add(tier);
@@ -135,7 +135,7 @@ var fallbackResult=SudokuGenerator.GenerateWithDifficultyFallback(
 Equal("Expert,Hard,Advanced,Moderate",string.Join(",",fallbackOrder),"fallback tier order");
 Equal(SudokuDifficulty.Moderate,fallbackResult.Difficulty,"fallback records actual tier");
 bool rejectedInvalidDifficulty=false;
-try { SudokuGenerator.GenerateSudoku(1,(SudokuDifficulty)99); }
+try { ClassicSudokuGenerator.GenerateSudoku(1,(SudokuDifficulty)99); }
 catch(ArgumentOutOfRangeException) { rejectedInvalidDifficulty=true; }
 Equal(true,rejectedInvalidDifficulty,"reject invalid difficulty enum");
 Console.WriteLine($"PASS: {checks} assertions (production model, generator, and difficulty analyzer).");

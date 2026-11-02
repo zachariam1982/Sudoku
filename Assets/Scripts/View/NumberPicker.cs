@@ -140,6 +140,10 @@ public class NumberPicker : MonoBehaviour
             }
         }
 
+        // GameContext can bind the picker before the SOS dialog's Awake runs.
+        // Bind again here so the dialog always observes the active picker VM.
+        BindSOSDialog();
+
         if (pickerPanel != null) pickerPanel.gameObject.SetActive(false);
     }
 

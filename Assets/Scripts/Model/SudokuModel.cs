@@ -21,7 +21,7 @@ public class SudokuResult
     public int[,] Solution; // The completed grid
     public SudokuDifficulty Difficulty; // The analyzer-rated tier actually generated
 }
-public static class ScoringSystem
+public class ScoringSystem : IScoringSystem
 {
     // ── Penalty constants ─────────────────────────────────────────────────────
     public const int PenaltyPerMistake        = 2;  // wrong manual entry (conflict)
@@ -89,8 +89,19 @@ public static class ScoringSystem
  
         return (total, diff, time, pen);
     }
+
+    int IScoringSystem.GetAbsoluteMaximumScore(SudokuDifficulty difficulty) =>
+        GetAbsoluteMaximumScore(difficulty);
+
+    int IScoringSystem.Calculate(
+        SudokuDifficulty difficulty, float elapsedSeconds, IScorePenalties penalties) =>
+        Calculate(difficulty, elapsedSeconds, penalties);
+
+    (int total, int diffScore, int timeScore, int penalty) IScoringSystem.CalculateDetailed(
+        SudokuDifficulty difficulty, float elapsedSeconds, IScorePenalties penalties) =>
+        CalculateDetailed(difficulty, elapsedSeconds, penalties);
 }
-public static class SudokuGenerator
+public class SudokuGenerator : ISudokuGenerator
 {
     private static ( int minClues, int maxClues) GetSearchRange( SudokuDifficulty difficulty)
     {
@@ -127,6 +138,10 @@ public static class SudokuGenerator
 
         return result;
     }
+
+    SudokuResult ISudokuGenerator.Generate(
+        int level, SudokuDifficulty requestedDifficulty, int maxAttempts) =>
+        GenerateSudoku(level, requestedDifficulty, maxAttempts);
 
     internal static SudokuResult GenerateWithDifficultyFallback(
         SudokuDifficulty requestedDifficulty,
@@ -322,8 +337,17 @@ public static class SudokuGenerator
         return true;
     }
 }
-public class SudokuModel
+public class SudokuModel : ISudokuModel
 {
+    private readonly ISudokuGenerator _generator;
+
+    public SudokuModel() : this(new SudokuGenerator()) { }
+
+    public SudokuModel(ISudokuGenerator generator)
+    {
+        _generator = generator ?? new SudokuGenerator();
+    }
+
     public int[,]  Board     { get; private set; } = new int[9, 9];
     public bool[,] GivenMask { get; private set; } = new bool[9, 9];
     public int[,] PencilCandidateMasks { get; private set; } = new int[9, 9];
@@ -399,7 +423,7 @@ public class SudokuModel
     }
     public void LoadCurrentLevelPuzzle(int maxAttempts = 100)
     {
-        this.ret = SudokuGenerator.GenerateSudoku(_puzzleSeed, _currentDifficulty, maxAttempts);
+        this.ret = _generator.Generate(_puzzleSeed, _currentDifficulty, maxAttempts);
         _currentDifficulty = ret.Difficulty;
 
         for (int row = 0; row < 9; row++)

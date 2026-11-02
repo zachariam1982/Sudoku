@@ -1,7 +1,7 @@
 using System;
 using System.Collections.Generic;
 
-public static class SudokuSolver
+public class SudokuSolver : ISudokuSolver
 {
     private const int FullCandidateMask = 0x3FE; // Bits 1 through 9.
     private const int ColumnMaskOffset = 9;
@@ -199,4 +199,11 @@ public static class SudokuSolver
 
         return true;
     }
+
+    bool ISudokuSolver.HasUniqueSolution(int[,] puzzle) => HasUniqueSolution(puzzle);
+    int ISudokuSolver.CountSolutions(int[,] board, int limit) => CountSolutions(board, limit);
+    List<int> ISudokuSolver.GetCandidates(int[,] board, int row, int col) =>
+        GetCandidates(board, row, col);
+    bool ISudokuSolver.IsValid(int[,] board, int row, int col, int value) =>
+        IsValid(board, row, col, value);
 }

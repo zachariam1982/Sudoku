@@ -24,7 +24,7 @@ public class SudokuDifficultyResult
     public bool SolvedLogically;
 }
 
-public static class SudokuDifficultyAnalyzer
+public class SudokuDifficultyAnalyzer : ISudokuDifficultyAnalyzer
 {
     internal struct CandidateSet : IEnumerable<int>
     {
@@ -336,6 +336,8 @@ public static class SudokuDifficultyAnalyzer
                 IsComplete(state.Board)
         };
     }
+
+    SudokuDifficultyResult ISudokuDifficultyAnalyzer.Analyze(int[,] puzzle) => Analyze(puzzle);
     private static SudokuTechnique Max(SudokuTechnique a,SudokuTechnique b) => (SudokuTechnique) Math.Max((int)a, (int)b);
     private static bool IsComplete(int[,] board)
     {

@@ -1,17 +1,11 @@
 using System;
-#if !UNITY_WEBGL || UNITY_EDITOR
 using SQLite;
-#endif
 
 [Serializable]
-#if !UNITY_WEBGL || UNITY_EDITOR
 [Table("new_game_results")]
-#endif
 public class NewGameResult
 {
-#if !UNITY_WEBGL || UNITY_EDITOR
     [PrimaryKey, AutoIncrement]
-#endif
     public int Id { get; set; }
     public int Level { get; set; }
     public int Difficulty { get; set; }
@@ -22,25 +16,17 @@ public class NewGameResult
     public string RecordedAt { get; set; }
 }
 
-#if !UNITY_WEBGL || UNITY_EDITOR
 [Table("new_game_result_completions")]
-#endif
 public class NewGameResultCompletion
 {
-#if !UNITY_WEBGL || UNITY_EDITOR
     [PrimaryKey]
-#endif
     public int ResultId { get; set; }
 }
 
-#if !UNITY_WEBGL || UNITY_EDITOR
 [Table("new_game_stats_by_difficulty")]
-#endif
 public class NewGameDifficultyStats
 {
-#if !UNITY_WEBGL || UNITY_EDITOR
     [PrimaryKey]
-#endif
     public int Difficulty { get; set; }
     public int GamesStarted { get; set; }
     public int GamesCompleted { get; set; }

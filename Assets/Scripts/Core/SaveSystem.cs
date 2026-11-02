@@ -15,11 +15,6 @@ public static class SaveSystem
     private const string JourneyFileName = "save.json";
     private const string NewGameFileName = "new_game_save.json";
     private const string DailyChallengeFileName = "daily_challenge_save.json";
-#if UNITY_WEBGL && !UNITY_EDITOR
-    private const string JourneyKey = "sudoku_current_game";
-    private const string NewGameKey = "sudoku_new_game";
-    private const string DailyChallengeKey = "sudoku_daily_challenge";
-#endif
 
     private static string GetFilePath(SaveSlot slot)
     {
@@ -54,18 +49,6 @@ public static class SaveSystem
         try
         {
             string json = JsonUtility.ToJson(data, prettyPrint: false);
-#if UNITY_WEBGL && !UNITY_EDITOR
-            string key = GetPlayerPrefsKey(slot);
-            string tempKey = key + ".tmp";
-            string backupKey = key + ".bak";
-            PlayerPrefs.SetString(tempKey, json);
-            PlayerPrefs.Save();
-            if (PlayerPrefs.HasKey(key))
-                PlayerPrefs.SetString(backupKey, PlayerPrefs.GetString(key));
-            PlayerPrefs.SetString(key, PlayerPrefs.GetString(tempKey));
-            PlayerPrefs.DeleteKey(tempKey);
-            PlayerPrefs.Save();
-#else
             string path = GetFilePath(slot);
             string tempPath = path + ".tmp";
             string backupPath = path + ".bak";
@@ -92,7 +75,6 @@ public static class SaveSystem
             {
                 File.Move(tempPath, path);
             }
-#endif
         }
         catch (Exception ex)
         {
@@ -135,18 +117,10 @@ public static class SaveSystem
 
     public static void Delete(SaveSlot slot)
     {
-#if UNITY_WEBGL && !UNITY_EDITOR
-        string key = GetPlayerPrefsKey(slot);
-        PlayerPrefs.DeleteKey(key);
-        PlayerPrefs.DeleteKey(key + ".tmp");
-        PlayerPrefs.DeleteKey(key + ".bak");
-        PlayerPrefs.Save();
-#else
         string path = GetFilePath(slot);
         DeleteIfExists(path);
         DeleteIfExists(path + ".tmp");
         DeleteIfExists(path + ".bak");
-#endif
     }
 
     public static bool IsValidSave(SaveGameData data, SaveSlot slot)
@@ -236,32 +210,17 @@ public static class SaveSystem
 
     private static string[] GetCandidates(SaveSlot slot)
     {
-#if UNITY_WEBGL && !UNITY_EDITOR
-        string key = GetPlayerPrefsKey(slot);
-        return new[] { key, key + ".tmp", key + ".bak" };
-#else
         string path = GetFilePath(slot);
         return new[] { path, path + ".tmp", path + ".bak" };
-#endif
     }
 
     private static string ReadCandidate(string candidate)
     {
-#if UNITY_WEBGL && !UNITY_EDITOR
-        return PlayerPrefs.HasKey(candidate) ? PlayerPrefs.GetString(candidate) : null;
-#else
         return File.Exists(candidate) ? File.ReadAllText(candidate) : null;
-#endif
     }
 
     private static void PromoteRecoveredCandidate(string candidate, SaveSlot slot)
     {
-#if UNITY_WEBGL && !UNITY_EDITOR
-        string key = GetPlayerPrefsKey(slot);
-        if (candidate == key) return;
-        PlayerPrefs.SetString(key, PlayerPrefs.GetString(candidate));
-        PlayerPrefs.Save();
-#else
         string path = GetFilePath(slot);
         if (candidate == path) return;
         try
@@ -277,7 +236,6 @@ public static class SaveSystem
         {
             Debug.LogWarning($"[SaveSystem] Could not restore recovered save: {ex.Message}");
         }
-#endif
     }
 
     private static void DeleteIfExists(string path)
@@ -285,12 +243,4 @@ public static class SaveSystem
         if (File.Exists(path)) File.Delete(path);
     }
 
-#if UNITY_WEBGL && !UNITY_EDITOR
-    private static string GetPlayerPrefsKey(SaveSlot slot)
-    {
-        if (slot == SaveSlot.NewGame) return NewGameKey;
-        if (slot == SaveSlot.DailyChallenge) return DailyChallengeKey;
-        return JourneyKey;
-    }
-#endif
 }

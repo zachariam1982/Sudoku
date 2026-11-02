@@ -19,7 +19,6 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
 //
-#if !UNITY_WEBGL || UNITY_EDITOR
 using System;
 using System.Collections;
 using System.Collections.Generic;
@@ -1989,5 +1988,3 @@ namespace SQLite
 		}
 	}
 }
-
-#endif

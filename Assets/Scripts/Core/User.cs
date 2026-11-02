@@ -20,11 +20,7 @@ public class User : MonoBehaviour
         DontDestroyOnLoad(gameObject);  // survive scene reloads
  
         GameDatabase.Init();
-#if UNITY_WEBGL && !UNITY_EDITOR
-        NewGameResultDatabase.Init();
-#else
         NewGameResultDatabase.Init(GameDatabase.Connection);
-#endif 
         StartCoroutine(SaveLoop());
     }
     public bool TryLoadSave()

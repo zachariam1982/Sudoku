@@ -16,6 +16,7 @@ public class SOSAdDialog : MonoBehaviour
     {
         Instance = this;
         _isSOSRunning = false;
+        NumberPicker.Instance?.BindSOSDialog();
     }
 
     public void Bind(BaseViewModel vm)

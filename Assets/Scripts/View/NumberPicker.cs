@@ -220,7 +220,11 @@ public class NumberPicker : MonoBehaviour
 
     public void Bind(BaseViewModel vm)
     {
-        if (ReferenceEquals(viewModel, vm)) return;
+        if (ReferenceEquals(viewModel, vm))
+        {
+            BindSOSDialog();
+            return;
+        }
         if (viewModel != null)
         {
             viewModel.IsPickerOpen.OnChanged -= OnPickerOpenChanged;
@@ -229,8 +233,21 @@ public class NumberPicker : MonoBehaviour
 
         viewModel = vm;
 
+        if (viewModel == null)
+        {
+            BindSOSDialog();
+            return;
+        }
+
         vm.IsPickerOpen.OnChanged += OnPickerOpenChanged;
         vm.SelectedCellTransform.OnChanged += OnSelectedCellTransformChanged;
+        BindSOSDialog();
+    }
+
+    public void BindSOSDialog()
+    {
+        if (viewModel != null && SOSAdDialog.Instance != null)
+            SOSAdDialog.Instance.Bind(viewModel);
     }
 
     private void OnDestroy()

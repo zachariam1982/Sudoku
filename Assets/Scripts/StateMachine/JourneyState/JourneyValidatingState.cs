@@ -68,9 +68,7 @@ public class JourneyValidatingState : IGameState
                 
                 _machine.TransitionTo(_machine.Win);
 
-                #if UNITY_WEBGL && !UNITY_EDITOR
                 User.Instance?.SaveNow();
-                #endif
             }
             else
             {

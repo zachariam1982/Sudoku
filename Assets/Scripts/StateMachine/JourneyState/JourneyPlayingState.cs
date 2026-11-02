@@ -78,9 +78,7 @@ public class JourneyPlayingState : IGameState
 
             _machine.TransitionTo(_machine.Lose);
 
-            #if UNITY_WEBGL && !UNITY_EDITOR
             User.Instance?.SaveNow();
-            #endif
         }
     }
 

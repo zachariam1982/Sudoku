@@ -63,22 +63,10 @@ public class SOSAdDialog : MonoBehaviour
             return;
         }
 
-        #if UNITY_WEBGL && !UNITY_EDITOR
-
         AdManager.Instance.PlayAd(
             onCompleted: OnAdCompleted,
             onFailed: OnAdFailed
         );
-
-        #else
-
-        // Preserve existing Android behavior for now.
-        AdManager.Instance.PlayAd(
-            onCompleted: OnAdCompleted,
-            onFailed: OnAdCompleted
-        );
-
-        #endif
     }
     
     private void OnAdFailed()

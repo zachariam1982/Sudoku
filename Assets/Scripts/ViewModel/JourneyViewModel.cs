@@ -143,17 +143,11 @@ public class JourneyViewModel : BaseViewModel
         AddHistoryToSave(UndoHistory, data.UndoHistory);
         AddHistoryToSave(RedoHistory, data.RedoHistory);
 
-#if UNITY_WEBGL && !UNITY_EDITOR
-        data.GameHistory = GameDatabase.ExportHistory();
-#endif
         return data;
     }
 
     public void LoadSaveData(SaveGameData data)
     {
-#if UNITY_WEBGL && !UNITY_EDITOR
-        GameDatabase.ImportHistory(data.GameHistory);
-#endif
         Model.SetLevel(data.Level);
         Model.SetPuzzleSeed(data.PuzzleSeed > 0 ? data.PuzzleSeed : data.Level);
         Model.SetDifficulty((SudokuDifficulty)data.Difficulty);

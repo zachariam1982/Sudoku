@@ -27,6 +27,7 @@ public class SOSAdDialog : MonoBehaviour
         _vm = vm;
 
         if (_vm != null) _vm.IsSOSMode.OnChanged += Show;
+        Debug.Log($"[SOS] Dialog bound to {(_vm == null ? "no view model" : _vm.GetType().Name)}.");
     }
     private void OnDestroy()
     {
@@ -41,9 +42,19 @@ public class SOSAdDialog : MonoBehaviour
         if (!arg)
             return;
 
-        if (_vm == null || _isSOSRunning) return;
+        if (_vm == null)
+        {
+            Debug.LogError("[SOS] SOS request reached the dialog without an active view model.");
+            return;
+        }
+        if (_isSOSRunning)
+        {
+            Debug.LogWarning("[SOS] Ignored a request because an SOS sequence is already running.");
+            return;
+        }
 
         _isSOSRunning = true;
+        Debug.Log($"[SOS] Dialog received request for {_vm.GetType().Name}.");
 
         try{
             StartAd();

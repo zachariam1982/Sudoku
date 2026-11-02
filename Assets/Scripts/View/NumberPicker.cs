@@ -152,6 +152,11 @@ public class NumberPicker : MonoBehaviour
         Camera uiCamera = canvas.renderMode == RenderMode.ScreenSpaceOverlay ? null : canvas.worldCamera;
 
         if (RectTransformUtility.RectangleContainsScreenPoint( pickerPanel, screenPosition, uiCamera)) return;
+        RectTransform sosRect = sosButton != null ? sosButton.GetComponent<RectTransform>() : null;
+        if (sosRect != null &&
+            RectTransformUtility.RectangleContainsScreenPoint(sosRect, screenPosition, uiCamera))
+            return;
+
         if (EventSystem.current != null)
         {
             PointerEventData pointerData = new PointerEventData(EventSystem.current) { position = screenPosition };
@@ -166,19 +171,10 @@ public class NumberPicker : MonoBehaviour
 
                 if (cell != null && !cell.IsGiven && cell.Value == 0) return;
 
-                // Let SOS receive its Button.onClick on pointer-up. Closing
-                // the picker here on pointer-down can cancel that click.
-                bool isSOSButton =
-                    sosButton != null &&
-                    (topHit == sosButton.gameObject ||
-                     topHit.transform.IsChildOf(sosButton.transform));
                 bool isEraseButton =
                     eraseButton != null &&
                     (topHit == eraseButton.gameObject ||
                      topHit.transform.IsChildOf(eraseButton.transform));
-
-                if (isSOSButton)
-                    return;
 
                 if (isEraseButton)
                 {
@@ -270,7 +266,18 @@ public class NumberPicker : MonoBehaviour
     /// </summary>
     public void OnSOSButtonPressed()
     {
-        viewModel?.SOSCommand.Execute();
+        if (viewModel == null)
+        {
+            Debug.LogError("[SOS] SOS button callback ran, but NumberPicker has no active view model.");
+            return;
+        }
+
+        bool canUseSOS = viewModel.SOSCommand.CanExecute();
+        Debug.Log($"[SOS] SOS button callback ran for {viewModel.GetType().Name}; " +
+                  $"selected=({viewModel.SelectedRow.Value},{viewModel.SelectedCol.Value}), " +
+                  $"canUse={canUseSOS}, pencil={viewModel.IsPencilMode.Value}, erase={viewModel.IsEraseMode.Value}.");
+        viewModel.SOSCommand.Execute();
+        viewModel.IsPickerOpen.Value = false;
     }
 
     private void OnSelectedCellTransformChanged( object cellTransform)

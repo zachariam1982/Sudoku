@@ -66,10 +66,6 @@ public class JourneyValidatingState : IGameState
                     GameDatabase.Insert(val);
                 }
                 
-                #if UNITY_WEBGL && !UNITY_EDITOR
-                YouTubePlatformManager.Instance?.SendScore(val.Points);
-                #endif
-
                 _machine.TransitionTo(_machine.Win);
 
                 #if UNITY_WEBGL && !UNITY_EDITOR

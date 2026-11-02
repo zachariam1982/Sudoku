@@ -1,5 +1,4 @@
 using System.Collections;
-using System.Threading;
 using UnityEngine;
 
 public class User : MonoBehaviour
@@ -9,16 +8,6 @@ public class User : MonoBehaviour
     public NewGameViewModel NewGameViewModel { get; set; }
     public DailyChallengeViewModel DailyChallengeViewModel { get; set; }
     // Start is called once before the first execution of Update after the MonoBehaviour is created
-    #if UNITY_WEBGL && !UNITY_EDITOR
-
-    private bool _initialCloudLoadComplete = false;
-    public bool InitialCloudLoadComplete => _initialCloudLoadComplete;
-
-    #else
-
-    public bool InitialCloudLoadComplete => true;
-
-    #endif
     void Awake()
     {
         if (Instance != null)
@@ -62,81 +51,6 @@ public class User : MonoBehaviour
         SaveGameData data = SaveSystem.Load(SaveSlot.NewGame);
         return data != null && NewGameViewModel != null && NewGameViewModel.LoadSaveData(data);
     }
-    public void TryLoadSaveFromCloud(System.Action onCompleted)
-    {
-        #if UNITY_WEBGL && !UNITY_EDITOR
-
-        _initialCloudLoadComplete = false;
-
-        if (ViewModel == null)
-        {
-            Debug.LogWarning("[YouTube] ViewModel not available during cloud load.");
-
-            _initialCloudLoadComplete = true;
-            onCompleted?.Invoke();
-            return;
-        }
-
-        if (YouTubePlatformManager.Instance == null)
-        {
-            Debug.LogWarning("[YouTube] Platform manager unavailable. Falling back to local save.");
-
-            TryLoadSave();
-
-            _initialCloudLoadComplete = true;
-            onCompleted?.Invoke();
-            return;
-        }
-
-        YouTubePlatformManager.Instance.LoadCloudData(
-            json =>
-            {
-                bool loadedFromCloud = false;
-
-                if (!string.IsNullOrWhiteSpace(json))
-                {
-                    try
-                    {
-                        SaveGameData data = JsonUtility.FromJson<SaveGameData>(json);
-
-                        if (json.Contains("\"BoardFlat\"") &&
-                            SaveSystem.IsValidSave(data, SaveSlot.Journey))
-                        {
-                            ViewModel.LoadSaveData(data);
-                            SaveSystem.Save(data, SaveSlot.Journey);
-                            loadedFromCloud = true;
-
-                            Debug.Log("[YouTube] Game restored from cloud save.");
-                        }
-                        else
-                        {
-                            Debug.LogWarning("[YouTube] Cloud save was invalid.");
-                        }
-                    }
-                    catch (System.Exception ex)
-                    {
-                        Debug.LogWarning($"[YouTube] Cloud save could not be parsed: {ex.Message}");
-                    }
-                }
-
-                if (!loadedFromCloud)
-                {
-                    bool loadedLocally = TryLoadSave();
-
-                    Debug.Log(loadedLocally ? "[YouTube] Using local fallback save." : "[YouTube] No previous save found. Starting normally.");
-                }
-
-                _initialCloudLoadComplete = true;
-
-                onCompleted?.Invoke();
-            }
-        );
-
-        #else
-        TryLoadSave();
-        onCompleted?.Invoke();
-        #endif
-    }
     private IEnumerator SaveLoop()
     {
         while (true)
@@ -151,14 +65,6 @@ public class User : MonoBehaviour
     }
     public void SaveNow()
     {
-        #if UNITY_WEBGL && !UNITY_EDITOR
-
-        if (!_initialCloudLoadComplete)
-        {
-            return;
-        }
-
-        #endif
         if (ViewModel == null)
         {
             Debug.LogWarning("[User] SaveLoop fired but ViewModel is not assigned.");
@@ -173,25 +79,16 @@ public class User : MonoBehaviour
 
         SaveDailyChallengeNow();
 
-        #if UNITY_WEBGL && !UNITY_EDITOR
-        YouTubePlatformManager.Instance?.SaveCloudData(data);
-        #endif        
     }
 
     public void SaveNewGameNow()
     {
-#if UNITY_WEBGL && !UNITY_EDITOR
-        if (!_initialCloudLoadComplete) return;
-#endif
         if (NewGameViewModel == null || !NewGameViewModel.HasActiveGame) return;
         SaveSystem.Save(NewGameViewModel.GetSaveData(), SaveSlot.NewGame);
     }
 
     public void SaveDailyChallengeNow()
     {
-#if UNITY_WEBGL && !UNITY_EDITOR
-        if (!_initialCloudLoadComplete) return;
-#endif
         if (DailyChallengeViewModel == null || !DailyChallengeViewModel.HasActiveChallenge) return;
         SaveGameData data = DailyChallengeViewModel.GetSaveData();
         if (data != null)

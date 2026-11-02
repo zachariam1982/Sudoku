@@ -386,9 +386,6 @@ public static class GameDatabase
     {
         LoadStore();
 
-        //
-        // YouTube cloud is the source of truth.
-        //
         _store.Records.Clear();
 
         int highestId = 0;

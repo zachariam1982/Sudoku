@@ -173,7 +173,7 @@ public class AdManager : MonoBehaviour
     public bool IsAdReady()
     {
     #if UNITY_WEBGL && !UNITY_EDITOR
-        return YouTubePlatformManager.Instance != null;
+        return false;
     #else
         return _isInitialised && _rewardedAd != null && _rewardedAd.IsAdReady();
     #endif
@@ -191,31 +191,8 @@ public class AdManager : MonoBehaviour
         _onCompleted = onCompleted;
         _onFailed = onFailed;
         _callbackInvoked = false;
-
-        if (YouTubePlatformManager.Instance == null)
-        {
-            Debug.LogWarning(
-                "[AdManager] YouTubePlatformManager unavailable."
-            );
-
-            CompleteOnce(false);
-            return;
-        }
-
-        YouTubePlatformManager.Instance
-            .RequestSOSRewardedAd(
-                rewardEarned =>
-                {
-                    Debug.Log(
-                        $"[AdManager] YouTube rewarded ad result: {rewardEarned}"
-                    );
-
-                    CompleteOnce(
-                        rewardEarned
-                    );
-                }
-            );
-
+        Debug.LogWarning("[AdManager] Rewarded ads are unavailable in WebGL builds.");
+        CompleteOnce(false);
 
         #else
         _onCompleted   = onCompleted;

@@ -76,15 +76,8 @@ public class GameContext : MonoBehaviour
         NewGameViewModel.GameCompleted += OnNewGameCompleted;
         DailyChallengeViewModel.GameCompleted += ExitDailyChallenge;
 
-#if UNITY_WEBGL && !UNITY_EDITOR
         User.Instance.TryLoadSave();
         User.Instance.TryLoadNewGameSave();
-        if (YouTubePlatformManager.Instance != null)
-            YouTubePlatformManager.Instance.SendGameReady();
-#else
-        User.Instance.TryLoadSave();
-        User.Instance.TryLoadNewGameSave();
-#endif
 
         _journeyStateMachine.SetSuspended(true);
         _homeScreen.Initialize(JourneyViewModel, this);
@@ -335,9 +328,6 @@ public class GameContext : MonoBehaviour
         Action<DailyChallengeRecord> onReady = null)
     {
         yield return null;
-        while (User.Instance != null && !User.Instance.InitialCloudLoadComplete)
-            yield return null;
-
         DateTime today = DateTime.Today;
         DailyChallengeRepository.FinalizeUncompletedPreviousChallenges(today);
         int difficultyCount = System.Enum.GetValues(typeof(SudokuDifficulty)).Length;
@@ -400,15 +390,9 @@ public class GameContext : MonoBehaviour
         }
     }
 
-#if UNITY_WEBGL && !UNITY_EDITOR
     private System.Collections.IEnumerator Start()
     {
         yield return null;
-        User.Instance.TryLoadSaveFromCloud(() =>
-        {
-            Debug.Log("[YouTube] Initial cloud synchronization completed.");
-            _homeScreen?.RefreshJourneyStatus();
-        });
+        _homeScreen?.RefreshJourneyStatus();
     }
-#endif
 }

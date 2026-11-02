@@ -62,6 +62,7 @@ public class NumberPicker : MonoBehaviour
 
     private Vector2 lastPickerPos;
     private Coroutine activeAnimation;
+    private int sosButtonHandledFrame = -1;
 
     private readonly Vector3[] gridCorners = new Vector3[4];
     private readonly List<RaycastResult> pointerHits = new List<RaycastResult>();
@@ -138,6 +139,15 @@ public class NumberPicker : MonoBehaviour
                 });
 
             }
+        }
+
+        // The scene keeps a persistent OnClick entry for editor visibility.
+        // Add a runtime fallback as Unity can lose that entry during scene edits.
+        if (sosButton != null)
+        {
+            sosButton.onClick.AddListener(OnSOSButtonPressed);
+            Debug.Log($"[SOS] Runtime click handler attached to {sosButton.gameObject.name}; " +
+                      $"persistent listeners={sosButton.onClick.GetPersistentEventCount()}.");
         }
 
         // GameContext can bind the picker before the SOS dialog's Awake runs.
@@ -245,6 +255,9 @@ public class NumberPicker : MonoBehaviour
 
     private void OnDestroy()
     {
+        if (sosButton != null)
+            sosButton.onClick.RemoveListener(OnSOSButtonPressed);
+
         if (viewModel == null) return;
 
         viewModel.IsPickerOpen.OnChanged -= OnPickerOpenChanged;
@@ -257,6 +270,9 @@ public class NumberPicker : MonoBehaviour
     /// </summary>
     public void OnSOSButtonPressed()
     {
+        if (sosButtonHandledFrame == Time.frameCount) return;
+        sosButtonHandledFrame = Time.frameCount;
+
         if (viewModel == null)
         {
             Debug.LogError("[SOS] SOS button callback ran, but NumberPicker has no active view model.");

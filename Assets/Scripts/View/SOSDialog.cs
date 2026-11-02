@@ -77,23 +77,10 @@ public class SOSAdDialog : MonoBehaviour
 
         AdManager.Instance.PlayAd(
             onCompleted: OnAdCompleted,
-            onFailed: OnAdFailed
+            onFailed: OnAdCompleted
         );
     }
     
-    private void OnAdFailed()
-    {
-        Debug.Log(
-            "[SOS] Reward was not earned."
-        );
-
-        _isSOSRunning = false;
-
-        if (_vm != null)
-        {
-            _vm.IsSOSMode.Value = false;
-        }
-    }
     private void OnAdCompleted()
     {
         if (_vm == null)

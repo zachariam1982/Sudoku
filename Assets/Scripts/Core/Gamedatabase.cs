@@ -28,6 +28,11 @@ public static class GameDatabase
 
     public static void Init()
     {
+        // User.Awake and DatabaseLifecycleHandler can both initialize the DB
+        // during startup. Reuse an open connection instead of replacing it.
+        if (_db != null)
+            return;
+
         try
         {
             Debug.Log($"DB stored at {DbPath}");
@@ -64,6 +69,9 @@ public static class GameDatabase
         }
         catch (Exception ex)
         {
+            try { _db?.Close(); }
+            catch (Exception) { }
+            _db = null;
             Debug.LogError($"[GameDatabase] Init failed: {ex.GetType().Name}: {ex}");
         }
     }
@@ -1161,6 +1169,15 @@ public static class GameDatabase
     {
         try
         {
+            if (_db == null)
+                Init();
+
+            if (_db == null)
+            {
+                Debug.LogError("[GameDatabase] GetGameStats skipped because the database could not be initialized.");
+                return null;
+            }
+
             GameStats stats =
                 _db.Find<GameStats>(1);
 

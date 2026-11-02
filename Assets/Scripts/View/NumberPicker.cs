@@ -156,6 +156,10 @@ public class NumberPicker : MonoBehaviour
         if (sosRect != null &&
             RectTransformUtility.RectangleContainsScreenPoint(sosRect, screenPosition, uiCamera))
             return;
+        RectTransform eraseRect = eraseButton != null ? eraseButton.GetComponent<RectTransform>() : null;
+        if (eraseRect != null &&
+            RectTransformUtility.RectangleContainsScreenPoint(eraseRect, screenPosition, uiCamera))
+            return;
 
         if (EventSystem.current != null)
         {
@@ -170,17 +174,6 @@ public class NumberPicker : MonoBehaviour
                 SudokuCell cell = topHit.GetComponentInParent<SudokuCell>();
 
                 if (cell != null && !cell.IsGiven && cell.Value == 0) return;
-
-                bool isEraseButton =
-                    eraseButton != null &&
-                    (topHit == eraseButton.gameObject ||
-                     topHit.transform.IsChildOf(eraseButton.transform));
-
-                if (isEraseButton)
-                {
-                    viewModel.IsPickerOpen.Value = false;
-                    return;
-                }
             }
         }
 
@@ -254,12 +247,6 @@ public class NumberPicker : MonoBehaviour
         viewModel.SelectedCellTransform.OnChanged -= OnSelectedCellTransformChanged;
     }
 
-    public void ClosePickerAfterUtilityAction()
-    {
-        if (viewModel != null)
-            viewModel.IsPickerOpen.Value = false;
-    }
-
     /// <summary>
     /// Uses the picker’s active gameplay binding, so the shared SOS button
     /// works for Journey, New Game, and Daily Challenge.
@@ -277,6 +264,22 @@ public class NumberPicker : MonoBehaviour
                   $"selected=({viewModel.SelectedRow.Value},{viewModel.SelectedCol.Value}), " +
                   $"canUse={canUseSOS}, pencil={viewModel.IsPencilMode.Value}, erase={viewModel.IsEraseMode.Value}.");
         viewModel.SOSCommand.Execute();
+        viewModel.IsPickerOpen.Value = false;
+    }
+
+    public void OnEraseButtonPressed()
+    {
+        if (viewModel == null)
+        {
+            Debug.LogError("[Picker] Erase button callback ran, but NumberPicker has no active view model.");
+            return;
+        }
+
+        bool canErase = viewModel.SetEraseModeCommand.CanExecute();
+        Debug.Log($"[Picker] Erase button callback ran for {viewModel.GetType().Name}; " +
+                  $"selected=({viewModel.SelectedRow.Value},{viewModel.SelectedCol.Value}), " +
+                  $"canErase={canErase}.");
+        viewModel.SetEraseModeCommand.Execute();
         viewModel.IsPickerOpen.Value = false;
     }
 

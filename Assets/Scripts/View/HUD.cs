@@ -86,7 +86,6 @@ public class HUD : MonoBehaviour
             redoButton.interactable = !isActive && redoButtonWasInteractable;
     }
 
-    public void EraseButtonPressed() => viewModel?.SetEraseModeCommand.Execute();
     public void PencilButtonPressed() => viewModel?.SetPencilModeCommand.Execute();
     public void AutoFillCandidatesButtonPressed() => viewModel?.AutoFillCandidatesCommand.Execute();
     public void UndoButtonPressed() => viewModel?.UndoCommand.Execute();

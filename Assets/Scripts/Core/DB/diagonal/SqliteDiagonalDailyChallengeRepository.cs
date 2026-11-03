@@ -4,7 +4,7 @@ using System.Globalization;
 using SQLite;
 
 /// <summary>Query and update operations for tables owned by DiagonalDailyChallengeDatabase.</summary>
-public sealed class SqliteDiagonalDailyChallengeRepository : IDiagonalDailyChallengeRepository
+public sealed class SqliteDiagonalDailyChallengeRepository : IDailyChallengeRepository
 {
     private readonly SqliteDatabaseConnection _database;
     private SQLiteConnection Db => _database.Connection;
@@ -16,15 +16,23 @@ public sealed class SqliteDiagonalDailyChallengeRepository : IDiagonalDailyChall
         _database = database ?? throw new ArgumentNullException(nameof(database));
     }
 
-    public DiagonalDailyChallengeRecord GetOrCreate(DateTime date, int difficulty)
+    public DailyChallengeRecord GetOrCreate(DateTime date, int difficulty)
     {
         DateTime day=date.Date;
         string dateKey=day.ToString("yyyy-MM-dd",CultureInfo.InvariantCulture);
-        List<DiagonalDailyChallengeRecord> rows=Db.Query<DiagonalDailyChallengeRecord>(
+        List<DailyChallengeRecord> rows=Db.Query<DailyChallengeRecord>(
             "SELECT * FROM diagonal_daily_game_challenge WHERE CurrentDate = ? ORDER BY Id DESC LIMIT 1",dateKey);
         if(rows.Count>0) return rows[0];
         var created=NewRecord(day,difficulty);
-        Db.Insert(created);
+        Db.Execute(@"
+            INSERT INTO diagonal_daily_game_challenge
+                (CurrentDate, Difficulty, ElapsedSeconds, LivesRemaining, Stars, IsWon,
+                 Started, CompletedAt, UndoUses, PencilUses, EraseUses, SOSUses, AutofillUses, IsAttempted)
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?);",
+            created.CurrentDateText, created.Difficulty, created.ElapsedSeconds, created.LivesRemaining,
+            created.Stars, created.IsWon, created.Started, created.CompletedAt, created.UndoUses,
+            created.PencilUses, created.EraseUses, created.SOSUses, created.AutofillUses, created.IsAttempted);
+        created.Id = Db.ExecuteScalar<int>("SELECT last_insert_rowid();");
         return created;
     }
 
@@ -33,60 +41,60 @@ public sealed class SqliteDiagonalDailyChallengeRepository : IDiagonalDailyChall
         return Db.ExecuteScalar<int>("SELECT COUNT(*) FROM diagonal_daily_game_challenge;");
     }
 
-    public DiagonalDailyChallengeStatsSnapshot GetStatsSnapshot()
+    public DailyChallengeStatsSnapshot GetStatsSnapshot()
     {
-        List<DiagonalDailyChallengeStatsSnapshot> rows = Db.Query<DiagonalDailyChallengeStatsSnapshot>(
+        List<DailyChallengeStatsSnapshot> rows = Db.Query<DailyChallengeStatsSnapshot>(
             "SELECT CurrentStreak, COALESCE(BestTimeSeconds, -1) AS BestTimeSeconds, " +
             "GamesPlayed, GamesWon, BestTimeGameId, SimpleBestTimeGameId, " +
             "BeginnerBestTimeGameId, EasyBestTimeGameId, NoviceBestTimeGameId, " +
             "ModerateBestTimeGameId, AdvancedBestTimeGameId, HardBestTimeGameId, " +
             "ExpertBestTimeGameId, HardestBestTimeGameId " +
             "FROM diagonal_daily_game_challenge_stats WHERE Id = 1 LIMIT 1");
-        return rows.Count == 0 ? new DiagonalDailyChallengeStatsSnapshot() : rows[0];
+        return rows.Count == 0 ? new DailyChallengeStatsSnapshot() : rows[0];
     }
 
-    public List<DiagonalDailyChallengeRecord> GetAllRecords()
+    public List<DailyChallengeRecord> GetAllRecords()
     {
-        return Db.Query<DiagonalDailyChallengeRecord>(
+        return Db.Query<DailyChallengeRecord>(
             "SELECT * FROM diagonal_daily_game_challenge ORDER BY CurrentDate DESC, Id DESC");
     }
 
-    public DiagonalDailyChallengeRecord GetBestOverallRecord(int? preferredGameId)
+    public DailyChallengeRecord GetBestOverallRecord(int? preferredGameId)
     {
-        List<DiagonalDailyChallengeRecord> rows = Db.Query<DiagonalDailyChallengeRecord>(
+        List<DailyChallengeRecord> rows = Db.Query<DailyChallengeRecord>(
             "SELECT * FROM diagonal_daily_game_challenge WHERE IsWon = 1 " +
             "ORDER BY CASE WHEN Id = ? THEN 0 ELSE 1 END, ElapsedSeconds, Id LIMIT 1",
             preferredGameId ?? -1);
         return rows.Count == 0 ? null : rows[0];
     }
 
-    public List<DiagonalDailyChallengeRecord> GetBestTimeRecordsByDifficulty(DiagonalDailyChallengeStatsSnapshot stats)
+    public List<DailyChallengeRecord> GetBestTimeRecordsByDifficulty(DailyChallengeStatsSnapshot stats)
     {
-        if (stats == null) return new List<DiagonalDailyChallengeRecord>();
+        if (stats == null) return new List<DailyChallengeRecord>();
         int?[] ids = stats.GetDifficultyBestGameIds();
         List<object> args = new List<object>(ids.Length);
         foreach (int? id in ids) if (id.HasValue) args.Add(id.Value);
-        if (args.Count == 0) return new List<DiagonalDailyChallengeRecord>();
+        if (args.Count == 0) return new List<DailyChallengeRecord>();
         string[] placeholders = new string[args.Count];
         for (int i = 0; i < placeholders.Length; i++) placeholders[i] = "?";
-        return Db.Query<DiagonalDailyChallengeRecord>(
+        return Db.Query<DailyChallengeRecord>(
             "SELECT * FROM diagonal_daily_game_challenge WHERE IsWon = 1 AND Id IN (" +
             string.Join(",", placeholders) + ")", args.ToArray());
     }
 
     public List<DateTime> GetWinningChallengeDates()
     {
-        List<DiagonalDailyChallengeDateRow> rows = Db.Query<DiagonalDailyChallengeDateRow>(
+        List<DailyChallengeDateRow> rows = Db.Query<DailyChallengeDateRow>(
             "SELECT CurrentDate FROM diagonal_daily_game_challenge WHERE IsWon = 1 " +
             "GROUP BY CurrentDate ORDER BY CurrentDate");
         List<DateTime> dates = new List<DateTime>(rows.Count);
-        foreach (DiagonalDailyChallengeDateRow row in rows)
+        foreach (DailyChallengeDateRow row in rows)
             if (DateTime.TryParse(row.CurrentDate, CultureInfo.InvariantCulture, DateTimeStyles.None, out DateTime date))
                 dates.Add(date.Date);
         return dates;
     }
 
-    public void MarkAttempted(DiagonalDailyChallengeRecord record)
+    public void MarkAttempted(DailyChallengeRecord record)
     {
         if(record==null)return;
         record.IsAttempted=true;
@@ -94,19 +102,28 @@ public sealed class SqliteDiagonalDailyChallengeRepository : IDiagonalDailyChall
         Update(record);
     }
 
-    public void Update(DiagonalDailyChallengeRecord record)
+    public void Update(DailyChallengeRecord record)
     {
         if(record==null)return;
-        Db.Update(record);
+        Db.Execute(@"
+            UPDATE diagonal_daily_game_challenge
+            SET CurrentDate = ?, Difficulty = ?, ElapsedSeconds = ?, LivesRemaining = ?, Stars = ?,
+                IsWon = ?, Started = ?, CompletedAt = ?, UndoUses = ?, PencilUses = ?, EraseUses = ?,
+                SOSUses = ?, AutofillUses = ?, IsAttempted = ?
+            WHERE Id = ?;",
+            record.CurrentDateText, record.Difficulty, record.ElapsedSeconds, record.LivesRemaining,
+            record.Stars, record.IsWon, record.Started, record.CompletedAt, record.UndoUses,
+            record.PencilUses, record.EraseUses, record.SOSUses, record.AutofillUses,
+            record.IsAttempted, record.Id);
     }
 
     public void FinalizeUncompletedPreviousChallenges(DateTime today)
     {
         DateTime day=today.Date;
         string dateKey=day.ToString("yyyy-MM-dd",CultureInfo.InvariantCulture);
-        List<DiagonalDailyChallengeRecord> rows=Db.Query<DiagonalDailyChallengeRecord>(
+        List<DailyChallengeRecord> rows=Db.Query<DailyChallengeRecord>(
             "SELECT * FROM diagonal_daily_game_challenge WHERE CurrentDate < ? AND (IsAttempted = 1 OR Started = 1) AND (CompletedAt IS NULL OR CompletedAt = '') ORDER BY CurrentDate, Id",dateKey);
-        foreach(DiagonalDailyChallengeRecord previous in rows)
+        foreach(DailyChallengeRecord previous in rows)
         {
             DateTime endOfRowDay=DateTime.SpecifyKind(
                 previous.CurrentDate.Date.AddDays(1).AddSeconds(-1),DateTimeKind.Local);
@@ -130,8 +147,8 @@ public sealed class SqliteDiagonalDailyChallengeRepository : IDiagonalDailyChall
     }
 
 
-    private static DiagonalDailyChallengeRecord NewRecord(DateTime date,int difficulty)
+    private static DailyChallengeRecord NewRecord(DateTime date,int difficulty)
     {
-        return new DiagonalDailyChallengeRecord { CurrentDate=date, Difficulty=difficulty, IsAttempted=false, Started=false, LivesRemaining=3 };
+        return new DailyChallengeRecord { CurrentDate=date, Difficulty=difficulty, IsAttempted=false, Started=false, LivesRemaining=3 };
     }
 }

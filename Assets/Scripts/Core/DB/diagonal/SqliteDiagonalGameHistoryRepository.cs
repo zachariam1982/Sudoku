@@ -1,10 +1,11 @@
 using System;
 using System.Collections.Generic;
+using System.Linq;
 using SQLite;
 using UnityEngine;
 
 /// <summary>Journey history and aggregate statistics stored in SQLite.</summary>
-public sealed class SqliteDiagonalGameHistoryRepository : IDiagonalGameHistoryRepository
+public sealed class SqliteDiagonalGameHistoryRepository : IGameHistoryRepository
 {
     private readonly SqliteDatabaseConnection _database;
     private SQLiteConnection Db => _database.Connection;
@@ -29,11 +30,44 @@ public sealed class SqliteDiagonalGameHistoryRepository : IDiagonalGameHistoryRe
 
         try
         {
-            Db.CreateTable<DiagonalGameRecord>();
-            Db.CreateTable<DiagonalGameStats>();
+            Db.Execute(@"
+                CREATE TABLE IF NOT EXISTS diagonal_completed_games (
+                    Id INTEGER PRIMARY KEY AUTOINCREMENT,
+                    Level INTEGER NOT NULL,
+                    Difficulty INTEGER NOT NULL,
+                    ElapsedSeconds REAL NOT NULL,
+                    LivesRemaining INTEGER NOT NULL,
+                    Points INTEGER NOT NULL,
+                    IsWon INTEGER NOT NULL,
+                    CompletedAt TEXT NOT NULL,
+                    UndoUses INTEGER NOT NULL DEFAULT 0,
+                    PencilUses INTEGER NOT NULL DEFAULT 0,
+                    EraseUses INTEGER NOT NULL DEFAULT 0,
+                    SOSUses INTEGER NOT NULL DEFAULT 0,
+                    AutoFillUses INTEGER NOT NULL DEFAULT 0
+                );");
+            Db.Execute(@"
+                CREATE TABLE IF NOT EXISTS diagonal_game_stats (
+                    Id INTEGER PRIMARY KEY,
+                    AggregateVersion INTEGER NOT NULL DEFAULT 0,
+                    TotalGames INTEGER NOT NULL DEFAULT 0,
+                    TotalWins INTEGER NOT NULL DEFAULT 0,
+                    TotalPoints INTEGER NOT NULL DEFAULT 0,
+                    FastestWinSeconds REAL,
+                    CurrentStreak INTEGER NOT NULL DEFAULT 0,
+                    SimpleCount INTEGER NOT NULL DEFAULT 0,
+                    BeginnerCount INTEGER NOT NULL DEFAULT 0,
+                    EasyCount INTEGER NOT NULL DEFAULT 0,
+                    NoviceCount INTEGER NOT NULL DEFAULT 0,
+                    ModerateCount INTEGER NOT NULL DEFAULT 0,
+                    AdvancedCount INTEGER NOT NULL DEFAULT 0,
+                    HardCount INTEGER NOT NULL DEFAULT 0,
+                    ExpertCount INTEGER NOT NULL DEFAULT 0,
+                    HardestCount INTEGER NOT NULL DEFAULT 0
+                );");
             CreateIndexes();
-            InitializeDiagonalGameStats();
-            RecreateDiagonalGameStatsTriggers();
+            InitializeGameStats();
+            RecreateGameStatsTriggers();
         }
         catch (Exception ex)
         {
@@ -78,10 +112,10 @@ public sealed class SqliteDiagonalGameHistoryRepository : IDiagonalGameHistoryRe
     // INITIAL AGGREGATE BUILD / MIGRATION
     // ============================================================
 
-    private void InitializeDiagonalGameStats()
+    private void InitializeGameStats()
     {
-        DiagonalGameStats existing =
-            Db.Find<DiagonalGameStats>(1);
+        GameStats existing = Db.Query<GameStats>(
+            "SELECT * FROM diagonal_game_stats WHERE Id = 1 LIMIT 1").FirstOrDefault();
 
         /*
          * Brand-new aggregate table, or aggregate schema/
@@ -95,7 +129,7 @@ public sealed class SqliteDiagonalGameHistoryRepository : IDiagonalGameHistoryRe
                 "[SqliteDiagonalGameHistoryRepository] Building diagonal_game_stats " +
                 "from diagonal_completed_games.");
 
-            RebuildDiagonalGameStats();
+            RebuildGameStats();
         }
     }
 
@@ -106,7 +140,7 @@ public sealed class SqliteDiagonalGameHistoryRepository : IDiagonalGameHistoryRe
      * Normally it runs only once when diagonal_game_stats is first
      * introduced or when AggregateVersion changes.
      */
-    public void RebuildDiagonalGameStats()
+    public void RebuildGameStats()
     {
         string sql = $@"
             INSERT OR REPLACE INTO diagonal_game_stats
@@ -286,7 +320,7 @@ public sealed class SqliteDiagonalGameHistoryRepository : IDiagonalGameHistoryRe
     // TRIGGERS
     // ============================================================
 
-    private void RecreateDiagonalGameStatsTriggers()
+    private void RecreateGameStatsTriggers()
     {
         /*
          * Important:
@@ -785,7 +819,7 @@ public sealed class SqliteDiagonalGameHistoryRepository : IDiagonalGameHistoryRe
     // ============================================================
 
     public void Insert(
-        DiagonalGameRecord record)
+        GameRecord record)
     {
         try
         {
@@ -793,7 +827,15 @@ public sealed class SqliteDiagonalGameHistoryRepository : IDiagonalGameHistoryRe
              * The INSERT trigger automatically updates
              * diagonal_game_stats.
              */
-            Db.Insert(record);
+            Db.Execute(@"
+                INSERT INTO diagonal_completed_games
+                    (Level, Difficulty, ElapsedSeconds, LivesRemaining, Points, IsWon,
+                     CompletedAt, UndoUses, PencilUses, EraseUses, SOSUses, AutoFillUses)
+                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?);",
+                record.Level, record.Difficulty, record.ElapsedSeconds, record.LivesRemaining,
+                record.Points, record.IsWon, record.CompletedAt, record.UndoUses, record.PencilUses,
+                record.EraseUses, record.SOSUses, record.AutoFillUses);
+            record.Id = (int)Db.ExecuteScalar<long>("SELECT last_insert_rowid();");
 
             Debug.Log(
                 $"[SqliteDiagonalGameHistoryRepository] Record saved — " +
@@ -811,7 +853,7 @@ public sealed class SqliteDiagonalGameHistoryRepository : IDiagonalGameHistoryRe
     }
 
     public void Update(
-        DiagonalGameRecord record)
+        GameRecord record)
     {
         try
         {
@@ -819,7 +861,15 @@ public sealed class SqliteDiagonalGameHistoryRepository : IDiagonalGameHistoryRe
              * The UPDATE trigger automatically updates
              * diagonal_game_stats.
              */
-            Db.Update(record);
+            Db.Execute(@"
+                UPDATE diagonal_completed_games
+                SET Level = ?, Difficulty = ?, ElapsedSeconds = ?, LivesRemaining = ?, Points = ?,
+                    IsWon = ?, CompletedAt = ?, UndoUses = ?, PencilUses = ?, EraseUses = ?,
+                    SOSUses = ?, AutoFillUses = ?
+                WHERE Id = ?;",
+                record.Level, record.Difficulty, record.ElapsedSeconds, record.LivesRemaining,
+                record.Points, record.IsWon, record.CompletedAt, record.UndoUses, record.PencilUses,
+                record.EraseUses, record.SOSUses, record.AutoFillUses, record.Id);
 
             Debug.Log(
                 $"[SqliteDiagonalGameHistoryRepository] Record updated — " +
@@ -840,28 +890,28 @@ public sealed class SqliteDiagonalGameHistoryRepository : IDiagonalGameHistoryRe
     // AGGREGATE READ
     // ============================================================
 
-    public DiagonalGameStats GetDiagonalGameStats()
+    public GameStats GetGameStats()
     {
         try
         {
             if (Db == null)
             {
-                Debug.LogError("[SqliteDiagonalGameHistoryRepository] GetDiagonalGameStats skipped because the database is not open.");
+                Debug.LogError("[SqliteDiagonalGameHistoryRepository] GetGameStats skipped because the database is not open.");
                 return null;
             }
 
-            DiagonalGameStats stats =
-                Db.Find<DiagonalGameStats>(1);
+            GameStats stats = Db.Query<GameStats>(
+                "SELECT * FROM diagonal_game_stats WHERE Id = 1 LIMIT 1").FirstOrDefault();
 
             /*
              * Defensive recovery.
              */
             if (stats == null)
             {
-                RebuildDiagonalGameStats();
+                RebuildGameStats();
 
-                stats =
-                    Db.Find<DiagonalGameStats>(1);
+                stats = Db.Query<GameStats>(
+                    "SELECT * FROM diagonal_game_stats WHERE Id = 1 LIMIT 1").FirstOrDefault();
             }
 
             return stats;
@@ -869,7 +919,7 @@ public sealed class SqliteDiagonalGameHistoryRepository : IDiagonalGameHistoryRe
         catch (Exception ex)
         {
             Debug.LogError(
-                $"[SqliteDiagonalGameHistoryRepository] GetDiagonalGameStats failed: " +
+                $"[SqliteDiagonalGameHistoryRepository] GetGameStats failed: " +
                 $"{ex.Message}");
 
             return null;
@@ -882,7 +932,7 @@ public sealed class SqliteDiagonalGameHistoryRepository : IDiagonalGameHistoryRe
      * The number of games at each difficulty is already
      * stored in diagonal_game_stats.
      */
-    public int GetTotalPossiblePoints(DiagonalGameStats stats)
+    public int GetTotalPossiblePoints(GameStats stats)
     {
         if (stats == null) return 0;
 
@@ -902,7 +952,7 @@ public sealed class SqliteDiagonalGameHistoryRepository : IDiagonalGameHistoryRe
     // EXISTING HISTORY READS
     // ============================================================
 
-    public List<DiagonalGameRecord> GetAll()
+    public List<GameRecord> GetAll()
     {
         try
         {
@@ -911,7 +961,7 @@ public sealed class SqliteDiagonalGameHistoryRepository : IDiagonalGameHistoryRe
                 "FROM diagonal_completed_games " +
                 "ORDER BY Id";
 
-            return Db.Query<DiagonalGameRecord>(
+            return Db.Query<GameRecord>(
                 query);
         }
         catch (Exception ex)
@@ -920,11 +970,11 @@ public sealed class SqliteDiagonalGameHistoryRepository : IDiagonalGameHistoryRe
                 $"[SqliteDiagonalGameHistoryRepository] GetAll failed: " +
                 $"{ex.Message}");
 
-            return new List<DiagonalGameRecord>();
+            return new List<GameRecord>();
         }
     }
 
-    public List<DiagonalGameRecord> GetNextSet(
+    public List<GameRecord> GetNextSet(
         int offset)
     {
         try
@@ -935,7 +985,7 @@ public sealed class SqliteDiagonalGameHistoryRepository : IDiagonalGameHistoryRe
                 "ORDER BY Id DESC " +
                 "LIMIT 10 OFFSET ?";
 
-            return Db.Query<DiagonalGameRecord>(
+            return Db.Query<GameRecord>(
                 query,
                 offset);
         }
@@ -945,27 +995,27 @@ public sealed class SqliteDiagonalGameHistoryRepository : IDiagonalGameHistoryRe
                 $"[SqliteDiagonalGameHistoryRepository] GetNextSet failed: " +
                 $"{ex.Message}");
 
-            return new List<DiagonalGameRecord>();
+            return new List<GameRecord>();
         }
     }
 
-    public List<DiagonalGameRecord> GetLastNRecordByDate(int number)
+    public List<GameRecord> GetLastNRecordByDate(int number)
     {
         try
         {
             string query = "SELECT *  FROM diagonal_completed_games ORDER BY Id DESC LIMIT ?";
 
-            return Db.Query<DiagonalGameRecord>(query,number);
+            return Db.Query<GameRecord>(query,number);
         }
         catch (Exception ex)
         {
             Debug.LogError($"[SqliteDiagonalGameHistoryRepository] GetLastNRecordByDate failed: {ex.Message}");
 
-            return new List<DiagonalGameRecord>();
+            return new List<GameRecord>();
         }
     }
 
-    public DiagonalGameRecord GetLastRecord()
+    public GameRecord GetLastRecord()
     {
         try
         {
@@ -976,7 +1026,7 @@ public sealed class SqliteDiagonalGameHistoryRepository : IDiagonalGameHistoryRe
                 "LIMIT 1";
 
             var result =
-                Db.Query<DiagonalGameRecord>(
+                Db.Query<GameRecord>(
                     query);
 
             return
@@ -999,7 +1049,7 @@ public sealed class SqliteDiagonalGameHistoryRepository : IDiagonalGameHistoryRe
      * code. StatsPanel will no longer need them.
      */
 
-    public DiagonalGameRecord GetFastestWin()
+    public GameRecord GetFastestWin()
     {
         try
         {
@@ -1011,7 +1061,7 @@ public sealed class SqliteDiagonalGameHistoryRepository : IDiagonalGameHistoryRe
                 "LIMIT 1";
 
             var result =
-                Db.Query<DiagonalGameRecord>(
+                Db.Query<GameRecord>(
                     query);
 
             return
@@ -1031,24 +1081,24 @@ public sealed class SqliteDiagonalGameHistoryRepository : IDiagonalGameHistoryRe
 
     public int GetTotalPoints()
     {
-        DiagonalGameStats stats =
-            GetDiagonalGameStats();
+        GameStats stats =
+            GetGameStats();
 
         return stats?.TotalPoints ?? 0;
     }
 
     public int GetTotalWins()
     {
-        DiagonalGameStats stats =
-            GetDiagonalGameStats();
+        GameStats stats =
+            GetGameStats();
 
         return stats?.TotalWins ?? 0;
     }
 
     public int GetTotalGamesPlayed()
     {
-        DiagonalGameStats stats =
-            GetDiagonalGameStats();
+        GameStats stats =
+            GetGameStats();
 
         return stats?.TotalGames ?? 0;
     }
@@ -1057,10 +1107,10 @@ public sealed class SqliteDiagonalGameHistoryRepository : IDiagonalGameHistoryRe
     // DEBUG
     // ============================================================
 
-    public void LogDiagonalGameStats()
+    public void LogGameStats()
     {
-        DiagonalGameStats stats =
-            GetDiagonalGameStats();
+        GameStats stats =
+            GetGameStats();
 
         if (stats == null)
         {

@@ -3,7 +3,7 @@ using System.Linq;
 using SQLite;
 using UnityEngine;
 
-public sealed class SqliteDiagonalGameResultRepository : IDiagonalGameResultRepository
+public sealed class SqliteDiagonalGameResultRepository : IGameResultRepository
 {
     public sealed class RecentEntryRow
     {
@@ -45,9 +45,27 @@ public sealed class SqliteDiagonalGameResultRepository : IDiagonalGameResultRepo
                 return;
             }
 
-            db.CreateTable<DiagonalNewGameResult>();
-            db.CreateTable<DiagonalNewGameResultCompletion>();
-            db.CreateTable<DiagonalNewGameDifficultyStats>();
+            db.Execute(@"
+                CREATE TABLE IF NOT EXISTS diagonal_new_game_results (
+                    Id INTEGER PRIMARY KEY AUTOINCREMENT,
+                    Level INTEGER NOT NULL,
+                    Difficulty INTEGER NOT NULL,
+                    PuzzleSeed INTEGER NOT NULL,
+                    PencilUses INTEGER NOT NULL DEFAULT 0,
+                    SOSUses INTEGER NOT NULL DEFAULT 0,
+                    AutoFillUses INTEGER NOT NULL DEFAULT 0,
+                    RecordedAt TEXT
+                );");
+            db.Execute(@"
+                CREATE TABLE IF NOT EXISTS diagonal_new_game_result_completions (
+                    ResultId INTEGER PRIMARY KEY
+                );");
+            db.Execute(@"
+                CREATE TABLE IF NOT EXISTS diagonal_new_game_stats_by_difficulty (
+                    Difficulty INTEGER PRIMARY KEY,
+                    GamesStarted INTEGER NOT NULL DEFAULT 0,
+                    GamesCompleted INTEGER NOT NULL DEFAULT 0
+                );");
             EnsureUsageCountColumns();
             RecreateStatsTriggers();
         }
@@ -57,7 +75,7 @@ public sealed class SqliteDiagonalGameResultRepository : IDiagonalGameResultRepo
         }
     }
 
-    public void RecordAttempt(DiagonalNewGameResult result, bool completed)
+    public void RecordAttempt(NewGameResult result, bool completed)
     {
         SQLiteConnection db = Db;
         if (result == null || db == null) return;
@@ -65,9 +83,15 @@ public sealed class SqliteDiagonalGameResultRepository : IDiagonalGameResultRepo
         db.BeginTransaction();
         try
         {
-            db.Insert(result);
+            db.Execute(@"
+                INSERT INTO diagonal_new_game_results
+                    (Level, Difficulty, PuzzleSeed, PencilUses, SOSUses, AutoFillUses, RecordedAt)
+                VALUES (?, ?, ?, ?, ?, ?, ?);",
+                result.Level, result.Difficulty, result.PuzzleSeed, result.PencilUses,
+                result.SOSUses, result.AutoFillUses, result.RecordedAt);
+            result.Id = (int)db.ExecuteScalar<long>("SELECT last_insert_rowid();");
             if (completed)
-                db.Insert(new DiagonalNewGameResultCompletion { ResultId = result.Id });
+                db.Execute("INSERT OR IGNORE INTO diagonal_new_game_result_completions (ResultId) VALUES (?);", result.Id);
             db.Commit();
         }
         catch (System.Exception ex)
@@ -78,7 +102,7 @@ public sealed class SqliteDiagonalGameResultRepository : IDiagonalGameResultRepo
     }
 
 
-    public void UpdateCompletedAttempt(DiagonalNewGameResult result)
+    public void UpdateCompletedAttempt(NewGameResult result)
     {
         SQLiteConnection db = Db;
         if (result == null || result.Id <= 0 || db == null) return;
@@ -86,7 +110,8 @@ public sealed class SqliteDiagonalGameResultRepository : IDiagonalGameResultRepo
         db.BeginTransaction();
         try
         {
-            DiagonalNewGameResult existing = db.Find<DiagonalNewGameResult>(result.Id);
+            NewGameResult existing = db.Query<NewGameResult>(
+                "SELECT * FROM diagonal_new_game_results WHERE Id = ? LIMIT 1", result.Id).FirstOrDefault();
             if (existing == null)
             {
                 db.Rollback();
@@ -99,7 +124,11 @@ public sealed class SqliteDiagonalGameResultRepository : IDiagonalGameResultRepo
             existing.SOSUses = result.SOSUses;
             existing.AutoFillUses = result.AutoFillUses;
             existing.RecordedAt = result.RecordedAt;
-            db.Update(existing);
+            db.Execute(@"
+                UPDATE diagonal_new_game_results
+                SET PencilUses = ?, SOSUses = ?, AutoFillUses = ?, RecordedAt = ?
+                WHERE Id = ?;",
+                existing.PencilUses, existing.SOSUses, existing.AutoFillUses, existing.RecordedAt, existing.Id);
             // The completion trigger increments wins only on the first success.
             db.Execute("INSERT OR IGNORE INTO diagonal_new_game_result_completions (ResultId) VALUES (?);", existing.Id);
             db.Commit();
@@ -116,11 +145,11 @@ public sealed class SqliteDiagonalGameResultRepository : IDiagonalGameResultRepo
         var columns = new System.Collections.Generic.HashSet<string>(
             Db.GetTableInfo("diagonal_new_game_results").Select(column => column.Name));
 
-        if (!columns.Contains(nameof(DiagonalNewGameResult.PencilUses)))
+        if (!columns.Contains(nameof(NewGameResult.PencilUses)))
             Db.Execute("ALTER TABLE diagonal_new_game_results ADD COLUMN PencilUses INTEGER NOT NULL DEFAULT 0;");
-        if (!columns.Contains(nameof(DiagonalNewGameResult.SOSUses)))
+        if (!columns.Contains(nameof(NewGameResult.SOSUses)))
             Db.Execute("ALTER TABLE diagonal_new_game_results ADD COLUMN SOSUses INTEGER NOT NULL DEFAULT 0;");
-        if (!columns.Contains(nameof(DiagonalNewGameResult.AutoFillUses)))
+        if (!columns.Contains(nameof(NewGameResult.AutoFillUses)))
             Db.Execute("ALTER TABLE diagonal_new_game_results ADD COLUMN AutoFillUses INTEGER NOT NULL DEFAULT 0;");
     }
 
@@ -162,19 +191,22 @@ public sealed class SqliteDiagonalGameResultRepository : IDiagonalGameResultRepo
     public int GetNextId()
     {
         if (Db == null) return 1;
-        DiagonalNewGameResult latest = Db.Table<DiagonalNewGameResult>().OrderByDescending(result => result.Id).FirstOrDefault();
+        NewGameResult latest = Db.Query<NewGameResult>(
+            "SELECT * FROM diagonal_new_game_results ORDER BY Id DESC LIMIT 1").FirstOrDefault();
         return latest == null ? 1 : latest.Id + 1;
     }
 
-    public DiagonalNewGameResult GetLatest() =>
-        Db == null ? null : Db.Table<DiagonalNewGameResult>().OrderByDescending(r => r.Id).FirstOrDefault();
+    public NewGameResult GetLatest() =>
+        Db == null ? null : Db.Query<NewGameResult>(
+            "SELECT * FROM diagonal_new_game_results ORDER BY Id DESC LIMIT 1").FirstOrDefault();
 
-    public List<DiagonalNewGameResult> GetRecent(int count) =>
-        Db == null ? new List<DiagonalNewGameResult>() : Db.Table<DiagonalNewGameResult>().OrderByDescending(r => r.Id).Take(count).ToList();
+    public List<NewGameResult> GetRecent(int count) =>
+        Db == null ? new List<NewGameResult>() : Db.Query<NewGameResult>(
+            "SELECT * FROM diagonal_new_game_results ORDER BY Id DESC LIMIT ?", count);
 
-    public List<DiagonalNewGameResultEntry> GetRecentEntries(int offset, int count)
+    public List<NewGameResultEntry> GetRecentEntries(int offset, int count)
     {
-        if (Db == null) return new List<DiagonalNewGameResultEntry>();
+        if (Db == null) return new List<NewGameResultEntry>();
         List<RecentEntryRow> rows = Db.Query<RecentEntryRow>(
             "SELECT results.Id, results.Level, results.Difficulty, results.PuzzleSeed, " +
             "results.PencilUses, results.SOSUses, results.AutoFillUses, results.RecordedAt, " +
@@ -184,7 +216,7 @@ public sealed class SqliteDiagonalGameResultRepository : IDiagonalGameResultRepo
             "ON completions.ResultId = results.Id " +
             "ORDER BY results.Id DESC LIMIT ? OFFSET ?", count, offset);
 
-        return rows.Select(row => new DiagonalNewGameResultEntry(new DiagonalNewGameResult
+        return rows.Select(row => new NewGameResultEntry(new NewGameResult
         {
             Id = row.Id,
             Level = row.Level,
@@ -197,28 +229,27 @@ public sealed class SqliteDiagonalGameResultRepository : IDiagonalGameResultRepo
         }, row.IsCompleted != 0)).ToList();
     }
 
-    public List<DiagonalNewGameResultEntry> GetRecentEntries(int count) =>
+    public List<NewGameResultEntry> GetRecentEntries(int count) =>
         GetRecentEntries(0, count);
 
-    public DiagonalNewGameResultStats GetStats()
+    public NewGameResultStats GetStats()
     {
-        var result = new DiagonalNewGameResultStats();
+        var result = new NewGameResultStats();
         SQLiteConnection db = Db;
         if (db == null) return result;
-        foreach (DiagonalNewGameDifficultyStats stat in db.Table<DiagonalNewGameDifficultyStats>())
-        {
-            result.TotalGames += stat.GamesStarted;
-            result.CompletedGames += stat.GamesCompleted;
-        }
+        result.TotalGames = db.ExecuteScalar<int>("SELECT COALESCE(SUM(GamesStarted), 0) FROM diagonal_new_game_stats_by_difficulty;");
+        result.CompletedGames = db.ExecuteScalar<int>("SELECT COALESCE(SUM(GamesCompleted), 0) FROM diagonal_new_game_stats_by_difficulty;");
         result.IncompleteGames = System.Math.Max(0, result.TotalGames - result.CompletedGames);
         return result;
     }
 
-    public DiagonalNewGameDifficultyStats GetDifficultyStats(SudokuDifficulty difficulty)
+    public NewGameDifficultyStats GetDifficultyStats(SudokuDifficulty difficulty)
     {
         SQLiteConnection db = Db;
-        if (db == null) return new DiagonalNewGameDifficultyStats { Difficulty = (int)difficulty };
-        DiagonalNewGameDifficultyStats row = db.Find<DiagonalNewGameDifficultyStats>((int)difficulty);
-        return row ?? new DiagonalNewGameDifficultyStats { Difficulty = (int)difficulty };
+        if (db == null) return new NewGameDifficultyStats { Difficulty = (int)difficulty };
+        NewGameDifficultyStats row = db.Query<NewGameDifficultyStats>(
+            "SELECT * FROM diagonal_new_game_stats_by_difficulty WHERE Difficulty = ? LIMIT 1",
+            (int)difficulty).FirstOrDefault();
+        return row ?? new NewGameDifficultyStats { Difficulty = (int)difficulty };
     }
 }

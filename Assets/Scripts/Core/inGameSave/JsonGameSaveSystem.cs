@@ -1,0 +1,232 @@
+using System;
+using System.Collections.Generic;
+using System.IO;
+using UnityEngine;
+
+public abstract class JsonGameSaveSystem : IGameSaveSystem
+{
+
+    protected abstract string VariantName { get; }
+    protected abstract string GetFileName(SaveSlot slot);
+    protected abstract bool IsValidSavedPuzzle(int[] puzzleFlat, int[] solutionFlat);
+    protected virtual bool AllowsLegacyMissingVariant => false;
+    protected virtual bool AllowsLegacyMissingPuzzle(SaveGameData data, SaveSlot slot) => false;
+    protected virtual bool AllowsLegacyEmptyPuzzle(SaveGameData data, SaveSlot slot) => false;
+
+    private string GetFilePath(SaveSlot slot) =>
+        Path.Combine(Application.persistentDataPath, GetFileName(slot));
+
+    private static string GetMode(SaveSlot slot)
+    {
+        if (slot == SaveSlot.NewGame) return "NewGame";
+        if (slot == SaveSlot.DailyChallenge) return "DailyChallenge";
+        return "Journey";
+    }
+
+    public void Save(SaveGameData data, SaveSlot slot)
+    {
+        if (data != null) data.SaveVariant = VariantName;
+        if (!IsValidSave(data, slot))
+        {
+            Debug.LogWarning($"[SaveSystem] Refused invalid {GetMode(slot)} save.");
+            return;
+        }
+
+        data.SaveVersion = 2;
+        data.SaveMode = GetMode(slot);
+
+        try
+        {
+            string json = JsonUtility.ToJson(data, prettyPrint: false);
+            string path = GetFilePath(slot);
+            string tempPath = path + ".tmp";
+            string backupPath = path + ".bak";
+            Directory.CreateDirectory(Path.GetDirectoryName(path));
+            File.WriteAllText(tempPath, json);
+
+            if (File.Exists(path))
+            {
+                try
+                {
+                    if (File.Exists(backupPath)) File.Delete(backupPath);
+                    File.Replace(tempPath, path, backupPath);
+                }
+                catch (NotSupportedException)
+                {
+                    if (File.Exists(tempPath)) ReplaceWithBackup(tempPath, path, backupPath);
+                }
+                catch (IOException)
+                {
+                    if (File.Exists(tempPath)) ReplaceWithBackup(tempPath, path, backupPath);
+                }
+            }
+            else
+            {
+                File.Move(tempPath, path);
+            }
+        }
+        catch (Exception ex)
+        {
+            Debug.LogError($"[SaveSystem] {GetMode(slot)} save failed: {ex.Message}");
+        }
+    }
+
+    private static void ReplaceWithBackup(string tempPath, string path, string backupPath)
+    {
+        if (File.Exists(backupPath)) File.Delete(backupPath);
+        if (File.Exists(path)) File.Copy(path, backupPath);
+        if (File.Exists(path)) File.Delete(path);
+        File.Move(tempPath, path);
+    }
+
+    public SaveGameData Load(SaveSlot slot)
+    {
+        foreach (string candidate in GetCandidates(slot))
+        {
+            SaveGameData data = TryRead(candidate, slot);
+            if (data == null) continue;
+            PromoteRecoveredCandidate(candidate, slot);
+            return data;
+        }
+        return null;
+    }
+
+    public bool HasSave(SaveSlot slot)
+    {
+        foreach (string candidate in GetCandidates(slot))
+            if (TryRead(candidate, slot) != null) return true;
+        return false;
+    }
+
+    public void Delete(SaveSlot slot)
+    {
+        string path = GetFilePath(slot);
+        DeleteIfExists(path);
+        DeleteIfExists(path + ".tmp");
+        DeleteIfExists(path + ".bak");
+    }
+
+    public bool IsValidSave(SaveGameData data, SaveSlot slot)
+    {
+        if (data == null || data.BoardFlat == null || data.BoardFlat.Length != 81 ||
+            data.PencilCandidateMasksFlat == null || data.PencilCandidateMasksFlat.Length != 81)
+            return false;
+        if (data.SaveVersion < 0 || data.SaveVersion > 2 ||
+            data.Difficulty < 0 || data.Difficulty > 8 || data.Level < 1)
+            return false;
+        if (data.SaveVariant != VariantName &&
+            !(AllowsLegacyMissingVariant && string.IsNullOrEmpty(data.SaveVariant)))
+            return false;
+        if (float.IsNaN(data.ElapsedSeconds) || float.IsInfinity(data.ElapsedSeconds) ||
+            data.ElapsedSeconds < 0f || data.LivesRemaining < 0)
+            return false;
+        if (slot == SaveSlot.NewGame && data.SaveMode != "NewGame") return false;
+        if (slot == SaveSlot.DailyChallenge &&
+            (data.SaveMode != "DailyChallenge" || data.DailyChallengeRecordId <= 0 ||
+             string.IsNullOrEmpty(data.DailyChallengeDate))) return false;
+        if (!string.IsNullOrEmpty(data.SaveMode) && data.SaveMode != GetMode(slot)) return false;
+
+        for (int i = 0; i < 81; i++)
+        {
+            if (data.BoardFlat[i] < 0 || data.BoardFlat[i] > 9 ||
+                data.PencilCandidateMasksFlat[i] < 0 || data.PencilCandidateMasksFlat[i] > 0x3FE)
+                return false;
+        }
+        if (!IsValidHistory(data.UndoHistory) || !IsValidHistory(data.RedoHistory)) return false;
+
+        bool puzzleMissing = data.OriginalPuzzleFlat == null && data.SolutionFlat == null;
+        if (puzzleMissing)
+            return AllowsLegacyMissingPuzzle(data, slot);
+
+        if (data.OriginalPuzzleFlat == null || data.SolutionFlat == null ||
+            data.OriginalPuzzleFlat.Length != 81 || data.SolutionFlat.Length != 81)
+            return false;
+        if (AllowsLegacyEmptyPuzzle(data, slot) &&
+            IsAllZero(data.OriginalPuzzleFlat) && IsAllZero(data.SolutionFlat))
+            return true;
+
+        return IsValidSavedPuzzle(data.OriginalPuzzleFlat, data.SolutionFlat);
+    }
+
+    private static bool IsAllZero(int[] values)
+    {
+        if (values == null) return true;
+        for (int i = 0; i < values.Length; i++)
+            if (values[i] != 0) return false;
+        return true;
+    }
+
+    private static bool IsValidHistory(List<SaveGameHistoryEntry> history)
+    {
+        if (history == null) return true;
+        foreach (SaveGameHistoryEntry entry in history)
+        {
+            if (entry == null) return false;
+            bool cellChange = entry.Row >= 0 && entry.Row < 9 && entry.Col >= 0 && entry.Col < 9;
+            bool candidatesOnly = entry.Row == -1 && entry.Col == -1;
+            if ((!cellChange && !candidatesOnly) || entry.BeforeValue < 0 || entry.BeforeValue > 9 ||
+                entry.AfterValue < 0 || entry.AfterValue > 9)
+                return false;
+
+            if (entry.CandidateChanges == null) continue;
+            foreach (SaveGameCandidateChange change in entry.CandidateChanges)
+                if (change == null || change.Row < 0 || change.Row >= 9 ||
+                    change.Col < 0 || change.Col >= 9 || change.BeforeMask < 0 ||
+                    change.BeforeMask > 0x3FE || change.AfterMask < 0 || change.AfterMask > 0x3FE)
+                    return false;
+        }
+        return true;
+    }
+
+    private SaveGameData TryRead(string candidate, SaveSlot slot)
+    {
+        try
+        {
+            string json = ReadCandidate(candidate);
+            if (string.IsNullOrEmpty(json) || !json.Contains("\"BoardFlat\"")) return null;
+            SaveGameData data = JsonUtility.FromJson<SaveGameData>(json);
+            return IsValidSave(data, slot) ? data : null;
+        }
+        catch (Exception ex)
+        {
+            Debug.LogWarning($"[SaveSystem] Ignoring unreadable {GetMode(slot)} save: {ex.Message}");
+            return null;
+        }
+    }
+
+    private string[] GetCandidates(SaveSlot slot)
+    {
+        string path = GetFilePath(slot);
+        return new[] { path, path + ".tmp", path + ".bak" };
+    }
+
+    private static string ReadCandidate(string candidate)
+    {
+        return File.Exists(candidate) ? File.ReadAllText(candidate) : null;
+    }
+
+    private void PromoteRecoveredCandidate(string candidate, SaveSlot slot)
+    {
+        string path = GetFilePath(slot);
+        if (candidate == path) return;
+        try
+        {
+            string recovered = File.ReadAllText(candidate);
+            string tempPath = path + ".recover";
+            File.WriteAllText(tempPath, recovered);
+            if (File.Exists(path)) File.Delete(path);
+            File.Move(tempPath, path);
+            Debug.LogWarning($"[SaveSystem] Recovered {GetMode(slot)} save from {Path.GetFileName(candidate)}.");
+        }
+        catch (Exception ex)
+        {
+            Debug.LogWarning($"[SaveSystem] Could not restore recovered save: {ex.Message}");
+        }
+    }
+
+    private static void DeleteIfExists(string path)
+    {
+        if (File.Exists(path)) File.Delete(path);
+    }
+
+}

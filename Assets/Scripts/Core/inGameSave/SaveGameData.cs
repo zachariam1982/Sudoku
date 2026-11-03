@@ -32,6 +32,7 @@ public class SaveGameData
     // even if puzzle generation changes in a later app release.
     public int SaveVersion;
     public string SaveMode = "Journey";
+    public string SaveVariant = "";
     public int GeneratorVersion = 1;
 
     // ── Puzzle identity ───────────────────────────────────────────────────────

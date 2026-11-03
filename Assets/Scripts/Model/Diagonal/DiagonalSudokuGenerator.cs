@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using UnityEngine;
 
 /// <summary>Deterministic, bounded generator for uniquely solvable Diagonal Sudoku.</summary>
 public sealed class DiagonalSudokuGenerator : ISudokuGenerator
@@ -49,12 +50,14 @@ public sealed class DiagonalSudokuGenerator : ISudokuGenerator
                     if (clueCount > maxClues) continue;
                     if (_analyzer.Analyze(puzzle).Difficulty != target) continue;
 
-                    return new SudokuResult
+                    var result = new SudokuResult
                     {
                         Puzzle = (int[,])puzzle.Clone(),
                         Solution = solution,
                         Difficulty = target
                     };
+                    Debug.Log($"[DiagonalSudokuGenerator] Generated solution (level {level}, difficulty {target}):\n{FormatBoard(solution)}");
+                    return result;
                 }
             }
         }
@@ -117,5 +120,25 @@ public sealed class DiagonalSudokuGenerator : ISudokuGenerator
         int count = 0;
         while (mask != 0) { mask &= mask - 1; count++; }
         return count;
+    }
+
+    private static string FormatBoard(int[,] board)
+    {
+        var output = new System.Text.StringBuilder();
+        for (int row = 0; row < 9; row++)
+        {
+            if (row > 0) output.AppendLine();
+            for (int col = 0; col < 9; col++)
+            {
+                if (col > 0) output.Append(col % 3 == 0 ? " | " : " ");
+                output.Append(board[row, col]);
+            }
+            if (row == 2 || row == 5)
+            {
+                output.AppendLine();
+                output.Append("------+-------+------");
+            }
+        }
+        return output.ToString();
     }
 }

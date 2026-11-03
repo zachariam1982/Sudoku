@@ -7,6 +7,7 @@ using UnityEngine;
 public sealed class DailyChallengeViewModel : BaseViewModel
 {
     private readonly IDailyChallengeRepository _dailyChallengeRepository;
+    private readonly IGameSaveSystem _gameSaveSystem;
     private DailyChallengeStateMachine DailyMachine => (DailyChallengeStateMachine)StateMachine;
     private int _dateSeed;
 
@@ -20,32 +21,16 @@ public sealed class DailyChallengeViewModel : BaseViewModel
     public ICommand NewGameCommand { get; }
     public ICommand RetryCommand { get; }
 
-    public DailyChallengeViewModel(IGameUsageStats usageStats, IScorePenalties penalties)
-        : this(usageStats, penalties, new SqliteDailyChallengeRepository(), new SqliteGameHistoryRepository()) { }
-
-    public DailyChallengeViewModel(
-        IGameUsageStats usageStats,
-        IScorePenalties penalties,
-        IDailyChallengeRepository dailyChallengeRepository)
-        : this(usageStats, penalties, dailyChallengeRepository, new SqliteGameHistoryRepository()) { }
-
-    public DailyChallengeViewModel(
-        IGameUsageStats usageStats,
-        IScorePenalties penalties,
-        IDailyChallengeRepository dailyChallengeRepository,
-        IGameHistoryRepository historyRepository)
-        : this(usageStats, penalties, new ClassicSudokuModel(historyRepository), dailyChallengeRepository)
-    {
-    }
-
     public DailyChallengeViewModel(
         IGameUsageStats usageStats,
         IScorePenalties penalties,
         ISudokuModel model,
-        IDailyChallengeRepository dailyChallengeRepository)
+        IDailyChallengeRepository dailyChallengeRepository,
+        IGameSaveSystem gameSaveSystem)
         : base(usageStats, penalties, model)
     {
         _dailyChallengeRepository = dailyChallengeRepository ?? throw new ArgumentNullException(nameof(dailyChallengeRepository));
+        _gameSaveSystem = gameSaveSystem ?? throw new ArgumentNullException(nameof(gameSaveSystem));
         NewGameCommand = new RelayCommand(_ => NotifyGameCompleted());
         RetryCommand = new RelayCommand(_ =>
             ShowMessage.Value = ("Challenge already attempted",
@@ -226,7 +211,7 @@ public sealed class DailyChallengeViewModel : BaseViewModel
         if (!string.IsNullOrEmpty(ChallengeRecord.CompletedAt))
         {
             HasActiveChallenge = false;
-            SaveSystem.Delete(SaveSlot.DailyChallenge);
+            _gameSaveSystem.Delete(SaveSlot.DailyChallenge);
             return;
         }
 
@@ -251,7 +236,7 @@ public sealed class DailyChallengeViewModel : BaseViewModel
         finally
         {
             HasActiveChallenge = false;
-            SaveSystem.Delete(SaveSlot.DailyChallenge);
+            _gameSaveSystem.Delete(SaveSlot.DailyChallenge);
         }
     }
 

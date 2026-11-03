@@ -47,8 +47,9 @@ public class GameContext : MonoBehaviour
         DailyChallengeViewModel = new DailyChallengeViewModel(
             new JourneyUsageStats(),
             new JourneyScorePenalties(),
+            new ClassicSudokuModel(historyRepository),
             new SqliteDailyChallengeRepository(database),
-            historyRepository);
+            User.Instance.GameSaveSystem);
 
         _grid = GetComponent<SudokuGrid>();
         _gridBuilder = GetComponent<GridBuilder>();
@@ -159,7 +160,7 @@ public class GameContext : MonoBehaviour
         _newGameStateMachine.SetSuspended(true);
         _newGameActive = false;
         NewGameViewModel.ClearActiveGame();
-        SaveSystem.Delete(SaveSlot.NewGame);
+        User.Instance.GameSaveSystem.Delete(SaveSlot.NewGame);
         _gridBuilder?.SetVisible(false);
         _journeyStateView?.SetGameplayVisible(false);
         _newGameStateView?.SetGameplayVisible(false);
@@ -191,7 +192,7 @@ public class GameContext : MonoBehaviour
         _newGameStateMachine.SetSuspended(true);
         _newGameActive = false;
         NewGameViewModel.ClearActiveGame();
-        SaveSystem.Delete(SaveSlot.NewGame);
+        User.Instance.GameSaveSystem.Delete(SaveSlot.NewGame);
         _gridBuilder?.SetVisible(false);
         _journeyStateView?.SetGameplayVisible(false);
         _newGameStateView?.SetGameplayVisible(false);
@@ -283,18 +284,18 @@ public class GameContext : MonoBehaviour
         }
         if (!string.IsNullOrEmpty(record.CompletedAt))
         {
-            SaveSystem.Delete(SaveSlot.DailyChallenge);
+            User.Instance.GameSaveSystem.Delete(SaveSlot.DailyChallenge);
             DailyChallengeViewModel.ShowMessage.Value = ("Challenge already attempted", "Today's challenge is already attempted.", "");
             _error?.Bind(DailyChallengeViewModel);
             yield break;
         }
-        SaveGameData savedChallenge = SaveSystem.Load(SaveSlot.DailyChallenge);
+        SaveGameData savedChallenge = User.Instance.GameSaveSystem.Load(SaveSlot.DailyChallenge);
         bool resumeSavedChallenge = savedChallenge != null &&
             savedChallenge.SaveMode == "DailyChallenge" &&
             savedChallenge.DailyChallengeRecordId == record.Id &&
             savedChallenge.DailyChallengeDate == record.CurrentDate.ToString("yyyy-MM-dd", CultureInfo.InvariantCulture);
         if (savedChallenge != null && !resumeSavedChallenge)
-            SaveSystem.Delete(SaveSlot.DailyChallenge);
+            User.Instance.GameSaveSystem.Delete(SaveSlot.DailyChallenge);
 
         DailyChallengeViewModel.MarkChallengeAttempted(record);
         _dailyChallengeScreen?.Hide();
@@ -307,7 +308,7 @@ public class GameContext : MonoBehaviour
             DailyChallengeViewModel.LoadSaveData(savedChallenge, record);
         if (resumeSavedChallenge && !restoredSavedChallenge)
         {
-            SaveSystem.Delete(SaveSlot.DailyChallenge);
+            User.Instance.GameSaveSystem.Delete(SaveSlot.DailyChallenge);
         }
         // Prepare generates a Sudoku puzzle. Only call it for a new challenge
         // (or if a saved challenge is invalid); a valid save already contains

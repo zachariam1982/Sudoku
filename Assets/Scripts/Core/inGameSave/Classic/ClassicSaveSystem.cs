@@ -3,14 +3,7 @@ using System.Collections.Generic;
 using System.IO;
 using UnityEngine;
 
-public enum SaveSlot
-{
-    Journey,
-    NewGame,
-    DailyChallenge
-}
-
-public static class SaveSystem
+public sealed class ClassicSaveSystem : IGameSaveSystem
 {
     private const string JourneyFileName = "save.json";
     private const string NewGameFileName = "new_game_save.json";
@@ -33,9 +26,7 @@ public static class SaveSystem
         return "Journey";
     }
 
-    public static void Save(SaveGameData data) => Save(data, SaveSlot.Journey);
-
-    public static void Save(SaveGameData data, SaveSlot slot)
+    public void Save(SaveGameData data, SaveSlot slot)
     {
         if (!IsValidSave(data, slot))
         {
@@ -90,9 +81,7 @@ public static class SaveSystem
         File.Move(tempPath, path);
     }
 
-    public static SaveGameData Load() => Load(SaveSlot.Journey);
-
-    public static SaveGameData Load(SaveSlot slot)
+    public SaveGameData Load(SaveSlot slot)
     {
         foreach (string candidate in GetCandidates(slot))
         {
@@ -104,18 +93,14 @@ public static class SaveSystem
         return null;
     }
 
-    public static bool HasSave() => HasSave(SaveSlot.Journey);
-
-    public static bool HasSave(SaveSlot slot)
+    public bool HasSave(SaveSlot slot)
     {
         foreach (string candidate in GetCandidates(slot))
             if (TryRead(candidate, slot) != null) return true;
         return false;
     }
 
-    public static void Delete() => Delete(SaveSlot.Journey);
-
-    public static void Delete(SaveSlot slot)
+    public void Delete(SaveSlot slot)
     {
         string path = GetFilePath(slot);
         DeleteIfExists(path);
@@ -123,7 +108,7 @@ public static class SaveSystem
         DeleteIfExists(path + ".bak");
     }
 
-    public static bool IsValidSave(SaveGameData data, SaveSlot slot)
+    public bool IsValidSave(SaveGameData data, SaveSlot slot)
     {
         if (data == null || data.BoardFlat == null || data.BoardFlat.Length != 81 ||
             data.PencilCandidateMasksFlat == null || data.PencilCandidateMasksFlat.Length != 81)

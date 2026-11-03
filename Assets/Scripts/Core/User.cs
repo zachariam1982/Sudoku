@@ -7,6 +7,7 @@ public class User : MonoBehaviour
     public JourneyViewModel ViewModel { get; set; }
     public NewGameViewModel NewGameViewModel { get; set; }
     public DailyChallengeViewModel DailyChallengeViewModel { get; set; }
+    public IGameSaveSystem GameSaveSystem { get; private set; }
     // Start is called once before the first execution of Update after the MonoBehaviour is created
     void Awake()
     {
@@ -18,6 +19,7 @@ public class User : MonoBehaviour
  
         Instance = this;
         DontDestroyOnLoad(gameObject);  // survive scene reloads
+        GameSaveSystem = new ClassicSaveSystem();
  
         SqliteDatabaseConnection database = SqliteDatabaseConnection.Instance;
         database.Open();
@@ -30,7 +32,7 @@ public class User : MonoBehaviour
     }
     public bool TryLoadSave()
     {
-        SaveGameData data = SaveSystem.Load(SaveSlot.Journey);
+        SaveGameData data = GameSaveSystem.Load(SaveSlot.Journey);
 
         if (data != null)
         {
@@ -42,14 +44,14 @@ public class User : MonoBehaviour
 
         bool recovered = ViewModel.RecoverFromHistory();
 
-        if (recovered) SaveSystem.Save(ViewModel.GetSaveData(), SaveSlot.Journey);
+        if (recovered) GameSaveSystem.Save(ViewModel.GetSaveData(), SaveSlot.Journey);
 
         return recovered;
     }
 
     public bool TryLoadNewGameSave()
     {
-        SaveGameData data = SaveSystem.Load(SaveSlot.NewGame);
+        SaveGameData data = GameSaveSystem.Load(SaveSlot.NewGame);
         return data != null && NewGameViewModel != null && NewGameViewModel.LoadSaveData(data);
     }
     private IEnumerator SaveLoop()
@@ -73,10 +75,10 @@ public class User : MonoBehaviour
         }
  
         SaveGameData data = ViewModel.GetSaveData();
-        SaveSystem.Save(data, SaveSlot.Journey);
+        GameSaveSystem.Save(data, SaveSlot.Journey);
 
         if (NewGameViewModel != null && NewGameViewModel.HasActiveGame)
-            SaveSystem.Save(NewGameViewModel.GetSaveData(), SaveSlot.NewGame);
+            GameSaveSystem.Save(NewGameViewModel.GetSaveData(), SaveSlot.NewGame);
 
         SaveDailyChallengeNow();
 
@@ -85,7 +87,7 @@ public class User : MonoBehaviour
     public void SaveNewGameNow()
     {
         if (NewGameViewModel == null || !NewGameViewModel.HasActiveGame) return;
-        SaveSystem.Save(NewGameViewModel.GetSaveData(), SaveSlot.NewGame);
+        GameSaveSystem.Save(NewGameViewModel.GetSaveData(), SaveSlot.NewGame);
     }
 
     public void SaveDailyChallengeNow()
@@ -93,7 +95,7 @@ public class User : MonoBehaviour
         if (DailyChallengeViewModel == null || !DailyChallengeViewModel.HasActiveChallenge) return;
         SaveGameData data = DailyChallengeViewModel.GetSaveData();
         if (data != null)
-            SaveSystem.Save(data, SaveSlot.DailyChallenge);
+            GameSaveSystem.Save(data, SaveSlot.DailyChallenge);
     }
 
     private void OnApplicationPause(bool paused)

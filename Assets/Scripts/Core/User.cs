@@ -21,6 +21,7 @@ public class User : MonoBehaviour
  
         GameDatabase.Init();
         NewGameResultDatabase.Init();
+        DailyChallengeDatabase.Init();
         StartCoroutine(SaveLoop());
     }
     public bool TryLoadSave()

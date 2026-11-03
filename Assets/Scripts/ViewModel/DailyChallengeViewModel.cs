@@ -34,7 +34,16 @@ public sealed class DailyChallengeViewModel : BaseViewModel
         IScorePenalties penalties,
         IDailyChallengeRepository dailyChallengeRepository,
         IGameHistoryRepository historyRepository)
-        : base(usageStats, penalties, new ClassicSudokuModel(historyRepository))
+        : this(usageStats, penalties, new ClassicSudokuModel(historyRepository), dailyChallengeRepository)
+    {
+    }
+
+    public DailyChallengeViewModel(
+        IGameUsageStats usageStats,
+        IScorePenalties penalties,
+        ISudokuModel model,
+        IDailyChallengeRepository dailyChallengeRepository)
+        : base(usageStats, penalties, model)
     {
         _dailyChallengeRepository = dailyChallengeRepository ?? throw new ArgumentNullException(nameof(dailyChallengeRepository));
         NewGameCommand = new RelayCommand(_ => NotifyGameCompleted());

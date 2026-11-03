@@ -43,7 +43,16 @@ public class JourneyViewModel : BaseViewModel
         IGameUsageStats usageStats,
         IScorePenalties penalties,
         IGameHistoryRepository historyRepository)
-        : base(usageStats, penalties, new ClassicSudokuModel(historyRepository))
+        : this(usageStats, penalties, new ClassicSudokuModel(historyRepository), historyRepository)
+    {
+    }
+
+    public JourneyViewModel(
+        IGameUsageStats usageStats,
+        IScorePenalties penalties,
+        ISudokuModel model,
+        IGameHistoryRepository historyRepository)
+        : base(usageStats, penalties, model)
     {
         _historyRepository = historyRepository ?? throw new ArgumentNullException(nameof(historyRepository));
         NewGameCommand = new RelayCommand(_ => NewGameRequested.Value = true);

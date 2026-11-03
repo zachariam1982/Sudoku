@@ -1,5 +1,4 @@
 using System.Collections.Generic;
-using System.IO;
 using System.Linq;
 using SQLite;
 using UnityEngine;
@@ -19,18 +18,25 @@ public static class NewGameResultDatabase
         public int IsCompleted { get; set; }
     }
 
-    private static SQLiteConnection _db;
-    private static string DbPath =>
-        Path.Combine(Application.persistentDataPath, "game_history.db");
+    // New Game uses the same database file and lifecycle as GameDatabase.
+    // Resolve the connection dynamically so a pause/resume reopen cannot leave
+    // this repository holding a stale SQLiteConnection instance.
+    private static SQLiteConnection Db => GameDatabase.Connection;
 
-    public static void Init(SQLiteConnection connection = null)
+    public static void Init()
     {
         try
         {
-            _db = connection ?? new SQLiteConnection(DbPath);
-            _db.CreateTable<NewGameResult>();
-            _db.CreateTable<NewGameResultCompletion>();
-            _db.CreateTable<NewGameDifficultyStats>();
+            SQLiteConnection db = Db;
+            if (db == null)
+            {
+                Debug.LogError("[NewGameResultDatabase] Init skipped because GameDatabase is not open.");
+                return;
+            }
+
+            db.CreateTable<NewGameResult>();
+            db.CreateTable<NewGameResultCompletion>();
+            db.CreateTable<NewGameDifficultyStats>();
             EnsureUsageCountColumns();
             RecreateStatsTriggers();
         }
@@ -42,7 +48,7 @@ public static class NewGameResultDatabase
 
     public static void RecordAttempt(NewGameResult result, bool completed)
     {
-        SQLiteConnection db = _db;
+        SQLiteConnection db = Db;
         if (result == null || db == null) return;
 
         db.BeginTransaction();
@@ -63,7 +69,7 @@ public static class NewGameResultDatabase
 
     public static void UpdateCompletedAttempt(NewGameResult result)
     {
-        SQLiteConnection db = _db;
+        SQLiteConnection db = Db;
         if (result == null || result.Id <= 0 || db == null) return;
 
         db.BeginTransaction();
@@ -97,22 +103,22 @@ public static class NewGameResultDatabase
     private static void EnsureUsageCountColumns()
     {
         var columns = new System.Collections.Generic.HashSet<string>(
-            _db.GetTableInfo("new_game_results").Select(column => column.Name));
+            Db.GetTableInfo("new_game_results").Select(column => column.Name));
 
         if (!columns.Contains(nameof(NewGameResult.PencilUses)))
-            _db.Execute("ALTER TABLE new_game_results ADD COLUMN PencilUses INTEGER NOT NULL DEFAULT 0;");
+            Db.Execute("ALTER TABLE new_game_results ADD COLUMN PencilUses INTEGER NOT NULL DEFAULT 0;");
         if (!columns.Contains(nameof(NewGameResult.SOSUses)))
-            _db.Execute("ALTER TABLE new_game_results ADD COLUMN SOSUses INTEGER NOT NULL DEFAULT 0;");
+            Db.Execute("ALTER TABLE new_game_results ADD COLUMN SOSUses INTEGER NOT NULL DEFAULT 0;");
         if (!columns.Contains(nameof(NewGameResult.AutoFillUses)))
-            _db.Execute("ALTER TABLE new_game_results ADD COLUMN AutoFillUses INTEGER NOT NULL DEFAULT 0;");
+            Db.Execute("ALTER TABLE new_game_results ADD COLUMN AutoFillUses INTEGER NOT NULL DEFAULT 0;");
     }
 
     private static void RecreateStatsTriggers()
     {
-        _db.Execute("DROP TRIGGER IF EXISTS trg_new_game_results_insert;");
-        _db.Execute("DROP TRIGGER IF EXISTS trg_new_game_result_completions_insert;");
+        Db.Execute("DROP TRIGGER IF EXISTS trg_new_game_results_insert;");
+        Db.Execute("DROP TRIGGER IF EXISTS trg_new_game_result_completions_insert;");
 
-        _db.Execute(@"
+        Db.Execute(@"
             CREATE TRIGGER trg_new_game_results_insert
             AFTER INSERT ON new_game_results
             BEGIN
@@ -127,7 +133,7 @@ public static class NewGameResultDatabase
             END;
         ");
 
-        _db.Execute(@"
+        Db.Execute(@"
             CREATE TRIGGER trg_new_game_result_completions_insert
             AFTER INSERT ON new_game_result_completions
             BEGIN
@@ -144,21 +150,21 @@ public static class NewGameResultDatabase
 
     public static int GetNextId()
     {
-        if (_db == null) return 1;
-        NewGameResult latest = _db.Table<NewGameResult>().OrderByDescending(result => result.Id).FirstOrDefault();
+        if (Db == null) return 1;
+        NewGameResult latest = Db.Table<NewGameResult>().OrderByDescending(result => result.Id).FirstOrDefault();
         return latest == null ? 1 : latest.Id + 1;
     }
 
     public static NewGameResult GetLatest() =>
-        _db == null ? null : _db.Table<NewGameResult>().OrderByDescending(r => r.Id).FirstOrDefault();
+        Db == null ? null : Db.Table<NewGameResult>().OrderByDescending(r => r.Id).FirstOrDefault();
 
     public static List<NewGameResult> GetRecent(int count) =>
-        _db == null ? new List<NewGameResult>() : _db.Table<NewGameResult>().OrderByDescending(r => r.Id).Take(count).ToList();
+        Db == null ? new List<NewGameResult>() : Db.Table<NewGameResult>().OrderByDescending(r => r.Id).Take(count).ToList();
 
     public static List<NewGameResultEntry> GetRecentEntries(int offset, int count)
     {
-        if (_db == null) return new List<NewGameResultEntry>();
-        List<RecentEntryRow> rows = _db.Query<RecentEntryRow>(
+        if (Db == null) return new List<NewGameResultEntry>();
+        List<RecentEntryRow> rows = Db.Query<RecentEntryRow>(
             "SELECT results.Id, results.Level, results.Difficulty, results.PuzzleSeed, " +
             "results.PencilUses, results.SOSUses, results.AutoFillUses, results.RecordedAt, " +
             "CASE WHEN completions.ResultId IS NULL THEN 0 ELSE 1 END AS IsCompleted " +
@@ -186,7 +192,7 @@ public static class NewGameResultDatabase
     public static NewGameResultStats GetStats()
     {
         var result = new NewGameResultStats();
-        SQLiteConnection db = _db;
+        SQLiteConnection db = Db;
         if (db == null) return result;
         foreach (NewGameDifficultyStats stat in db.Table<NewGameDifficultyStats>())
         {
@@ -199,7 +205,7 @@ public static class NewGameResultDatabase
 
     public static NewGameDifficultyStats GetDifficultyStats(SudokuDifficulty difficulty)
     {
-        SQLiteConnection db = _db;
+        SQLiteConnection db = Db;
         if (db == null) return new NewGameDifficultyStats { Difficulty = (int)difficulty };
         NewGameDifficultyStats row = db.Find<NewGameDifficultyStats>((int)difficulty);
         return row ?? new NewGameDifficultyStats { Difficulty = (int)difficulty };

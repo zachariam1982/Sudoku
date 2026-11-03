@@ -17,6 +17,11 @@ public class DatabaseLifecycleHandler : MonoBehaviour
         else
         {
             GameDatabase.Init();
+            // NewGameResultDatabase caches its own connection reference. The
+            // game database is closed while suspended, so rebind the result
+            // repository after GameDatabase has reopened the shared file.
+            if (GameDatabase.Connection != null)
+                NewGameResultDatabase.Init(GameDatabase.Connection);
         }
     }
 

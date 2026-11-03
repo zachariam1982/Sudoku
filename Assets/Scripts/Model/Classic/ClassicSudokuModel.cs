@@ -135,6 +135,9 @@ public class ClassicSudokuGenerator : ISudokuGenerator
         UnityEngine.Debug.Log(
             $"[ClassicSudokuGenerator] level={level} requested={requestedDifficulty} actual={result.Difficulty} " +
             $"total={ElapsedMilliseconds(generationStartedAt):F2}ms");
+        UnityEngine.Debug.Log(
+            $"[ClassicSudokuGenerator] Generated solution (level {level}, difficulty {result.Difficulty}):\n" +
+            FormatBoard(result.Solution));
 
         return result;
     }
@@ -335,6 +338,26 @@ public class ClassicSudokuGenerator : ISudokuGenerator
             if (board[startRow + (i / 3), startCol + (i % 3)] == num) return false;
         }
         return true;
+    }
+
+    private static string FormatBoard(int[,] board)
+    {
+        var output = new System.Text.StringBuilder();
+        for (int row = 0; row < 9; row++)
+        {
+            if (row > 0) output.AppendLine();
+            for (int col = 0; col < 9; col++)
+            {
+                if (col > 0) output.Append(col % 3 == 0 ? " | " : " ");
+                output.Append(board[row, col]);
+            }
+            if (row == 2 || row == 5)
+            {
+                output.AppendLine();
+                output.Append("------+-------+------");
+            }
+        }
+        return output.ToString();
     }
 }
 public class ClassicSudokuModel : ISudokuModel

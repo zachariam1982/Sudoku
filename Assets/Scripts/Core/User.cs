@@ -20,7 +20,7 @@ public class User : MonoBehaviour
         DontDestroyOnLoad(gameObject);  // survive scene reloads
  
         GameDatabase.Init();
-        NewGameResultDatabase.Init(GameDatabase.Connection);
+        NewGameResultDatabase.Init();
         StartCoroutine(SaveLoop());
     }
     public bool TryLoadSave()

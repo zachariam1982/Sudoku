@@ -25,6 +25,7 @@ public class User : MonoBehaviour
         new SqliteGameHistoryRepository(database).InitializeSchema();
         SqliteClassicGameResultRepository.InitializeSchema(database);
         DailyChallengeDatabase.Initialize(database);
+        DiagonalDatabase.Initialize(database);
         StartCoroutine(SaveLoop());
     }
     public bool TryLoadSave()

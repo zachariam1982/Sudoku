@@ -33,7 +33,8 @@ public class GameContext : MonoBehaviour
 
     private void Awake()
     {
-        IGameHistoryRepository historyRepository = new SqliteGameHistoryRepository();
+        SqliteDatabaseConnection database = SqliteDatabaseConnection.Instance;
+        IGameHistoryRepository historyRepository = new SqliteGameHistoryRepository(database);
         JourneyViewModel = new JourneyViewModel(
             new JourneyUsageStats(),
             new JourneyScorePenalties(),
@@ -42,11 +43,11 @@ public class GameContext : MonoBehaviour
             new NewGameUsageStats(),
             new NewGameScorePenalties(),
             new ClassicSudokuModel(historyRepository),
-            new SqliteClassicGameResultRepository());
+            new SqliteClassicGameResultRepository(database));
         DailyChallengeViewModel = new DailyChallengeViewModel(
             new JourneyUsageStats(),
             new JourneyScorePenalties(),
-            new SqliteDailyChallengeRepository(),
+            new SqliteDailyChallengeRepository(database),
             historyRepository);
 
         _grid = GetComponent<SudokuGrid>();

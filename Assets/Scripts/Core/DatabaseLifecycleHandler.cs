@@ -11,17 +11,16 @@ public class DatabaseLifecycleHandler : MonoBehaviour
     {
         if (isPaused)
         {
-            GameDatabase.FlushToDisk();
-            GameDatabase.Close(); 
+            SqliteDatabaseConnection.Instance.Close();
         }
         else
         {
-            GameDatabase.Init();
+            SqliteDatabaseConnection.Instance.Open();
         }
     }
 
     void OnApplicationQuit()
     {
-        GameDatabase.Close();
+        SqliteDatabaseConnection.Instance.Close();
     }
 }

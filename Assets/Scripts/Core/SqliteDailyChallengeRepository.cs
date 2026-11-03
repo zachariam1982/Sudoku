@@ -6,7 +6,15 @@ using SQLite;
 /// <summary>Query and update operations for tables owned by DailyChallengeDatabase.</summary>
 public sealed class SqliteDailyChallengeRepository : IDailyChallengeRepository
 {
-    private static SQLiteConnection Db => GameDatabase.Connection;
+    private readonly SqliteDatabaseConnection _database;
+    private SQLiteConnection Db => _database.Connection;
+
+    public SqliteDailyChallengeRepository() : this(SqliteDatabaseConnection.Instance) { }
+
+    public SqliteDailyChallengeRepository(SqliteDatabaseConnection database)
+    {
+        _database = database ?? throw new ArgumentNullException(nameof(database));
+    }
 
     public DailyChallengeRecord GetOrCreate(DateTime date, int difficulty)
     {

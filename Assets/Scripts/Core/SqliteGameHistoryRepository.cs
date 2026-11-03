@@ -1,19 +1,1200 @@
+using System;
 using System.Collections.Generic;
+using SQLite;
+using UnityEngine;
 
-/// <summary>SQLite-backed history used by the Classic Sudoku progression.</summary>
+/// <summary>Journey history and aggregate statistics stored in SQLite.</summary>
 public sealed class SqliteGameHistoryRepository : IGameHistoryRepository
 {
-    public void Insert(GameRecord record) => GameDatabase.Insert(record);
-    public void Update(GameRecord record) => GameDatabase.Update(record);
-    public GameStats GetGameStats() => GameDatabase.GetGameStats();
-    public int GetTotalPossiblePoints(GameStats stats) => GameDatabase.GetTotalPossiblePoints(stats);
-    public List<GameRecord> GetAll() => GameDatabase.GetAll();
-    public List<GameRecord> GetNextSet(int offset) => GameDatabase.GetNextSet(offset);
-    public List<GameRecord> GetLastNRecordByDate(int count) => GameDatabase.GetLastNRecordByDate(count);
-    public GameRecord GetLastRecord() => GameDatabase.GetLastRecord();
-    public GameRecord GetFastestWin() => GameDatabase.GetFastestWin();
-    public int GetTotalPoints() => GameDatabase.GetTotalPoints();
-    public int GetTotalWins() => GameDatabase.GetTotalWins();
-    public int GetTotalGamesPlayed() => GameDatabase.GetTotalGamesPlayed();
-    public void RebuildGameStats() => GameDatabase.RebuildGameStats();
+    private readonly SqliteDatabaseConnection _database;
+    private SQLiteConnection Db => _database.Connection;
+
+    private const int CurrentAggregateVersion = 1;
+    private const int CurrentDbVersion = 2;
+
+    public SqliteGameHistoryRepository() : this(SqliteDatabaseConnection.Instance) { }
+
+    public SqliteGameHistoryRepository(SqliteDatabaseConnection database)
+    {
+        _database = database ?? throw new ArgumentNullException(nameof(database));
+    }
+
+    public void InitializeSchema()
+    {
+        SQLiteConnection db = Db;
+        if (db == null)
+        {
+            Debug.LogError("[SqliteGameHistoryRepository] Schema initialization skipped because the database is not open.");
+            return;
+        }
+
+        try
+        {
+            if (_database.WasCreated)
+            {
+                Db.CreateTable<GameRecord>();
+                SetDatabaseVersion(CurrentDbVersion);
+                Debug.Log($"[SqliteGameHistoryRepository] Created new database at version {CurrentDbVersion}.");
+            }
+            else
+            {
+                MigrateDatabase();
+            }
+
+            Db.CreateTable<GameStats>();
+            CreateIndexes();
+            InitializeGameStats();
+            RecreateGameStatsTriggers();
+        }
+        catch (Exception ex)
+        {
+            Debug.LogError($"[SqliteGameHistoryRepository] Schema initialization failed: {ex.GetType().Name}: {ex}");
+        }
+    }
+
+    private void MigrateDatabase()
+    {
+        int version =
+            GetDatabaseVersion();
+
+        Debug.Log(
+            $"[SqliteGameHistoryRepository] Current DB version: {version}");
+
+        if (version > CurrentDbVersion)
+        {
+            throw new InvalidOperationException(
+                $"Database version {version} is newer than " +
+                $"supported version {CurrentDbVersion}.");
+        }
+
+        //
+        // Legacy schema -> usage-stat schema.
+        //
+        if (version < 1)
+        {
+            MigrateToVersion1();
+
+            version = 1;
+        }
+
+        if (version < 2)
+        {
+            MigrateToVersion2();
+
+            version = 2;
+        }
+
+        Debug.Log(
+            $"[SqliteGameHistoryRepository] Database ready at version " +
+            $"{version}.");
+    }
+
+    private void MigrateToVersion2()
+    {
+        Debug.Log("[SqliteGameHistoryRepository] Migrating DB v1 -> v2.");
+
+        Db.BeginTransaction();
+        try
+        {
+            // Daily Challenge tables are initialized independently by
+            // DailyChallengeDatabase after this shared database is opened.
+            SetDatabaseVersion(2);
+            Db.Commit();
+            Debug.Log("[SqliteGameHistoryRepository] Migration v1 -> v2 complete.");
+        }
+        catch (Exception)
+        {
+            Db.Rollback();
+            Debug.LogError("[SqliteGameHistoryRepository] Migration v1 -> v2 failed.");
+            throw;
+        }
+    }
+
+    private void MigrateToVersion1()
+    {
+        Debug.Log("[SqliteGameHistoryRepository] Migrating DB v0 -> v1.");
+
+        Db.BeginTransaction();
+
+        try
+        {
+            Db.Execute(@"ALTER TABLE completed_games ADD COLUMN UndoUses INTEGER NOT NULL DEFAULT 0;");
+            Db.Execute(@"ALTER TABLE completed_games ADD COLUMN PencilUses INTEGER NOT NULL DEFAULT 0;");
+            Db.Execute(@"ALTER TABLE completed_games ADD COLUMN EraseUses INTEGER NOT NULL DEFAULT 0;");
+            Db.Execute(@"ALTER TABLE completed_games ADD COLUMN SOSUses INTEGER NOT NULL DEFAULT 0;");
+            Db.Execute(@"ALTER TABLE completed_games ADD COLUMN AutoFillUses INTEGER NOT NULL DEFAULT 0;");
+
+            SetDatabaseVersion(1);
+
+            Db.Commit();
+
+            Debug.Log("[SqliteGameHistoryRepository] Migration v0 -> v1 complete.");
+        }
+        catch (Exception)
+        {
+            Db.Rollback();
+
+            Debug.LogError("[SqliteGameHistoryRepository] Migration v0 -> v1 failed.");
+
+            throw;
+        }
+    }
+
+    private int GetDatabaseVersion()
+    {
+        return Db.ExecuteScalar<int>("PRAGMA user_version;");
+    }
+
+    private void SetDatabaseVersion(int version)
+    {
+        Db.Execute($"PRAGMA user_version = {version};");
+    }
+    // ============================================================
+    // INDEXES
+    // ============================================================
+
+    private void CreateIndexes()
+    {
+        /*
+         * Helps fastest-win queries.
+         */
+        Db.Execute(@"
+            CREATE INDEX IF NOT EXISTS
+                idx_completed_games_won_elapsed
+            ON completed_games
+            (
+                IsWon,
+                ElapsedSeconds
+            );
+        ");
+
+        /*
+         * Helps streak recalculation.
+         */
+        Db.Execute(@"
+            CREATE INDEX IF NOT EXISTS
+                idx_completed_games_won_id
+            ON completed_games
+            (
+                IsWon,
+                Id
+            );
+        ");
+    }
+
+    // ============================================================
+    // INITIAL AGGREGATE BUILD / MIGRATION
+    // ============================================================
+
+    private void InitializeGameStats()
+    {
+        GameStats existing =
+            Db.Find<GameStats>(1);
+
+        /*
+         * Brand-new aggregate table, or aggregate schema/
+         * calculation changed.
+         */
+        if (existing == null ||
+            existing.AggregateVersion <
+                CurrentAggregateVersion)
+        {
+            Debug.Log(
+                "[SqliteGameHistoryRepository] Building game_stats " +
+                "from completed_games.");
+
+            RebuildGameStats();
+        }
+    }
+
+    /*
+     * This is the ONLY operation that scans the whole
+     * completed_games table.
+     *
+     * Normally it runs only once when game_stats is first
+     * introduced or when AggregateVersion changes.
+     */
+    public void RebuildGameStats()
+    {
+        string sql = $@"
+            INSERT OR REPLACE INTO game_stats
+            (
+                Id,
+                AggregateVersion,
+
+                TotalGames,
+                TotalWins,
+                TotalPoints,
+                FastestWinSeconds,
+                CurrentStreak,
+
+                SimpleCount,
+                BeginnerCount,
+                EasyCount,
+                NoviceCount,
+                ModerateCount,
+                AdvancedCount,
+                HardCount,
+                ExpertCount,
+                HardestCount
+            )
+
+            SELECT
+                1,
+
+                {CurrentAggregateVersion},
+
+                COUNT(*),
+
+                COALESCE(
+                    SUM(
+                        CASE
+                            WHEN IsWon = 1
+                            THEN 1
+                            ELSE 0
+                        END
+                    ),
+                    0
+                ),
+
+                COALESCE(
+                    SUM(Points),
+                    0
+                ),
+
+                MIN(
+                    CASE
+                        WHEN IsWon = 1
+                        THEN ElapsedSeconds
+                        ELSE NULL
+                    END
+                ),
+
+                /*
+                 * Current streak =
+                 * number of consecutive wins after the
+                 * most recent loss.
+                 */
+                (
+                    SELECT COUNT(*)
+                    FROM completed_games
+                    WHERE
+                        Id >
+                        COALESCE(
+                            (
+                                SELECT MAX(Id)
+                                FROM completed_games
+                                WHERE IsWon = 0
+                            ),
+                            0
+                        )
+                        AND IsWon = 1
+                ),
+
+                COALESCE(
+                    SUM(
+                        CASE
+                            WHEN Difficulty = 0
+                            THEN 1 ELSE 0
+                        END
+                    ),
+                    0
+                ),
+
+                COALESCE(
+                    SUM(
+                        CASE
+                            WHEN Difficulty = 1
+                            THEN 1 ELSE 0
+                        END
+                    ),
+                    0
+                ),
+
+                COALESCE(
+                    SUM(
+                        CASE
+                            WHEN Difficulty = 2
+                            THEN 1 ELSE 0
+                        END
+                    ),
+                    0
+                ),
+
+                COALESCE(
+                    SUM(
+                        CASE
+                            WHEN Difficulty = 3
+                            THEN 1 ELSE 0
+                        END
+                    ),
+                    0
+                ),
+
+                COALESCE(
+                    SUM(
+                        CASE
+                            WHEN Difficulty = 4
+                            THEN 1 ELSE 0
+                        END
+                    ),
+                    0
+                ),
+
+                COALESCE(
+                    SUM(
+                        CASE
+                            WHEN Difficulty = 5
+                            THEN 1 ELSE 0
+                        END
+                    ),
+                    0
+                ),
+
+                COALESCE(
+                    SUM(
+                        CASE
+                            WHEN Difficulty = 6
+                            THEN 1 ELSE 0
+                        END
+                    ),
+                    0
+                ),
+
+                COALESCE(
+                    SUM(
+                        CASE
+                            WHEN Difficulty = 7
+                            THEN 1 ELSE 0
+                        END
+                    ),
+                    0
+                ),
+
+                COALESCE(
+                    SUM(
+                        CASE
+                            WHEN Difficulty = 8
+                            THEN 1 ELSE 0
+                        END
+                    ),
+                    0
+                )
+
+            FROM completed_games;
+        ";
+
+        Db.Execute(sql);
+
+        Debug.Log(
+            "[SqliteGameHistoryRepository] game_stats rebuilt.");
+    }
+
+    // ============================================================
+    // TRIGGERS
+    // ============================================================
+
+    private void RecreateGameStatsTriggers()
+    {
+        /*
+         * Important:
+         *
+         * CREATE TRIGGER IF NOT EXISTS will NOT replace an
+         * existing trigger.
+         *
+         * Therefore drop the old definitions first.
+         */
+
+        Db.Execute(
+            "DROP TRIGGER IF EXISTS " +
+            "trg_completed_games_insert;");
+
+        Db.Execute(
+            "DROP TRIGGER IF EXISTS " +
+            "trg_completed_games_update;");
+
+        Db.Execute(
+            "DROP TRIGGER IF EXISTS " +
+            "trg_completed_games_delete;");
+
+        CreateInsertStatsTrigger();
+        CreateUpdateStatsTrigger();
+        CreateDeleteStatsTrigger();
+    }
+
+    // ============================================================
+    // INSERT TRIGGER
+    // ============================================================
+
+    private void CreateInsertStatsTrigger()
+    {
+        string sql = @"
+            CREATE TRIGGER
+                trg_completed_games_insert
+
+            AFTER INSERT ON completed_games
+
+            BEGIN
+
+                UPDATE game_stats
+
+                SET
+                    TotalGames =
+                        TotalGames + 1,
+
+                    TotalWins =
+                        TotalWins +
+                        CASE
+                            WHEN NEW.IsWon = 1
+                            THEN 1
+                            ELSE 0
+                        END,
+
+                    TotalPoints =
+                        TotalPoints +
+                        NEW.Points,
+
+                    /*
+                     * New winning game becomes fastest
+                     * if there was no previous win or its
+                     * time is faster.
+                     */
+                    FastestWinSeconds =
+                        CASE
+
+                            WHEN
+                                NEW.IsWon = 1
+                                AND
+                                (
+                                    FastestWinSeconds IS NULL
+
+                                    OR
+
+                                    NEW.ElapsedSeconds <
+                                        FastestWinSeconds
+                                )
+
+                            THEN
+                                NEW.ElapsedSeconds
+
+                            ELSE
+                                FastestWinSeconds
+
+                        END,
+
+                    /*
+                     * New games affect the live streak.
+                     */
+                    CurrentStreak =
+                        CASE
+
+                            WHEN NEW.IsWon = 1
+                            THEN CurrentStreak + 1
+
+                            ELSE 0
+
+                        END,
+
+                    SimpleCount =
+                        SimpleCount +
+                        CASE
+                            WHEN NEW.Difficulty = 0
+                            THEN 1 ELSE 0
+                        END,
+
+                    BeginnerCount =
+                        BeginnerCount +
+                        CASE
+                            WHEN NEW.Difficulty = 1
+                            THEN 1 ELSE 0
+                        END,
+
+                    EasyCount =
+                        EasyCount +
+                        CASE
+                            WHEN NEW.Difficulty = 2
+                            THEN 1 ELSE 0
+                        END,
+
+                    NoviceCount =
+                        NoviceCount +
+                        CASE
+                            WHEN NEW.Difficulty = 3
+                            THEN 1 ELSE 0
+                        END,
+
+                    ModerateCount =
+                        ModerateCount +
+                        CASE
+                            WHEN NEW.Difficulty = 4
+                            THEN 1 ELSE 0
+                        END,
+
+                    AdvancedCount =
+                        AdvancedCount +
+                        CASE
+                            WHEN NEW.Difficulty = 5
+                            THEN 1 ELSE 0
+                        END,
+
+                    HardCount =
+                        HardCount +
+                        CASE
+                            WHEN NEW.Difficulty = 6
+                            THEN 1 ELSE 0
+                        END,
+
+                    ExpertCount =
+                        ExpertCount +
+                        CASE
+                            WHEN NEW.Difficulty = 7
+                            THEN 1 ELSE 0
+                        END,
+
+                    HardestCount =
+                        HardestCount +
+                        CASE
+                            WHEN NEW.Difficulty = 8
+                            THEN 1 ELSE 0
+                        END
+
+                WHERE Id = 1;
+
+            END;
+        ";
+
+        Db.Execute(sql);
+    }
+
+    // ============================================================
+    // UPDATE TRIGGER
+    // ============================================================
+
+    private void CreateUpdateStatsTrigger()
+    {
+        string sql = @"
+            CREATE TRIGGER
+                trg_completed_games_update
+
+            AFTER UPDATE OF
+                IsWon,
+                Points,
+                ElapsedSeconds,
+                Difficulty
+
+            ON completed_games
+
+            BEGIN
+
+                UPDATE game_stats
+
+                SET
+                    /*
+                     * TotalGames stays unchanged because
+                     * this is an UPDATE, not a new game.
+                     */
+
+                    TotalWins =
+                        TotalWins
+
+                        - CASE
+                            WHEN OLD.IsWon = 1
+                            THEN 1
+                            ELSE 0
+                          END
+
+                        + CASE
+                            WHEN NEW.IsWon = 1
+                            THEN 1
+                            ELSE 0
+                          END,
+
+                    TotalPoints =
+                        TotalPoints
+                        - OLD.Points
+                        + NEW.Points,
+
+                    /*
+                     * UPDATE can change the current fastest
+                     * game, so recompute it.
+                     *
+                     * UPDATEs are rare compared with normal
+                     * inserts.
+                     */
+                    FastestWinSeconds =
+                    (
+                        SELECT MIN(ElapsedSeconds)
+                        FROM completed_games
+                        WHERE IsWon = 1
+                    ),
+
+                    /*
+                     * Important for historical retries:
+                     * changing an old loss to a win can alter
+                     * the sequence of wins/losses.
+                     */
+                    CurrentStreak =
+                    (
+                        SELECT COUNT(*)
+                        FROM completed_games
+
+                        WHERE
+                            Id >
+                            COALESCE(
+                                (
+                                    SELECT MAX(Id)
+                                    FROM completed_games
+                                    WHERE IsWon = 0
+                                ),
+                                0
+                            )
+
+                            AND IsWon = 1
+                    ),
+
+                    SimpleCount =
+                        SimpleCount
+                        - CASE
+                            WHEN OLD.Difficulty = 0
+                            THEN 1 ELSE 0
+                          END
+                        + CASE
+                            WHEN NEW.Difficulty = 0
+                            THEN 1 ELSE 0
+                          END,
+
+                    BeginnerCount =
+                        BeginnerCount
+                        - CASE
+                            WHEN OLD.Difficulty = 1
+                            THEN 1 ELSE 0
+                          END
+                        + CASE
+                            WHEN NEW.Difficulty = 1
+                            THEN 1 ELSE 0
+                          END,
+
+                    EasyCount =
+                        EasyCount
+                        - CASE
+                            WHEN OLD.Difficulty = 2
+                            THEN 1 ELSE 0
+                          END
+                        + CASE
+                            WHEN NEW.Difficulty = 2
+                            THEN 1 ELSE 0
+                          END,
+
+                    NoviceCount =
+                        NoviceCount
+                        - CASE
+                            WHEN OLD.Difficulty = 3
+                            THEN 1 ELSE 0
+                          END
+                        + CASE
+                            WHEN NEW.Difficulty = 3
+                            THEN 1 ELSE 0
+                          END,
+
+                    ModerateCount =
+                        ModerateCount
+                        - CASE
+                            WHEN OLD.Difficulty = 4
+                            THEN 1 ELSE 0
+                          END
+                        + CASE
+                            WHEN NEW.Difficulty = 4
+                            THEN 1 ELSE 0
+                          END,
+
+                    AdvancedCount =
+                        AdvancedCount
+                        - CASE
+                            WHEN OLD.Difficulty = 5
+                            THEN 1 ELSE 0
+                          END
+                        + CASE
+                            WHEN NEW.Difficulty = 5
+                            THEN 1 ELSE 0
+                          END,
+
+                    HardCount =
+                        HardCount
+                        - CASE
+                            WHEN OLD.Difficulty = 6
+                            THEN 1 ELSE 0
+                          END
+                        + CASE
+                            WHEN NEW.Difficulty = 6
+                            THEN 1 ELSE 0
+                          END,
+
+                    ExpertCount =
+                        ExpertCount
+                        - CASE
+                            WHEN OLD.Difficulty = 7
+                            THEN 1 ELSE 0
+                          END
+                        + CASE
+                            WHEN NEW.Difficulty = 7
+                            THEN 1 ELSE 0
+                          END,
+
+                    HardestCount =
+                        HardestCount
+                        - CASE
+                            WHEN OLD.Difficulty = 8
+                            THEN 1 ELSE 0
+                          END
+                        + CASE
+                            WHEN NEW.Difficulty = 8
+                            THEN 1 ELSE 0
+                          END
+
+                WHERE Id = 1;
+
+            END;
+        ";
+
+        Db.Execute(sql);
+    }
+
+    // ============================================================
+    // DELETE TRIGGER
+    // ============================================================
+
+    private void CreateDeleteStatsTrigger()
+    {
+        string sql = @"
+            CREATE TRIGGER
+                trg_completed_games_delete
+
+            AFTER DELETE ON completed_games
+
+            BEGIN
+
+                UPDATE game_stats
+
+                SET
+                    TotalGames =
+                        TotalGames - 1,
+
+                    TotalWins =
+                        TotalWins -
+                        CASE
+                            WHEN OLD.IsWon = 1
+                            THEN 1
+                            ELSE 0
+                        END,
+
+                    TotalPoints =
+                        TotalPoints -
+                        OLD.Points,
+
+                    FastestWinSeconds =
+                    (
+                        SELECT MIN(ElapsedSeconds)
+                        FROM completed_games
+                        WHERE IsWon = 1
+                    ),
+
+                    CurrentStreak =
+                    (
+                        SELECT COUNT(*)
+                        FROM completed_games
+
+                        WHERE
+                            Id >
+                            COALESCE(
+                                (
+                                    SELECT MAX(Id)
+                                    FROM completed_games
+                                    WHERE IsWon = 0
+                                ),
+                                0
+                            )
+
+                            AND IsWon = 1
+                    ),
+
+                    SimpleCount =
+                        SimpleCount -
+                        CASE
+                            WHEN OLD.Difficulty = 0
+                            THEN 1 ELSE 0
+                        END,
+
+                    BeginnerCount =
+                        BeginnerCount -
+                        CASE
+                            WHEN OLD.Difficulty = 1
+                            THEN 1 ELSE 0
+                        END,
+
+                    EasyCount =
+                        EasyCount -
+                        CASE
+                            WHEN OLD.Difficulty = 2
+                            THEN 1 ELSE 0
+                        END,
+
+                    NoviceCount =
+                        NoviceCount -
+                        CASE
+                            WHEN OLD.Difficulty = 3
+                            THEN 1 ELSE 0
+                        END,
+
+                    ModerateCount =
+                        ModerateCount -
+                        CASE
+                            WHEN OLD.Difficulty = 4
+                            THEN 1 ELSE 0
+                        END,
+
+                    AdvancedCount =
+                        AdvancedCount -
+                        CASE
+                            WHEN OLD.Difficulty = 5
+                            THEN 1 ELSE 0
+                        END,
+
+                    HardCount =
+                        HardCount -
+                        CASE
+                            WHEN OLD.Difficulty = 6
+                            THEN 1 ELSE 0
+                        END,
+
+                    ExpertCount =
+                        ExpertCount -
+                        CASE
+                            WHEN OLD.Difficulty = 7
+                            THEN 1 ELSE 0
+                        END,
+
+                    HardestCount =
+                        HardestCount -
+                        CASE
+                            WHEN OLD.Difficulty = 8
+                            THEN 1 ELSE 0
+                        END
+
+                WHERE Id = 1;
+
+            END;
+        ";
+
+        Db.Execute(sql);
+    }
+
+    // ============================================================
+    // WRITE COMPLETED GAME
+    // ============================================================
+
+    public void Insert(
+        GameRecord record)
+    {
+        try
+        {
+            /*
+             * The INSERT trigger automatically updates
+             * game_stats.
+             */
+            Db.Insert(record);
+
+            Debug.Log(
+                $"[SqliteGameHistoryRepository] Record saved — " +
+                $"Level={record.Level} " +
+                $"Difficulty={record.Difficulty} " +
+                $"Won={record.IsWon} " +
+                $"Time={record.ElapsedSeconds:F0}s");
+        }
+        catch (Exception ex)
+        {
+            Debug.LogError(
+                $"[SqliteGameHistoryRepository] Insert failed: " +
+                $"{ex.Message}");
+        }
+    }
+
+    public void Update(
+        GameRecord record)
+    {
+        try
+        {
+            /*
+             * The UPDATE trigger automatically updates
+             * game_stats.
+             */
+            Db.Update(record);
+
+            Debug.Log(
+                $"[SqliteGameHistoryRepository] Record updated — " +
+                $"Level={record.Level} " +
+                $"Difficulty={record.Difficulty} " +
+                $"Won={record.IsWon} " +
+                $"Time={record.ElapsedSeconds:F0}s");
+        }
+        catch (Exception ex)
+        {
+            Debug.LogError(
+                $"[SqliteGameHistoryRepository] Update failed: " +
+                $"{ex.Message}");
+        }
+    }
+
+    // ============================================================
+    // AGGREGATE READ
+    // ============================================================
+
+    public GameStats GetGameStats()
+    {
+        try
+        {
+            if (Db == null)
+            {
+                Debug.LogError("[SqliteGameHistoryRepository] GetGameStats skipped because the database is not open.");
+                return null;
+            }
+
+            GameStats stats =
+                Db.Find<GameStats>(1);
+
+            /*
+             * Defensive recovery.
+             */
+            if (stats == null)
+            {
+                RebuildGameStats();
+
+                stats =
+                    Db.Find<GameStats>(1);
+            }
+
+            return stats;
+        }
+        catch (Exception ex)
+        {
+            Debug.LogError(
+                $"[SqliteGameHistoryRepository] GetGameStats failed: " +
+                $"{ex.Message}");
+
+            return null;
+        }
+    }
+
+    /*
+     * No completed_games scan is required.
+     *
+     * The number of games at each difficulty is already
+     * stored in game_stats.
+     */
+    public int GetTotalPossiblePoints(GameStats stats)
+    {
+        if (stats == null) return 0;
+
+        return
+            stats.SimpleCount   * ScoringSystem.GetAbsoluteMaximumScore(SudokuDifficulty.Simple) +
+            stats.BeginnerCount * ScoringSystem.GetAbsoluteMaximumScore(SudokuDifficulty.Beginner) +
+            stats.EasyCount     * ScoringSystem.GetAbsoluteMaximumScore(SudokuDifficulty.Easy) +
+            stats.NoviceCount   * ScoringSystem.GetAbsoluteMaximumScore(SudokuDifficulty.Novice) +
+            stats.ModerateCount * ScoringSystem.GetAbsoluteMaximumScore(SudokuDifficulty.Moderate) +
+            stats.AdvancedCount * ScoringSystem.GetAbsoluteMaximumScore(SudokuDifficulty.Advanced) +
+            stats.HardCount     * ScoringSystem.GetAbsoluteMaximumScore(SudokuDifficulty.Hard) +
+            stats.ExpertCount   * ScoringSystem.GetAbsoluteMaximumScore(SudokuDifficulty.Expert) +
+            stats.HardestCount  * ScoringSystem.GetAbsoluteMaximumScore(SudokuDifficulty.Hardest);
+    }
+
+    // ============================================================
+    // EXISTING HISTORY READS
+    // ============================================================
+
+    public List<GameRecord> GetAll()
+    {
+        try
+        {
+            string query =
+                "SELECT * " +
+                "FROM completed_games " +
+                "ORDER BY Id";
+
+            return Db.Query<GameRecord>(
+                query);
+        }
+        catch (Exception ex)
+        {
+            Debug.LogError(
+                $"[SqliteGameHistoryRepository] GetAll failed: " +
+                $"{ex.Message}");
+
+            return new List<GameRecord>();
+        }
+    }
+
+    public List<GameRecord> GetNextSet(
+        int offset)
+    {
+        try
+        {
+            string query =
+                "SELECT * " +
+                "FROM completed_games " +
+                "ORDER BY Id DESC " +
+                "LIMIT 10 OFFSET ?";
+
+            return Db.Query<GameRecord>(
+                query,
+                offset);
+        }
+        catch (Exception ex)
+        {
+            Debug.LogError(
+                $"[SqliteGameHistoryRepository] GetNextSet failed: " +
+                $"{ex.Message}");
+
+            return new List<GameRecord>();
+        }
+    }
+
+    public List<GameRecord> GetLastNRecordByDate(int number)
+    {
+        try
+        {
+            string query = "SELECT *  FROM completed_games ORDER BY Id DESC LIMIT ?";
+
+            return Db.Query<GameRecord>(query,number);
+        }
+        catch (Exception ex)
+        {
+            Debug.LogError($"[SqliteGameHistoryRepository] GetLastNRecordByDate failed: {ex.Message}");
+
+            return new List<GameRecord>();
+        }
+    }
+
+    public GameRecord GetLastRecord()
+    {
+        try
+        {
+            string query =
+                "SELECT * " +
+                "FROM completed_games " +
+                "ORDER BY Id DESC " +
+                "LIMIT 1";
+
+            var result =
+                Db.Query<GameRecord>(
+                    query);
+
+            return
+                result.Count == 0
+                    ? null
+                    : result[0];
+        }
+        catch (Exception ex)
+        {
+            Debug.LogError(
+                "[SqliteGameHistoryRepository] GetLastRecord failed: " +
+                $"{ex.Message}");
+
+            return null;
+        }
+    }
+
+    /*
+     * Keeping these for compatibility with any existing
+     * code. StatsPanel will no longer need them.
+     */
+
+    public GameRecord GetFastestWin()
+    {
+        try
+        {
+            string query =
+                "SELECT * " +
+                "FROM completed_games " +
+                "WHERE IsWon = 1 " +
+                "ORDER BY ElapsedSeconds " +
+                "LIMIT 1";
+
+            var result =
+                Db.Query<GameRecord>(
+                    query);
+
+            return
+                result.Count == 0
+                    ? null
+                    : result[0];
+        }
+        catch (Exception ex)
+        {
+            Debug.LogError(
+                "[SqliteGameHistoryRepository] GetFastestWin failed: " +
+                $"{ex.Message}");
+
+            return null;
+        }
+    }
+
+    public int GetTotalPoints()
+    {
+        GameStats stats =
+            GetGameStats();
+
+        return stats?.TotalPoints ?? 0;
+    }
+
+    public int GetTotalWins()
+    {
+        GameStats stats =
+            GetGameStats();
+
+        return stats?.TotalWins ?? 0;
+    }
+
+    public int GetTotalGamesPlayed()
+    {
+        GameStats stats =
+            GetGameStats();
+
+        return stats?.TotalGames ?? 0;
+    }
+
+    // ============================================================
+    // DEBUG
+    // ============================================================
+
+    public void LogGameStats()
+    {
+        GameStats stats =
+            GetGameStats();
+
+        if (stats == null)
+        {
+            Debug.Log(
+                "[SqliteGameHistoryRepository] No game_stats row.");
+
+            return;
+        }
+
+        Debug.Log(
+            "GAME STATS\n" +
+            $"Games={stats.TotalGames}\n" +
+            $"Wins={stats.TotalWins}\n" +
+            $"Points={stats.TotalPoints}\n" +
+            $"Fastest={stats.FastestWinSeconds}\n" +
+            $"Streak={stats.CurrentStreak}\n" +
+            $"Simple={stats.SimpleCount}\n" +
+            $"Beginner={stats.BeginnerCount}\n" +
+            $"Easy={stats.EasyCount}\n" +
+            $"Novice={stats.NoviceCount}\n" +
+            $"Moderate={stats.ModerateCount}\n" +
+            $"Advanced={stats.AdvancedCount}\n" +
+            $"Hard={stats.HardCount}\n" +
+            $"Expert={stats.ExpertCount}\n" +
+            $"Hardest={stats.HardestCount}"
+        );
+    }
+
 }

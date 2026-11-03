@@ -3,16 +3,27 @@ using SQLite;
 using UnityEngine;
 
 /// <summary>Owns the Daily Challenge tables and their statistics triggers.</summary>
-public static class DailyChallengeDatabase
+public sealed class DailyChallengeDatabase
 {
-    private static SQLiteConnection Db => GameDatabase.Connection;
+    private readonly SqliteDatabaseConnection _database;
+    private SQLiteConnection Db => _database.Connection;
 
-    public static void Init()
+    private DailyChallengeDatabase(SqliteDatabaseConnection database)
+    {
+        _database = database ?? throw new ArgumentNullException(nameof(database));
+    }
+
+    public static void Initialize(SqliteDatabaseConnection database)
+    {
+        new DailyChallengeDatabase(database).InitializeSchema();
+    }
+
+    private void InitializeSchema()
     {
         SQLiteConnection db = Db;
         if (db == null)
         {
-            Debug.LogError("[DailyChallengeDatabase] Init skipped because GameDatabase is not open.");
+            Debug.LogError("[DailyChallengeDatabase] Init skipped because the shared database connection is not open.");
             return;
         }
 
@@ -29,7 +40,7 @@ public static class DailyChallengeDatabase
         }
     }
 
-    private static void CreateDailyGameChallengeTable()
+    private void CreateDailyGameChallengeTable()
     {
         Db.Execute(@"
             CREATE TABLE IF NOT EXISTS DailyGame_challenge
@@ -53,7 +64,7 @@ public static class DailyChallengeDatabase
         ");
     }
 
-    private static void CreateDailyGameChallengeStatsTable()
+    private void CreateDailyGameChallengeStatsTable()
     {
         Db.Execute(@"
             CREATE TABLE IF NOT EXISTS DailyGameChallengeStats
@@ -84,7 +95,7 @@ public static class DailyChallengeDatabase
             "INSERT OR IGNORE INTO DailyGameChallengeStats (Id) VALUES (1);");
     }
 
-    private static void CreateDailyGameChallengeCompletionTrigger()
+    private void CreateDailyGameChallengeCompletionTrigger()
     {
         Db.Execute("DROP TRIGGER IF EXISTS trg_daily_game_challenge_complete_win;");
         Db.Execute("DROP TRIGGER IF EXISTS trg_daily_game_challenge_complete_loss;");
@@ -202,7 +213,7 @@ public static class DailyChallengeDatabase
         ");
     }
 
-    private static void CreateDailyGameChallengeFirstRowTrigger()
+    private void CreateDailyGameChallengeFirstRowTrigger()
     {
         Db.Execute("DROP TRIGGER IF EXISTS trg_daily_game_challenge_first_row;");
 

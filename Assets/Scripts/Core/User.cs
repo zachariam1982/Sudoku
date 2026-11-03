@@ -19,9 +19,12 @@ public class User : MonoBehaviour
         Instance = this;
         DontDestroyOnLoad(gameObject);  // survive scene reloads
  
-        GameDatabase.Init();
-        SqliteClassicGameResultRepository.InitializeSchema();
-        DailyChallengeDatabase.Init();
+        SqliteDatabaseConnection database = SqliteDatabaseConnection.Instance;
+        database.Open();
+
+        new SqliteGameHistoryRepository(database).InitializeSchema();
+        SqliteClassicGameResultRepository.InitializeSchema(database);
+        DailyChallengeDatabase.Initialize(database);
         StartCoroutine(SaveLoop());
     }
     public bool TryLoadSave()

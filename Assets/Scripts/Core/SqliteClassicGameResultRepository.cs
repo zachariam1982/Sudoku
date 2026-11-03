@@ -18,19 +18,30 @@ public sealed class SqliteClassicGameResultRepository : IGameResultRepository
         public int IsCompleted { get; set; }
     }
 
-    // New Game uses the same database file and lifecycle as GameDatabase.
-    // Resolve the connection dynamically so a pause/resume reopen cannot leave
-    // this repository holding a stale SQLiteConnection instance.
-    private static SQLiteConnection Db => GameDatabase.Connection;
+    private readonly SqliteDatabaseConnection _database;
+    private SQLiteConnection Db => _database.Connection;
 
-    public static void InitializeSchema()
+    public SqliteClassicGameResultRepository() : this(SqliteDatabaseConnection.Instance) { }
+
+    public SqliteClassicGameResultRepository(SqliteDatabaseConnection database)
+    {
+        _database = database ?? throw new System.ArgumentNullException(nameof(database));
+    }
+
+    public static void InitializeSchema(SqliteDatabaseConnection database)
+    {
+        if (database == null) throw new System.ArgumentNullException(nameof(database));
+        new SqliteClassicGameResultRepository(database).InitializeSchema();
+    }
+
+    private void InitializeSchema()
     {
         try
         {
             SQLiteConnection db = Db;
             if (db == null)
             {
-                Debug.LogError("[SqliteClassicGameResultRepository] Init skipped because GameDatabase is not open.");
+                Debug.LogError("[SqliteClassicGameResultRepository] Init skipped because the shared database connection is not open.");
                 return;
             }
 
@@ -100,7 +111,7 @@ public sealed class SqliteClassicGameResultRepository : IGameResultRepository
         }
     }
 
-    private static void EnsureUsageCountColumns()
+    private void EnsureUsageCountColumns()
     {
         var columns = new System.Collections.Generic.HashSet<string>(
             Db.GetTableInfo("new_game_results").Select(column => column.Name));
@@ -113,7 +124,7 @@ public sealed class SqliteClassicGameResultRepository : IGameResultRepository
             Db.Execute("ALTER TABLE new_game_results ADD COLUMN AutoFillUses INTEGER NOT NULL DEFAULT 0;");
     }
 
-    private static void RecreateStatsTriggers()
+    private void RecreateStatsTriggers()
     {
         Db.Execute("DROP TRIGGER IF EXISTS trg_new_game_results_insert;");
         Db.Execute("DROP TRIGGER IF EXISTS trg_new_game_result_completions_insert;");

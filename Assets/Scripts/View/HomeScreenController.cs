@@ -79,9 +79,9 @@ public sealed class HomeScreenController : MonoBehaviour
     {
         if (_viewModel == null) return;
 
-        bool hasProgress = SaveSystem.HasSave(SaveSlot.Journey) || GameDatabase.GetLastRecord() != null;
+        bool hasProgress = SaveSystem.HasSave(SaveSlot.Journey) || _viewModel.GetLastRecord() != null;
         int difficultyIndex = Mathf.Clamp(_viewModel.GetDifficulty, 0, 8);
-        int totalPoints = GameDatabase.GetTotalPoints();
+        int totalPoints = _viewModel.GetTotalPoints();
 
         journeyLabel.text = $"<color=#9771FF><b>{(hasProgress ? "CONTINUE JOURNEY" : "SUDOKU JOURNEY")}</b></color>\n<size=24><color=#AAACCD>Level {_viewModel.GetLevel}  •  {(SudokuDifficulty)difficultyIndex}  •  {totalPoints:N0} Points</color></size>";
 

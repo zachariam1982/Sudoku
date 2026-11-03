@@ -255,7 +255,7 @@ public sealed class NewGameStatsPanel : MonoBehaviour
         Set(sosUsesValue, _viewModel.UsageStats.SOSUses.ToString());
         Set(autoFillUsesValue, _viewModel.UsageStats.AutoFillUses.ToString());
 
-        NewGameResultStats stats = NewGameResultDatabase.GetStats();
+        NewGameResultStats stats = _viewModel.GetResultStats();
         RefreshDifficultySummary(stats);
         RefreshRecords();
     }
@@ -274,22 +274,22 @@ public sealed class NewGameStatsPanel : MonoBehaviour
             allTimeTableHeader.text = "<color=#AFC5E9>DIFFICULTY<pos=42%>PLAYED<pos=62%>WON<pos=79%>WIN RATE</color>";
 
         StringBuilder rows = new StringBuilder();
-        AppendDifficultyRow(rows, "SIMPLE", SudokuDifficulty.Simple);
-        AppendDifficultyRow(rows, "BEGINNER", SudokuDifficulty.Beginner);
-        AppendDifficultyRow(rows, "EASY", SudokuDifficulty.Easy);
-        AppendDifficultyRow(rows, "NOVICE", SudokuDifficulty.Novice);
-        AppendDifficultyRow(rows, "MODERATE", SudokuDifficulty.Moderate);
-        AppendDifficultyRow(rows, "ADVANCED", SudokuDifficulty.Advanced);
-        AppendDifficultyRow(rows, "HARD", SudokuDifficulty.Hard);
-        AppendDifficultyRow(rows, "EXPERT", SudokuDifficulty.Expert);
-        AppendDifficultyRow(rows, "HARDEST", SudokuDifficulty.Hardest);
+        AppendDifficultyRow(rows, _viewModel, "SIMPLE", SudokuDifficulty.Simple);
+        AppendDifficultyRow(rows, _viewModel, "BEGINNER", SudokuDifficulty.Beginner);
+        AppendDifficultyRow(rows, _viewModel, "EASY", SudokuDifficulty.Easy);
+        AppendDifficultyRow(rows, _viewModel, "NOVICE", SudokuDifficulty.Novice);
+        AppendDifficultyRow(rows, _viewModel, "MODERATE", SudokuDifficulty.Moderate);
+        AppendDifficultyRow(rows, _viewModel, "ADVANCED", SudokuDifficulty.Advanced);
+        AppendDifficultyRow(rows, _viewModel, "HARD", SudokuDifficulty.Hard);
+        AppendDifficultyRow(rows, _viewModel, "EXPERT", SudokuDifficulty.Expert);
+        AppendDifficultyRow(rows, _viewModel, "HARDEST", SudokuDifficulty.Hardest);
         if (allTimeTableDetails != null)
             allTimeTableDetails.text = rows.ToString();
     }
 
-    private static void AppendDifficultyRow(StringBuilder table, string label, SudokuDifficulty difficulty)
+    private static void AppendDifficultyRow(StringBuilder table, NewGameViewModel viewModel, string label, SudokuDifficulty difficulty)
     {
-        NewGameDifficultyStats tier = NewGameResultDatabase.GetDifficultyStats(difficulty);
+        NewGameDifficultyStats tier = viewModel.GetDifficultyStats(difficulty);
         float winRate = tier.GamesStarted > 0
             ? tier.GamesCompleted * 100f / tier.GamesStarted
             : 0f;
@@ -392,7 +392,7 @@ public sealed class NewGameStatsPanel : MonoBehaviour
         {
             RectTransform contentRect = recordsContent as RectTransform;
             Vector2 previousPosition = contentRect != null ? contentRect.anchoredPosition : Vector2.zero;
-            var entries = NewGameResultDatabase.GetRecentEntries(_recordOffset, RecordPageSize);
+            var entries = _viewModel.GetRecentResultEntries(_recordOffset, RecordPageSize);
             foreach (NewGameResultEntry entry in entries)
             {
                 NewGameRecordRow row = Instantiate(recordPrefab, recordsContent, false);

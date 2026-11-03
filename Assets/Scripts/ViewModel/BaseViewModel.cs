@@ -73,7 +73,7 @@ public class BaseViewModel
     public event Action SaveRequested;
 
     public BaseViewModel(IGameUsageStats usageStats, IScorePenalties penalties)
-        : this(usageStats, penalties, new ClassicSudokuModel())
+        : this(usageStats, penalties, new ClassicSudokuModel(new SqliteGameHistoryRepository()))
     {
     }
 

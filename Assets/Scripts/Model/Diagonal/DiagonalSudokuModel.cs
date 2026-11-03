@@ -6,16 +6,24 @@ public sealed class DiagonalSudokuModel : ISudokuModel
 {
     private const int LastGamesForProgression = 5;
     private readonly ISudokuGenerator _generator;
+    private readonly IGameHistoryRepository _historyRepository;
     private int _currentLevel = 1;
     private int _puzzleSeed = 1;
     private SudokuDifficulty _currentDifficulty = SudokuDifficulty.Easy;
     private SudokuResult _result;
 
-    public DiagonalSudokuModel() : this(new DiagonalSudokuGenerator()) { }
+    public DiagonalSudokuModel() : this(new DiagonalSudokuGenerator(), new SqliteGameHistoryRepository()) { }
 
     public DiagonalSudokuModel(ISudokuGenerator generator)
+        : this(generator, new SqliteGameHistoryRepository()) { }
+
+    public DiagonalSudokuModel(IGameHistoryRepository historyRepository)
+        : this(new DiagonalSudokuGenerator(), historyRepository) { }
+
+    public DiagonalSudokuModel(ISudokuGenerator generator, IGameHistoryRepository historyRepository)
     {
         _generator = generator ?? throw new ArgumentNullException(nameof(generator));
+        _historyRepository = historyRepository ?? throw new ArgumentNullException(nameof(historyRepository));
     }
 
     public int[,] Board { get; private set; } = new int[9, 9];
@@ -40,7 +48,7 @@ public sealed class DiagonalSudokuModel : ISudokuModel
     public void UpdateDifficultyFromHistory(List<GameRecord> records = null)
     {
         if (records == null)
-            records = GameDatabase.GetLastNRecordByDate(LastGamesForProgression);
+            records = _historyRepository.GetLastNRecordByDate(LastGamesForProgression);
         _currentDifficulty = ClassicSudokuModel.CalculateNextDifficulty(records, _currentDifficulty);
     }
 

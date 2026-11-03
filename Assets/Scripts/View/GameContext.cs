@@ -26,21 +26,28 @@ public class GameContext : MonoBehaviour
     private NewGameGameStateView _newGameStateView;
     private StatsPanel _statsPanel;
     private NewGameStatsPanel _newGameStatsPanel;
+    private DailyChallengeStatsPanel _dailyChallengeStatsPanel;
     private DailyChallengeGameStateView _dailyChallengeStateView;
     private bool _dailyChallengeActive;
     private bool _newGameActive;
 
     private void Awake()
     {
+        IGameHistoryRepository historyRepository = new SqliteGameHistoryRepository();
         JourneyViewModel = new JourneyViewModel(
             new JourneyUsageStats(),
-            new JourneyScorePenalties());
+            new JourneyScorePenalties(),
+            historyRepository);
         NewGameViewModel = new NewGameViewModel(
             new NewGameUsageStats(),
-            new NewGameScorePenalties());
+            new NewGameScorePenalties(),
+            new ClassicSudokuModel(historyRepository),
+            new SqliteClassicGameResultRepository());
         DailyChallengeViewModel = new DailyChallengeViewModel(
             new JourneyUsageStats(),
-            new JourneyScorePenalties());
+            new JourneyScorePenalties(),
+            new SqliteDailyChallengeRepository(),
+            historyRepository);
 
         _grid = GetComponent<SudokuGrid>();
         _gridBuilder = GetComponent<GridBuilder>();
@@ -54,9 +61,11 @@ public class GameContext : MonoBehaviour
 
         _statsPanel = GetComponentInChildren<StatsPanel>(true);
         _newGameStatsPanel = GetComponentInChildren<NewGameStatsPanel>(true);
+        _dailyChallengeStatsPanel = GetComponentInChildren<DailyChallengeStatsPanel>(true);
         BindGameplay(JourneyViewModel);
         _statsPanel?.Bind(JourneyViewModel);
         _newGameStatsPanel?.Bind(NewGameViewModel);
+        _dailyChallengeStatsPanel?.Bind(DailyChallengeViewModel);
 
         User.Instance.ViewModel = JourneyViewModel;
         User.Instance.NewGameViewModel = NewGameViewModel;
@@ -228,8 +237,8 @@ public class GameContext : MonoBehaviour
 
         screen.SetChallengeData(
             today,
-            DailyChallengeRepository.GetStatsSnapshot(),
-            DailyChallengeRepository.GetTotalChallengeCount());
+            DailyChallengeViewModel.GetChallengeStats(),
+            DailyChallengeViewModel.GetTotalChallengeCount());
     }
 
     public void OpenDailyChallengeScreen(DailyChallengeScreenController screen)
@@ -286,7 +295,7 @@ public class GameContext : MonoBehaviour
         if (savedChallenge != null && !resumeSavedChallenge)
             SaveSystem.Delete(SaveSlot.DailyChallenge);
 
-        DailyChallengeRepository.MarkAttempted(record);
+        DailyChallengeViewModel.MarkChallengeAttempted(record);
         _dailyChallengeScreen?.Hide();
         _dailyChallengeActive = true;
         _newGameActive = false;
@@ -329,7 +338,7 @@ public class GameContext : MonoBehaviour
     {
         yield return null;
         DateTime today = DateTime.Today;
-        DailyChallengeRepository.FinalizeUncompletedPreviousChallenges(today);
+        DailyChallengeViewModel.FinalizeExpiredChallenges(today);
         int difficultyCount = System.Enum.GetValues(typeof(SudokuDifficulty)).Length;
         if (difficultyCount == 0)
         {
@@ -341,7 +350,7 @@ public class GameContext : MonoBehaviour
         int minimumDailyDifficulty = Mathf.Max(0, journeyDifficulty - 2);
         int dailyDifficultyCount = journeyDifficulty - minimumDailyDifficulty + 1;
         int difficulty = minimumDailyDifficulty + ((today.DayOfYear - 1) % dailyDifficultyCount);
-        DailyChallengeRecord record = DailyChallengeRepository.GetOrCreate(today, difficulty);
+        DailyChallengeRecord record = DailyChallengeViewModel.GetOrCreateChallenge(today, difficulty);
         onReady?.Invoke(record);
     }
 
@@ -351,7 +360,7 @@ public class GameContext : MonoBehaviour
         var interval = new WaitForSeconds(60f);
         while (true)
         {
-            DailyChallengeRepository.DeleteUnattemptedBefore(DateTime.Today);
+            DailyChallengeViewModel.DeleteOldUnattemptedChallenges(DateTime.Today);
             yield return interval;
         }
     }

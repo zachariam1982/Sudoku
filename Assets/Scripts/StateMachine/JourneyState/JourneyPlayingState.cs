@@ -74,7 +74,7 @@ public class JourneyPlayingState : IGameState
                 AutoFillUses   = _vm.UsageStats.AutoFillUses
             };
             
-            if(_vm.RetryGameData.id == -1) GameDatabase.Insert(val);
+            if(_vm.RetryGameData.id == -1) _vm.SaveGameResult(val, updateExisting: false);
 
             _machine.TransitionTo(_machine.Lose);
 

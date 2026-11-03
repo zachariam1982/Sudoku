@@ -10,6 +10,7 @@
     <Compile Include="../../Assets/Scripts/Model/Diagonal/DiagonalSudokuGenerator.cs" Link="DiagonalSudokuGenerator.cs" />
     <Compile Include="../../Assets/Scripts/Model/Diagonal/DiagonalSudokuModel.cs" Link="DiagonalSudokuModel.cs" />
     <Compile Include="../../Assets/Scripts/Model/ISudokuServices.cs" Link="ISudokuServices.cs" />
+    <Compile Include="../../Assets/Scripts/Core/IGameHistoryRepository.cs" Link="IGameHistoryRepository.cs" />
     <Compile Include="../../Assets/Scripts/Core/IScorePenalties.cs" Link="IScorePenalties.cs" />
     <Compile Include="../../Assets/Scripts/Core/GameRecord.cs" Link="GameRecord.cs" />
     <Compile Include="../../Assets/Scripts/StateMachine/IGameState.cs" Link="IGameState.cs" />

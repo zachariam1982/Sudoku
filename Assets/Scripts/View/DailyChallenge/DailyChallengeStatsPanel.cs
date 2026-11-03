@@ -8,6 +8,7 @@ using UnityEngine.UI;
 /// <summary>Independent Daily Challenge statistics screen opened from its own top bar.</summary>
 public sealed class DailyChallengeStatsPanel : MonoBehaviour
 {
+    private DailyChallengeViewModel _viewModel;
     [SerializeField] private Sprite portraitBackground;
     [SerializeField] private Sprite landscapeBackground;
     [SerializeField] private GameObject gameplayTools;
@@ -83,6 +84,8 @@ public sealed class DailyChallengeStatsPanel : MonoBehaviour
         if (backButton != null) backButton.gameObject.SetActive(false);
     }
 
+    public void Bind(DailyChallengeViewModel viewModel) => _viewModel = viewModel;
+
     private void Update()
     {
         bool landscape = Screen.width > Screen.height;
@@ -139,11 +142,12 @@ public sealed class DailyChallengeStatsPanel : MonoBehaviour
 
     private void Refresh()
     {
-        DailyChallengeStatsSnapshot stats = DailyChallengeRepository.GetStatsSnapshot();
+        if (_viewModel == null) return;
+        DailyChallengeStatsSnapshot stats = _viewModel.GetChallengeStats();
         DailyChallengeRecord bestOverall =
-            DailyChallengeRepository.GetBestOverallRecord(stats.BestTimeGameId);
+            _viewModel.GetBestOverallChallenge(stats.BestTimeGameId);
         List<DailyChallengeRecord> bestDifficultyRecords =
-            DailyChallengeRepository.GetBestTimeRecordsByDifficulty(stats);
+            _viewModel.GetBestChallengeTimes(stats);
         DailyChallengeRecord[] bestByDifficulty = new DailyChallengeRecord[difficultyNames.Length];
         foreach (DailyChallengeRecord record in bestDifficultyRecords)
             if (record.Difficulty >= 0 && record.Difficulty < bestByDifficulty.Length)
@@ -151,7 +155,7 @@ public sealed class DailyChallengeStatsPanel : MonoBehaviour
 
         summaryLabels[0].text = Metric("CURRENT STREAK", stats.CurrentStreak, "days");
         summaryLabels[1].text = Metric("BEST STREAK",
-            GetBestStreak(DailyChallengeRepository.GetWinningChallengeDates()), "days");
+            GetBestStreak(_viewModel.GetWinningChallengeDates()), "days");
         summaryLabels[2].text = Metric("GAMES WON", stats.GamesWon, "");
 
         if (bestOverall == null)

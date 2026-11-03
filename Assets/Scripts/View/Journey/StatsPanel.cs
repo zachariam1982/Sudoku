@@ -522,8 +522,8 @@ public class StatsPanel : MonoBehaviour
         if (backdropButton != null) backdropButton.gameObject.SetActive(true);
         _vm.FetchHistoricalData.Execute();
 
-        _gameStats = GameDatabase.GetGameStats();
-        _totalPossiblePoints = GameDatabase.GetTotalPossiblePoints(_gameStats);
+        _gameStats = _vm.GetGameStats();
+        _totalPossiblePoints = _vm.GetTotalPossiblePoints(_gameStats);
 
         RefreshSession();
         RefreshAllTime();
@@ -625,7 +625,7 @@ public class StatsPanel : MonoBehaviour
 
         int[] gamesByDifficulty = new int[9];
         int[] winsByDifficulty = new int[9];
-        List<GameRecord> records = GameDatabase.GetAll();
+        List<GameRecord> records = _vm.GetAllRecords();
         if (records != null)
         {
             foreach (GameRecord record in records)
@@ -695,7 +695,7 @@ public class StatsPanel : MonoBehaviour
         const int RequiredWins = 4;
         const float RequiredEfficiency = 0.80f;
 
-        List<GameRecord> recent = GameDatabase.GetLastNRecordByDate(WindowSize);
+        List<GameRecord> recent = _vm.GetRecentRecords(WindowSize);
         SudokuDifficulty currentDifficulty = (SudokuDifficulty)_vm.GetDifficulty;
 
         if (currentDifficultyText != null)

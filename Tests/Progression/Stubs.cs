@@ -17,6 +17,22 @@ public static class GameDatabase {
  public static List<GameRecord> Records = new();
  public static List<GameRecord> GetLastNRecordByDate(int n) => Records.Take(n).ToList();
 }
+public class GameStats {}
+public sealed class SqliteGameHistoryRepository : IGameHistoryRepository {
+ public void Insert(GameRecord record) {}
+ public void Update(GameRecord record) {}
+ public GameStats GetGameStats() => null;
+ public int GetTotalPossiblePoints(GameStats stats) => 0;
+ public List<GameRecord> GetAll() => GameDatabase.Records;
+ public List<GameRecord> GetNextSet(int offset) => GameDatabase.Records.Skip(offset).Take(10).ToList();
+ public List<GameRecord> GetLastNRecordByDate(int count) => GameDatabase.GetLastNRecordByDate(count);
+ public GameRecord GetLastRecord() => GameDatabase.Records.OrderByDescending(record => record.Id).FirstOrDefault();
+ public GameRecord GetFastestWin() => null;
+ public int GetTotalPoints() => 0;
+ public int GetTotalWins() => 0;
+ public int GetTotalGamesPlayed() => 0;
+ public void RebuildGameStats() {}
+}
 public class Observable<T> {
  T currentValue;
  public event Action<T> OnChanged;

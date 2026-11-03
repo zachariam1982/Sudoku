@@ -340,12 +340,20 @@ public class ClassicSudokuGenerator : ISudokuGenerator
 public class ClassicSudokuModel : ISudokuModel
 {
     private readonly ISudokuGenerator _generator;
+    private readonly IGameHistoryRepository _historyRepository;
 
-    public ClassicSudokuModel() : this(new ClassicSudokuGenerator()) { }
+    public ClassicSudokuModel() : this(new ClassicSudokuGenerator(), new SqliteGameHistoryRepository()) { }
 
     public ClassicSudokuModel(ISudokuGenerator generator)
+        : this(generator, new SqliteGameHistoryRepository()) { }
+
+    public ClassicSudokuModel(IGameHistoryRepository historyRepository)
+        : this(new ClassicSudokuGenerator(), historyRepository) { }
+
+    public ClassicSudokuModel(ISudokuGenerator generator, IGameHistoryRepository historyRepository)
     {
         _generator = generator ?? new ClassicSudokuGenerator();
+        _historyRepository = historyRepository ?? throw new ArgumentNullException(nameof(historyRepository));
     }
 
     public int[,]  Board     { get; private set; } = new int[9, 9];
@@ -373,7 +381,7 @@ public class ClassicSudokuModel : ISudokuModel
 
     public void UpdateDifficultyFromHistory(List<GameRecord> records = null)
     {
-        records = records ?? GameDatabase.GetLastNRecordByDate(_NoOfLastGames);
+        records = records ?? _historyRepository.GetLastNRecordByDate(_NoOfLastGames);
         SudokuDifficulty previous = _currentDifficulty;
         _currentDifficulty = CalculateNextDifficulty(records, _currentDifficulty);
 

@@ -138,4 +138,44 @@ bool rejectedInvalidDifficulty=false;
 try { ClassicSudokuGenerator.GenerateSudoku(1,(SudokuDifficulty)99); }
 catch(ArgumentOutOfRangeException) { rejectedInvalidDifficulty=true; }
 Equal(true,rejectedInvalidDifficulty,"reject invalid difficulty enum");
+
+// Diagonal Sudoku rules and persistence must include both main diagonals.
+int[,] diagonalSolution = {
+ {9,4,7,6,3,5,1,2,8},
+ {8,5,2,1,4,7,3,6,9},
+ {6,1,3,9,8,2,5,4,7},
+ {7,8,9,4,5,3,6,1,2},
+ {3,6,4,8,2,1,7,9,5},
+ {1,2,5,7,9,6,4,8,3},
+ {2,7,1,5,6,9,8,3,4},
+ {5,9,8,3,1,4,2,7,6},
+ {4,3,6,2,7,8,9,5,1}
+};
+Equal(true,DiagonalSudokuRules.ValidateCompleteSolution(diagonalSolution),"valid diagonal solution");
+int[,] diagonalSingleHole=(int[,])diagonalSolution.Clone();
+diagonalSingleHole[0,0]=0;
+var diagonalSolver=new DiagonalSudokuSolver();
+Equal(1,diagonalSolver.CountSolutions(diagonalSingleHole),"diagonal single-hole puzzle is unique");
+int[,] mainDiagonalConflict=new int[9,9];
+mainDiagonalConflict[4,4]=3;
+Equal(false,diagonalSolver.IsValid(mainDiagonalConflict,0,0,3),"main diagonal rejects duplicate");
+int[,] antiDiagonalConflict=new int[9,9];
+antiDiagonalConflict[4,4]=4;
+Equal(false,diagonalSolver.IsValid(antiDiagonalConflict,0,8,4),"anti-diagonal rejects duplicate");
+int[,] centerDiagonalPeers=new int[9,9];
+centerDiagonalPeers[0,0]=1;
+centerDiagonalPeers[0,8]=2;
+var centerCandidates=diagonalSolver.GetCandidates(centerDiagonalPeers,4,4);
+Equal(false,centerCandidates.Contains(1),"center observes main diagonal");
+Equal(false,centerCandidates.Contains(2),"center observes anti-diagonal");
+Equal(true,DiagonalSudokuModel.IsValidSavedPuzzle(new int[81],FlattenBoard(diagonalSolution)),"diagonal saved solution accepted");
+int[] nonDiagonalSolution=FlattenBoard(diagonalSolution);
+nonDiagonalSolution[0]=nonDiagonalSolution[10];
+Equal(false,DiagonalSudokuModel.IsValidSavedPuzzle(new int[81],nonDiagonalSolution),"saved solution with diagonal duplicate rejected");
 Console.WriteLine($"PASS: {checks} assertions (production model, generator, and difficulty analyzer).");
+
+int[] FlattenBoard(int[,] board) {
+ var flat=new int[81];
+ for(int row=0;row<9;row++) for(int col=0;col<9;col++) flat[row*9+col]=board[row,col];
+ return flat;
+}

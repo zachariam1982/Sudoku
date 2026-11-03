@@ -24,7 +24,7 @@ public sealed class DiagonalSudokuGenerator : ISudokuGenerator
             for (int attempt = 0; attempt < maxAttempts; attempt++)
             {
                 int seed = unchecked(level * 397 ^ ((tier + 1) * 7919) ^ attempt * 104729 ^ 0xD1A60A1);
-                var random = new Random(seed);
+                var random = new System.Random(seed);
                 int[,] solution = new int[9, 9];
                 if (!FillSolution(solution, random)) continue;
 
@@ -66,7 +66,7 @@ public sealed class DiagonalSudokuGenerator : ISudokuGenerator
             $"Could not generate a Diagonal Sudoku at or below {requestedDifficulty} within {maxAttempts} attempts per tier.");
     }
 
-    private bool FillSolution(int[,] board, Random random)
+    private bool FillSolution(int[,] board, System.Random random)
     {
         int bestRow = -1, bestCol = -1, bestMask = 0, bestCount = 10;
         for (int row = 0; row < 9; row++)

@@ -2,6 +2,7 @@
   <PropertyGroup><OutputType>Exe</OutputType><TargetFramework>net8.0</TargetFramework><ImplicitUsings>enable</ImplicitUsings></PropertyGroup>
   <ItemGroup>
     <Compile Include="../../Assets/Scripts/Model/Classic/ClassicSudokuModel.cs" Link="ClassicSudokuModel.cs" />
+    <Compile Include="../../Assets/Scripts/Model/Classic/ClassicSudokuGenerator.cs" Link="ClassicSudokuGenerator.cs" />
     <Compile Include="../../Assets/Scripts/Model/Classic/ClassicSudokuSolver.cs" Link="ClassicSudokuSolver.cs" />
     <Compile Include="../../Assets/Scripts/Model/Classic/ClassicSudokuDifficultyAnalyzer.cs" Link="ClassicSudokuDifficultyAnalyzer.cs" />
     <Compile Include="../../Assets/Scripts/Model/Diagonal/DiagonalSudokuRules.cs" Link="DiagonalSudokuRules.cs" />

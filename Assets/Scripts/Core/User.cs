@@ -7,6 +7,7 @@ public class User : MonoBehaviour
     public JourneyViewModel ViewModel { get; set; }
     public NewGameViewModel NewGameViewModel { get; set; }
     public DailyChallengeViewModel DailyChallengeViewModel { get; set; }
+    public IGameVariantFactory VariantFactory { get; private set; }
     public IGameSaveSystem GameSaveSystem { get; private set; }
     // Start is called once before the first execution of Update after the MonoBehaviour is created
     void Awake()
@@ -19,15 +20,12 @@ public class User : MonoBehaviour
  
         Instance = this;
         DontDestroyOnLoad(gameObject);  // survive scene reloads
-        GameSaveSystem = new ClassicSaveSystem();
  
         SqliteDatabaseConnection database = SqliteDatabaseConnection.Instance;
         database.Open();
-
-        new SqliteGameHistoryRepository(database).InitializeSchema();
-        SqliteClassicGameResultRepository.InitializeSchema(database);
-        DailyChallengeDatabase.Initialize(database);
-        DiagonalDatabase.Initialize(database);
+        VariantFactory = GameVariantFactoryProvider.Create(GameVariant.Classic, database);
+        VariantFactory.InitializeDatabase();
+        GameSaveSystem = VariantFactory.GameSaveSystem;
         StartCoroutine(SaveLoop());
     }
     public bool TryLoadSave()

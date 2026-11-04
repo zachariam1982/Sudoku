@@ -23,10 +23,23 @@ public class User : MonoBehaviour
  
         SqliteDatabaseConnection database = SqliteDatabaseConnection.Instance;
         database.Open();
-        VariantFactory = GameVariantFactoryProvider.Create(GameVariant.Classic, database);
-        VariantFactory.InitializeDatabase();
-        GameSaveSystem = VariantFactory.GameSaveSystem;
+        SelectVariant(GameVariant.Classic);
         StartCoroutine(SaveLoop());
+    }
+
+    public IGameVariantFactory SelectVariant(GameVariant variant)
+    {
+        if (VariantFactory != null && VariantFactory.Variant == variant)
+            return VariantFactory;
+
+        SqliteDatabaseConnection database = SqliteDatabaseConnection.Instance;
+        if (database.Connection == null) database.Open();
+
+        IGameVariantFactory factory = GameVariantFactoryProvider.Create(variant, database);
+        factory.InitializeDatabase();
+        VariantFactory = factory;
+        GameSaveSystem = factory.GameSaveSystem;
+        return factory;
     }
     public bool TryLoadSave()
     {

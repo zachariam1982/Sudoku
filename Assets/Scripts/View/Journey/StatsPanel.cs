@@ -428,7 +428,16 @@ public class StatsPanel : MonoBehaviour
 
     public void Bind(JourneyViewModel vm)
     {
+        if (_vm != null)
+        {
+            _vm.ElapsedSeconds.OnChanged -= OnElapsedSecondsChanged;
+            _vm.LivesRemaining.OnChanged -= OnLivesRemainingChanged;
+            _vm.PastHistory.OnChanged -= OnPastHistoryChanged;
+            _vm.RetryOlderGameRequested.OnChanged -= OnRetryOlderGameRequested;
+        }
+
         _vm = vm;
+        if (_vm == null) return;
         vm.ElapsedSeconds.OnChanged += OnElapsedSecondsChanged;
         vm.LivesRemaining.OnChanged += OnLivesRemainingChanged;
         vm.PastHistory.OnChanged += OnPastHistoryChanged;

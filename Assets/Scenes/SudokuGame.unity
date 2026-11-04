@@ -55859,6 +55859,7 @@ MonoBehaviour:
   - {fileID: 8000000000000523}
   - {fileID: 8000000000000623}
   classicHomeScreen: {fileID: 2147000000}
+  gameContext: {fileID: 2027544917}
 
 --- !u!1 &8000000000000010
 GameObject:
@@ -56482,7 +56483,19 @@ MonoBehaviour:
   m_TargetGraphic: {fileID: 8000000000000203}
   m_OnClick:
     m_PersistentCalls:
-      m_Calls: []
+      m_Calls:
+      - m_Target: {fileID: 8000000000000004}
+        m_TargetAssemblyTypeName: PuzzleVariantSelectionScreen, Assembly-CSharp
+        m_MethodName: OpenDiagonal
+        m_Mode: 1
+        m_Arguments:
+          m_ObjectArgument: {fileID: 0}
+          m_ObjectArgumentAssemblyTypeName: UnityEngine.Object, UnityEngine
+          m_IntArgument: 0
+          m_FloatArgument: 0
+          m_StringArgument:
+          m_BoolArgument: 0
+        m_CallState: 2
 --- !u!1 &8000000000000210
 GameObject:
   m_ObjectHideFlags: 0

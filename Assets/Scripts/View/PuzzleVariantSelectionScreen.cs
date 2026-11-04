@@ -12,6 +12,7 @@ public sealed class PuzzleVariantSelectionScreen : MonoBehaviour
     [SerializeField] private RectTransform[] variantIcons;
     [SerializeField] private TextMeshProUGUI[] variantLabels;
     [SerializeField] private GameObject classicHomeScreen;
+    [SerializeField] private GameContext gameContext;
 
     private bool _layoutApplied;
     private bool _lastLandscape;
@@ -29,6 +30,20 @@ public sealed class PuzzleVariantSelectionScreen : MonoBehaviour
 
     public void OpenClassic()
     {
+        if (gameContext != null) gameContext.SelectVariant(GameVariant.Classic);
+        if (classicHomeScreen != null) classicHomeScreen.SetActive(true);
+        gameObject.SetActive(false);
+    }
+
+    public void OpenDiagonal()
+    {
+        if (gameContext == null)
+        {
+            Debug.LogError("PuzzleVariantSelectionScreen requires a GameContext reference.", this);
+            return;
+        }
+
+        if (!gameContext.SelectVariant(GameVariant.Diagonal)) return;
         if (classicHomeScreen != null) classicHomeScreen.SetActive(true);
         gameObject.SetActive(false);
     }

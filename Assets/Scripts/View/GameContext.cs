@@ -33,25 +33,6 @@ public class GameContext : MonoBehaviour
 
     private void Awake()
     {
-        IGameVariantFactory variantFactory = User.Instance.VariantFactory;
-        IGameHistoryRepository historyRepository = variantFactory.GameHistoryRepository;
-        JourneyViewModel = new JourneyViewModel(
-            new JourneyUsageStats(),
-            new JourneyScorePenalties(),
-            variantFactory.CreateSudokuModel(),
-            historyRepository);
-        NewGameViewModel = new NewGameViewModel(
-            new NewGameUsageStats(),
-            new NewGameScorePenalties(),
-            variantFactory.CreateSudokuModel(),
-            variantFactory.GameResultRepository);
-        DailyChallengeViewModel = new DailyChallengeViewModel(
-            new JourneyUsageStats(),
-            new JourneyScorePenalties(),
-            variantFactory.CreateSudokuModel(),
-            variantFactory.DailyChallengeRepository,
-            variantFactory.GameSaveSystem);
-
         _grid = GetComponent<SudokuGrid>();
         _gridBuilder = GetComponent<GridBuilder>();
         _error = GetComponent<ErrorMessage>();
@@ -65,40 +46,103 @@ public class GameContext : MonoBehaviour
         _statsPanel = GetComponentInChildren<StatsPanel>(true);
         _newGameStatsPanel = GetComponentInChildren<NewGameStatsPanel>(true);
         _dailyChallengeStatsPanel = GetComponentInChildren<DailyChallengeStatsPanel>(true);
-        BindGameplay(JourneyViewModel);
-        _statsPanel?.Bind(JourneyViewModel);
-        _newGameStatsPanel?.Bind(NewGameViewModel);
-        _dailyChallengeStatsPanel?.Bind(DailyChallengeViewModel);
-
-        User.Instance.ViewModel = JourneyViewModel;
-        User.Instance.NewGameViewModel = NewGameViewModel;
-        User.Instance.DailyChallengeViewModel = DailyChallengeViewModel;
-        NewGameViewModel.SaveRequested += User.Instance.SaveNewGameNow;
-        DailyChallengeViewModel.SaveRequested += User.Instance.SaveDailyChallengeNow;
-        _journeyStateMachine.Initialise(JourneyViewModel);
-        _newGameStateMachine.Initialise(NewGameViewModel);
         if (_dailyChallengeStateMachine == null)
             _dailyChallengeStateMachine = GetComponent<DailyChallengeStateMachine>();
         if (_dailyChallengeStateMachine == null)
             _dailyChallengeStateMachine = gameObject.AddComponent<DailyChallengeStateMachine>();
-        _dailyChallengeStateMachine.Initialise(DailyChallengeViewModel);
-        _dailyChallengeStateView?.Bind(DailyChallengeViewModel);
-        _dailyChallengeStateMachine.SetSuspended(true);
-        _newGameStateMachine.SetSuspended(true);
-        NewGameViewModel.GameCompleted += OnNewGameCompleted;
-        DailyChallengeViewModel.GameCompleted += ExitDailyChallenge;
 
-        User.Instance.TryLoadSave();
-        User.Instance.TryLoadNewGameSave();
-
-        _journeyStateMachine.SetSuspended(true);
-        _homeScreen.Initialize(JourneyViewModel, this);
+        ConfigureVariant(User.Instance.VariantFactory);
         _dailyChallengeStateView?.SetGameplayVisible(false);
         StartDailyChallengeBackgroundJobs();
         // Startup is the mode selector, not an active Journey session.
         _gridBuilder?.SetVisible(false);
         _journeyStateView?.SetGameplayVisible(false);
         _newGameStateView?.SetGameplayVisible(false);
+    }
+
+    public bool SelectVariant(GameVariant variant)
+    {
+        if (User.Instance == null)
+        {
+            Debug.LogError("Cannot select a puzzle variant before User has initialized.", this);
+            return false;
+        }
+
+        if (_dailyChallengeActive || _newGameActive)
+        {
+            Debug.LogWarning("Cannot change puzzle variants while a game is active.", this);
+            return false;
+        }
+
+        if (User.Instance.VariantFactory != null &&
+            User.Instance.VariantFactory.Variant == variant)
+            return true;
+
+        _journeyStateMachine.SetSuspended(true);
+        _newGameStateMachine.SetSuspended(true);
+        _dailyChallengeStateMachine.SetSuspended(true);
+        _gridBuilder?.SetVisible(false);
+        _journeyStateView?.SetGameplayVisible(false);
+        _newGameStateView?.SetGameplayVisible(false);
+        _dailyChallengeStateView?.SetGameplayVisible(false);
+
+        IGameVariantFactory factory = User.Instance.SelectVariant(variant);
+        if (factory == null) return false;
+
+        ConfigureVariant(factory);
+        return true;
+    }
+
+    private void ConfigureVariant(IGameVariantFactory factory)
+    {
+        if (NewGameViewModel != null)
+        {
+            NewGameViewModel.SaveRequested -= User.Instance.SaveNewGameNow;
+            NewGameViewModel.GameCompleted -= OnNewGameCompleted;
+        }
+        if (DailyChallengeViewModel != null)
+        {
+            DailyChallengeViewModel.SaveRequested -= User.Instance.SaveDailyChallengeNow;
+            DailyChallengeViewModel.GameCompleted -= ExitDailyChallenge;
+        }
+
+        IGameHistoryRepository historyRepository = factory.GameHistoryRepository;
+        JourneyViewModel = new JourneyViewModel(
+            new JourneyUsageStats(), new JourneyScorePenalties(),
+            factory.CreateSudokuModel(), historyRepository);
+        NewGameViewModel = new NewGameViewModel(
+            new NewGameUsageStats(), new NewGameScorePenalties(),
+            factory.CreateSudokuModel(), factory.GameResultRepository);
+        DailyChallengeViewModel = new DailyChallengeViewModel(
+            new JourneyUsageStats(), new JourneyScorePenalties(),
+            factory.CreateSudokuModel(), factory.DailyChallengeRepository,
+            factory.GameSaveSystem);
+
+        User.Instance.ViewModel = JourneyViewModel;
+        User.Instance.NewGameViewModel = NewGameViewModel;
+        User.Instance.DailyChallengeViewModel = DailyChallengeViewModel;
+        NewGameViewModel.SaveRequested += User.Instance.SaveNewGameNow;
+        DailyChallengeViewModel.SaveRequested += User.Instance.SaveDailyChallengeNow;
+        NewGameViewModel.GameCompleted += OnNewGameCompleted;
+        DailyChallengeViewModel.GameCompleted += ExitDailyChallenge;
+
+        _journeyStateMachine.Initialise(JourneyViewModel);
+        _newGameStateMachine.Initialise(NewGameViewModel);
+        _dailyChallengeStateMachine.Initialise(DailyChallengeViewModel);
+
+        _journeyStateMachine.SetSuspended(true);
+        _newGameStateMachine.SetSuspended(true);
+        _dailyChallengeStateMachine.SetSuspended(true);
+
+        BindGameplay(JourneyViewModel);
+        _dailyChallengeStateView?.Bind(DailyChallengeViewModel);
+        _statsPanel?.Bind(JourneyViewModel);
+        _newGameStatsPanel?.Bind(NewGameViewModel);
+        _dailyChallengeStatsPanel?.Bind(DailyChallengeViewModel);
+
+        User.Instance.TryLoadSave();
+        User.Instance.TryLoadNewGameSave();
+        _homeScreen?.Initialize(JourneyViewModel, this);
     }
 
     public void ActivateJourney()

@@ -10,8 +10,8 @@ public sealed class KillerSaveSystem : JsonGameSaveSystem
         return "killer_save.json";
     }
 
-    // Killer Sudoku retains the standard row, column, box, and given-value rules.
-    // Cage validation can be added when cage data and KillerSudokuModel are implemented.
+    // SaveGameData currently stores only the flattened grid and solution. Cage-layout
+    // serialization must be added before saved Killer sessions can validate cage sums.
     protected override bool IsValidSavedPuzzle(int[] puzzleFlat, int[] solutionFlat) =>
-        ClassicSudokuModel.IsValidSavedPuzzle(puzzleFlat, solutionFlat);
+        KillerSudokuModel.IsValidSavedPuzzle(puzzleFlat, solutionFlat);
 }

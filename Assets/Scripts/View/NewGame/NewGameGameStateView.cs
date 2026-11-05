@@ -10,6 +10,7 @@ public sealed class NewGameGameStateView : MonoBehaviour
     [SerializeField] private GameObject hudPanel;
     [SerializeField] private GameObject overlay;
     [SerializeField] private GameObject winPanel;
+    [SerializeField] private GameObject landscapeWinPanel;
     [SerializeField] private GameObject pausePanel;
     [SerializeField] private NewGameTopBar topBar;
 
@@ -18,6 +19,24 @@ public sealed class NewGameGameStateView : MonoBehaviour
     private VerseTicker _verseTicker;
     private Button _pauseResumeButton;
     private bool _gameplayVisible;
+    private bool _hasWinOrientation;
+    private bool _lastWinLandscape;
+
+    private void Update()
+    {
+        if (!_gameplayVisible || _viewModel == null || landscapeWinPanel == null ||
+            _viewModel.CurrentStateName.Value != "NewGameWinState")
+        {
+            return;
+        }
+
+        bool isLandscape = Screen.width > Screen.height;
+        if (_hasWinOrientation && _lastWinLandscape == isLandscape) return;
+
+        _hasWinOrientation = true;
+        _lastWinLandscape = isLandscape;
+        ShowWinPanelForOrientation(isLandscape);
+    }
 
     public void Bind(NewGameViewModel viewModel)
     {
@@ -74,6 +93,7 @@ public sealed class NewGameGameStateView : MonoBehaviour
         {
             if (hudPanel != null) hudPanel.SetActive(false);
             if (winPanel != null) winPanel.SetActive(false);
+            if (landscapeWinPanel != null) landscapeWinPanel.SetActive(false);
             if (topBar != null) topBar.gameObject.SetActive(false);
             UpdateVerseTicker(false);
             return;
@@ -95,7 +115,7 @@ public sealed class NewGameGameStateView : MonoBehaviour
                 break;
             case "NewGameWinState":
                 if (overlay != null) overlay.SetActive(true);
-                if (winPanel != null) winPanel.SetActive(true);
+                ShowWinPanelForOrientation(Screen.width > Screen.height);
                 break;
         }
 
@@ -116,8 +136,23 @@ public sealed class NewGameGameStateView : MonoBehaviour
     public void OnWinAcknowledged()
     {
         if (winPanel != null) winPanel.SetActive(false);
+        if (landscapeWinPanel != null) landscapeWinPanel.SetActive(false);
         if (overlay != null) overlay.SetActive(false);
         _viewModel?.NotifyGameCompleted();
+    }
+
+    private void ShowWinPanelForOrientation(bool isLandscape)
+    {
+        if (landscapeWinPanel == null)
+        {
+            if (winPanel != null) winPanel.SetActive(true);
+            return;
+        }
+
+        if (winPanel != null) winPanel.SetActive(!isLandscape);
+        landscapeWinPanel.SetActive(isLandscape);
+        _hasWinOrientation = true;
+        _lastWinLandscape = isLandscape;
     }
 
     public void OnPlayPressed()
@@ -145,6 +180,7 @@ public sealed class NewGameGameStateView : MonoBehaviour
     {
         if (hudPanel != null) hudPanel.SetActive(false);
         if (winPanel != null) winPanel.SetActive(false);
+        if (landscapeWinPanel != null) landscapeWinPanel.SetActive(false);
         if (pausePanel != null) pausePanel.SetActive(false);
         if (overlay != null) overlay.SetActive(false);
     }

@@ -15,12 +15,15 @@ public sealed class DiagonalSudokuDifficultyAnalyzer : ISudokuDifficultyAnalyzer
             throw new ArgumentException("Puzzle contains a duplicate or invalid value under Diagonal Sudoku rules.", nameof(puzzle));
 
         int[,] reducedPuzzle = (int[,])puzzle.Clone();
+        int[] usedMasks = BuildUsedMasks(reducedPuzzle);
         int diagonalSteps = 0;
         SudokuTechnique diagonalTechnique = SudokuTechnique.NakedSingle;
 
-        while (TryFindDiagonalAwareSingle(reducedPuzzle, out int row, out int col, out int value, out bool hidden))
+        while (TryFindDiagonalAwareSingle(
+            reducedPuzzle, usedMasks, out int row, out int col, out int value, out bool hidden))
         {
             reducedPuzzle[row, col] = value;
+            AddUsedMask(usedMasks, row, col, value);
             diagonalSteps++;
             if (hidden) diagonalTechnique = SudokuTechnique.HiddenSingle;
         }
@@ -44,13 +47,14 @@ public sealed class DiagonalSudokuDifficultyAnalyzer : ISudokuDifficultyAnalyzer
     }
 
     private static bool TryFindDiagonalAwareSingle(
-        int[,] board, out int foundRow, out int foundCol, out int foundValue, out bool hidden)
+        int[,] board, int[] usedMasks,
+        out int foundRow, out int foundCol, out int foundValue, out bool hidden)
     {
         for (int row = 0; row < 9; row++)
             for (int col = 0; col < 9; col++)
             {
                 if (board[row, col] != 0) continue;
-                int candidates = DiagonalSudokuRules.GetCandidateMask(board, row, col);
+                int candidates = GetCandidateMask(usedMasks, row, col);
                 if (CountBits(candidates) != 1) continue;
                 foundRow = row;
                 foundCol = col;
@@ -69,7 +73,7 @@ public sealed class DiagonalSudokuDifficultyAnalyzer : ISudokuDifficultyAnalyzer
                     int row = index / 9;
                     int col = index % 9;
                     if (board[row, col] != 0 ||
-                        (DiagonalSudokuRules.GetCandidateMask(board, row, col) & (1 << value)) == 0)
+                        (GetCandidateMask(usedMasks, row, col) & (1 << value)) == 0)
                         continue;
                     candidateIndex = index;
                     count++;
@@ -87,6 +91,37 @@ public sealed class DiagonalSudokuDifficultyAnalyzer : ISudokuDifficultyAnalyzer
         foundRow = foundCol = foundValue = 0;
         hidden = false;
         return false;
+    }
+
+    private static int[] BuildUsedMasks(int[,] board)
+    {
+        var masks = new int[29];
+        for (int row = 0; row < 9; row++)
+            for (int col = 0; col < 9; col++)
+            {
+                int value = board[row, col];
+                if (value < 1 || value > 9) continue;
+                AddUsedMask(masks, row, col, value);
+            }
+        return masks;
+    }
+
+    private static void AddUsedMask(int[] masks, int row, int col, int value)
+    {
+        int bit = 1 << value;
+        masks[row] |= bit;
+        masks[9 + col] |= bit;
+        masks[18 + row / 3 * 3 + col / 3] |= bit;
+        if (row == col) masks[27] |= bit;
+        if (row + col == 8) masks[28] |= bit;
+    }
+
+    private static int GetCandidateMask(int[] masks, int row, int col)
+    {
+        int used = masks[row] | masks[9 + col] | masks[18 + row / 3 * 3 + col / 3];
+        if (row == col) used |= masks[27];
+        if (row + col == 8) used |= masks[28];
+        return DiagonalSudokuRules.FullMask & ~used;
     }
 
     private static int CountBits(int mask)

@@ -48,6 +48,19 @@ public sealed class PuzzleVariantSelectionScreen : MonoBehaviour
         gameObject.SetActive(false);
     }
 
+    public void OpenKiller()
+    {
+        if (gameContext == null)
+        {
+            Debug.LogError("PuzzleVariantSelectionScreen requires a GameContext reference.", this);
+            return;
+        }
+
+        if (!gameContext.SelectVariant(GameVariant.Killer)) return;
+        if (classicHomeScreen != null) classicHomeScreen.SetActive(true);
+        gameObject.SetActive(false);
+    }
+
     private void ApplyLayout()
     {
         if (headerText == null || variantCards == null || variantCards.Length != 6) return;

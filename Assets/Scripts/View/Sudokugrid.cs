@@ -198,14 +198,16 @@ public class SudokuGrid : MonoBehaviour
             labelRect.anchorMin = new Vector2(0, 1);
             labelRect.anchorMax = new Vector2(0, 1);
             labelRect.pivot = new Vector2(0, 1);
-            labelRect.anchoredPosition = new Vector2(2f, -1f);
-            labelRect.sizeDelta = new Vector2(cellRect.rect.width * 0.72f, cellRect.rect.height * 0.56f);
+            labelRect.anchoredPosition = new Vector2(3f, -2f);
+            labelRect.sizeDelta = new Vector2(cellRect.rect.width * 0.82f, cellRect.rect.height * 0.78f);
             TextMeshProUGUI label = labelObject.GetComponent<TextMeshProUGUI>();
             label.text = targetSum.ToString();
             label.font = cell.NumberFont != null ? cell.NumberFont : TMP_Settings.defaultFontAsset;
-            label.fontSize = Mathf.Clamp(cellRect.rect.width * 0.32f, 8f, 15f);
+            // Make cage totals readable at the current device scale. A softer
+            // gold tint keeps them watermark-like behind the main Sudoku digit.
+            label.fontSize = Mathf.Clamp(cellRect.rect.width * 0.48f, 12f, 32f);
             label.fontStyle = FontStyles.Bold;
-            label.color = new Color32(255, 231, 170, 255);
+            label.color = new Color32(255, 225, 146, 142);
             label.alignment = TextAlignmentOptions.TopLeft;
             label.enableAutoSizing = false;
             label.textWrappingMode = TextWrappingModes.NoWrap;

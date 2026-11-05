@@ -17,26 +17,10 @@ public sealed class NewGameGameStateView : MonoBehaviour
     private NewGameViewModel _viewModel;
     private HUD _hud;
     private VerseTicker _verseTicker;
+    private OrientationManager _orientationManager;
     private Button _pauseResumeButton;
     private bool _gameplayVisible;
-    private bool _hasWinOrientation;
-    private bool _lastWinLandscape;
-
-    private void Update()
-    {
-        if (!_gameplayVisible || _viewModel == null || landscapeWinPanel == null ||
-            _viewModel.CurrentStateName.Value != "NewGameWinState")
-        {
-            return;
-        }
-
-        bool isLandscape = Screen.width > Screen.height;
-        if (_hasWinOrientation && _lastWinLandscape == isLandscape) return;
-
-        _hasWinOrientation = true;
-        _lastWinLandscape = isLandscape;
-        ShowWinPanelForOrientation(isLandscape);
-    }
+    private bool _landscapeOrientationLocked;
 
     public void Bind(NewGameViewModel viewModel)
     {
@@ -76,6 +60,7 @@ public sealed class NewGameGameStateView : MonoBehaviour
 
     private void Unbind()
     {
+        RestoreAutomaticOrientation();
         if (_viewModel == null) return;
         if (_pauseResumeButton != null)
         {
@@ -91,6 +76,7 @@ public sealed class NewGameGameStateView : MonoBehaviour
     {
         if (!_gameplayVisible)
         {
+            RestoreAutomaticOrientation();
             if (hudPanel != null) hudPanel.SetActive(false);
             if (winPanel != null) winPanel.SetActive(false);
             if (landscapeWinPanel != null) landscapeWinPanel.SetActive(false);
@@ -98,6 +84,9 @@ public sealed class NewGameGameStateView : MonoBehaviour
             UpdateVerseTicker(false);
             return;
         }
+
+        if (stateName != "NewGameWinState")
+            RestoreAutomaticOrientation();
 
         SetAllPanelsHidden();
         switch (stateName)
@@ -115,7 +104,7 @@ public sealed class NewGameGameStateView : MonoBehaviour
                 break;
             case "NewGameWinState":
                 if (overlay != null) overlay.SetActive(true);
-                ShowWinPanelForOrientation(Screen.width > Screen.height);
+                ShowLandscapeWinPanel();
                 break;
         }
 
@@ -135,13 +124,14 @@ public sealed class NewGameGameStateView : MonoBehaviour
 
     public void OnWinAcknowledged()
     {
+        RestoreAutomaticOrientation();
         if (winPanel != null) winPanel.SetActive(false);
         if (landscapeWinPanel != null) landscapeWinPanel.SetActive(false);
         if (overlay != null) overlay.SetActive(false);
         _viewModel?.NotifyGameCompleted();
     }
 
-    private void ShowWinPanelForOrientation(bool isLandscape)
+    private void ShowLandscapeWinPanel()
     {
         if (landscapeWinPanel == null)
         {
@@ -149,10 +139,51 @@ public sealed class NewGameGameStateView : MonoBehaviour
             return;
         }
 
-        if (winPanel != null) winPanel.SetActive(!isLandscape);
-        landscapeWinPanel.SetActive(isLandscape);
-        _hasWinOrientation = true;
-        _lastWinLandscape = isLandscape;
+        LockToLandscapeOrientation();
+        if (winPanel != null) winPanel.SetActive(false);
+        landscapeWinPanel.SetActive(true);
+    }
+
+    private void LockToLandscapeOrientation()
+    {
+        if (_landscapeOrientationLocked) return;
+
+        if (_orientationManager == null)
+            _orientationManager = GetComponentInParent<OrientationManager>();
+
+        if (_orientationManager != null)
+            _orientationManager.LockToLandscape();
+        else
+        {
+            Screen.autorotateToPortrait = false;
+            Screen.autorotateToPortraitUpsideDown = false;
+            Screen.autorotateToLandscapeLeft = true;
+            Screen.autorotateToLandscapeRight = true;
+            Screen.orientation = ScreenOrientation.AutoRotation;
+        }
+
+        _landscapeOrientationLocked = true;
+    }
+
+    private void RestoreAutomaticOrientation()
+    {
+        if (!_landscapeOrientationLocked) return;
+
+        if (_orientationManager == null)
+            _orientationManager = GetComponentInParent<OrientationManager>();
+
+        if (_orientationManager != null)
+            _orientationManager.RestoreAutoRotation();
+        else
+        {
+            Screen.autorotateToPortrait = true;
+            Screen.autorotateToPortraitUpsideDown = true;
+            Screen.autorotateToLandscapeLeft = true;
+            Screen.autorotateToLandscapeRight = true;
+            Screen.orientation = ScreenOrientation.AutoRotation;
+        }
+
+        _landscapeOrientationLocked = false;
     }
 
     public void OnPlayPressed()
@@ -171,6 +202,7 @@ public sealed class NewGameGameStateView : MonoBehaviour
             return;
         }
 
+        RestoreAutomaticOrientation();
         SetAllPanelsHidden();
         if (topBar != null) topBar.gameObject.SetActive(false);
         UpdateVerseTicker(false);

@@ -34929,7 +34929,9 @@ MonoBehaviour:
   m_text: '<color=#B68CFF><size=54><b>KILLER</b></size></color>
 
     <size=34><color=#AAACCD>Cages
-    sum to their target</color></size>'
+    sum to their target</color>
+
+    <color=#AAACCD>COMING SOON</color></size>'
   m_isRightToLeft: 0
   m_fontAsset: {fileID: 11400000, guid: 8f586378b4e144a9851e7b34d9b748ee, type: 2}
   m_sharedMaterial: {fileID: 2180264, guid: 8f586378b4e144a9851e7b34d9b748ee, type: 2}
@@ -35266,7 +35268,9 @@ MonoBehaviour:
   m_text: '<color=#FF8A3D><size=54><b>THERMO</b></size></color>
 
     <size=34><color=#AAACCD>Digits
-    rise from bulb to tip</color></size>'
+    rise from bulb to tip</color>
+
+    <color=#AAACCD>COMING SOON</color></size>'
   m_isRightToLeft: 0
   m_fontAsset: {fileID: 11400000, guid: 8f586378b4e144a9851e7b34d9b748ee, type: 2}
   m_sharedMaterial: {fileID: 2180264, guid: 8f586378b4e144a9851e7b34d9b748ee, type: 2}
@@ -35601,7 +35605,7 @@ MonoBehaviour:
     m_PersistentCalls:
       m_Calls: []
   m_text: "<color=#5394FF><size=54><b>HYPER</b></size></color>\n<size=34><color=#AAACCD>Extra
-    3\xD73 regions</color></size>"
+    3\xD73 regions</color>\n<color=#AAACCD>COMING SOON</color></size>"
   m_isRightToLeft: 0
   m_fontAsset: {fileID: 11400000, guid: 8f586378b4e144a9851e7b34d9b748ee, type: 2}
   m_sharedMaterial: {fileID: 2180264, guid: 8f586378b4e144a9851e7b34d9b748ee, type: 2}
@@ -35936,7 +35940,7 @@ MonoBehaviour:
     m_PersistentCalls:
       m_Calls: []
   m_text: "<color=#75D85A><size=54><b>IRREGULAR</b></size></color>\n<size=34><color=#AAACCD>Shaped
-    regions contain 1\u20139</color></size>"
+    regions contain 1\u20139</color>\n<color=#AAACCD>COMING SOON</color></size>"
   m_isRightToLeft: 0
   m_fontAsset: {fileID: 11400000, guid: 8f586378b4e144a9851e7b34d9b748ee, type: 2}
   m_sharedMaterial: {fileID: 2180264, guid: 8f586378b4e144a9851e7b34d9b748ee, type: 2}

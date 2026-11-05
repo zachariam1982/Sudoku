@@ -18,15 +18,39 @@ public sealed class DiagonalSudokuGenerator : ISudokuGenerator
             throw new ArgumentOutOfRangeException(nameof(requestedDifficulty));
         if (maxAttempts <= 0) throw new ArgumentOutOfRangeException(nameof(maxAttempts));
 
+        long generationStartedAt = System.Diagnostics.Stopwatch.GetTimestamp();
         for (int tier = (int)requestedDifficulty; tier >= (int)SudokuDifficulty.Simple; tier--)
         {
             SudokuDifficulty target = (SudokuDifficulty)tier;
+            long tierStartedAt = System.Diagnostics.Stopwatch.GetTimestamp();
+            double fillSolutionMs = 0d;
+            double uniquenessMs = 0d;
+            double analyzerMs = 0d;
+            int uniquenessChecks = 0;
+            int analyzerCalls = 0;
+            int acceptedRemovals = 0;
+            int fillFailures = 0;
+            int slowestAttempt = 0;
+            int slowestSeed = 0;
+            double slowestAttemptMs = 0d;
+
             for (int attempt = 0; attempt < maxAttempts; attempt++)
             {
+                long attemptStartedAt = System.Diagnostics.Stopwatch.GetTimestamp();
                 int seed = unchecked(level * 397 ^ ((tier + 1) * 7919) ^ attempt * 104729 ^ 0xD1A60A1);
                 var random = new System.Random(seed);
                 int[,] solution = new int[9, 9];
-                if (!FillSolution(solution, random)) continue;
+
+                long stageStartedAt = System.Diagnostics.Stopwatch.GetTimestamp();
+                bool filledSolution = FillSolution(solution, random);
+                fillSolutionMs += ElapsedMilliseconds(stageStartedAt);
+                if (!filledSolution)
+                {
+                    fillFailures++;
+                    RecordSlowestAttempt(attempt, seed, attemptStartedAt,
+                        ref slowestAttempt, ref slowestSeed, ref slowestAttemptMs);
+                    continue;
+                }
 
                 int[,] puzzle = (int[,])solution.Clone();
                 int[] cells = Enumerable.Range(0, 81).OrderBy(_ => random.Next()).ToArray();
@@ -40,15 +64,33 @@ public sealed class DiagonalSudokuGenerator : ISudokuGenerator
                     int col = cell % 9;
                     int oldValue = puzzle[row, col];
                     puzzle[row, col] = 0;
-                    if (!_solver.HasUniqueSolution(puzzle))
+                    uniquenessChecks++;
+                    stageStartedAt = System.Diagnostics.Stopwatch.GetTimestamp();
+                    bool hasUniqueSolution = _solver.HasUniqueSolution(puzzle);
+                    uniquenessMs += ElapsedMilliseconds(stageStartedAt);
+                    if (!hasUniqueSolution)
                     {
                         puzzle[row, col] = oldValue;
                         continue;
                     }
 
                     clueCount--;
+                    acceptedRemovals++;
                     if (clueCount > maxClues) continue;
-                    if (_analyzer.Analyze(puzzle).Difficulty != target) continue;
+
+                    analyzerCalls++;
+                    stageStartedAt = System.Diagnostics.Stopwatch.GetTimestamp();
+                    SudokuDifficulty analyzedDifficulty = _analyzer.Analyze(puzzle).Difficulty;
+                    analyzerMs += ElapsedMilliseconds(stageStartedAt);
+                    if (analyzedDifficulty != target) continue;
+
+                    RecordSlowestAttempt(attempt, seed, attemptStartedAt,
+                        ref slowestAttempt, ref slowestSeed, ref slowestAttemptMs);
+                    LogTierDiagnostics(
+                        level, target, "matched", attempt + 1, maxAttempts, tierStartedAt,
+                        fillSolutionMs, uniquenessMs, uniquenessChecks,
+                        analyzerMs, analyzerCalls, acceptedRemovals, fillFailures,
+                        slowestAttempt, slowestSeed, slowestAttemptMs);
 
                     var result = new SudokuResult
                     {
@@ -56,14 +98,72 @@ public sealed class DiagonalSudokuGenerator : ISudokuGenerator
                         Solution = solution,
                         Difficulty = target
                     };
+                    Debug.Log(
+                        $"[DiagonalSudokuGenerator] level={level} requested={requestedDifficulty} actual={target} " +
+                        $"total={ElapsedMilliseconds(generationStartedAt):F2}ms");
                     Debug.Log($"[DiagonalSudokuGenerator] Generated solution (level {level}, difficulty {target}):\n{FormatBoard(solution)}");
                     return result;
                 }
+
+                RecordSlowestAttempt(attempt, seed, attemptStartedAt,
+                    ref slowestAttempt, ref slowestSeed, ref slowestAttemptMs);
             }
+
+            LogTierDiagnostics(
+                level, target, "no-match", maxAttempts, maxAttempts, tierStartedAt,
+                fillSolutionMs, uniquenessMs, uniquenessChecks,
+                analyzerMs, analyzerCalls, acceptedRemovals, fillFailures,
+                slowestAttempt, slowestSeed, slowestAttemptMs);
         }
 
         throw new InvalidOperationException(
             $"Could not generate a Diagonal Sudoku at or below {requestedDifficulty} within {maxAttempts} attempts per tier.");
+    }
+
+    private static double ElapsedMilliseconds(long startedAt) =>
+        (System.Diagnostics.Stopwatch.GetTimestamp() - startedAt) *
+        1000d / System.Diagnostics.Stopwatch.Frequency;
+
+    private static void RecordSlowestAttempt(
+        int attempt, int seed, long attemptStartedAt,
+        ref int slowestAttempt, ref int slowestSeed, ref double slowestAttemptMs)
+    {
+        double attemptMs = ElapsedMilliseconds(attemptStartedAt);
+        if (attemptMs <= slowestAttemptMs) return;
+
+        slowestAttempt = attempt + 1;
+        slowestSeed = seed;
+        slowestAttemptMs = attemptMs;
+    }
+
+    private static void LogTierDiagnostics(
+        int level,
+        SudokuDifficulty difficulty,
+        string outcome,
+        int attempts,
+        int maxAttempts,
+        long tierStartedAt,
+        double fillSolutionMs,
+        double uniquenessMs,
+        int uniquenessChecks,
+        double analyzerMs,
+        int analyzerCalls,
+        int acceptedRemovals,
+        int fillFailures,
+        int slowestAttempt,
+        int slowestSeed,
+        double slowestAttemptMs)
+    {
+        double totalMs = ElapsedMilliseconds(tierStartedAt);
+        double otherMs = Math.Max(0d, totalMs - fillSolutionMs - uniquenessMs - analyzerMs);
+
+        Debug.Log(
+            $"[DiagonalSudokuGenerator] level={level} tier={difficulty} outcome={outcome} " +
+            $"attempts={attempts}/{maxAttempts} total={totalMs:F2}ms " +
+            $"fill={fillSolutionMs:F2}ms uniqueness={uniquenessMs:F2}ms/{uniquenessChecks} checks " +
+            $"analyzer={analyzerMs:F2}ms/{analyzerCalls} calls other={otherMs:F2}ms " +
+            $"acceptedRemovals={acceptedRemovals} fillFailures={fillFailures} " +
+            $"slowestAttempt={slowestAttempt} slowestSeed={slowestSeed} slowestMs={slowestAttemptMs:F2}");
     }
 
     private bool FillSolution(int[,] board, System.Random random)

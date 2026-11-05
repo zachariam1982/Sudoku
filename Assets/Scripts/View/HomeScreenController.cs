@@ -33,6 +33,7 @@ public sealed class HomeScreenController : MonoBehaviour
     [SerializeField] private GameObject newGameScreen;
     [SerializeField] private GameContext _gameContext;
     [SerializeField] private DailyChallengeScreenController dailyChallengeScreen;
+    [SerializeField] private PuzzleVariantSelectionScreen variantSelectionScreen;
 
     private JourneyViewModel _viewModel;
     private bool _layoutApplied;
@@ -144,6 +145,26 @@ public sealed class HomeScreenController : MonoBehaviour
         _gameContext.SuspendActiveGame();
         RefreshJourneyStatus();
         gameObject.SetActive(true);
+    }
+
+    public void OpenVariantSelection()
+    {
+        if (_gameContext != null)
+        {
+            _gameContext.CloseDailyChallengeScreen();
+            _gameContext.SuspendActiveGame();
+        }
+        else if (dailyChallengeScreen != null)
+        {
+            dailyChallengeScreen.Hide();
+        }
+
+        SetVerseTickerVisible(false);
+        RefreshJourneyStatus();
+        gameObject.SetActive(false);
+
+        if (variantSelectionScreen != null)
+            variantSelectionScreen.gameObject.SetActive(true);
     }
 
     public void CloseDailyChallenge()

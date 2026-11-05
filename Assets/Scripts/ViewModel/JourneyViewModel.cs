@@ -144,6 +144,7 @@ public class JourneyViewModel : BaseViewModel
             AutoFillUses = UsageStats.AutoFillUses,
             RetryOlderGame_Points = RetryGameData.points
         };
+        CaptureModelSaveData(data);
 
         int[] originalPuzzle = Model.GetOriginalPuzzleFlat();
         int[] solution = Model.GetSolutionFlat();
@@ -169,7 +170,7 @@ public class JourneyViewModel : BaseViewModel
         Model.SetLevel(data.Level);
         Model.SetPuzzleSeed(data.PuzzleSeed > 0 ? data.PuzzleSeed : data.Level);
         Model.SetDifficulty((SudokuDifficulty)data.Difficulty);
-        if (!Model.TryLoadSavedPuzzle(data.OriginalPuzzleFlat, data.SolutionFlat))
+        if (!TryLoadModelPuzzle(data))
             Model.LoadCurrentLevelPuzzle();
 
         for (int row = 0; row < 9; row++)

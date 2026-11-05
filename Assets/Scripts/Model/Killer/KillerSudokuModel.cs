@@ -86,6 +86,7 @@ public sealed class KillerSudokuModel : ISudokuModel
     {
         if (puzzleFlat == null || solutionFlat == null || puzzleFlat.Length != 81 || solutionFlat.Length != 81)
             return false;
+        if (!KillerSudokuRules.ValidateCageLayout(cages)) return false;
         int[,] puzzle = Expand(puzzleFlat);
         int[,] solution = Expand(solutionFlat);
         if (!KillerSudokuRules.ValidateBoard(puzzle, cages) ||
@@ -93,6 +94,33 @@ public sealed class KillerSudokuModel : ISudokuModel
         for (int index = 0; index < 81; index++)
             if (puzzleFlat[index] != 0 && puzzleFlat[index] != solutionFlat[index]) return false;
         return true;
+    }
+
+    public static List<SaveGameKillerCage> SerializeCages(KillerCage[] cages)
+    {
+        var saved = new List<SaveGameKillerCage>();
+        if (cages == null) return saved;
+        foreach (KillerCage cage in cages)
+            if (cage != null)
+                saved.Add(new SaveGameKillerCage
+                {
+                    TargetSum = cage.TargetSum,
+                    Cells = cage.Cells == null ? Array.Empty<int>() : (int[])cage.Cells.Clone()
+                });
+        return saved;
+    }
+
+    public static KillerCage[] DeserializeCages(List<SaveGameKillerCage> saved)
+    {
+        if (saved == null || saved.Count == 0) return null;
+        var cages = new KillerCage[saved.Count];
+        for (int i = 0; i < saved.Count; i++)
+        {
+            SaveGameKillerCage cage = saved[i];
+            if (cage == null) return null;
+            cages[i] = new KillerCage(cage.TargetSum, cage.Cells);
+        }
+        return cages;
     }
 
     public bool SetValue(int row, int col, int value)

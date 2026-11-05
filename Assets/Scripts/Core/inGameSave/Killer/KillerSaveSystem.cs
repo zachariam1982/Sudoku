@@ -10,8 +10,14 @@ public sealed class KillerSaveSystem : JsonGameSaveSystem
         return "killer_save.json";
     }
 
-    // SaveGameData currently stores only the flattened grid and solution. Cage-layout
-    // serialization must be added before saved Killer sessions can validate cage sums.
+    // Keep the array-only contract for base compatibility; Killer saves use the
+    // SaveGameData overload below so cage sums and layout are validated too.
     protected override bool IsValidSavedPuzzle(int[] puzzleFlat, int[] solutionFlat) =>
         KillerSudokuModel.IsValidSavedPuzzle(puzzleFlat, solutionFlat);
+
+    protected override bool IsValidSavedPuzzle(SaveGameData data, SaveSlot slot) =>
+        KillerSudokuModel.IsValidSavedPuzzle(
+            data.OriginalPuzzleFlat,
+            data.SolutionFlat,
+            KillerSudokuModel.DeserializeCages(data.KillerCages));
 }

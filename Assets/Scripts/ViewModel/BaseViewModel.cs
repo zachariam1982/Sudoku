@@ -55,6 +55,22 @@ public class BaseViewModel
     public BindableProperty<(string title, string message, string status)> ShowMessage { get; } =
         new BindableProperty<(string, string, string)>(("", "", ""));
 
+    protected void CaptureModelSaveData(SaveGameData data)
+    {
+        if (Model is KillerSudokuModel killerModel)
+            data.KillerCages = KillerSudokuModel.SerializeCages(killerModel.Cages);
+    }
+
+    protected bool TryLoadModelPuzzle(SaveGameData data)
+    {
+        if (Model is KillerSudokuModel killerModel)
+            return killerModel.TryLoadSavedPuzzle(
+                data.OriginalPuzzleFlat,
+                data.SolutionFlat,
+                KillerSudokuModel.DeserializeCages(data.KillerCages));
+        return Model.TryLoadSavedPuzzle(data.OriginalPuzzleFlat, data.SolutionFlat);
+    }
+
     public ICommand SelectCellCommand { get; }
     public ICommand EnterValueCommand { get; }
     public ICommand CancelPickerCommand { get; }

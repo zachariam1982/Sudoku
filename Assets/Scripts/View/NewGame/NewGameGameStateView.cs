@@ -27,6 +27,7 @@ public sealed class NewGameGameStateView : MonoBehaviour
     private bool _gameplayVisible;
     private bool _hasWinLayout;
     private bool _lastWinLandscape;
+    private Vector2 _lastWinPanelSize;
 
     private void Update()
     {
@@ -37,7 +38,10 @@ public sealed class NewGameGameStateView : MonoBehaviour
         }
 
         bool isLandscape = Screen.width > Screen.height;
-        if (_hasWinLayout && _lastWinLandscape == isLandscape) return;
+        Vector2 panelSize = GetWinPanelSize();
+        if (_hasWinLayout && _lastWinLandscape == isLandscape &&
+            Mathf.Abs(_lastWinPanelSize.x - panelSize.x) < 0.5f &&
+            Mathf.Abs(_lastWinPanelSize.y - panelSize.y) < 0.5f) return;
         ApplyWinPanelLayout(isLandscape);
     }
 
@@ -145,6 +149,11 @@ public sealed class NewGameGameStateView : MonoBehaviour
 
     private void ApplyWinPanelLayout(bool isLandscape)
     {
+        Vector2 panelSize = GetWinPanelSize();
+        float width = panelSize.x;
+        float height = panelSize.y;
+        if (width <= 0f || height <= 0f) return;
+
         if (winPanelBackground != null)
         {
             Sprite background = isLandscape ? winLandscapeBackground : winPortraitBackground;
@@ -153,22 +162,55 @@ public sealed class NewGameGameStateView : MonoBehaviour
 
         if (isLandscape)
         {
-            SetWinElementLayout(winNewGameBanner, new Vector2(0.17f, 0.74f), new Vector2(980f, 230f));
-            SetWinElementLayout(winVictoryTrophyEmblem, new Vector2(0.47f, 0.66f), new Vector2(1080f, 980f));
-            SetWinElementLayout(winPuzzleCompleteWordmark, new Vector2(0.78f, 0.70f), new Vector2(1180f, 440f));
-            SetWinElementLayout(winBackToHomeButton, new Vector2(0.49f, 0.16f), new Vector2(1540f, 320f));
+            // Size every element from the panel bounds. The gap is also a width
+            // percentage, so the trophy and wordmark stay separated at any resolution.
+            float trophySize = Mathf.Min(width * 0.29f, height * 0.58f);
+            float wordmarkWidth = width * 0.30f;
+            float gap = width * 0.035f;
+            float trophyCenterX = 0.47f;
+            float wordmarkCenterX = trophyCenterX +
+                (trophySize * 0.5f + gap + wordmarkWidth * 0.5f) / width;
+
+            SetWinElementLayout(winNewGameBanner, new Vector2(0.15f, 0.77f),
+                new Vector2(width * 0.30f, width * 0.30f * (230f / 980f)));
+            SetWinElementLayout(winVictoryTrophyEmblem, new Vector2(trophyCenterX, 0.62f),
+                new Vector2(trophySize, trophySize));
+            SetWinElementLayout(winPuzzleCompleteWordmark, new Vector2(wordmarkCenterX, 0.70f),
+                new Vector2(wordmarkWidth, wordmarkWidth * (440f / 1180f)));
+            SetWinElementLayout(winBackToHomeButton, new Vector2(0.50f, 0.12f),
+                new Vector2(width * 0.68f, height * 0.15f));
         }
         else
         {
             // Stack the three title/emblem sprites in a single portrait column.
-            SetWinElementLayout(winNewGameBanner, new Vector2(0.5f, 0.92f), new Vector2(560f, 160f));
-            SetWinElementLayout(winPuzzleCompleteWordmark, new Vector2(0.5f, 0.79f), new Vector2(700f, 330f));
-            SetWinElementLayout(winVictoryTrophyEmblem, new Vector2(0.5f, 0.54f), new Vector2(650f, 650f));
-            SetWinElementLayout(winBackToHomeButton, new Vector2(0.5f, 0.10f), new Vector2(800f, 200f));
+            float bannerWidth = width * 0.72f;
+            float wordmarkWidth = width * 0.90f;
+            float trophySize = Mathf.Min(width * 0.70f, height * 0.42f);
+            SetWinElementLayout(winNewGameBanner, new Vector2(0.5f, 0.93f),
+                new Vector2(bannerWidth, bannerWidth * (230f / 980f)));
+            SetWinElementLayout(winPuzzleCompleteWordmark, new Vector2(0.5f, 0.80f),
+                new Vector2(wordmarkWidth, wordmarkWidth * (440f / 1180f)));
+            SetWinElementLayout(winVictoryTrophyEmblem, new Vector2(0.5f, 0.47f),
+                new Vector2(trophySize, trophySize));
+            SetWinElementLayout(winBackToHomeButton, new Vector2(0.5f, 0.10f),
+                new Vector2(width * 0.88f, height * 0.10f));
         }
 
         _hasWinLayout = true;
         _lastWinLandscape = isLandscape;
+        _lastWinPanelSize = panelSize;
+    }
+
+    private Vector2 GetWinPanelSize()
+    {
+        RectTransform panelRect = winPanel != null ? winPanel.GetComponent<RectTransform>() : null;
+        if (panelRect != null)
+        {
+            Vector2 size = panelRect.rect.size;
+            if (size.x > 0f && size.y > 0f) return size;
+        }
+
+        return new Vector2(Screen.width, Screen.height);
     }
 
     private static void SetWinElementLayout(RectTransform element, Vector2 anchor, Vector2 size)

@@ -175,6 +175,7 @@ public class SudokuGrid : MonoBehaviour
         var overlay = new GameObject("Killer Cage Overlay", typeof(RectTransform));
         RectTransform root = overlay.GetComponent<RectTransform>();
         root.SetParent(cell.transform, false);
+        overlay.layer = cell.gameObject.layer;
         root.anchorMin = Vector2.zero;
         root.anchorMax = Vector2.one;
         root.offsetMin = Vector2.zero;
@@ -182,12 +183,12 @@ public class SudokuGrid : MonoBehaviour
         root.SetAsLastSibling();
 
         RectTransform cellRect = cell.GetComponent<RectTransform>();
-        float edge = Mathf.Clamp(cellRect.rect.width * 0.065f, 1.25f, 2.5f);
-        Color edgeColor = new Color32(255, 190, 65, 235);
-        if (top) AddCageEdge(root, "Top", edgeColor, new Vector2(0, 1), new Vector2(1, 1), new Vector2(0, edge), new Vector2(0, -edge / 2f));
-        if (right) AddCageEdge(root, "Right", edgeColor, new Vector2(1, 0), new Vector2(1, 1), new Vector2(edge, 0), new Vector2(-edge / 2f, 0));
-        if (bottom) AddCageEdge(root, "Bottom", edgeColor, new Vector2(0, 0), new Vector2(1, 0), new Vector2(0, edge), new Vector2(0, edge / 2f));
-        if (left) AddCageEdge(root, "Left", edgeColor, new Vector2(0, 0), new Vector2(0, 1), new Vector2(edge, 0), new Vector2(edge / 2f, 0));
+        float edge = Mathf.Clamp(cellRect.rect.width * 0.045f, 1f, 1.75f);
+        Color edgeColor = new Color32(255, 194, 86, 225);
+        if (top) AddDashedCageEdge(root, "Top", edgeColor, true, true, edge);
+        if (right) AddDashedCageEdge(root, "Right", edgeColor, false, true, edge);
+        if (bottom) AddDashedCageEdge(root, "Bottom", edgeColor, true, false, edge);
+        if (left) AddDashedCageEdge(root, "Left", edgeColor, false, false, edge);
 
         if (showTarget)
         {
@@ -198,38 +199,61 @@ public class SudokuGrid : MonoBehaviour
             labelRect.anchorMax = new Vector2(0, 1);
             labelRect.pivot = new Vector2(0, 1);
             labelRect.anchoredPosition = new Vector2(2f, -1f);
-            labelRect.sizeDelta = new Vector2(cellRect.rect.width * 0.42f, cellRect.rect.height * 0.36f);
+            labelRect.sizeDelta = new Vector2(cellRect.rect.width * 0.72f, cellRect.rect.height * 0.56f);
             TextMeshProUGUI label = labelObject.GetComponent<TextMeshProUGUI>();
             label.text = targetSum.ToString();
             label.font = cell.NumberFont != null ? cell.NumberFont : TMP_Settings.defaultFontAsset;
-            label.fontSize = Mathf.Clamp(cellRect.rect.width * 0.23f, 6f, 12f);
-            label.color = new Color32(255, 225, 143, 255);
+            label.fontSize = Mathf.Clamp(cellRect.rect.width * 0.32f, 8f, 15f);
+            label.fontStyle = FontStyles.Bold;
+            label.color = new Color32(255, 231, 170, 255);
             label.alignment = TextAlignmentOptions.TopLeft;
-            label.enableAutoSizing = true;
-            label.fontSizeMin = 5f;
-            label.fontSizeMax = label.fontSize;
+            label.enableAutoSizing = false;
+            label.textWrappingMode = TextWrappingModes.NoWrap;
+            label.overflowMode = TextOverflowModes.Overflow;
             label.raycastTarget = false;
-            label.outlineWidth = 0.12f;
-            label.outlineColor = new Color32(12, 20, 42, 255);
+            label.enabled = true;
+            label.gameObject.layer = cell.gameObject.layer;
+            label.ForceMeshUpdate(true, true);
         }
         return overlay;
     }
 
-    private static void AddCageEdge(
-        RectTransform parent, string name, Color color,
-        Vector2 anchorMin, Vector2 anchorMax, Vector2 sizeDelta, Vector2 anchoredPosition)
+    private static void AddDashedCageEdge(
+        RectTransform parent, string side, Color color, bool horizontal, bool farSide, float thickness)
     {
-        var edgeObject = new GameObject(name, typeof(RectTransform), typeof(Image));
-        RectTransform edgeRect = edgeObject.GetComponent<RectTransform>();
-        edgeRect.SetParent(parent, false);
-        edgeRect.anchorMin = anchorMin;
-        edgeRect.anchorMax = anchorMax;
-        edgeRect.pivot = new Vector2(0.5f, 0.5f);
-        edgeRect.sizeDelta = sizeDelta;
-        edgeRect.anchoredPosition = anchoredPosition;
-        Image image = edgeObject.GetComponent<Image>();
-        image.color = color;
-        image.raycastTarget = false;
+        // Three short dashes per cell create a conventional cage boundary
+        // without competing with the solid 3x3 Sudoku box lines.
+        const int dashCount = 3;
+        const float dashFraction = 0.2f;
+        float gapFraction = (1f - dashCount * dashFraction) / (dashCount - 1);
+        float edgeAnchor = farSide ? 1f : 0f;
+        for (int dash = 0; dash < dashCount; dash++)
+        {
+            float start = dash * (dashFraction + gapFraction);
+            float end = start + dashFraction;
+            Vector2 anchorMin = horizontal
+                ? new Vector2(start, edgeAnchor)
+                : new Vector2(edgeAnchor, start);
+            Vector2 anchorMax = horizontal
+                ? new Vector2(end, edgeAnchor)
+                : new Vector2(edgeAnchor, end);
+            Vector2 size = horizontal ? new Vector2(0f, thickness) : new Vector2(thickness, 0f);
+            float inward = (farSide ? -1f : 1f) * thickness * 0.5f;
+            Vector2 position = horizontal ? new Vector2(0f, inward) : new Vector2(inward, 0f);
+
+            var edgeObject = new GameObject($"{side} Dash {dash + 1}", typeof(RectTransform), typeof(Image));
+            RectTransform edgeRect = edgeObject.GetComponent<RectTransform>();
+            edgeRect.SetParent(parent, false);
+            edgeRect.anchorMin = anchorMin;
+            edgeRect.anchorMax = anchorMax;
+            edgeRect.pivot = new Vector2(0.5f, 0.5f);
+            edgeRect.sizeDelta = size;
+            edgeRect.anchoredPosition = position;
+            edgeObject.layer = parent.gameObject.layer;
+            Image image = edgeObject.GetComponent<Image>();
+            image.color = color;
+            image.raycastTarget = false;
+        }
     }
 
     // ── Binding Handlers ──────────────────────────────────────────────────────

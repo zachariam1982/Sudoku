@@ -82,6 +82,7 @@ public class SudokuCell : MonoBehaviour
     };
     public int  Value   { get; private set; }
     public bool IsGiven { get; private set; }
+    public TMP_FontAsset NumberFont => numberText != null ? numberText.font : null;
     private Vector3 _originalScale;
     private Vector3 _originalPosition;
     private Quaternion _originalRotation;

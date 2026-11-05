@@ -2,6 +2,7 @@ using System.Collections.Generic;
 //using UnityEditor.Rendering.Universal;
 using UnityEngine;
 using UnityEngine.UI;
+using TMPro;
 
 /// <summary>
 /// View — manages the 9x9 grid of SudokuCell views.
@@ -16,6 +17,9 @@ public class SudokuGrid : MonoBehaviour
     private bool           cellsReady = false;
     private BaseViewModel viewModel;
     private bool diagonalVariantActive;
+    private bool killerVariantActive;
+    private KillerCage[] killerCages;
+    private GameObject[] killerCellOverlays = new GameObject[81];
 
 
     // ── Unity Lifecycle ───────────────────────────────────────────────────────
@@ -37,6 +41,7 @@ public class SudokuGrid : MonoBehaviour
 
         vm.BoardValues.OnChanged      += OnBoardChanged;
         vm.GivenMask.OnChanged        += OnBoardChanged;
+        vm.KillerCages.OnChanged      += OnKillerCagesChanged;
         vm.SelectedRow.OnChanged      += OnSelectedRowOrColumnChanged;
         vm.SelectedCol.OnChanged      += OnSelectedRowOrColumnChanged;
         vm.SelectedDigit.OnChanged    += OnSelectedDigitChanged;
@@ -61,6 +66,7 @@ public class SudokuGrid : MonoBehaviour
             OnPencilCandidatesChanged(viewModel.PencilCandidateMasks.Value);
             OnPencilModeChanged(viewModel.IsPencilMode.Value);
             OnCandidateHighlightChanged(viewModel.HighlightedCandidateNumber.Value);
+            OnKillerCagesChanged(viewModel.KillerCages.Value);
         }
     }
 
@@ -71,6 +77,14 @@ public class SudokuGrid : MonoBehaviour
         diagonalVariantActive = active;
         RefreshHighlights();
     }
+
+    public void SetKillerVariantActive(bool active)
+    {
+        killerVariantActive = active;
+        RefreshKillerCages();
+    }
+
+    public void RefreshKillerCageLayout() => RefreshKillerCages();
 
 
     private void OnDestroy()
@@ -84,6 +98,7 @@ public class SudokuGrid : MonoBehaviour
 
         viewModel.BoardValues.OnChanged      -= OnBoardChanged;
         viewModel.GivenMask.OnChanged        -= OnBoardChanged;
+        viewModel.KillerCages.OnChanged      -= OnKillerCagesChanged;
         viewModel.SelectedRow.OnChanged      -= OnSelectedRowOrColumnChanged;
         viewModel.SelectedCol.OnChanged      -= OnSelectedRowOrColumnChanged;
         viewModel.SelectedDigit.OnChanged    -= OnSelectedDigitChanged;
@@ -95,6 +110,126 @@ public class SudokuGrid : MonoBehaviour
         viewModel.HighlightedCandidateNumber.OnChanged -= OnCandidateHighlightChanged;
         viewModel.PencilCandidateMasks.OnChanged -= OnPencilCandidatesChanged;
         viewModel = null;
+    }
+
+    private void OnKillerCagesChanged(KillerCage[] cages)
+    {
+        if (ReferenceEquals(killerCages, cages)) return;
+        killerCages = cages;
+        RefreshKillerCages();
+    }
+
+    private void RefreshKillerCages()
+    {
+        if (!cellsReady) return;
+        bool hasCages = killerVariantActive && killerCages != null && killerCages.Length > 0;
+        if (!hasCages)
+        {
+            for (int i = 0; i < killerCellOverlays.Length; i++)
+                if (killerCellOverlays[i] != null) killerCellOverlays[i].SetActive(false);
+            return;
+        }
+
+        for (int i = 0; i < killerCellOverlays.Length; i++)
+        {
+            if (killerCellOverlays[i] != null) Destroy(killerCellOverlays[i]);
+            killerCellOverlays[i] = null;
+        }
+
+        var cageAt = new int[81];
+        for (int i = 0; i < cageAt.Length; i++) cageAt[i] = -1;
+        for (int cageIndex = 0; cageIndex < killerCages.Length; cageIndex++)
+        {
+            int[] cageCells = killerCages[cageIndex]?.Cells;
+            if (cageCells == null) continue;
+            foreach (int cellIndex in cageCells)
+                if (cellIndex >= 0 && cellIndex < 81) cageAt[cellIndex] = cageIndex;
+        }
+
+        for (int cageIndex = 0; cageIndex < killerCages.Length; cageIndex++)
+        {
+            KillerCage cage = killerCages[cageIndex];
+            if (cage == null || cage.Cells == null || cage.Cells.Length == 0) continue;
+            int labelCell = 81;
+            foreach (int cellIndex in cage.Cells)
+                if (cellIndex >= 0 && cellIndex < labelCell) labelCell = cellIndex;
+
+            foreach (int cellIndex in cage.Cells)
+            {
+                if (cellIndex < 0 || cellIndex >= 81 || cells[cellIndex / 9, cellIndex % 9] == null) continue;
+                bool top = cellIndex < 9 || cageAt[cellIndex - 9] != cageIndex;
+                bool right = cellIndex % 9 == 8 || cageAt[cellIndex + 1] != cageIndex;
+                bool bottom = cellIndex >= 72 || cageAt[cellIndex + 9] != cageIndex;
+                bool left = cellIndex % 9 == 0 || cageAt[cellIndex - 1] != cageIndex;
+                killerCellOverlays[cellIndex] = CreateKillerCellOverlay(
+                    cells[cellIndex / 9, cellIndex % 9], cage.TargetSum,
+                    cellIndex == labelCell, top, right, bottom, left);
+            }
+        }
+    }
+
+    private static GameObject CreateKillerCellOverlay(
+        SudokuCell cell, int targetSum, bool showTarget,
+        bool top, bool right, bool bottom, bool left)
+    {
+        var overlay = new GameObject("Killer Cage Overlay", typeof(RectTransform));
+        RectTransform root = overlay.GetComponent<RectTransform>();
+        root.SetParent(cell.transform, false);
+        root.anchorMin = Vector2.zero;
+        root.anchorMax = Vector2.one;
+        root.offsetMin = Vector2.zero;
+        root.offsetMax = Vector2.zero;
+        root.SetAsLastSibling();
+
+        RectTransform cellRect = cell.GetComponent<RectTransform>();
+        float edge = Mathf.Clamp(cellRect.rect.width * 0.065f, 1.25f, 2.5f);
+        Color edgeColor = new Color32(255, 190, 65, 235);
+        if (top) AddCageEdge(root, "Top", edgeColor, new Vector2(0, 1), new Vector2(1, 1), new Vector2(0, edge), new Vector2(0, -edge / 2f));
+        if (right) AddCageEdge(root, "Right", edgeColor, new Vector2(1, 0), new Vector2(1, 1), new Vector2(edge, 0), new Vector2(-edge / 2f, 0));
+        if (bottom) AddCageEdge(root, "Bottom", edgeColor, new Vector2(0, 0), new Vector2(1, 0), new Vector2(0, edge), new Vector2(0, edge / 2f));
+        if (left) AddCageEdge(root, "Left", edgeColor, new Vector2(0, 0), new Vector2(0, 1), new Vector2(edge, 0), new Vector2(edge / 2f, 0));
+
+        if (showTarget)
+        {
+            var labelObject = new GameObject("Cage Sum", typeof(RectTransform), typeof(TextMeshProUGUI));
+            RectTransform labelRect = labelObject.GetComponent<RectTransform>();
+            labelRect.SetParent(root, false);
+            labelRect.anchorMin = new Vector2(0, 1);
+            labelRect.anchorMax = new Vector2(0, 1);
+            labelRect.pivot = new Vector2(0, 1);
+            labelRect.anchoredPosition = new Vector2(2f, -1f);
+            labelRect.sizeDelta = new Vector2(cellRect.rect.width * 0.42f, cellRect.rect.height * 0.36f);
+            TextMeshProUGUI label = labelObject.GetComponent<TextMeshProUGUI>();
+            label.text = targetSum.ToString();
+            label.font = cell.NumberFont != null ? cell.NumberFont : TMP_Settings.defaultFontAsset;
+            label.fontSize = Mathf.Clamp(cellRect.rect.width * 0.23f, 6f, 12f);
+            label.color = new Color32(255, 225, 143, 255);
+            label.alignment = TextAlignmentOptions.TopLeft;
+            label.enableAutoSizing = true;
+            label.fontSizeMin = 5f;
+            label.fontSizeMax = label.fontSize;
+            label.raycastTarget = false;
+            label.outlineWidth = 0.12f;
+            label.outlineColor = new Color32(12, 20, 42, 255);
+        }
+        return overlay;
+    }
+
+    private static void AddCageEdge(
+        RectTransform parent, string name, Color color,
+        Vector2 anchorMin, Vector2 anchorMax, Vector2 sizeDelta, Vector2 anchoredPosition)
+    {
+        var edgeObject = new GameObject(name, typeof(RectTransform), typeof(Image));
+        RectTransform edgeRect = edgeObject.GetComponent<RectTransform>();
+        edgeRect.SetParent(parent, false);
+        edgeRect.anchorMin = anchorMin;
+        edgeRect.anchorMax = anchorMax;
+        edgeRect.pivot = new Vector2(0.5f, 0.5f);
+        edgeRect.sizeDelta = sizeDelta;
+        edgeRect.anchoredPosition = anchoredPosition;
+        Image image = edgeObject.GetComponent<Image>();
+        image.color = color;
+        image.raycastTarget = false;
     }
 
     // ── Binding Handlers ──────────────────────────────────────────────────────
@@ -300,6 +435,7 @@ public class SudokuGrid : MonoBehaviour
             }
 
         cellsReady = true;
+        RefreshKillerCages();
 
         if (viewModel != null)
         {

@@ -28,6 +28,8 @@ public class BaseViewModel
     public BindableProperty<bool[,]> GivenMask { get; } = new BindableProperty<bool[,]>();
     public BindableProperty<int[,]> PencilCandidateMasks { get; } =
         new BindableProperty<int[,]>();
+    public BindableProperty<KillerCage[]> KillerCages { get; } =
+        new BindableProperty<KillerCage[]>(System.Array.Empty<KillerCage>());
     public BindableProperty<int> SelectedRow { get; } = new BindableProperty<int>(-1);
     public BindableProperty<int> SelectedCol { get; } = new BindableProperty<int>(-1);
     public BindableProperty<int> SelectedDigit { get; } = new BindableProperty<int>(0);
@@ -268,6 +270,9 @@ public class BaseViewModel
     {
         BoardValues.Value = Model.Board;
         GivenMask.Value = Model.GivenMask;
+        KillerCages.Value = Model is KillerSudokuModel killerModel
+            ? killerModel.Cages
+            : System.Array.Empty<KillerCage>();
     }
 
     protected void PublishPencilCandidates()

@@ -37339,7 +37339,7 @@ MonoBehaviour:
   m_OnClick:
     m_PersistentCalls:
       m_Calls:
-      - m_Target: {fileID: 1023807775}
+      - m_Target: {fileID: 8600000000000000085}
         m_TargetAssemblyTypeName: HUD, Assembly-CSharp
         m_MethodName: PauseButtonPressed
         m_Mode: 1

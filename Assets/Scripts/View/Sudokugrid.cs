@@ -15,6 +15,7 @@ public class SudokuGrid : MonoBehaviour
     private SudokuCell[,]  cells      = new SudokuCell[9, 9];
     private bool           cellsReady = false;
     private BaseViewModel viewModel;
+    private bool diagonalVariantActive;
 
 
     // ── Unity Lifecycle ───────────────────────────────────────────────────────
@@ -61,6 +62,14 @@ public class SudokuGrid : MonoBehaviour
             OnPencilModeChanged(viewModel.IsPencilMode.Value);
             OnCandidateHighlightChanged(viewModel.HighlightedCandidateNumber.Value);
         }
+    }
+
+    public void SetDiagonalVariantActive(bool active)
+    {
+        if (diagonalVariantActive == active) return;
+
+        diagonalVariantActive = active;
+        RefreshHighlights();
     }
 
 
@@ -195,11 +204,13 @@ public class SudokuGrid : MonoBehaviour
                 bool isSelected = hasSelection && row == selectedRow && col == selectedCol;
                 bool isRelated = hasSelection && !isSelected
                     && (row == selectedRow || col == selectedCol);
+                bool isDiagonal = diagonalVariantActive && (row == col || row + col == 8);
 
                 SudokuCell cell = cells[row, col];
                 cell.SetHighlight(false);
                 cell.SetRelatedHighlight(false);
                 cell.SetDigitMatchHighlight(false);
+                cell.SetDiagonalHighlight(isDiagonal);
                 cell.SetDimmed(isRelated);
                 cell.SetPickerHighlight(isSelected);
             }

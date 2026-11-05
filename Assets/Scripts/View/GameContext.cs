@@ -68,12 +68,6 @@ public class GameContext : MonoBehaviour
             return false;
         }
 
-        if (_dailyChallengeActive || _newGameActive)
-        {
-            Debug.LogWarning("Cannot change puzzle variants while a game is active.", this);
-            return false;
-        }
-
         if (User.Instance.VariantFactory != null &&
             User.Instance.VariantFactory.Variant == variant)
             return true;
@@ -85,6 +79,12 @@ public class GameContext : MonoBehaviour
         _journeyStateView?.SetGameplayVisible(false);
         _newGameStateView?.SetGameplayVisible(false);
         _dailyChallengeStateView?.SetGameplayVisible(false);
+
+        // Persist through the currently selected variant before replacing its
+        // view models and save system with the destination variant's services.
+        User.Instance.SaveNow();
+        _newGameActive = false;
+        _dailyChallengeActive = false;
 
         IGameVariantFactory factory = User.Instance.SelectVariant(variant);
         if (factory == null) return false;

@@ -192,7 +192,7 @@ public class ClassicSudokuModel : ISudokuModel
 
         return baseline;
     }
-    public void LoadCurrentLevelPuzzle(int maxAttempts = 100)
+    public void LoadCurrentLevelPuzzle(int maxAttempts = 100000)
     {
         this.ret = _generator.Generate(_puzzleSeed, _currentDifficulty, maxAttempts);
         _currentDifficulty = ret.Difficulty;

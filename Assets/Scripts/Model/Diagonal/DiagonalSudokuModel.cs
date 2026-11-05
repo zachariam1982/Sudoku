@@ -52,7 +52,7 @@ public sealed class DiagonalSudokuModel : ISudokuModel
         _currentDifficulty = ClassicSudokuModel.CalculateNextDifficulty(records, _currentDifficulty);
     }
 
-    public void LoadCurrentLevelPuzzle(int maxAttempts = 100)
+    public void LoadCurrentLevelPuzzle(int maxAttempts = 100000)
     {
         _result = _generator.Generate(_puzzleSeed, _currentDifficulty, maxAttempts);
         _currentDifficulty = _result.Difficulty;

@@ -16,7 +16,7 @@ public interface ISudokuModel
     void increaseDifficulty();
     void decreaseDifficulty(List<GameRecord> records = null);
     void UpdateDifficultyFromHistory(List<GameRecord> records = null);
-    void LoadCurrentLevelPuzzle(int maxAttempts = 100);
+    void LoadCurrentLevelPuzzle(int maxAttempts = 100000);
     int[] GetOriginalPuzzleFlat();
     int[] GetSolutionFlat();
     bool TryLoadSavedPuzzle(int[] puzzleFlat, int[] solutionFlat);

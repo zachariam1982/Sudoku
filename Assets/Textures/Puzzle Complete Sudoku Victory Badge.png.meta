@@ -1,0 +1,879 @@
+fileFormatVersion: 2
+guid: d7d26e284b9ef1242af186ac2012fd31
+TextureImporter:
+  internalIDToNameTable:
+  - first:
+      213: -3032336914732355161
+    second: Puzzle Complete Sudoku Victory Badge_0
+  - first:
+      213: 5881742980830841200
+    second: Puzzle Complete Sudoku Victory Badge_1
+  - first:
+      213: -8649568517964796056
+    second: Puzzle Complete Sudoku Victory Badge_2
+  - first:
+      213: 2357017142483710861
+    second: Puzzle Complete Sudoku Victory Badge_3
+  - first:
+      213: -686503741496596358
+    second: Puzzle Complete Sudoku Victory Badge_4
+  - first:
+      213: -997072610513272540
+    second: Puzzle Complete Sudoku Victory Badge_5
+  - first:
+      213: 1007893245086145638
+    second: Puzzle Complete Sudoku Victory Badge_6
+  - first:
+      213: -4269255378834418866
+    second: Puzzle Complete Sudoku Victory Badge_7
+  - first:
+      213: 7472355208823429406
+    second: Puzzle Complete Sudoku Victory Badge_8
+  - first:
+      213: 425471948607442697
+    second: Puzzle Complete Sudoku Victory Badge_9
+  - first:
+      213: 5981988005712363825
+    second: Puzzle Complete Sudoku Victory Badge_10
+  - first:
+      213: 7386980079502219353
+    second: Puzzle Complete Sudoku Victory Badge_11
+  - first:
+      213: 3227937940598864158
+    second: Puzzle Complete Sudoku Victory Badge_12
+  - first:
+      213: 7266263322602855237
+    second: Puzzle Complete Sudoku Victory Badge_13
+  - first:
+      213: -6061250467487831935
+    second: Puzzle Complete Sudoku Victory Badge_14
+  - first:
+      213: -8416485652645481920
+    second: Puzzle Complete Sudoku Victory Badge_15
+  - first:
+      213: -2087224541744960562
+    second: Puzzle Complete Sudoku Victory Badge_16
+  - first:
+      213: -2399278535749107722
+    second: Puzzle Complete Sudoku Victory Badge_17
+  - first:
+      213: -1046299362949493946
+    second: Puzzle Complete Sudoku Victory Badge_18
+  - first:
+      213: 3674393354903776212
+    second: Puzzle Complete Sudoku Victory Badge_19
+  - first:
+      213: -5040063680167061735
+    second: Puzzle Complete Sudoku Victory Badge_20
+  - first:
+      213: -1663771417054167081
+    second: Puzzle Complete Sudoku Victory Badge_21
+  - first:
+      213: -2771650644706749403
+    second: Puzzle Complete Sudoku Victory Badge_22
+  - first:
+      213: -8641847052127164116
+    second: Puzzle Complete Sudoku Victory Badge_23
+  - first:
+      213: 2354947941508311367
+    second: Puzzle Complete Sudoku Victory Badge_24
+  - first:
+      213: -2414870134876302827
+    second: Puzzle Complete Sudoku Victory Badge_25
+  - first:
+      213: -5087271243862214255
+    second: Puzzle Complete Sudoku Victory Badge_26
+  - first:
+      213: -1052451517385796531
+    second: Puzzle Complete Sudoku Victory Badge_27
+  - first:
+      213: -6588518513273003165
+    second: Puzzle Complete Sudoku Victory Badge_28
+  - first:
+      213: 2628412194495660890
+    second: Puzzle Complete Sudoku Victory Badge_29
+  - first:
+      213: -4141311240636284492
+    second: Puzzle Complete Sudoku Victory Badge_30
+  - first:
+      213: 2908612932211755630
+    second: Puzzle Complete Sudoku Victory Badge_31
+  - first:
+      213: -2459891338162091779
+    second: Puzzle Complete Sudoku Victory Badge_32
+  - first:
+      213: -1355567904397823842
+    second: Puzzle Complete Sudoku Victory Badge_33
+  - first:
+      213: 2293409961784551998
+    second: Puzzle Complete Sudoku Victory Badge_34
+  - first:
+      213: 3614774878978475790
+    second: Puzzle Complete Sudoku Victory Badge_35
+  - first:
+      213: 160765952180611402
+    second: Puzzle Complete Sudoku Victory Badge_36
+  - first:
+      213: 5238660869318867365
+    second: Puzzle Complete Sudoku Victory Badge_37
+  - first:
+      213: 1830604434514030020
+    second: Puzzle Complete Sudoku Victory Badge_38
+  - first:
+      213: 5887580428595964791
+    second: Puzzle Complete Sudoku Victory Badge_39
+  - first:
+      213: -9031609978375608401
+    second: Puzzle Complete Sudoku Victory Badge_40
+  - first:
+      213: -8581995132664706875
+    second: Puzzle Complete Sudoku Victory Badge_41
+  - first:
+      213: 3940166118664915350
+    second: Puzzle Complete Sudoku Victory Badge_42
+  - first:
+      213: -6385644537376380100
+    second: Puzzle Complete Sudoku Victory Badge_43
+  - first:
+      213: -2175120891764811618
+    second: Puzzle Complete Sudoku Victory Badge_44
+  - first:
+      213: -4123983232345903608
+    second: Puzzle Complete Sudoku Victory Badge_45
+  - first:
+      213: 1963173966372637159
+    second: Puzzle Complete Sudoku Victory Badge_46
+  - first:
+      213: 1513910446135863096
+    second: Puzzle Complete Sudoku Victory Badge_47
+  - first:
+      213: 6742404303641814613
+    second: Puzzle Complete Sudoku Victory Badge_48
+  - first:
+      213: -3999659658029663571
+    second: Puzzle Complete Sudoku Victory Badge_49
+  - first:
+      213: 3287042732944909628
+    second: Puzzle Complete Sudoku Victory Badge_50
+  - first:
+      213: -6039366233341093723
+    second: Puzzle Complete Sudoku Victory Badge_51
+  - first:
+      213: -661200424600629298
+    second: Puzzle Complete Sudoku Victory Badge_52
+  - first:
+      213: 2231907465310824997
+    second: Puzzle Complete Sudoku Victory Badge_53
+  - first:
+      213: 6493673374588150982
+    second: Puzzle Complete Sudoku Victory Badge_54
+  - first:
+      213: 8029906712110026250
+    second: Puzzle Complete Sudoku Victory Badge_55
+  - first:
+      213: -3883567172268000375
+    second: Puzzle Complete Sudoku Victory Badge_56
+  - first:
+      213: 4999949371167139054
+    second: Puzzle Complete Sudoku Victory Badge_57
+  - first:
+      213: -4605981861197519108
+    second: Puzzle Complete Sudoku Victory Badge_58
+  - first:
+      213: 8594554189879637806
+    second: Puzzle Complete Sudoku Victory Badge_59
+  - first:
+      213: -7629287160548375958
+    second: Puzzle Complete Sudoku Victory Badge_60
+  - first:
+      213: -6160063708977950221
+    second: Puzzle Complete Sudoku Victory Badge_61
+  - first:
+      213: 3164027267888761105
+    second: Puzzle Complete Sudoku Victory Badge_62
+  - first:
+      213: 9212310071771070243
+    second: Puzzle Complete Sudoku Victory Badge_63
+  - first:
+      213: -288840425923460575
+    second: Puzzle Complete Sudoku Victory Badge_64
+  - first:
+      213: -396827174954980820
+    second: Puzzle Complete Sudoku Victory Badge_65
+  - first:
+      213: -8758774050532727993
+    second: Puzzle Complete Sudoku Victory Badge_66
+  - first:
+      213: -1644620963756572360
+    second: Puzzle Complete Sudoku Victory Badge_67
+  - first:
+      213: 4563345745431999583
+    second: Puzzle Complete Sudoku Victory Badge_68
+  - first:
+      213: 2503052287756939431
+    second: Puzzle Complete Sudoku Victory Badge_69
+  - first:
+      213: 6900170408812082539
+    second: Puzzle Complete Sudoku Victory Badge_70
+  - first:
+      213: 189750714648581079
+    second: Puzzle Complete Sudoku Victory Badge_71
+  - first:
+      213: -6343749696389118356
+    second: Puzzle Complete Sudoku Victory Badge_72
+  - first:
+      213: 6512882973100531610
+    second: Puzzle Complete Sudoku Victory Badge_73
+  - first:
+      213: -3786634839403002307
+    second: Puzzle Complete Sudoku Victory Badge_74
+  - first:
+      213: -7615794251183761690
+    second: Puzzle Complete Sudoku Victory Badge_75
+  - first:
+      213: -15451995939480297
+    second: Puzzle Complete Sudoku Victory Badge_76
+  - first:
+      213: -6354722613277763168
+    second: Puzzle Complete Sudoku Victory Badge_77
+  - first:
+      213: 2378757103051644159
+    second: Puzzle Complete Sudoku Victory Badge_78
+  - first:
+      213: 9093834332271966127
+    second: Puzzle Complete Sudoku Victory Badge_79
+  - first:
+      213: -8648497419179320322
+    second: Puzzle Complete Sudoku Victory Badge_80
+  - first:
+      213: -4541301860451218773
+    second: Puzzle Complete Sudoku Victory Badge_81
+  - first:
+      213: -4929296413337199569
+    second: Puzzle Complete Sudoku Victory Badge_82
+  - first:
+      213: 2901203221650304150
+    second: Puzzle Complete Sudoku Victory Badge_83
+  - first:
+      213: -1852179312679806589
+    second: Puzzle Complete Sudoku Victory Badge_84
+  - first:
+      213: -8049197927808900777
+    second: Puzzle Complete Sudoku Victory Badge_85
+  - first:
+      213: 3773813000319924164
+    second: Puzzle Complete Sudoku Victory Badge_86
+  - first:
+      213: -3564186753943452208
+    second: Puzzle Complete Sudoku Victory Badge_87
+  - first:
+      213: 2140746715581224047
+    second: Puzzle Complete Sudoku Victory Badge_88
+  - first:
+      213: -3254940196386105166
+    second: Puzzle Complete Sudoku Victory Badge_89
+  - first:
+      213: 63833750081749678
+    second: Puzzle Complete Sudoku Victory Badge_90
+  - first:
+      213: -3960304311331659305
+    second: Puzzle Complete Sudoku Victory Badge_91
+  - first:
+      213: 472573850468225274
+    second: Puzzle Complete Sudoku Victory Badge_92
+  - first:
+      213: 9058890194108053300
+    second: Puzzle Complete Sudoku Victory Badge_93
+  - first:
+      213: -7185848062666636823
+    second: Puzzle Complete Sudoku Victory Badge_94
+  - first:
+      213: -448672456628957244
+    second: Puzzle Complete Sudoku Victory Badge_95
+  - first:
+      213: -2917717294898431027
+    second: Puzzle Complete Sudoku Victory Badge_96
+  - first:
+      213: 5144972926767069082
+    second: Puzzle Complete Sudoku Victory Badge_97
+  - first:
+      213: -1086076688006983449
+    second: Puzzle Complete Sudoku Victory Badge_98
+  - first:
+      213: -6470198699911271620
+    second: Puzzle Complete Sudoku Victory Badge_99
+  - first:
+      213: -3526547197349956528
+    second: Puzzle Complete Sudoku Victory Badge_100
+  - first:
+      213: -6303942211782309410
+    second: Puzzle Complete Sudoku Victory Badge_101
+  - first:
+      213: -5396422488269334711
+    second: Puzzle Complete Sudoku Victory Badge_102
+  - first:
+      213: -394666685990277486
+    second: Puzzle Complete Sudoku Victory Badge_103
+  - first:
+      213: -3512110354813930040
+    second: Puzzle Complete Sudoku Victory Badge_104
+  - first:
+      213: -6455200617369755567
+    second: Puzzle Complete Sudoku Victory Badge_105
+  - first:
+      213: -8661259772425463531
+    second: Puzzle Complete Sudoku Victory Badge_106
+  - first:
+      213: 7562743308442301558
+    second: Puzzle Complete Sudoku Victory Badge_107
+  - first:
+      213: -1150164180126917565
+    second: Puzzle Complete Sudoku Victory Badge_108
+  - first:
+      213: -6169447882530557000
+    second: Puzzle Complete Sudoku Victory Badge_109
+  - first:
+      213: 1842149252515198033
+    second: Puzzle Complete Sudoku Victory Badge_110
+  - first:
+      213: -7943821739370903859
+    second: Puzzle Complete Sudoku Victory Badge_111
+  - first:
+      213: 6640988582182686520
+    second: Puzzle Complete Sudoku Victory Badge_112
+  - first:
+      213: -3481072808062244218
+    second: Puzzle Complete Sudoku Victory Badge_113
+  - first:
+      213: 4720847720050058934
+    second: Puzzle Complete Sudoku Victory Badge_114
+  - first:
+      213: 282054443360162844
+    second: Puzzle Complete Sudoku Victory Badge_115
+  - first:
+      213: -143091726682294615
+    second: Puzzle Complete Sudoku Victory Badge_116
+  - first:
+      213: 7079897313927657117
+    second: Puzzle Complete Sudoku Victory Badge_117
+  - first:
+      213: -2781757230361138300
+    second: Puzzle Complete Sudoku Victory Badge_118
+  - first:
+      213: 642258302468625740
+    second: Puzzle Complete Sudoku Victory Badge_119
+  - first:
+      213: -7776942103642649280
+    second: Puzzle Complete Sudoku Victory Badge_120
+  - first:
+      213: -5742909721363207490
+    second: Puzzle Complete Sudoku Victory Badge_121
+  - first:
+      213: -5176528102247187681
+    second: Puzzle Complete Sudoku Victory Badge_122
+  - first:
+      213: -4156115911756704680
+    second: Puzzle Complete Sudoku Victory Badge_123
+  - first:
+      213: 760223236814578908
+    second: Puzzle Complete Sudoku Victory Badge_124
+  - first:
+      213: -7082015522114412595
+    second: Puzzle Complete Sudoku Victory Badge_125
+  - first:
+      213: 7012123199401162252
+    second: Puzzle Complete Sudoku Victory Badge_126
+  - first:
+      213: 487071356369756520
+    second: Puzzle Complete Sudoku Victory Badge_127
+  - first:
+      213: -7610315578175049068
+    second: Puzzle Complete Sudoku Victory Badge_128
+  - first:
+      213: -6225549067535405521
+    second: Puzzle Complete Sudoku Victory Badge_129
+  - first:
+      213: 674763677837096316
+    second: Puzzle Complete Sudoku Victory Badge_130
+  - first:
+      213: 6324100552834214752
+    second: Puzzle Complete Sudoku Victory Badge_131
+  - first:
+      213: 267712360396320854
+    second: Puzzle Complete Sudoku Victory Badge_132
+  - first:
+      213: 3629261541215526618
+    second: Puzzle Complete Sudoku Victory Badge_133
+  - first:
+      213: -187932153575711723
+    second: Puzzle Complete Sudoku Victory Badge_134
+  - first:
+      213: 4578287007669322587
+    second: Puzzle Complete Sudoku Victory Badge_135
+  - first:
+      213: -5269467224615605264
+    second: Puzzle Complete Sudoku Victory Badge_136
+  - first:
+      213: -879211901809097428
+    second: Puzzle Complete Sudoku Victory Badge_137
+  - first:
+      213: -2380631953308698859
+    second: Puzzle Complete Sudoku Victory Badge_138
+  - first:
+      213: -5610012420304578428
+    second: Puzzle Complete Sudoku Victory Badge_139
+  - first:
+      213: 5065422927687218102
+    second: Puzzle Complete Sudoku Victory Badge_140
+  - first:
+      213: 3110097143770027887
+    second: Puzzle Complete Sudoku Victory Badge_141
+  - first:
+      213: 3027769861883445760
+    second: Puzzle Complete Sudoku Victory Badge_142
+  - first:
+      213: 9187731228642638823
+    second: Puzzle Complete Sudoku Victory Badge_143
+  - first:
+      213: -6009513277745683781
+    second: Puzzle Complete Sudoku Victory Badge_144
+  - first:
+      213: -8878736382990790208
+    second: Puzzle Complete Sudoku Victory Badge_145
+  - first:
+      213: -6212482764966008364
+    second: Puzzle Complete Sudoku Victory Badge_146
+  - first:
+      213: -1007144297822100568
+    second: Puzzle Complete Sudoku Victory Badge_147
+  - first:
+      213: 4810114537854397425
+    second: Puzzle Complete Sudoku Victory Badge_148
+  - first:
+      213: 6297019871166788370
+    second: Puzzle Complete Sudoku Victory Badge_149
+  - first:
+      213: 3800012911063843436
+    second: Puzzle Complete Sudoku Victory Badge_150
+  - first:
+      213: -4329710526592790799
+    second: Puzzle Complete Sudoku Victory Badge_151
+  - first:
+      213: 4649927138116680043
+    second: Puzzle Complete Sudoku Victory Badge_152
+  - first:
+      213: -8385519718824442901
+    second: Puzzle Complete Sudoku Victory Badge_153
+  - first:
+      213: 7369808122534340080
+    second: Puzzle Complete Sudoku Victory Badge_154
+  - first:
+      213: 1832455534116282241
+    second: Puzzle Complete Sudoku Victory Badge_155
+  - first:
+      213: -9084990511128118643
+    second: Puzzle Complete Sudoku Victory Badge_156
+  - first:
+      213: 4371473353843429152
+    second: Puzzle Complete Sudoku Victory Badge_157
+  - first:
+      213: -6547157394676130251
+    second: Puzzle Complete Sudoku Victory Badge_158
+  - first:
+      213: -2968342350180656799
+    second: Puzzle Complete Sudoku Victory Badge_159
+  - first:
+      213: -2051252886566553656
+    second: Puzzle Complete Sudoku Victory Badge_160
+  - first:
+      213: 289451869482405457
+    second: Puzzle Complete Sudoku Victory Badge_161
+  - first:
+      213: -1903270431838740773
+    second: Puzzle Complete Sudoku Victory Badge_162
+  - first:
+      213: -8862289331768755616
+    second: Puzzle Complete Sudoku Victory Badge_163
+  - first:
+      213: -2306531968331065817
+    second: Puzzle Complete Sudoku Victory Badge_164
+  - first:
+      213: 6500811750420587288
+    second: Puzzle Complete Sudoku Victory Badge_165
+  - first:
+      213: 8811843267451394893
+    second: Puzzle Complete Sudoku Victory Badge_166
+  - first:
+      213: -8508694190082759754
+    second: Puzzle Complete Sudoku Victory Badge_167
+  - first:
+      213: -4651754379093831676
+    second: Puzzle Complete Sudoku Victory Badge_168
+  - first:
+      213: -4296858344281053376
+    second: Puzzle Complete Sudoku Victory Badge_169
+  - first:
+      213: -164805412611278550
+    second: Puzzle Complete Sudoku Victory Badge_170
+  - first:
+      213: -8985190085808289446
+    second: Puzzle Complete Sudoku Victory Badge_171
+  - first:
+      213: -667417396537196319
+    second: Puzzle Complete Sudoku Victory Badge_172
+  externalObjects: {}
+  serializedVersion: 13
+  mipmaps:
+    mipMapMode: 0
+    enableMipMap: 0
+    sRGBTexture: 1
+    linearTexture: 0
+    fadeOut: 0
+    borderMipMap: 0
+    mipMapsPreserveCoverage: 0
+    alphaTestReferenceValue: 0.5
+    mipMapFadeDistanceStart: 1
+    mipMapFadeDistanceEnd: 3
+  bumpmap:
+    convertToNormalMap: 0
+    externalNormalMap: 0
+    heightScale: 0.25
+    normalMapFilter: 0
+    flipGreenChannel: 0
+  isReadable: 0
+  streamingMipmaps: 0
+  streamingMipmapsPriority: 0
+  vTOnly: 0
+  ignoreMipmapLimit: 0
+  grayScaleToAlpha: 0
+  generateCubemap: 6
+  cubemapConvolution: 0
+  seamlessCubemap: 0
+  textureFormat: 1
+  maxTextureSize: 2048
+  textureSettings:
+    serializedVersion: 2
+    filterMode: 1
+    aniso: 1
+    mipBias: 0
+    wrapU: 1
+    wrapV: 1
+    wrapW: 1
+  nPOTScale: 0
+  lightmap: 0
+  compressionQuality: 50
+  spriteMode: 2
+  spriteExtrude: 1
+  spriteMeshType: 1
+  alignment: 0
+  spritePivot: {x: 0.5, y: 0.5}
+  spritePixelsToUnits: 100
+  spriteBorder: {x: 0, y: 0, z: 0, w: 0}
+  spriteGenerateFallbackPhysicsShape: 1
+  alphaUsage: 1
+  alphaIsTransparency: 1
+  spriteTessellationDetail: -1
+  textureType: 8
+  textureShape: 1
+  singleChannelComponent: 0
+  flipbookRows: 1
+  flipbookColumns: 1
+  maxTextureSizeSet: 0
+  compressionQualitySet: 0
+  textureFormatSet: 0
+  ignorePngGamma: 0
+  applyGammaDecoding: 0
+  swizzle: 50462976
+  cookieLightType: 0
+  platformSettings:
+  - serializedVersion: 4
+    buildTarget: DefaultTexturePlatform
+    maxTextureSize: 2048
+    resizeAlgorithm: 0
+    textureFormat: -1
+    textureCompression: 1
+    compressionQuality: 50
+    crunchedCompression: 0
+    allowsAlphaSplitting: 0
+    overridden: 0
+    ignorePlatformSupport: 0
+    androidETC2FallbackOverride: 0
+    forceMaximumCompressionQuality_BC6H_BC7: 0
+  - serializedVersion: 4
+    buildTarget: Standalone
+    maxTextureSize: 2048
+    resizeAlgorithm: 0
+    textureFormat: -1
+    textureCompression: 1
+    compressionQuality: 50
+    crunchedCompression: 0
+    allowsAlphaSplitting: 0
+    overridden: 0
+    ignorePlatformSupport: 0
+    androidETC2FallbackOverride: 0
+    forceMaximumCompressionQuality_BC6H_BC7: 0
+  - serializedVersion: 4
+    buildTarget: Android
+    maxTextureSize: 2048
+    resizeAlgorithm: 0
+    textureFormat: -1
+    textureCompression: 1
+    compressionQuality: 50
+    crunchedCompression: 0
+    allowsAlphaSplitting: 0
+    overridden: 0
+    ignorePlatformSupport: 0
+    androidETC2FallbackOverride: 0
+    forceMaximumCompressionQuality_BC6H_BC7: 0
+  - serializedVersion: 4
+    buildTarget: WebGL
+    maxTextureSize: 2048
+    resizeAlgorithm: 0
+    textureFormat: -1
+    textureCompression: 1
+    compressionQuality: 50
+    crunchedCompression: 0
+    allowsAlphaSplitting: 0
+    overridden: 0
+    ignorePlatformSupport: 0
+    androidETC2FallbackOverride: 0
+    forceMaximumCompressionQuality_BC6H_BC7: 0
+  spriteSheet:
+    serializedVersion: 2
+    sprites:
+    - serializedVersion: 2
+      name: Puzzle Complete Sudoku Victory Badge_0
+      rect:
+        serializedVersion: 2
+        x: 113
+        y: 984
+        width: 906
+        height: 324
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: e25e1153a1a42db44ae56c8e39b62874
+      internalID: -3032336914732355161
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Puzzle Complete Sudoku Victory Badge_1
+      rect:
+        serializedVersion: 2
+        x: 168
+        y: 158
+        width: 789
+        height: 698
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: 26a78d37c09475844914dcc8eb6215e0
+      internalID: 5881742980830841200
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    outline: []
+    customData: 
+    physicsShape: []
+    bones: []
+    spriteID: c6d1bd0c4fbbf5b488309b3a6ca3eaea
+    internalID: 0
+    vertices: []
+    indices: 
+    edges: []
+    weights: []
+    secondaryTextures: []
+    spriteCustomMetadata:
+      entries: []
+    nameFileIdTable:
+      Puzzle Complete Sudoku Victory Badge_0: -3032336914732355161
+      Puzzle Complete Sudoku Victory Badge_1: 5881742980830841200
+      Puzzle Complete Sudoku Victory Badge_10: 5981988005712363825
+      Puzzle Complete Sudoku Victory Badge_100: -3526547197349956528
+      Puzzle Complete Sudoku Victory Badge_101: -6303942211782309410
+      Puzzle Complete Sudoku Victory Badge_102: -5396422488269334711
+      Puzzle Complete Sudoku Victory Badge_103: -394666685990277486
+      Puzzle Complete Sudoku Victory Badge_104: -3512110354813930040
+      Puzzle Complete Sudoku Victory Badge_105: -6455200617369755567
+      Puzzle Complete Sudoku Victory Badge_106: -8661259772425463531
+      Puzzle Complete Sudoku Victory Badge_107: 7562743308442301558
+      Puzzle Complete Sudoku Victory Badge_108: -1150164180126917565
+      Puzzle Complete Sudoku Victory Badge_109: -6169447882530557000
+      Puzzle Complete Sudoku Victory Badge_11: 7386980079502219353
+      Puzzle Complete Sudoku Victory Badge_110: 1842149252515198033
+      Puzzle Complete Sudoku Victory Badge_111: -7943821739370903859
+      Puzzle Complete Sudoku Victory Badge_112: 6640988582182686520
+      Puzzle Complete Sudoku Victory Badge_113: -3481072808062244218
+      Puzzle Complete Sudoku Victory Badge_114: 4720847720050058934
+      Puzzle Complete Sudoku Victory Badge_115: 282054443360162844
+      Puzzle Complete Sudoku Victory Badge_116: -143091726682294615
+      Puzzle Complete Sudoku Victory Badge_117: 7079897313927657117
+      Puzzle Complete Sudoku Victory Badge_118: -2781757230361138300
+      Puzzle Complete Sudoku Victory Badge_119: 642258302468625740
+      Puzzle Complete Sudoku Victory Badge_12: 3227937940598864158
+      Puzzle Complete Sudoku Victory Badge_120: -7776942103642649280
+      Puzzle Complete Sudoku Victory Badge_121: -5742909721363207490
+      Puzzle Complete Sudoku Victory Badge_122: -5176528102247187681
+      Puzzle Complete Sudoku Victory Badge_123: -4156115911756704680
+      Puzzle Complete Sudoku Victory Badge_124: 760223236814578908
+      Puzzle Complete Sudoku Victory Badge_125: -7082015522114412595
+      Puzzle Complete Sudoku Victory Badge_126: 7012123199401162252
+      Puzzle Complete Sudoku Victory Badge_127: 487071356369756520
+      Puzzle Complete Sudoku Victory Badge_128: -7610315578175049068
+      Puzzle Complete Sudoku Victory Badge_129: -6225549067535405521
+      Puzzle Complete Sudoku Victory Badge_13: 7266263322602855237
+      Puzzle Complete Sudoku Victory Badge_130: 674763677837096316
+      Puzzle Complete Sudoku Victory Badge_131: 6324100552834214752
+      Puzzle Complete Sudoku Victory Badge_132: 267712360396320854
+      Puzzle Complete Sudoku Victory Badge_133: 3629261541215526618
+      Puzzle Complete Sudoku Victory Badge_134: -187932153575711723
+      Puzzle Complete Sudoku Victory Badge_135: 4578287007669322587
+      Puzzle Complete Sudoku Victory Badge_136: -5269467224615605264
+      Puzzle Complete Sudoku Victory Badge_137: -879211901809097428
+      Puzzle Complete Sudoku Victory Badge_138: -2380631953308698859
+      Puzzle Complete Sudoku Victory Badge_139: -5610012420304578428
+      Puzzle Complete Sudoku Victory Badge_14: -6061250467487831935
+      Puzzle Complete Sudoku Victory Badge_140: 5065422927687218102
+      Puzzle Complete Sudoku Victory Badge_141: 3110097143770027887
+      Puzzle Complete Sudoku Victory Badge_142: 3027769861883445760
+      Puzzle Complete Sudoku Victory Badge_143: 9187731228642638823
+      Puzzle Complete Sudoku Victory Badge_144: -6009513277745683781
+      Puzzle Complete Sudoku Victory Badge_145: -8878736382990790208
+      Puzzle Complete Sudoku Victory Badge_146: -6212482764966008364
+      Puzzle Complete Sudoku Victory Badge_147: -1007144297822100568
+      Puzzle Complete Sudoku Victory Badge_148: 4810114537854397425
+      Puzzle Complete Sudoku Victory Badge_149: 6297019871166788370
+      Puzzle Complete Sudoku Victory Badge_15: -8416485652645481920
+      Puzzle Complete Sudoku Victory Badge_150: 3800012911063843436
+      Puzzle Complete Sudoku Victory Badge_151: -4329710526592790799
+      Puzzle Complete Sudoku Victory Badge_152: 4649927138116680043
+      Puzzle Complete Sudoku Victory Badge_153: -8385519718824442901
+      Puzzle Complete Sudoku Victory Badge_154: 7369808122534340080
+      Puzzle Complete Sudoku Victory Badge_155: 1832455534116282241
+      Puzzle Complete Sudoku Victory Badge_156: -9084990511128118643
+      Puzzle Complete Sudoku Victory Badge_157: 4371473353843429152
+      Puzzle Complete Sudoku Victory Badge_158: -6547157394676130251
+      Puzzle Complete Sudoku Victory Badge_159: -2968342350180656799
+      Puzzle Complete Sudoku Victory Badge_16: -2087224541744960562
+      Puzzle Complete Sudoku Victory Badge_160: -2051252886566553656
+      Puzzle Complete Sudoku Victory Badge_161: 289451869482405457
+      Puzzle Complete Sudoku Victory Badge_162: -1903270431838740773
+      Puzzle Complete Sudoku Victory Badge_163: -8862289331768755616
+      Puzzle Complete Sudoku Victory Badge_164: -2306531968331065817
+      Puzzle Complete Sudoku Victory Badge_165: 6500811750420587288
+      Puzzle Complete Sudoku Victory Badge_166: 8811843267451394893
+      Puzzle Complete Sudoku Victory Badge_167: -8508694190082759754
+      Puzzle Complete Sudoku Victory Badge_168: -4651754379093831676
+      Puzzle Complete Sudoku Victory Badge_169: -4296858344281053376
+      Puzzle Complete Sudoku Victory Badge_17: -2399278535749107722
+      Puzzle Complete Sudoku Victory Badge_170: -164805412611278550
+      Puzzle Complete Sudoku Victory Badge_171: -8985190085808289446
+      Puzzle Complete Sudoku Victory Badge_172: -667417396537196319
+      Puzzle Complete Sudoku Victory Badge_18: -1046299362949493946
+      Puzzle Complete Sudoku Victory Badge_19: 3674393354903776212
+      Puzzle Complete Sudoku Victory Badge_2: -8649568517964796056
+      Puzzle Complete Sudoku Victory Badge_20: -5040063680167061735
+      Puzzle Complete Sudoku Victory Badge_21: -1663771417054167081
+      Puzzle Complete Sudoku Victory Badge_22: -2771650644706749403
+      Puzzle Complete Sudoku Victory Badge_23: -8641847052127164116
+      Puzzle Complete Sudoku Victory Badge_24: 2354947941508311367
+      Puzzle Complete Sudoku Victory Badge_25: -2414870134876302827
+      Puzzle Complete Sudoku Victory Badge_26: -5087271243862214255
+      Puzzle Complete Sudoku Victory Badge_27: -1052451517385796531
+      Puzzle Complete Sudoku Victory Badge_28: -6588518513273003165
+      Puzzle Complete Sudoku Victory Badge_29: 2628412194495660890
+      Puzzle Complete Sudoku Victory Badge_3: 2357017142483710861
+      Puzzle Complete Sudoku Victory Badge_30: -4141311240636284492
+      Puzzle Complete Sudoku Victory Badge_31: 2908612932211755630
+      Puzzle Complete Sudoku Victory Badge_32: -2459891338162091779
+      Puzzle Complete Sudoku Victory Badge_33: -1355567904397823842
+      Puzzle Complete Sudoku Victory Badge_34: 2293409961784551998
+      Puzzle Complete Sudoku Victory Badge_35: 3614774878978475790
+      Puzzle Complete Sudoku Victory Badge_36: 160765952180611402
+      Puzzle Complete Sudoku Victory Badge_37: 5238660869318867365
+      Puzzle Complete Sudoku Victory Badge_38: 1830604434514030020
+      Puzzle Complete Sudoku Victory Badge_39: 5887580428595964791
+      Puzzle Complete Sudoku Victory Badge_4: -686503741496596358
+      Puzzle Complete Sudoku Victory Badge_40: -9031609978375608401
+      Puzzle Complete Sudoku Victory Badge_41: -8581995132664706875
+      Puzzle Complete Sudoku Victory Badge_42: 3940166118664915350
+      Puzzle Complete Sudoku Victory Badge_43: -6385644537376380100
+      Puzzle Complete Sudoku Victory Badge_44: -2175120891764811618
+      Puzzle Complete Sudoku Victory Badge_45: -4123983232345903608
+      Puzzle Complete Sudoku Victory Badge_46: 1963173966372637159
+      Puzzle Complete Sudoku Victory Badge_47: 1513910446135863096
+      Puzzle Complete Sudoku Victory Badge_48: 6742404303641814613
+      Puzzle Complete Sudoku Victory Badge_49: -3999659658029663571
+      Puzzle Complete Sudoku Victory Badge_5: -997072610513272540
+      Puzzle Complete Sudoku Victory Badge_50: 3287042732944909628
+      Puzzle Complete Sudoku Victory Badge_51: -6039366233341093723
+      Puzzle Complete Sudoku Victory Badge_52: -661200424600629298
+      Puzzle Complete Sudoku Victory Badge_53: 2231907465310824997
+      Puzzle Complete Sudoku Victory Badge_54: 6493673374588150982
+      Puzzle Complete Sudoku Victory Badge_55: 8029906712110026250
+      Puzzle Complete Sudoku Victory Badge_56: -3883567172268000375
+      Puzzle Complete Sudoku Victory Badge_57: 4999949371167139054
+      Puzzle Complete Sudoku Victory Badge_58: -4605981861197519108
+      Puzzle Complete Sudoku Victory Badge_59: 8594554189879637806
+      Puzzle Complete Sudoku Victory Badge_6: 1007893245086145638
+      Puzzle Complete Sudoku Victory Badge_60: -7629287160548375958
+      Puzzle Complete Sudoku Victory Badge_61: -6160063708977950221
+      Puzzle Complete Sudoku Victory Badge_62: 3164027267888761105
+      Puzzle Complete Sudoku Victory Badge_63: 9212310071771070243
+      Puzzle Complete Sudoku Victory Badge_64: -288840425923460575
+      Puzzle Complete Sudoku Victory Badge_65: -396827174954980820
+      Puzzle Complete Sudoku Victory Badge_66: -8758774050532727993
+      Puzzle Complete Sudoku Victory Badge_67: -1644620963756572360
+      Puzzle Complete Sudoku Victory Badge_68: 4563345745431999583
+      Puzzle Complete Sudoku Victory Badge_69: 2503052287756939431
+      Puzzle Complete Sudoku Victory Badge_7: -4269255378834418866
+      Puzzle Complete Sudoku Victory Badge_70: 6900170408812082539
+      Puzzle Complete Sudoku Victory Badge_71: 189750714648581079
+      Puzzle Complete Sudoku Victory Badge_72: -6343749696389118356
+      Puzzle Complete Sudoku Victory Badge_73: 6512882973100531610
+      Puzzle Complete Sudoku Victory Badge_74: -3786634839403002307
+      Puzzle Complete Sudoku Victory Badge_75: -7615794251183761690
+      Puzzle Complete Sudoku Victory Badge_76: -15451995939480297
+      Puzzle Complete Sudoku Victory Badge_77: -6354722613277763168
+      Puzzle Complete Sudoku Victory Badge_78: 2378757103051644159
+      Puzzle Complete Sudoku Victory Badge_79: 9093834332271966127
+      Puzzle Complete Sudoku Victory Badge_8: 7472355208823429406
+      Puzzle Complete Sudoku Victory Badge_80: -8648497419179320322
+      Puzzle Complete Sudoku Victory Badge_81: -4541301860451218773
+      Puzzle Complete Sudoku Victory Badge_82: -4929296413337199569
+      Puzzle Complete Sudoku Victory Badge_83: 2901203221650304150
+      Puzzle Complete Sudoku Victory Badge_84: -1852179312679806589
+      Puzzle Complete Sudoku Victory Badge_85: -8049197927808900777
+      Puzzle Complete Sudoku Victory Badge_86: 3773813000319924164
+      Puzzle Complete Sudoku Victory Badge_87: -3564186753943452208
+      Puzzle Complete Sudoku Victory Badge_88: 2140746715581224047
+      Puzzle Complete Sudoku Victory Badge_89: -3254940196386105166
+      Puzzle Complete Sudoku Victory Badge_9: 425471948607442697
+      Puzzle Complete Sudoku Victory Badge_90: 63833750081749678
+      Puzzle Complete Sudoku Victory Badge_91: -3960304311331659305
+      Puzzle Complete Sudoku Victory Badge_92: 472573850468225274
+      Puzzle Complete Sudoku Victory Badge_93: 9058890194108053300
+      Puzzle Complete Sudoku Victory Badge_94: -7185848062666636823
+      Puzzle Complete Sudoku Victory Badge_95: -448672456628957244
+      Puzzle Complete Sudoku Victory Badge_96: -2917717294898431027
+      Puzzle Complete Sudoku Victory Badge_97: 5144972926767069082
+      Puzzle Complete Sudoku Victory Badge_98: -1086076688006983449
+      Puzzle Complete Sudoku Victory Badge_99: -6470198699911271620
+  mipmapLimitGroupName: 
+  pSDRemoveMatte: 0
+  userData: 
+  assetBundleName: 
+  assetBundleVariant: 

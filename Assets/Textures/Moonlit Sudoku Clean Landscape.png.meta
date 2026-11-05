@@ -129,41 +129,42 @@ TextureImporter:
       name: Moonlit Sudoku Clean Landscape_0
       rect:
         serializedVersion: 2
-        x: 0
-        y: 0
-        width: 1672
-        height: 941
+        x: 1
+        y: 1
+        width: 1679
+        height: 935
       alignment: 0
       pivot: {x: 0, y: 0}
       border: {x: 0, y: 0, z: 0, w: 0}
-      customData:
+      customData: 
       outline: []
       physicsShape: []
-      tessellationDetail: -1
+      tessellationDetail: 0
       bones: []
-      spriteID: 29e74fa7d395a9560800000000000000
-      internalID: 7321262264834883218
+      spriteID: ccfc56f25a31ab14eb4e8d54cc9863a7
+      internalID: 918555539
       vertices: []
-      indices:
+      indices: 
       edges: []
       weights: []
     outline: []
-    customData:
+    customData: 
     physicsShape: []
     bones: []
-    spriteID:
+    spriteID: 5c392a39a85f07d49b1f760045c0f0f2
     internalID: 0
     vertices: []
-    indices:
+    indices: 
     edges: []
     weights: []
     secondaryTextures: []
     spriteCustomMetadata:
       entries: []
     nameFileIdTable:
+      Moonlit Sudoku Clean Landscape_0: 918555539
       Moonlit Sudoku Victory Landscape_0: 7321262264834883218
-  mipmapLimitGroupName:
+  mipmapLimitGroupName: 
   pSDRemoveMatte: 0
-  userData:
-  assetBundleName:
-  assetBundleVariant:
+  userData: 
+  assetBundleName: 
+  assetBundleVariant: 

@@ -10,17 +10,36 @@ public sealed class NewGameGameStateView : MonoBehaviour
     [SerializeField] private GameObject hudPanel;
     [SerializeField] private GameObject overlay;
     [SerializeField] private GameObject winPanel;
-    [SerializeField] private GameObject landscapeWinPanel;
+    [SerializeField] private Image winPanelBackground;
+    [SerializeField] private Sprite winLandscapeBackground;
+    [SerializeField] private Sprite winPortraitBackground;
+    [SerializeField] private RectTransform winNewGameBanner;
+    [SerializeField] private RectTransform winPuzzleCompleteWordmark;
+    [SerializeField] private RectTransform winVictoryTrophyEmblem;
+    [SerializeField] private RectTransform winBackToHomeButton;
     [SerializeField] private GameObject pausePanel;
     [SerializeField] private NewGameTopBar topBar;
 
     private NewGameViewModel _viewModel;
     private HUD _hud;
     private VerseTicker _verseTicker;
-    private OrientationManager _orientationManager;
     private Button _pauseResumeButton;
     private bool _gameplayVisible;
-    private bool _landscapeOrientationLocked;
+    private bool _hasWinLayout;
+    private bool _lastWinLandscape;
+
+    private void Update()
+    {
+        if (!_gameplayVisible || _viewModel == null || winPanel == null ||
+            !winPanel.activeSelf || _viewModel.CurrentStateName.Value != "NewGameWinState")
+        {
+            return;
+        }
+
+        bool isLandscape = Screen.width > Screen.height;
+        if (_hasWinLayout && _lastWinLandscape == isLandscape) return;
+        ApplyWinPanelLayout(isLandscape);
+    }
 
     public void Bind(NewGameViewModel viewModel)
     {
@@ -60,7 +79,6 @@ public sealed class NewGameGameStateView : MonoBehaviour
 
     private void Unbind()
     {
-        RestoreAutomaticOrientation();
         if (_viewModel == null) return;
         if (_pauseResumeButton != null)
         {
@@ -76,17 +94,12 @@ public sealed class NewGameGameStateView : MonoBehaviour
     {
         if (!_gameplayVisible)
         {
-            RestoreAutomaticOrientation();
             if (hudPanel != null) hudPanel.SetActive(false);
             if (winPanel != null) winPanel.SetActive(false);
-            if (landscapeWinPanel != null) landscapeWinPanel.SetActive(false);
             if (topBar != null) topBar.gameObject.SetActive(false);
             UpdateVerseTicker(false);
             return;
         }
-
-        if (stateName != "NewGameWinState")
-            RestoreAutomaticOrientation();
 
         SetAllPanelsHidden();
         switch (stateName)
@@ -104,7 +117,8 @@ public sealed class NewGameGameStateView : MonoBehaviour
                 break;
             case "NewGameWinState":
                 if (overlay != null) overlay.SetActive(true);
-                ShowLandscapeWinPanel();
+                ApplyWinPanelLayout(Screen.width > Screen.height);
+                if (winPanel != null) winPanel.SetActive(true);
                 break;
         }
 
@@ -124,66 +138,46 @@ public sealed class NewGameGameStateView : MonoBehaviour
 
     public void OnWinAcknowledged()
     {
-        RestoreAutomaticOrientation();
         if (winPanel != null) winPanel.SetActive(false);
-        if (landscapeWinPanel != null) landscapeWinPanel.SetActive(false);
         if (overlay != null) overlay.SetActive(false);
         _viewModel?.NotifyGameCompleted();
     }
 
-    private void ShowLandscapeWinPanel()
+    private void ApplyWinPanelLayout(bool isLandscape)
     {
-        if (landscapeWinPanel == null)
+        if (winPanelBackground != null)
         {
-            if (winPanel != null) winPanel.SetActive(true);
-            return;
+            Sprite background = isLandscape ? winLandscapeBackground : winPortraitBackground;
+            if (background != null) winPanelBackground.sprite = background;
         }
 
-        LockToLandscapeOrientation();
-        if (winPanel != null) winPanel.SetActive(false);
-        landscapeWinPanel.SetActive(true);
-    }
-
-    private void LockToLandscapeOrientation()
-    {
-        if (_landscapeOrientationLocked) return;
-
-        if (_orientationManager == null)
-            _orientationManager = GetComponentInParent<OrientationManager>();
-
-        if (_orientationManager != null)
-            _orientationManager.LockToLandscape();
+        if (isLandscape)
+        {
+            SetWinElementLayout(winNewGameBanner, new Vector2(0.17f, 0.74f), new Vector2(980f, 230f));
+            SetWinElementLayout(winVictoryTrophyEmblem, new Vector2(0.47f, 0.66f), new Vector2(1080f, 980f));
+            SetWinElementLayout(winPuzzleCompleteWordmark, new Vector2(0.78f, 0.70f), new Vector2(1180f, 440f));
+            SetWinElementLayout(winBackToHomeButton, new Vector2(0.49f, 0.16f), new Vector2(1540f, 320f));
+        }
         else
         {
-            Screen.autorotateToPortrait = false;
-            Screen.autorotateToPortraitUpsideDown = false;
-            Screen.autorotateToLandscapeLeft = true;
-            Screen.autorotateToLandscapeRight = true;
-            Screen.orientation = ScreenOrientation.AutoRotation;
+            // Stack the three title/emblem sprites in a single portrait column.
+            SetWinElementLayout(winNewGameBanner, new Vector2(0.5f, 0.92f), new Vector2(560f, 160f));
+            SetWinElementLayout(winPuzzleCompleteWordmark, new Vector2(0.5f, 0.79f), new Vector2(700f, 330f));
+            SetWinElementLayout(winVictoryTrophyEmblem, new Vector2(0.5f, 0.54f), new Vector2(650f, 650f));
+            SetWinElementLayout(winBackToHomeButton, new Vector2(0.5f, 0.10f), new Vector2(800f, 200f));
         }
 
-        _landscapeOrientationLocked = true;
+        _hasWinLayout = true;
+        _lastWinLandscape = isLandscape;
     }
 
-    private void RestoreAutomaticOrientation()
+    private static void SetWinElementLayout(RectTransform element, Vector2 anchor, Vector2 size)
     {
-        if (!_landscapeOrientationLocked) return;
-
-        if (_orientationManager == null)
-            _orientationManager = GetComponentInParent<OrientationManager>();
-
-        if (_orientationManager != null)
-            _orientationManager.RestoreAutoRotation();
-        else
-        {
-            Screen.autorotateToPortrait = true;
-            Screen.autorotateToPortraitUpsideDown = true;
-            Screen.autorotateToLandscapeLeft = true;
-            Screen.autorotateToLandscapeRight = true;
-            Screen.orientation = ScreenOrientation.AutoRotation;
-        }
-
-        _landscapeOrientationLocked = false;
+        if (element == null) return;
+        element.anchorMin = anchor;
+        element.anchorMax = anchor;
+        element.anchoredPosition = Vector2.zero;
+        element.sizeDelta = size;
     }
 
     public void OnPlayPressed()
@@ -202,7 +196,6 @@ public sealed class NewGameGameStateView : MonoBehaviour
             return;
         }
 
-        RestoreAutomaticOrientation();
         SetAllPanelsHidden();
         if (topBar != null) topBar.gameObject.SetActive(false);
         UpdateVerseTicker(false);
@@ -212,7 +205,6 @@ public sealed class NewGameGameStateView : MonoBehaviour
     {
         if (hudPanel != null) hudPanel.SetActive(false);
         if (winPanel != null) winPanel.SetActive(false);
-        if (landscapeWinPanel != null) landscapeWinPanel.SetActive(false);
         if (pausePanel != null) pausePanel.SetActive(false);
         if (overlay != null) overlay.SetActive(false);
     }

@@ -28,26 +28,6 @@ public class OrientationManager : MonoBehaviour
     private Rect lastSafeArea;
     private bool layoutReady;
 
-    /// <summary>Temporarily keeps the screen in landscape for landscape-only UI.</summary>
-    public void LockToLandscape()
-    {
-        Screen.autorotateToPortrait = false;
-        Screen.autorotateToPortraitUpsideDown = false;
-        Screen.autorotateToLandscapeLeft = true;
-        Screen.autorotateToLandscapeRight = true;
-        Screen.orientation = ScreenOrientation.AutoRotation;
-    }
-
-    /// <summary>Returns orientation control to the app's normal auto-rotate policy.</summary>
-    public void RestoreAutoRotation()
-    {
-        Screen.autorotateToPortrait           = true;
-        Screen.autorotateToPortraitUpsideDown = true;
-        Screen.autorotateToLandscapeLeft      = true;
-        Screen.autorotateToLandscapeRight     = true;
-        Screen.orientation = ScreenOrientation.AutoRotation;
-    }
-
     void Start()
     {
         // Allow all rotations

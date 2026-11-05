@@ -10,7 +10,18 @@ public sealed class SqliteDatabaseConnection
     private SQLiteConnection _connection;
 
     public static SqliteDatabaseConnection Instance => _instance;
-    public SQLiteConnection Connection => _connection;
+    /// <summary>
+    /// Returns the shared connection, reopening it after lifecycle pauses when
+    /// a repository performs its next operation.
+    /// </summary>
+    public SQLiteConnection Connection
+    {
+        get
+        {
+            if (_connection == null) Open();
+            return _connection;
+        }
+    }
     public bool WasCreated { get; private set; }
 
     private SqliteDatabaseConnection() { }

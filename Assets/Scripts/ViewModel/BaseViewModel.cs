@@ -8,7 +8,7 @@ using UnityEngine;
 /// </summary>
 public class BaseViewModel
 {
-    protected readonly SudokuModel Model = new SudokuModel();
+    protected readonly ISudokuModel Model;
     protected readonly Stack<SaveGameHistoryEntry> UndoHistory =
         new Stack<SaveGameHistoryEntry>();
     protected readonly Stack<SaveGameHistoryEntry> RedoHistory =
@@ -73,9 +73,18 @@ public class BaseViewModel
     public event Action SaveRequested;
 
     public BaseViewModel(IGameUsageStats usageStats, IScorePenalties penalties)
+        : this(usageStats, penalties, new ClassicSudokuModel(new SqliteGameHistoryRepository()))
+    {
+    }
+
+    protected BaseViewModel(
+        IGameUsageStats usageStats,
+        IScorePenalties penalties,
+        ISudokuModel model)
     {
         UsageStats = usageStats ?? throw new ArgumentNullException(nameof(usageStats));
         Penalties = penalties ?? throw new ArgumentNullException(nameof(penalties));
+        Model = model ?? throw new ArgumentNullException(nameof(model));
 
         SelectCellCommand = new RelayCommand(param =>
         {
@@ -217,14 +226,7 @@ public class BaseViewModel
         ConflictingCells.Value.Clear();
         UsageStats.Reset();
         Penalties.Reset();
-        if(Model.CurrentDifficulty == SudokuDifficulty.Hard || Model.CurrentDifficulty == SudokuDifficulty.Expert)
-        {
-            Model.LoadCurrentLevelPuzzle(100000);    
-        }
-        else
-        {
-            Model.LoadCurrentLevelPuzzle();
-        }
+        Model.LoadCurrentLevelPuzzle();
         PublishBoard();
         PublishPencilCandidates();
         ClosePicker();

@@ -2,7 +2,7 @@ using System;
 using System.Globalization;
 using UnityEngine;
 
-/// <summary>Creates and connects the independent Journey and New Game flows.</summary>
+/// <summary>Creates and connects the independent gameplay modes.</summary>
 public class GameContext : MonoBehaviour
 {
     public JourneyViewModel ViewModel => JourneyViewModel;
@@ -22,75 +22,129 @@ public class GameContext : MonoBehaviour
     private GridBuilder _gridBuilder;
     private ErrorMessage _error;
     private NumberPicker _picker;
-    private GameStateView _stateView;
+    private JourneyGameStateView _journeyStateView;
+    private NewGameGameStateView _newGameStateView;
     private StatsPanel _statsPanel;
     private NewGameStatsPanel _newGameStatsPanel;
+    private DailyChallengeStatsPanel _dailyChallengeStatsPanel;
     private DailyChallengeGameStateView _dailyChallengeStateView;
     private bool _dailyChallengeActive;
     private bool _newGameActive;
 
     private void Awake()
     {
-        JourneyViewModel = new JourneyViewModel(
-            new JourneyUsageStats(),
-            new JourneyScorePenalties());
-        NewGameViewModel = new NewGameViewModel(
-            new NewGameUsageStats(),
-            new NewGameScorePenalties());
-        DailyChallengeViewModel = new DailyChallengeViewModel(
-            new JourneyUsageStats(),
-            new JourneyScorePenalties());
-
         _grid = GetComponent<SudokuGrid>();
         _gridBuilder = GetComponent<GridBuilder>();
         _error = GetComponent<ErrorMessage>();
         _picker = GetComponentInChildren<NumberPicker>();
-        _stateView = GetComponentInChildren<GameStateView>(true);
+        _journeyStateView = GetComponentInChildren<JourneyGameStateView>(true);
+        _newGameStateView = GetComponentInChildren<NewGameGameStateView>(true);
         _dailyChallengeStateView = GetComponentInChildren<DailyChallengeGameStateView>(true);
         if (_dailyChallengeScreen == null)
             _dailyChallengeScreen = GetComponentInChildren<DailyChallengeScreenController>(true);
 
         _statsPanel = GetComponentInChildren<StatsPanel>(true);
         _newGameStatsPanel = GetComponentInChildren<NewGameStatsPanel>(true);
-        BindGameplay(JourneyViewModel);
-        _statsPanel?.Bind(JourneyViewModel);
-        _newGameStatsPanel?.Bind(NewGameViewModel);
+        _dailyChallengeStatsPanel = GetComponentInChildren<DailyChallengeStatsPanel>(true);
+        if (_dailyChallengeStateMachine == null)
+            _dailyChallengeStateMachine = GetComponent<DailyChallengeStateMachine>();
+        if (_dailyChallengeStateMachine == null)
+            _dailyChallengeStateMachine = gameObject.AddComponent<DailyChallengeStateMachine>();
+
+        ConfigureVariant(User.Instance.VariantFactory);
+        _dailyChallengeStateView?.SetGameplayVisible(false);
+        StartDailyChallengeBackgroundJobs();
+        // Startup is the mode selector, not an active Journey session.
+        _gridBuilder?.SetVisible(false);
+        _journeyStateView?.SetGameplayVisible(false);
+        _newGameStateView?.SetGameplayVisible(false);
+    }
+
+    public bool SelectVariant(GameVariant variant)
+    {
+        if (User.Instance == null)
+        {
+            Debug.LogError("Cannot select a puzzle variant before User has initialized.", this);
+            return false;
+        }
+
+        if (User.Instance.VariantFactory != null &&
+            User.Instance.VariantFactory.Variant == variant)
+            return true;
+
+        _journeyStateMachine.SetSuspended(true);
+        _newGameStateMachine.SetSuspended(true);
+        _dailyChallengeStateMachine.SetSuspended(true);
+        _gridBuilder?.SetVisible(false);
+        _journeyStateView?.SetGameplayVisible(false);
+        _newGameStateView?.SetGameplayVisible(false);
+        _dailyChallengeStateView?.SetGameplayVisible(false);
+
+        // Persist through the currently selected variant before replacing its
+        // view models and save system with the destination variant's services.
+        User.Instance.SaveNow();
+        _newGameActive = false;
+        _dailyChallengeActive = false;
+
+        IGameVariantFactory factory = User.Instance.SelectVariant(variant);
+        if (factory == null) return false;
+
+        ConfigureVariant(factory);
+        return true;
+    }
+
+    private void ConfigureVariant(IGameVariantFactory factory)
+    {
+        _grid?.SetDiagonalVariantActive(factory.Variant == GameVariant.Diagonal);
+
+        if (NewGameViewModel != null)
+        {
+            NewGameViewModel.SaveRequested -= User.Instance.SaveNewGameNow;
+            NewGameViewModel.GameCompleted -= OnNewGameCompleted;
+        }
+        if (DailyChallengeViewModel != null)
+        {
+            DailyChallengeViewModel.SaveRequested -= User.Instance.SaveDailyChallengeNow;
+            DailyChallengeViewModel.GameCompleted -= ExitDailyChallenge;
+        }
+
+        IGameHistoryRepository historyRepository = factory.GameHistoryRepository;
+        JourneyViewModel = new JourneyViewModel(
+            new JourneyUsageStats(), new JourneyScorePenalties(),
+            factory.CreateSudokuModel(), historyRepository);
+        NewGameViewModel = new NewGameViewModel(
+            new NewGameUsageStats(), new NewGameScorePenalties(),
+            factory.CreateSudokuModel(), factory.GameResultRepository);
+        DailyChallengeViewModel = new DailyChallengeViewModel(
+            new JourneyUsageStats(), new JourneyScorePenalties(),
+            factory.CreateSudokuModel(), factory.DailyChallengeRepository,
+            factory.GameSaveSystem);
 
         User.Instance.ViewModel = JourneyViewModel;
         User.Instance.NewGameViewModel = NewGameViewModel;
         User.Instance.DailyChallengeViewModel = DailyChallengeViewModel;
         NewGameViewModel.SaveRequested += User.Instance.SaveNewGameNow;
         DailyChallengeViewModel.SaveRequested += User.Instance.SaveDailyChallengeNow;
-        _journeyStateMachine.Initialise(JourneyViewModel);
-        _newGameStateMachine.Initialise(NewGameViewModel);
-        if (_dailyChallengeStateMachine == null)
-            _dailyChallengeStateMachine = GetComponent<DailyChallengeStateMachine>();
-        if (_dailyChallengeStateMachine == null)
-            _dailyChallengeStateMachine = gameObject.AddComponent<DailyChallengeStateMachine>();
-        _dailyChallengeStateMachine.Initialise(DailyChallengeViewModel);
-        _dailyChallengeStateView?.Bind(DailyChallengeViewModel);
-        _dailyChallengeStateMachine.SetSuspended(true);
-        _newGameStateMachine.SetSuspended(true);
         NewGameViewModel.GameCompleted += OnNewGameCompleted;
         DailyChallengeViewModel.GameCompleted += ExitDailyChallenge;
 
-#if UNITY_WEBGL && !UNITY_EDITOR
-        User.Instance.TryLoadSave();
-        User.Instance.TryLoadNewGameSave();
-        if (YouTubePlatformManager.Instance != null)
-            YouTubePlatformManager.Instance.SendGameReady();
-#else
-        User.Instance.TryLoadSave();
-        User.Instance.TryLoadNewGameSave();
-#endif
+        _journeyStateMachine.Initialise(JourneyViewModel);
+        _newGameStateMachine.Initialise(NewGameViewModel);
+        _dailyChallengeStateMachine.Initialise(DailyChallengeViewModel);
 
         _journeyStateMachine.SetSuspended(true);
-        _homeScreen.Initialize(JourneyViewModel, this);
-        _dailyChallengeStateView?.SetGameplayVisible(false);
-        StartDailyChallengeBackgroundJobs();
-        // Startup is the mode selector, not an active Journey session.
-        _gridBuilder?.SetVisible(false);
-        _stateView?.SetGameplayVisible(false);
+        _newGameStateMachine.SetSuspended(true);
+        _dailyChallengeStateMachine.SetSuspended(true);
+
+        BindGameplay(JourneyViewModel);
+        _dailyChallengeStateView?.Bind(DailyChallengeViewModel);
+        _statsPanel?.Bind(JourneyViewModel);
+        _newGameStatsPanel?.Bind(NewGameViewModel);
+        _dailyChallengeStatsPanel?.Bind(DailyChallengeViewModel);
+
+        User.Instance.TryLoadSave();
+        User.Instance.TryLoadNewGameSave();
+        _homeScreen?.Initialize(JourneyViewModel, this);
     }
 
     public void ActivateJourney()
@@ -102,7 +156,9 @@ public class GameContext : MonoBehaviour
         BindGameplay(JourneyViewModel);
         _journeyStateMachine.SetSuspended(false);
         _gridBuilder?.SetVisible(true);
-        _stateView?.SetGameplayVisible(true);
+        _dailyChallengeStateView?.SetGameplayVisible(false);
+        _newGameStateView?.SetGameplayVisible(false);
+        _journeyStateView?.SetGameplayVisible(true);
     }
 
     public void ActivateNewGame(SudokuDifficulty difficulty)
@@ -115,7 +171,9 @@ public class GameContext : MonoBehaviour
         NewGameViewModel.StartRandomGame(difficulty);
         _newGameStateMachine.SetSuspended(false);
         _gridBuilder?.SetVisible(true);
-        _stateView?.SetGameplayVisible(true);
+        _dailyChallengeStateView?.SetGameplayVisible(false);
+        _journeyStateView?.SetGameplayVisible(false);
+        _newGameStateView?.SetGameplayVisible(true);
     }
 
     private void StartDailyChallengeBackgroundJobs()
@@ -136,7 +194,9 @@ public class GameContext : MonoBehaviour
         BindGameplay(NewGameViewModel);
         _newGameStateMachine.SetSuspended(false);
         _gridBuilder?.SetVisible(true);
-        _stateView?.SetGameplayVisible(true);
+        _dailyChallengeStateView?.SetGameplayVisible(false);
+        _journeyStateView?.SetGameplayVisible(false);
+        _newGameStateView?.SetGameplayVisible(true);
     }
 
     public void ExitNewGame()
@@ -147,9 +207,10 @@ public class GameContext : MonoBehaviour
         _newGameStateMachine.SetSuspended(true);
         _newGameActive = false;
         NewGameViewModel.ClearActiveGame();
-        SaveSystem.Delete(SaveSlot.NewGame);
+        User.Instance.GameSaveSystem.Delete(SaveSlot.NewGame);
         _gridBuilder?.SetVisible(false);
-        _stateView?.SetGameplayVisible(false);
+        _journeyStateView?.SetGameplayVisible(false);
+        _newGameStateView?.SetGameplayVisible(false);
         _newGameScreen.Show();
     }
 
@@ -163,12 +224,12 @@ public class GameContext : MonoBehaviour
         else if (_newGameActive)
         {
             _newGameStateMachine.SetSuspended(true);
-            _stateView?.SetTopBarMode(false);
         }
         else _journeyStateMachine.SetSuspended(true);
 
         _gridBuilder?.SetVisible(false);
-        _stateView?.SetGameplayVisible(false);
+        _journeyStateView?.SetGameplayVisible(false);
+        _newGameStateView?.SetGameplayVisible(false);
         _dailyChallengeStateView?.SetGameplayVisible(false);
     }
 
@@ -178,19 +239,11 @@ public class GameContext : MonoBehaviour
         _newGameStateMachine.SetSuspended(true);
         _newGameActive = false;
         NewGameViewModel.ClearActiveGame();
-        SaveSystem.Delete(SaveSlot.NewGame);
+        User.Instance.GameSaveSystem.Delete(SaveSlot.NewGame);
         _gridBuilder?.SetVisible(false);
-        _stateView?.SetGameplayVisible(false);
+        _journeyStateView?.SetGameplayVisible(false);
+        _newGameStateView?.SetGameplayVisible(false);
         _newGameScreen.Show();
-    }
-
-    public void RetryLatestNewGameResult()
-    {
-        NewGameResult latest = NewGameResultDatabase.GetLatest();
-        if (latest != null)
-            RetryNewGameResult(latest);
-        else if (NewGameViewModel != null && NewGameViewModel.HasActiveGame)
-            NewGameViewModel.RestartCurrentGame();
     }
 
     public void RetryNewGameResult(NewGameResult result)
@@ -209,7 +262,9 @@ public class GameContext : MonoBehaviour
         NewGameViewModel.ReplayResult(result);
         _newGameStateMachine.SetSuspended(false);
         _gridBuilder?.SetVisible(true);
-        _stateView?.SetGameplayVisible(true);
+        _dailyChallengeStateView?.SetGameplayVisible(false);
+        _journeyStateView?.SetGameplayVisible(false);
+        _newGameStateView?.SetGameplayVisible(true);
     }
 
     public void RefreshDailyChallengeScreen(DailyChallengeScreenController screen)
@@ -231,8 +286,8 @@ public class GameContext : MonoBehaviour
 
         screen.SetChallengeData(
             today,
-            DailyChallengeRepository.GetStatsSnapshot(),
-            DailyChallengeRepository.GetTotalChallengeCount());
+            DailyChallengeViewModel.GetChallengeStats(),
+            DailyChallengeViewModel.GetTotalChallengeCount());
     }
 
     public void OpenDailyChallengeScreen(DailyChallengeScreenController screen)
@@ -243,10 +298,10 @@ public class GameContext : MonoBehaviour
         if (_dailyChallengeScreen == null)
             return;
 
-        // The ready page is a standalone screen. Binding another mode's view
-        // can reactivate its top bar, so keep both gameplay views hidden here.
+        // The ready page is standalone. Keep every gameplay view hidden here.
         _gridBuilder?.SetVisible(false);
-        _stateView?.SetGameplayVisible(false);
+        _journeyStateView?.SetGameplayVisible(false);
+        _newGameStateView?.SetGameplayVisible(false);
         _dailyChallengeStateView?.SetGameplayVisible(false);
         _dailyChallengeScreen.SetLandscape(Screen.width > Screen.height);
         _dailyChallengeScreen.Show();
@@ -276,20 +331,20 @@ public class GameContext : MonoBehaviour
         }
         if (!string.IsNullOrEmpty(record.CompletedAt))
         {
-            SaveSystem.Delete(SaveSlot.DailyChallenge);
+            User.Instance.GameSaveSystem.Delete(SaveSlot.DailyChallenge);
             DailyChallengeViewModel.ShowMessage.Value = ("Challenge already attempted", "Today's challenge is already attempted.", "");
             _error?.Bind(DailyChallengeViewModel);
             yield break;
         }
-        SaveGameData savedChallenge = SaveSystem.Load(SaveSlot.DailyChallenge);
+        SaveGameData savedChallenge = User.Instance.GameSaveSystem.Load(SaveSlot.DailyChallenge);
         bool resumeSavedChallenge = savedChallenge != null &&
             savedChallenge.SaveMode == "DailyChallenge" &&
             savedChallenge.DailyChallengeRecordId == record.Id &&
             savedChallenge.DailyChallengeDate == record.CurrentDate.ToString("yyyy-MM-dd", CultureInfo.InvariantCulture);
         if (savedChallenge != null && !resumeSavedChallenge)
-            SaveSystem.Delete(SaveSlot.DailyChallenge);
+            User.Instance.GameSaveSystem.Delete(SaveSlot.DailyChallenge);
 
-        DailyChallengeRepository.MarkAttempted(record);
+        DailyChallengeViewModel.MarkChallengeAttempted(record);
         _dailyChallengeScreen?.Hide();
         _dailyChallengeActive = true;
         _newGameActive = false;
@@ -300,7 +355,7 @@ public class GameContext : MonoBehaviour
             DailyChallengeViewModel.LoadSaveData(savedChallenge, record);
         if (resumeSavedChallenge && !restoredSavedChallenge)
         {
-            SaveSystem.Delete(SaveSlot.DailyChallenge);
+            User.Instance.GameSaveSystem.Delete(SaveSlot.DailyChallenge);
         }
         // Prepare generates a Sudoku puzzle. Only call it for a new challenge
         // (or if a saved challenge is invalid); a valid save already contains
@@ -309,7 +364,8 @@ public class GameContext : MonoBehaviour
             DailyChallengeViewModel.Prepare(record);
         _dailyChallengeStateMachine.SetSuspended(false);
         _gridBuilder?.SetVisible(true);
-        _stateView?.SetGameplayVisible(false);
+        _journeyStateView?.SetGameplayVisible(false);
+        _newGameStateView?.SetGameplayVisible(false);
         _dailyChallengeStateView?.SetGameplayVisible(true);
     }
 
@@ -330,11 +386,8 @@ public class GameContext : MonoBehaviour
         Action<DailyChallengeRecord> onReady = null)
     {
         yield return null;
-        while (User.Instance != null && !User.Instance.InitialCloudLoadComplete)
-            yield return null;
-
         DateTime today = DateTime.Today;
-        DailyChallengeRepository.FinalizeUncompletedPreviousChallenges(today);
+        DailyChallengeViewModel.FinalizeExpiredChallenges(today);
         int difficultyCount = System.Enum.GetValues(typeof(SudokuDifficulty)).Length;
         if (difficultyCount == 0)
         {
@@ -346,7 +399,7 @@ public class GameContext : MonoBehaviour
         int minimumDailyDifficulty = Mathf.Max(0, journeyDifficulty - 2);
         int dailyDifficultyCount = journeyDifficulty - minimumDailyDifficulty + 1;
         int difficulty = minimumDailyDifficulty + ((today.DayOfYear - 1) % dailyDifficultyCount);
-        DailyChallengeRecord record = DailyChallengeRepository.GetOrCreate(today, difficulty);
+        DailyChallengeRecord record = DailyChallengeViewModel.GetOrCreateChallenge(today, difficulty);
         onReady?.Invoke(record);
     }
 
@@ -356,7 +409,7 @@ public class GameContext : MonoBehaviour
         var interval = new WaitForSeconds(60f);
         while (true)
         {
-            DailyChallengeRepository.DeleteUnattemptedBefore(DateTime.Today);
+            DailyChallengeViewModel.DeleteOldUnattemptedChallenges(DateTime.Today);
             yield return interval;
         }
     }
@@ -373,7 +426,10 @@ public class GameContext : MonoBehaviour
         _grid?.Bind(viewModel);
         _error?.Bind(viewModel);
         _picker?.Bind(viewModel);
-        _stateView?.Bind(viewModel);
+        if (viewModel is NewGameViewModel newGameViewModel)
+            _newGameStateView?.Bind(newGameViewModel);
+        else if (viewModel is JourneyViewModel journeyViewModel)
+            _journeyStateView?.Bind(journeyViewModel);
     }
 
     private void OnDestroy()
@@ -392,15 +448,9 @@ public class GameContext : MonoBehaviour
         }
     }
 
-#if UNITY_WEBGL && !UNITY_EDITOR
     private System.Collections.IEnumerator Start()
     {
         yield return null;
-        User.Instance.TryLoadSaveFromCloud(() =>
-        {
-            Debug.Log("[YouTube] Initial cloud synchronization completed.");
-            _homeScreen?.RefreshJourneyStatus();
-        });
+        _homeScreen?.RefreshJourneyStatus();
     }
-#endif
 }

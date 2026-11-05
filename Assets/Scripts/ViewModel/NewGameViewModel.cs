@@ -3,6 +3,7 @@ using System.Collections.Generic;
 /// <summary>Gameplay state and persistence for the independent New Game slot.</summary>
 public sealed class NewGameViewModel : BaseViewModel
 {
+    private readonly IGameResultRepository _resultRepository;
     private NewGameStateMachine NewGameMachine => (NewGameStateMachine)StateMachine;
     private bool _resultRecorded;
     private int _replayResultId;
@@ -17,11 +18,28 @@ public sealed class NewGameViewModel : BaseViewModel
         // including the pre-game stats screen before HasActiveGame is set.
         return _replayResultId > 0
             ? _replayResultId
-            : NewGameResultDatabase.GetNextId();
+            : _resultRepository.GetNextId();
     }
 
     public NewGameViewModel(IGameUsageStats usageStats, IScorePenalties penalties)
-        : base(usageStats, penalties) { }
+        : this(usageStats, penalties, new ClassicSudokuModel(new SqliteGameHistoryRepository()),
+            new SqliteClassicGameResultRepository()) { }
+
+    public NewGameViewModel(
+        IGameUsageStats usageStats,
+        IScorePenalties penalties,
+        ISudokuModel model,
+        IGameResultRepository resultRepository)
+        : base(usageStats, penalties, model)
+    {
+        _resultRepository = resultRepository ?? throw new System.ArgumentNullException(nameof(resultRepository));
+    }
+
+    public NewGameResultStats GetResultStats() => _resultRepository.GetStats();
+    public NewGameDifficultyStats GetDifficultyStats(SudokuDifficulty difficulty) =>
+        _resultRepository.GetDifficultyStats(difficulty);
+    public List<NewGameResultEntry> GetRecentResultEntries(int offset, int count) =>
+        _resultRepository.GetRecentEntries(offset, count);
 
     public override void ResetPuzzle()
     {
@@ -164,11 +182,11 @@ public sealed class NewGameViewModel : BaseViewModel
         {
             // Match Journey: a successful retake replaces the original result;
             // abandoning a retake leaves that result unchanged.
-            if (completed) NewGameResultDatabase.UpdateCompletedAttempt(result);
+            if (completed) _resultRepository.UpdateCompletedAttempt(result);
         }
         else
         {
-            NewGameResultDatabase.RecordAttempt(result, completed);
+            _resultRepository.RecordAttempt(result, completed);
         }
     }
 

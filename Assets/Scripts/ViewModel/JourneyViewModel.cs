@@ -7,6 +7,7 @@ using System.Collections.Generic;
 /// </summary>
 public class JourneyViewModel : BaseViewModel
 {
+    private readonly IGameHistoryRepository _historyRepository;
     private int _historyOffset;
     private JourneyStateMachine JourneyMachine => (JourneyStateMachine)StateMachine;
 
@@ -35,8 +36,25 @@ public class JourneyViewModel : BaseViewModel
 
     public JourneyViewModel(
         IGameUsageStats usageStats,
-        IScorePenalties penalties) : base(usageStats, penalties)
+        IScorePenalties penalties)
+        : this(usageStats, penalties, new SqliteGameHistoryRepository()) { }
+
+    public JourneyViewModel(
+        IGameUsageStats usageStats,
+        IScorePenalties penalties,
+        IGameHistoryRepository historyRepository)
+        : this(usageStats, penalties, new ClassicSudokuModel(historyRepository), historyRepository)
     {
+    }
+
+    public JourneyViewModel(
+        IGameUsageStats usageStats,
+        IScorePenalties penalties,
+        ISudokuModel model,
+        IGameHistoryRepository historyRepository)
+        : base(usageStats, penalties, model)
+    {
+        _historyRepository = historyRepository ?? throw new ArgumentNullException(nameof(historyRepository));
         NewGameCommand = new RelayCommand(_ => NewGameRequested.Value = true);
         RetryCommand = new RelayCommand(_ => RetryGameRequested.Value = true);
         RetryOlderGameCommand = new RelayCommand(param =>
@@ -46,7 +64,7 @@ public class JourneyViewModel : BaseViewModel
         });
         NextLevel = new RelayCommand(_ =>
         {
-            int level = GameDatabase.GetLastRecord()?.Level ?? Model.CurrentLevel;
+            int level = _historyRepository.GetLastRecord()?.Level ?? Model.CurrentLevel;
             Model.SetLevel(level + 1);
         });
         IncreaseDifficulty = new RelayCommand(_ => Model.increaseDifficulty());
@@ -74,7 +92,7 @@ public class JourneyViewModel : BaseViewModel
 
     public bool RecoverFromHistory()
     {
-        GameRecord last = GameDatabase.GetLastRecord();
+        GameRecord last = _historyRepository.GetLastRecord();
         if (last == null) return false;
 
         Model.SetLevel(last.Level + 1);
@@ -143,17 +161,11 @@ public class JourneyViewModel : BaseViewModel
         AddHistoryToSave(UndoHistory, data.UndoHistory);
         AddHistoryToSave(RedoHistory, data.RedoHistory);
 
-#if UNITY_WEBGL && !UNITY_EDITOR
-        data.GameHistory = GameDatabase.ExportHistory();
-#endif
         return data;
     }
 
     public void LoadSaveData(SaveGameData data)
     {
-#if UNITY_WEBGL && !UNITY_EDITOR
-        GameDatabase.ImportHistory(data.GameHistory);
-#endif
         Model.SetLevel(data.Level);
         Model.SetPuzzleSeed(data.PuzzleSeed > 0 ? data.PuzzleSeed : data.Level);
         Model.SetDifficulty((SudokuDifficulty)data.Difficulty);
@@ -288,9 +300,30 @@ public class JourneyViewModel : BaseViewModel
 
     private void FetchData()
     {
-        List<GameRecord> records = GameDatabase.GetNextSet(_historyOffset);
+        List<GameRecord> records = _historyRepository.GetNextSet(_historyOffset);
         if (records.Count == 0) return;
         PastHistory.Value = records;
         _historyOffset += 10;
+    }
+
+    public GameRecord GetLastRecord() => _historyRepository.GetLastRecord();
+    public int GetTotalPoints() => _historyRepository.GetTotalPoints();
+    public GameStats GetGameStats() => _historyRepository.GetGameStats();
+    public int GetTotalPossiblePoints(GameStats stats) => _historyRepository.GetTotalPossiblePoints(stats);
+    public List<GameRecord> GetAllRecords() => _historyRepository.GetAll();
+    public List<GameRecord> GetRecentRecords(int count) => _historyRepository.GetLastNRecordByDate(count);
+
+    public void SaveGameResult(GameRecord record, bool updateExisting)
+    {
+        if (record == null) return;
+        if (updateExisting)
+        {
+            _historyRepository.Update(record);
+            _historyRepository.RebuildGameStats();
+        }
+        else
+        {
+            _historyRepository.Insert(record);
+        }
     }
 }

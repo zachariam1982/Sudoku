@@ -6,6 +6,8 @@ using UnityEngine;
 /// <summary>Owns the dated puzzle and gameplay-only state for Daily Challenge.</summary>
 public sealed class DailyChallengeViewModel : BaseViewModel
 {
+    private readonly IDailyChallengeRepository _dailyChallengeRepository;
+    private readonly IGameSaveSystem _gameSaveSystem;
     private DailyChallengeStateMachine DailyMachine => (DailyChallengeStateMachine)StateMachine;
     private int _dateSeed;
 
@@ -19,9 +21,16 @@ public sealed class DailyChallengeViewModel : BaseViewModel
     public ICommand NewGameCommand { get; }
     public ICommand RetryCommand { get; }
 
-    public DailyChallengeViewModel(IGameUsageStats usageStats, IScorePenalties penalties)
-        : base(usageStats, penalties)
+    public DailyChallengeViewModel(
+        IGameUsageStats usageStats,
+        IScorePenalties penalties,
+        ISudokuModel model,
+        IDailyChallengeRepository dailyChallengeRepository,
+        IGameSaveSystem gameSaveSystem)
+        : base(usageStats, penalties, model)
     {
+        _dailyChallengeRepository = dailyChallengeRepository ?? throw new ArgumentNullException(nameof(dailyChallengeRepository));
+        _gameSaveSystem = gameSaveSystem ?? throw new ArgumentNullException(nameof(gameSaveSystem));
         NewGameCommand = new RelayCommand(_ => NotifyGameCompleted());
         RetryCommand = new RelayCommand(_ =>
             ShowMessage.Value = ("Challenge already attempted",
@@ -34,7 +43,7 @@ public sealed class DailyChallengeViewModel : BaseViewModel
         ChallengeRecord = record;
         // Suppress bindable-property autosaves until the puzzle is fully prepared.
         HasActiveChallenge = false;
-        _dateSeed = DailyChallengeRepository.GetPuzzleSeed(record.CurrentDate);
+        _dateSeed = _dailyChallengeRepository.GetPuzzleSeed(record.CurrentDate);
         SetGameLevelAndDifficulty(_dateSeed, (SudokuDifficulty)record.Difficulty);
         Model.SetPuzzleSeed(_dateSeed);
         ElapsedSeconds.Value = 0f;
@@ -110,7 +119,7 @@ public sealed class DailyChallengeViewModel : BaseViewModel
 
         ChallengeRecord = record;
         HasActiveChallenge = true;
-        _dateSeed = DailyChallengeRepository.GetPuzzleSeed(record.CurrentDate);
+        _dateSeed = _dailyChallengeRepository.GetPuzzleSeed(record.CurrentDate);
         Model.SetLevel(_dateSeed);
         Model.SetDifficulty((SudokuDifficulty)record.Difficulty);
         Model.SetPuzzleSeed(_dateSeed);
@@ -202,7 +211,7 @@ public sealed class DailyChallengeViewModel : BaseViewModel
         if (!string.IsNullOrEmpty(ChallengeRecord.CompletedAt))
         {
             HasActiveChallenge = false;
-            SaveSystem.Delete(SaveSlot.DailyChallenge);
+            _gameSaveSystem.Delete(SaveSlot.DailyChallenge);
             return;
         }
 
@@ -218,7 +227,7 @@ public sealed class DailyChallengeViewModel : BaseViewModel
         ChallengeRecord.AutofillUses = UsageStats.AutoFillUses;
         try
         {
-            DailyChallengeRepository.Update(ChallengeRecord);
+            _dailyChallengeRepository.Update(ChallengeRecord);
         }
         catch (Exception ex)
         {
@@ -227,9 +236,22 @@ public sealed class DailyChallengeViewModel : BaseViewModel
         finally
         {
             HasActiveChallenge = false;
-            SaveSystem.Delete(SaveSlot.DailyChallenge);
+            _gameSaveSystem.Delete(SaveSlot.DailyChallenge);
         }
     }
+
+    public DailyChallengeRecord GetOrCreateChallenge(DateTime date, int difficulty) =>
+        _dailyChallengeRepository.GetOrCreate(date, difficulty);
+    public DailyChallengeStatsSnapshot GetChallengeStats() => _dailyChallengeRepository.GetStatsSnapshot();
+    public int GetTotalChallengeCount() => _dailyChallengeRepository.GetTotalChallengeCount();
+    public DailyChallengeRecord GetBestOverallChallenge(int? preferredId) =>
+        _dailyChallengeRepository.GetBestOverallRecord(preferredId);
+    public List<DailyChallengeRecord> GetBestChallengeTimes(DailyChallengeStatsSnapshot stats) =>
+        _dailyChallengeRepository.GetBestTimeRecordsByDifficulty(stats);
+    public List<DateTime> GetWinningChallengeDates() => _dailyChallengeRepository.GetWinningChallengeDates();
+    public void MarkChallengeAttempted(DailyChallengeRecord record) => _dailyChallengeRepository.MarkAttempted(record);
+    public void FinalizeExpiredChallenges(DateTime today) => _dailyChallengeRepository.FinalizeUncompletedPreviousChallenges(today);
+    public void DeleteOldUnattemptedChallenges(DateTime today) => _dailyChallengeRepository.DeleteUnattemptedBefore(today);
 
     private static void AddHistoryToSave(
         Stack<SaveGameHistoryEntry> history,

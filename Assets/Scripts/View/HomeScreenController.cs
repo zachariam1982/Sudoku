@@ -33,6 +33,7 @@ public sealed class HomeScreenController : MonoBehaviour
     [SerializeField] private GameObject newGameScreen;
     [SerializeField] private GameContext _gameContext;
     [SerializeField] private DailyChallengeScreenController dailyChallengeScreen;
+    [SerializeField] private PuzzleVariantSelectionScreen variantSelectionScreen;
 
     private JourneyViewModel _viewModel;
     private bool _layoutApplied;
@@ -79,13 +80,13 @@ public sealed class HomeScreenController : MonoBehaviour
     {
         if (_viewModel == null) return;
 
-        bool hasProgress = SaveSystem.HasSave(SaveSlot.Journey) || GameDatabase.GetLastRecord() != null;
+        bool hasProgress = User.Instance.GameSaveSystem.HasSave(SaveSlot.Journey) || _viewModel.GetLastRecord() != null;
         int difficultyIndex = Mathf.Clamp(_viewModel.GetDifficulty, 0, 8);
-        int totalPoints = GameDatabase.GetTotalPoints();
+        int totalPoints = _viewModel.GetTotalPoints();
 
         journeyLabel.text = $"<color=#9771FF><b>{(hasProgress ? "CONTINUE JOURNEY" : "SUDOKU JOURNEY")}</b></color>\n<size=24><color=#AAACCD>Level {_viewModel.GetLevel}  •  {(SudokuDifficulty)difficultyIndex}  •  {totalPoints:N0} Points</color></size>";
 
-        bool hasSavedNewGame = SaveSystem.HasSave(SaveSlot.NewGame) &&
+        bool hasSavedNewGame = User.Instance.GameSaveSystem.HasSave(SaveSlot.NewGame) &&
                                _gameContext != null && _gameContext.HasSavedNewGame;
         newGameLabel.text = hasSavedNewGame
             ? "<color=#4FD3FF><b>RESUME YOUR GAME</b></color>\n<size=24><color=#AAACCD>Resume your saved puzzle</color></size>"
@@ -144,6 +145,26 @@ public sealed class HomeScreenController : MonoBehaviour
         _gameContext.SuspendActiveGame();
         RefreshJourneyStatus();
         gameObject.SetActive(true);
+    }
+
+    public void OpenVariantSelection()
+    {
+        if (_gameContext != null)
+        {
+            _gameContext.CloseDailyChallengeScreen();
+            _gameContext.SuspendActiveGame();
+        }
+        else if (dailyChallengeScreen != null)
+        {
+            dailyChallengeScreen.Hide();
+        }
+
+        SetVerseTickerVisible(false);
+        RefreshJourneyStatus();
+        gameObject.SetActive(false);
+
+        if (variantSelectionScreen != null)
+            variantSelectionScreen.gameObject.SetActive(true);
     }
 
     public void CloseDailyChallenge()

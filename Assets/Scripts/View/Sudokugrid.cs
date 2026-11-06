@@ -146,6 +146,47 @@ public class SudokuGrid : MonoBehaviour
                 if (cellIndex >= 0 && cellIndex < 81) cageAt[cellIndex] = cageIndex;
         }
 
+        Color32[] cagePalette =
+        {
+            new Color32(59, 159, 199, 255),
+            new Color32(108, 183, 131, 255),
+            new Color32(178, 130, 204, 255),
+            new Color32(226, 171, 76, 255),
+            new Color32(75, 132, 205, 255),
+            new Color32(209, 116, 139, 255),
+            new Color32(81, 184, 177, 255),
+            new Color32(192, 157, 91, 255)
+        };
+        int[] cageColors = new int[killerCages.Length];
+        for (int i = 0; i < cageColors.Length; i++) cageColors[i] = -1;
+
+        // Adjacent cages get different colors, while non-adjacent cages can
+        // reuse a color. This makes the cage layout easy to parse at a glance.
+        for (int cageIndex = 0; cageIndex < killerCages.Length; cageIndex++)
+        {
+            bool[] usedColors = new bool[cagePalette.Length];
+            int[] cageCells = killerCages[cageIndex]?.Cells;
+            if (cageCells != null)
+            {
+                foreach (int cellIndex in cageCells)
+                {
+                    if (cellIndex < 0 || cellIndex >= 81) continue;
+                    int row = cellIndex / 9;
+                    int col = cellIndex % 9;
+                    MarkNeighborColor(row > 0 ? cellIndex - 9 : -1, cageIndex, cageAt, cageColors, usedColors);
+                    MarkNeighborColor(col < 8 ? cellIndex + 1 : -1, cageIndex, cageAt, cageColors, usedColors);
+                    MarkNeighborColor(row < 8 ? cellIndex + 9 : -1, cageIndex, cageAt, cageColors, usedColors);
+                    MarkNeighborColor(col > 0 ? cellIndex - 1 : -1, cageIndex, cageAt, cageColors, usedColors);
+                }
+            }
+
+            int colorIndex = 0;
+            while (colorIndex < usedColors.Length && usedColors[colorIndex]) colorIndex++;
+            cageColors[cageIndex] = colorIndex < usedColors.Length
+                ? colorIndex
+                : cageIndex % cagePalette.Length;
+        }
+
         for (int cageIndex = 0; cageIndex < killerCages.Length; cageIndex++)
         {
             KillerCage cage = killerCages[cageIndex];
@@ -157,22 +198,28 @@ public class SudokuGrid : MonoBehaviour
             foreach (int cellIndex in cage.Cells)
             {
                 if (cellIndex < 0 || cellIndex >= 81 || cells[cellIndex / 9, cellIndex % 9] == null) continue;
-                bool top = cellIndex < 9 || cageAt[cellIndex - 9] != cageIndex;
-                bool right = cellIndex % 9 == 8 || cageAt[cellIndex + 1] != cageIndex;
-                bool bottom = cellIndex >= 72 || cageAt[cellIndex + 9] != cageIndex;
-                bool left = cellIndex % 9 == 0 || cageAt[cellIndex - 1] != cageIndex;
+                Color32 cageColor = cagePalette[cageColors[cageIndex]];
+                cageColor.a = 72;
                 killerCellOverlays[cellIndex] = CreateKillerCellOverlay(
                     cells[cellIndex / 9, cellIndex % 9], cage.TargetSum,
-                    cellIndex == labelCell, top, right, bottom, left);
+                    cellIndex == labelCell, cageColor);
             }
         }
     }
 
-    private static GameObject CreateKillerCellOverlay(
-        SudokuCell cell, int targetSum, bool showTarget,
-        bool top, bool right, bool bottom, bool left)
+    private static void MarkNeighborColor(
+        int neighborCell, int currentCage, int[] cageAt, int[] cageColors, bool[] usedColors)
     {
-        var overlay = new GameObject("Killer Cage Overlay", typeof(RectTransform));
+        if (neighborCell < 0) return;
+        int neighborCage = cageAt[neighborCell];
+        if (neighborCage >= 0 && neighborCage < currentCage && cageColors[neighborCage] >= 0)
+            usedColors[cageColors[neighborCage]] = true;
+    }
+
+    private static GameObject CreateKillerCellOverlay(
+        SudokuCell cell, int targetSum, bool showTarget, Color fillColor)
+    {
+        var overlay = new GameObject("Killer Cage Cell Tint", typeof(RectTransform), typeof(Image));
         RectTransform root = overlay.GetComponent<RectTransform>();
         root.SetParent(cell.transform, false);
         overlay.layer = cell.gameObject.layer;
@@ -180,35 +227,31 @@ public class SudokuGrid : MonoBehaviour
         root.anchorMax = Vector2.one;
         root.offsetMin = Vector2.zero;
         root.offsetMax = Vector2.zero;
-        root.SetAsLastSibling();
+        root.SetAsFirstSibling();
 
         RectTransform cellRect = cell.GetComponent<RectTransform>();
-        float edge = Mathf.Clamp(cellRect.rect.width * 0.045f, 1f, 1.75f);
-        Color edgeColor = new Color32(255, 194, 86, 225);
-        if (top) AddDashedCageEdge(root, "Top", edgeColor, true, true, edge);
-        if (right) AddDashedCageEdge(root, "Right", edgeColor, false, true, edge);
-        if (bottom) AddDashedCageEdge(root, "Bottom", edgeColor, true, false, edge);
-        if (left) AddDashedCageEdge(root, "Left", edgeColor, false, false, edge);
+        Image tint = overlay.GetComponent<Image>();
+        tint.color = fillColor;
+        tint.raycastTarget = false;
 
         if (showTarget)
         {
             var labelObject = new GameObject("Cage Sum", typeof(RectTransform), typeof(TextMeshProUGUI));
             RectTransform labelRect = labelObject.GetComponent<RectTransform>();
             labelRect.SetParent(root, false);
-            labelRect.anchorMin = new Vector2(0, 1);
-            labelRect.anchorMax = new Vector2(0, 1);
-            labelRect.pivot = new Vector2(0, 1);
-            labelRect.anchoredPosition = new Vector2(3f, -2f);
-            labelRect.sizeDelta = new Vector2(cellRect.rect.width * 0.82f, cellRect.rect.height * 0.78f);
+            labelObject.layer = cell.gameObject.layer;
+            labelRect.anchorMin = Vector2.zero;
+            labelRect.anchorMax = Vector2.one;
+            labelRect.offsetMin = new Vector2(1f, 1f);
+            labelRect.offsetMax = new Vector2(-1f, -1f);
             TextMeshProUGUI label = labelObject.GetComponent<TextMeshProUGUI>();
             label.text = targetSum.ToString();
             label.font = cell.NumberFont != null ? cell.NumberFont : TMP_Settings.defaultFontAsset;
-            // Make cage totals readable at the current device scale. A softer
-            // gold tint keeps them watermark-like behind the main Sudoku digit.
-            label.fontSize = Mathf.Clamp(cellRect.rect.width * 0.48f, 12f, 32f);
+            // Watermark-sized cage sums sit behind normal Sudoku digits.
+            label.fontSize = Mathf.Clamp(cellRect.rect.width * 0.76f, 14f, 42f);
             label.fontStyle = FontStyles.Bold;
-            label.color = new Color32(255, 225, 146, 142);
-            label.alignment = TextAlignmentOptions.TopLeft;
+            label.color = new Color32(255, 228, 169, 112);
+            label.alignment = TextAlignmentOptions.Center;
             label.enableAutoSizing = false;
             label.textWrappingMode = TextWrappingModes.NoWrap;
             label.overflowMode = TextOverflowModes.Overflow;
@@ -218,44 +261,6 @@ public class SudokuGrid : MonoBehaviour
             label.ForceMeshUpdate(true, true);
         }
         return overlay;
-    }
-
-    private static void AddDashedCageEdge(
-        RectTransform parent, string side, Color color, bool horizontal, bool farSide, float thickness)
-    {
-        // Three short dashes per cell create a conventional cage boundary
-        // without competing with the solid 3x3 Sudoku box lines.
-        const int dashCount = 3;
-        const float dashFraction = 0.2f;
-        float gapFraction = (1f - dashCount * dashFraction) / (dashCount - 1);
-        float edgeAnchor = farSide ? 1f : 0f;
-        for (int dash = 0; dash < dashCount; dash++)
-        {
-            float start = dash * (dashFraction + gapFraction);
-            float end = start + dashFraction;
-            Vector2 anchorMin = horizontal
-                ? new Vector2(start, edgeAnchor)
-                : new Vector2(edgeAnchor, start);
-            Vector2 anchorMax = horizontal
-                ? new Vector2(end, edgeAnchor)
-                : new Vector2(edgeAnchor, end);
-            Vector2 size = horizontal ? new Vector2(0f, thickness) : new Vector2(thickness, 0f);
-            float inward = (farSide ? -1f : 1f) * thickness * 0.5f;
-            Vector2 position = horizontal ? new Vector2(0f, inward) : new Vector2(inward, 0f);
-
-            var edgeObject = new GameObject($"{side} Dash {dash + 1}", typeof(RectTransform), typeof(Image));
-            RectTransform edgeRect = edgeObject.GetComponent<RectTransform>();
-            edgeRect.SetParent(parent, false);
-            edgeRect.anchorMin = anchorMin;
-            edgeRect.anchorMax = anchorMax;
-            edgeRect.pivot = new Vector2(0.5f, 0.5f);
-            edgeRect.sizeDelta = size;
-            edgeRect.anchoredPosition = position;
-            edgeObject.layer = parent.gameObject.layer;
-            Image image = edgeObject.GetComponent<Image>();
-            image.color = color;
-            image.raycastTarget = false;
-        }
     }
 
     // ── Binding Handlers ──────────────────────────────────────────────────────

@@ -332,9 +332,9 @@ public class SudokuGrid : MonoBehaviour
         if (gridPanelRect == null || killerCages == null) return;
         float cellWidth = gridPanelRect.rect.width / 9f;
         float cellHeight = gridPanelRect.rect.height / 9f;
-        // Keep the requested 35-unit minimum while scaling cage sums with the
-        // rendered cell size on larger boards and devices.
-        float fontSize = Mathf.Max(35f, cellHeight * 0.4f);
+        // Scale cage sums to each rendered cell so portrait boards stay
+        // legible without the labels overwhelming the smaller cells.
+        float fontSize = Mathf.Clamp(cellHeight * 0.32f, 12f, 35f);
 
         int labelIndex = 0;
         for (int cageIndex = 0; cageIndex < killerCages.Length && labelIndex < cageSumLabelRects.Count; cageIndex++)
@@ -356,8 +356,8 @@ public class SudokuGrid : MonoBehaviour
             int col = topLeftCell % 9;
             RectTransform labelRect = cageSumLabelRects[labelIndex];
             labelRect.sizeDelta = new Vector2(
-                Mathf.Max(cellWidth * 1.2f, fontSize * 1.5f),
-                Mathf.Max(cellHeight * 0.75f, fontSize * 1.2f));
+                Mathf.Max(cellWidth * 0.7f, fontSize * 1.25f),
+                Mathf.Max(cellHeight * 0.38f, fontSize * 1.05f));
             labelRect.anchoredPosition = new Vector2(col * cellWidth + 2f, -row * cellHeight - 1f);
             if (labelIndex < cageSumLabelTexts.Count)
                 cageSumLabelTexts[labelIndex].fontSize = fontSize;

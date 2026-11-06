@@ -174,10 +174,10 @@ internal static class KillerSudokuRules
         int bestCount = 10;
         foreach (int cell in cage.Cells)
         {
-            int row = cell / Size;
-            int col = cell % Size;
-            if (board[row, col] != 0) continue;
-            int cellCandidates = GetClassicCandidateMask(board, row, col) & ~used;
+            int candidateRow = cell / Size;
+            int candidateCol = cell % Size;
+            if (board[candidateRow, candidateCol] != 0) continue;
+            int cellCandidates = GetClassicCandidateMask(board, candidateRow, candidateCol) & ~used;
             int count = CountBits(cellCandidates);
             if (count == 0) return false;
             if (count >= bestCount) continue;

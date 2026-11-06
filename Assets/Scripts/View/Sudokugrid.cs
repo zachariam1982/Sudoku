@@ -165,38 +165,21 @@ public class SudokuGrid : MonoBehaviour
 
         Color32[] cagePalette =
         {
-            new Color32(77, 225, 255, 255),  // bright cyan
-            new Color32(255, 138, 77, 255),   // orange
-            new Color32(190, 120, 255, 255),  // violet
-            new Color32(184, 239, 73, 255),   // lime
-            new Color32(255, 92, 153, 255),   // rose
-            new Color32(84, 145, 255, 255),   // blue
-            new Color32(255, 213, 68, 255),   // yellow
-            new Color32(72, 218, 163, 255)    // mint
+            new Color32(0, 114, 178, 255),    // blue
+            new Color32(230, 159, 0, 255),    // orange
+            new Color32(0, 158, 115, 255),    // green
+            new Color32(204, 121, 167, 255),  // reddish purple
+            new Color32(213, 94, 0, 255),     // vermillion
+            new Color32(86, 180, 233, 255),   // sky blue
+            new Color32(240, 228, 66, 255),   // yellow
+            new Color32(122, 64, 180, 255),   // violet
+            new Color32(0, 190, 210, 255),    // cyan
+            new Color32(255, 70, 110, 255),   // rose
+            new Color32(150, 205, 0, 255),    // lime
+            new Color32(150, 90, 45, 255)     // brown
         };
-        int[] cageColors = new int[killerCages.Length];
-        for (int i = 0; i < cageColors.Length; i++) cageColors[i] = -1;
-        for (int cageIndex = 0; cageIndex < killerCages.Length; cageIndex++)
-        {
-            bool[] usedColors = new bool[cagePalette.Length];
-            int[] cageCells = killerCages[cageIndex]?.Cells;
-            if (cageCells != null)
-            {
-                foreach (int cellIndex in cageCells)
-                {
-                    if (cellIndex < 0 || cellIndex >= 81) continue;
-                    int row = cellIndex / 9;
-                    int col = cellIndex % 9;
-                    MarkNeighborColor(row > 0 ? cellIndex - 9 : -1, cageIndex, cageAt, cageColors, usedColors);
-                    MarkNeighborColor(col < 8 ? cellIndex + 1 : -1, cageIndex, cageAt, cageColors, usedColors);
-                    MarkNeighborColor(row < 8 ? cellIndex + 9 : -1, cageIndex, cageAt, cageColors, usedColors);
-                    MarkNeighborColor(col > 0 ? cellIndex - 1 : -1, cageIndex, cageAt, cageColors, usedColors);
-                }
-            }
-            int colorIndex = 0;
-            while (colorIndex < usedColors.Length && usedColors[colorIndex]) colorIndex++;
-            cageColors[cageIndex] = colorIndex < usedColors.Length ? colorIndex : cageIndex % cagePalette.Length;
-        }
+        int[][] cageNeighbors = BuildCageNeighbors(cageAt, killerCages.Length);
+        int[] cageColors = AssignCageColors(cageNeighbors, cagePalette);
 
         for (int cageIndex = 0; cageIndex < killerCages.Length; cageIndex++)
         {
@@ -216,13 +199,121 @@ public class SudokuGrid : MonoBehaviour
         UpdateCageSumBadge();
     }
 
-    private static void MarkNeighborColor(
-        int neighborCell, int currentCage, int[] cageAt, int[] cageColors, bool[] usedColors)
+    private static int[][] BuildCageNeighbors(int[] cageAt, int cageCount)
     {
-        if (neighborCell < 0) return;
-        int neighborCage = cageAt[neighborCell];
-        if (neighborCage >= 0 && neighborCage < currentCage && cageColors[neighborCage] >= 0)
-            usedColors[cageColors[neighborCage]] = true;
+        var neighbors = new HashSet<int>[cageCount];
+        for (int i = 0; i < cageCount; i++) neighbors[i] = new HashSet<int>();
+
+        for (int cell = 0; cell < cageAt.Length; cell++)
+        {
+            int row = cell / 9;
+            int col = cell % 9;
+            int cage = cageAt[cell];
+            if (cage < 0) continue;
+            if (col < 8) AddCageNeighbor(cage, cageAt[cell + 1], neighbors);
+            if (row < 8) AddCageNeighbor(cage, cageAt[cell + 9], neighbors);
+        }
+
+        var result = new int[cageCount][];
+        for (int i = 0; i < cageCount; i++)
+        {
+            var list = new List<int>(neighbors[i]);
+            result[i] = list.ToArray();
+        }
+        return result;
+    }
+
+    private static void AddCageNeighbor(int cage, int neighbor, HashSet<int>[] neighbors)
+    {
+        if (neighbor < 0 || neighbor == cage) return;
+        neighbors[cage].Add(neighbor);
+        neighbors[neighbor].Add(cage);
+    }
+
+    private static int[] AssignCageColors(int[][] cageNeighbors, Color32[] palette)
+    {
+        var order = new List<int>(cageNeighbors.Length);
+        for (int i = 0; i < cageNeighbors.Length; i++) order.Add(i);
+        order.Sort((left, right) => cageNeighbors[right].Length.CompareTo(cageNeighbors[left].Length));
+
+        var cageColors = new int[cageNeighbors.Length];
+        var colorUsage = new int[palette.Length];
+        for (int i = 0; i < cageColors.Length; i++) cageColors[i] = -1;
+
+        foreach (int cage in order)
+        {
+            var forbidden = new bool[palette.Length];
+            bool hasColoredNeighbor = false;
+            foreach (int neighbor in cageNeighbors[cage])
+            {
+                int neighborColor = cageColors[neighbor];
+                if (neighborColor < 0) continue;
+                forbidden[neighborColor] = true;
+                hasColoredNeighbor = true;
+            }
+
+            int bestColor = -1;
+            int bestDistance = -1;
+            int bestUsage = int.MaxValue;
+            for (int candidate = 0; candidate < palette.Length; candidate++)
+            {
+                if (hasColoredNeighbor && forbidden[candidate]) continue;
+
+                int nearestDistance = int.MaxValue;
+                foreach (int neighbor in cageNeighbors[cage])
+                {
+                    int neighborColor = cageColors[neighbor];
+                    if (neighborColor < 0) continue;
+                    int distance = GetColorDistanceSquared(palette[candidate], palette[neighborColor]);
+                    if (distance < nearestDistance) nearestDistance = distance;
+                }
+
+                if (nearestDistance > bestDistance ||
+                    (nearestDistance == bestDistance && colorUsage[candidate] < bestUsage))
+                {
+                    bestColor = candidate;
+                    bestDistance = nearestDistance;
+                    bestUsage = colorUsage[candidate];
+                }
+            }
+
+            // If an unusually large cage touches every palette color, allow
+            // reuse but still choose the most visually separated available hue.
+            if (bestColor < 0)
+            {
+                for (int candidate = 0; candidate < palette.Length; candidate++)
+                {
+                    int nearestDistance = int.MaxValue;
+                    foreach (int neighbor in cageNeighbors[cage])
+                    {
+                        int neighborColor = cageColors[neighbor];
+                        if (neighborColor < 0) continue;
+                        int distance = GetColorDistanceSquared(palette[candidate], palette[neighborColor]);
+                        if (distance < nearestDistance) nearestDistance = distance;
+                    }
+                    if (nearestDistance > bestDistance ||
+                        (nearestDistance == bestDistance && colorUsage[candidate] < bestUsage))
+                    {
+                        bestColor = candidate;
+                        bestDistance = nearestDistance;
+                        bestUsage = colorUsage[candidate];
+                    }
+                }
+            }
+
+            cageColors[cage] = bestColor;
+            colorUsage[bestColor]++;
+        }
+
+        return cageColors;
+    }
+
+    private static int GetColorDistanceSquared(Color32 a, Color32 b)
+    {
+        int red = a.r - b.r;
+        int green = a.g - b.g;
+        int blue = a.b - b.b;
+        return red * red + green * green + blue * blue;
     }
 
     private void OnSelectedCageCellChanged()

@@ -7,6 +7,23 @@ public sealed class KillerSudokuGenerator : ISudokuGenerator
     private readonly KillerSudokuSolver _solver = new KillerSudokuSolver();
     private readonly KillerSudokuDifficultyAnalyzer _analyzer = new KillerSudokuDifficultyAnalyzer();
 
+    // Keep Killer clue density comparable to the Classic game. Killer cage
+    // sums are additional constraints, so puzzles should not become nearly
+    // empty just because the cage rules make them logically solvable.
+    private static (int minClues, int maxClues) GetClueRange(SudokuDifficulty difficulty) => difficulty switch
+    {
+        SudokuDifficulty.Simple => (66, 71),
+        SudokuDifficulty.Beginner => (56, 65),
+        SudokuDifficulty.Easy => (45, 55),
+        SudokuDifficulty.Novice => (36, 52),
+        SudokuDifficulty.Moderate => (30, 48),
+        SudokuDifficulty.Advanced => (27, 44),
+        SudokuDifficulty.Hard => (24, 40),
+        SudokuDifficulty.Expert => (21, 36),
+        SudokuDifficulty.Hardest => (17, 32),
+        _ => (36, 52)
+    };
+
     public SudokuResult Generate(int level, SudokuDifficulty requestedDifficulty, int maxAttempts = 100) =>
         GenerateKillerSudoku(level, requestedDifficulty, maxAttempts);
 
@@ -20,6 +37,7 @@ public sealed class KillerSudokuGenerator : ISudokuGenerator
         for (int tier = (int)requestedDifficulty; tier >= (int)SudokuDifficulty.Simple; tier--)
         {
             SudokuDifficulty target = (SudokuDifficulty)tier;
+            (int minClues, int maxClues) = GetClueRange(target);
             for (int attempt = 0; attempt < maxAttempts; attempt++)
             {
                 int seed = unchecked(level * 397 ^ ((tier + 1) * 7919) ^ attempt * 104729 ^ 0xC1A55E7);
@@ -27,12 +45,15 @@ public sealed class KillerSudokuGenerator : ISudokuGenerator
                 int[,] solution = CreateSolvedGrid(random);
                 KillerCage[] cages = CreateCages(solution, random);
                 int[,] puzzle = (int[,])solution.Clone();
+                int clueCount = 81;
                 List<int> removalOrder = new List<int>(81);
                 for (int cell = 0; cell < 81; cell++) removalOrder.Add(cell);
                 Shuffle(removalOrder, random);
 
                 foreach (int cell in removalOrder)
                 {
+                    if (clueCount <= minClues) break;
+
                     int row = cell / 9;
                     int col = cell % 9;
                     int saved = puzzle[row, col];
@@ -42,6 +63,9 @@ public sealed class KillerSudokuGenerator : ISudokuGenerator
                         puzzle[row, col] = saved;
                         continue;
                     }
+
+                    clueCount--;
+                    if (clueCount > maxClues) continue;
 
                     SudokuDifficultyResult rating = _analyzer.AnalyzeKnownValidPuzzle(puzzle, cages);
                     if (rating.Difficulty == target)

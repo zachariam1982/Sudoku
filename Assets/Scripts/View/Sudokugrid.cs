@@ -207,7 +207,7 @@ public class SudokuGrid : MonoBehaviour
             {
                 if (cellIndex < 0 || cellIndex >= 81 || cells[cellIndex / 9, cellIndex % 9] == null) continue;
                 Color32 cageTint = cagePalette[cageColors[cageIndex]];
-                cageTint.a = 48;
+                cageTint.a = 38;
                 cells[cellIndex / 9, cellIndex % 9].SetKillerCageTint(cageTint, true);
             }
         }

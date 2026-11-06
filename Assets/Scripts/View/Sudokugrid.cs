@@ -158,10 +158,14 @@ public class SudokuGrid : MonoBehaviour
 
         Color32[] cagePalette =
         {
-            new Color32(91, 194, 211, 235), new Color32(122, 198, 145, 235),
-            new Color32(178, 147, 214, 235), new Color32(221, 172, 88, 235),
-            new Color32(100, 154, 211, 235), new Color32(206, 121, 152, 235),
-            new Color32(85, 181, 168, 235), new Color32(191, 160, 100, 235)
+            new Color32(77, 225, 255, 255),  // bright cyan
+            new Color32(255, 138, 77, 255),   // orange
+            new Color32(190, 120, 255, 255),  // violet
+            new Color32(184, 239, 73, 255),   // lime
+            new Color32(255, 92, 153, 255),   // rose
+            new Color32(84, 145, 255, 255),   // blue
+            new Color32(255, 213, 68, 255),   // yellow
+            new Color32(72, 218, 163, 255)    // mint
         };
         int[] cageColors = new int[killerCages.Length];
         for (int i = 0; i < cageColors.Length; i++) cageColors[i] = -1;
@@ -196,7 +200,7 @@ public class SudokuGrid : MonoBehaviour
             {
                 if (cellIndex < 0 || cellIndex >= 81 || cells[cellIndex / 9, cellIndex % 9] == null) continue;
                 Color32 cageTint = cagePalette[cageColors[cageIndex]];
-                cageTint.a = 30;
+                cageTint.a = 48;
                 cells[cellIndex / 9, cellIndex % 9].SetKillerCageTint(cageTint, true);
             }
         }

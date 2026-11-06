@@ -10,6 +10,8 @@ using TMPro;
 /// </summary>
 public class SudokuGrid : MonoBehaviour
 {
+    private const int TotalSudokuDigitSum = 405;
+
     [Header("Background")]
     [SerializeField] private Image gridBackground;
 
@@ -234,7 +236,17 @@ public class SudokuGrid : MonoBehaviour
         int col = viewModel.SelectedCol.Value;
         if (row < 0 || row >= 9 || col < 0 || col >= 9)
         {
-            if (cageSumBadgeRect != null) cageSumBadgeRect.gameObject.SetActive(false);
+            if (viewModel.IsPencilMode.Value)
+            {
+                if (cageSumBadgeRect != null) cageSumBadgeRect.gameObject.SetActive(false);
+                return;
+            }
+
+            EnsureCageSumBadge();
+            if (cageSumBadgeRect == null || cageSumBadgeText == null) return;
+            cageSumBadgeText.text = $"GRID SUM  {TotalSudokuDigitSum}";
+            PositionCageSumBadge();
+            cageSumBadgeRect.gameObject.SetActive(true);
             return;
         }
 
@@ -360,6 +372,8 @@ public class SudokuGrid : MonoBehaviour
         {
             OnCandidateHighlightChanged(0);
         }
+
+        UpdateCageSumBadge();
     }
     private void OnEraseModeChanged(bool arg)
     {

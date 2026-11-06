@@ -42,9 +42,12 @@ public sealed class KillerSudokuDifficultyAnalyzer : ISudokuDifficultyAnalyzer
             }
         }
 
+        // For Killer Sudoku, the cage sums often make advanced boards solvable
+        // with singles. Rate the selected tier by the visible givens so the
+        // displayed difficulty stays aligned with the puzzle's clue density.
         return new SudokuDifficultyResult
         {
-            Difficulty = MapToDifficulty(hardest, steps, CountEmptyCells(board)),
+            Difficulty = MapToDifficulty(CountGivens(puzzle)),
             HardestTechnique = hardest,
             SolveSteps = steps,
             SolvedLogically = IsComplete(board)
@@ -98,20 +101,17 @@ public sealed class KillerSudokuDifficultyAnalyzer : ISudokuDifficultyAnalyzer
         return false;
     }
 
-    private static SudokuDifficulty MapToDifficulty(SudokuTechnique technique, int steps, int remainingCells)
+    private static SudokuDifficulty MapToDifficulty(int givens)
     {
-        if (technique == SudokuTechnique.SearchRequired)
-        {
-            if (remainingCells <= 8) return SudokuDifficulty.Moderate;
-            if (remainingCells <= 16) return SudokuDifficulty.Advanced;
-            if (remainingCells <= 25) return SudokuDifficulty.Hard;
-            if (remainingCells <= 36) return SudokuDifficulty.Expert;
-            return SudokuDifficulty.Hardest;
-        }
-        if (technique == SudokuTechnique.HiddenSingle) return SudokuDifficulty.Novice;
-        if (steps <= 15) return SudokuDifficulty.Simple;
-        if (steps <= 25) return SudokuDifficulty.Beginner;
-        return SudokuDifficulty.Easy;
+        if (givens >= 50) return SudokuDifficulty.Simple;
+        if (givens >= 43) return SudokuDifficulty.Beginner;
+        if (givens >= 36) return SudokuDifficulty.Easy;
+        if (givens >= 30) return SudokuDifficulty.Novice;
+        if (givens >= 25) return SudokuDifficulty.Moderate;
+        if (givens >= 21) return SudokuDifficulty.Advanced;
+        if (givens >= 17) return SudokuDifficulty.Hard;
+        if (givens >= 13) return SudokuDifficulty.Expert;
+        return SudokuDifficulty.Hardest;
     }
 
     private static bool IsComplete(int[,] board)
@@ -122,12 +122,13 @@ public sealed class KillerSudokuDifficultyAnalyzer : ISudokuDifficultyAnalyzer
         return true;
     }
 
-    private static int CountEmptyCells(int[,] board)
+    private static int CountGivens(int[,] puzzle)
     {
         int count = 0;
         for (int row = 0; row < 9; row++)
             for (int col = 0; col < 9; col++)
-                if (board[row, col] == 0) count++;
+                if (puzzle[row, col] != 0)
+                    count++;
         return count;
     }
 

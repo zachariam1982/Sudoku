@@ -7,21 +7,34 @@ public sealed class KillerSudokuGenerator : ISudokuGenerator
     private readonly KillerSudokuSolver _solver = new KillerSudokuSolver();
     private readonly KillerSudokuDifficultyAnalyzer _analyzer = new KillerSudokuDifficultyAnalyzer();
 
-    // Keep Killer clue density comparable to the Classic game. Killer cage
-    // sums are additional constraints, so puzzles should not become nearly
-    // empty just because the cage rules make them logically solvable.
+    // Killer difficulty is intentionally driven by visible givens. The bands
+    // are disjoint so each tier has fewer clues than the tier before it.
     private static (int minClues, int maxClues) GetClueRange(SudokuDifficulty difficulty) => difficulty switch
     {
-        SudokuDifficulty.Simple => (66, 71),
-        SudokuDifficulty.Beginner => (56, 65),
-        SudokuDifficulty.Easy => (45, 55),
-        SudokuDifficulty.Novice => (36, 52),
-        SudokuDifficulty.Moderate => (30, 48),
-        SudokuDifficulty.Advanced => (27, 44),
-        SudokuDifficulty.Hard => (24, 40),
-        SudokuDifficulty.Expert => (21, 36),
-        SudokuDifficulty.Hardest => (17, 32),
-        _ => (36, 52)
+        SudokuDifficulty.Simple => (50, 58),
+        SudokuDifficulty.Beginner => (43, 49),
+        SudokuDifficulty.Easy => (36, 42),
+        SudokuDifficulty.Novice => (30, 35),
+        SudokuDifficulty.Moderate => (25, 29),
+        SudokuDifficulty.Advanced => (21, 24),
+        SudokuDifficulty.Hard => (17, 20),
+        SudokuDifficulty.Expert => (13, 16),
+        SudokuDifficulty.Hardest => (9, 12),
+        _ => (30, 35)
+    };
+
+    private static (int minSize, int maxSize) GetCageSizeRange(SudokuDifficulty difficulty) => difficulty switch
+    {
+        SudokuDifficulty.Simple => (2, 3),
+        SudokuDifficulty.Beginner => (2, 4),
+        SudokuDifficulty.Easy => (3, 4),
+        SudokuDifficulty.Novice => (3, 5),
+        SudokuDifficulty.Moderate => (4, 5),
+        SudokuDifficulty.Advanced => (4, 6),
+        SudokuDifficulty.Hard => (5, 6),
+        SudokuDifficulty.Expert => (5, 7),
+        SudokuDifficulty.Hardest => (6, 8),
+        _ => (3, 5)
     };
 
     public SudokuResult Generate(int level, SudokuDifficulty requestedDifficulty, int maxAttempts = 100) =>
@@ -33,85 +46,54 @@ public sealed class KillerSudokuGenerator : ISudokuGenerator
             throw new ArgumentOutOfRangeException(nameof(requestedDifficulty));
         if (maxAttempts <= 0) throw new ArgumentOutOfRangeException(nameof(maxAttempts));
 
-        SudokuResult fallback = null;
-        for (int tier = (int)requestedDifficulty; tier >= (int)SudokuDifficulty.Simple; tier--)
+        (int minClues, int maxClues) = GetClueRange(requestedDifficulty);
+        (int minCageSize, int maxCageSize) = GetCageSizeRange(requestedDifficulty);
+        for (int attempt = 0; attempt < maxAttempts; attempt++)
         {
-            SudokuDifficulty target = (SudokuDifficulty)tier;
-            (int minClues, int maxClues) = GetClueRange(target);
-            for (int attempt = 0; attempt < maxAttempts; attempt++)
+            int seed = unchecked(level * 397 ^ (((int)requestedDifficulty + 1) * 7919) ^ attempt * 104729 ^ 0xC1A55E7);
+            var random = new System.Random(seed);
+            int[,] solution = CreateSolvedGrid(random);
+            KillerCage[] cages = CreateCages(solution, random, minCageSize, maxCageSize);
+            int[,] puzzle = (int[,])solution.Clone();
+            int clueCount = 81;
+            List<int> removalOrder = new List<int>(81);
+            for (int cell = 0; cell < 81; cell++) removalOrder.Add(cell);
+            Shuffle(removalOrder, random);
+
+            foreach (int cell in removalOrder)
             {
-                int seed = unchecked(level * 397 ^ ((tier + 1) * 7919) ^ attempt * 104729 ^ 0xC1A55E7);
-                var random = new System.Random(seed);
-                int[,] solution = CreateSolvedGrid(random);
-                KillerCage[] cages = CreateCages(solution, random);
-                int[,] puzzle = (int[,])solution.Clone();
-                int clueCount = 81;
-                List<int> removalOrder = new List<int>(81);
-                for (int cell = 0; cell < 81; cell++) removalOrder.Add(cell);
-                Shuffle(removalOrder, random);
+                if (clueCount <= minClues) break;
 
-                foreach (int cell in removalOrder)
+                int row = cell / 9;
+                int col = cell % 9;
+                int saved = puzzle[row, col];
+                puzzle[row, col] = 0;
+                if (!_solver.HasUniqueSolution(puzzle, cages))
                 {
-                    if (clueCount <= minClues) break;
-
-                    int row = cell / 9;
-                    int col = cell % 9;
-                    int saved = puzzle[row, col];
-                    puzzle[row, col] = 0;
-                    if (!_solver.HasUniqueSolution(puzzle, cages))
-                    {
-                        puzzle[row, col] = saved;
-                        continue;
-                    }
-
-                    clueCount--;
-                    if (clueCount > maxClues) continue;
-
-                    SudokuDifficultyResult rating = _analyzer.AnalyzeKnownValidPuzzle(puzzle, cages);
-                    if (rating.Difficulty == target)
-                    {
-                        return new SudokuResult
-                        {
-                            Puzzle = (int[,])puzzle.Clone(),
-                            Solution = (int[,])solution.Clone(),
-                            Difficulty = rating.Difficulty,
-                            KillerCages = CloneCages(cages)
-                        };
-                    }
-                    if ((int)rating.Difficulty <= (int)requestedDifficulty)
-                    {
-                        // Keep the latest fallback snapshot; avoid cloning the
-                        // solution and cage layout for every accepted clue removal.
-                        fallback = new SudokuResult
-                        {
-                            Puzzle = (int[,])puzzle.Clone(),
-                            Solution = solution,
-                            Difficulty = rating.Difficulty,
-                            KillerCages = cages
-                        };
-                    }
+                    puzzle[row, col] = saved;
+                    continue;
                 }
-            }
 
-            // Once this tier has exhausted its attempts, a valid result at or
-            // below the requested difficulty is preferable to repeating the
-            // same removal work for every easier tier.
-            if (fallback != null) return fallback;
+                clueCount--;
+                if (clueCount > maxClues) continue;
+
+                SudokuDifficultyResult rating = _analyzer.AnalyzeKnownValidPuzzle(puzzle, cages);
+                if (rating.Difficulty != requestedDifficulty) continue;
+
+                return new SudokuResult
+                {
+                    Puzzle = (int[,])puzzle.Clone(),
+                    Solution = (int[,])solution.Clone(),
+                    Difficulty = requestedDifficulty,
+                    KillerCages = CloneCages(cages)
+                };
+            }
         }
 
-        if (fallback != null) return fallback;
-
-        // A fully-clued grid is always uniquely solvable and still carries a complete cage layout.
-        var finalRandom = new System.Random(unchecked(level * 397 ^ 0xC1A55E7));
-        int[,] finalSolution = CreateSolvedGrid(finalRandom);
-        KillerCage[] finalCages = CreateCages(finalSolution, finalRandom);
-        return new SudokuResult
-        {
-            Puzzle = (int[,])finalSolution.Clone(),
-            Solution = (int[,])finalSolution.Clone(),
-            Difficulty = _analyzer.AnalyzeKnownValidPuzzle(finalSolution, finalCages).Difficulty,
-            KillerCages = finalCages
-        };
+        throw new InvalidOperationException(
+            $"Could not generate a uniquely solvable Killer Sudoku at {requestedDifficulty} " +
+            $"({minClues}-{maxClues} givens, cages {minCageSize}-{maxCageSize} cells) " +
+            $"within {maxAttempts} attempts.");
     }
 
     private static int[,] CreateSolvedGrid(System.Random random)
@@ -144,7 +126,7 @@ public sealed class KillerSudokuGenerator : ISudokuGenerator
         return order.ToArray();
     }
 
-    private static KillerCage[] CreateCages(int[,] solution, System.Random random)
+    private static KillerCage[] CreateCages(int[,] solution, System.Random random, int minSize, int maxSize)
     {
         var unassigned = new HashSet<int>();
         for (int cell = 0; cell < 81; cell++) unassigned.Add(cell);
@@ -153,7 +135,8 @@ public sealed class KillerSudokuGenerator : ISudokuGenerator
         {
             var remaining = new List<int>(unassigned);
             int start = remaining[random.Next(remaining.Count)];
-            int desiredSize = random.Next(2, 5);
+            int desiredSize = random.Next(minSize, maxSize + 1);
+            int startBox = GetBoxIndex(start);
             var cells = new List<int> { start };
             int usedValues = 1 << solution[start / 9, start % 9];
             unassigned.Remove(start);
@@ -169,6 +152,19 @@ public sealed class KillerSudokuGenerator : ISudokuGenerator
                         if ((usedValues & bit) == 0 && !frontier.Contains(neighbor)) frontier.Add(neighbor);
                     }
                 if (frontier.Count == 0) break;
+
+                // Larger Killer cages should visually span 3x3 box boundaries.
+                // Prefer an adjacent cell outside the starting box whenever
+                // the cage has begun growing and such a cell is available.
+                if (cells.Count >= 2)
+                {
+                    var outsideStartingBox = new List<int>();
+                    foreach (int candidate in frontier)
+                        if (GetBoxIndex(candidate) != startBox)
+                            outsideStartingBox.Add(candidate);
+                    if (outsideStartingBox.Count > 0) frontier = outsideStartingBox;
+                }
+
                 int next = frontier[random.Next(frontier.Count)];
                 cells.Add(next);
                 unassigned.Remove(next);
@@ -191,6 +187,8 @@ public sealed class KillerSudokuGenerator : ISudokuGenerator
         if (col > 0) yield return cell - 1;
         if (col < 8) yield return cell + 1;
     }
+
+    private static int GetBoxIndex(int cell) => (cell / 27) * 3 + (cell % 9) / 3;
 
     private static KillerCage[] CloneCages(KillerCage[] cages)
     {

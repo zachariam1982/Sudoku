@@ -166,10 +166,10 @@ public class SudokuGrid : MonoBehaviour
 
         Color32[] cagePalette =
         {
-            new Color32(59, 159, 199, 255), new Color32(108, 183, 131, 255),
-            new Color32(178, 130, 204, 255), new Color32(226, 171, 76, 255),
-            new Color32(75, 132, 205, 255), new Color32(209, 116, 139, 255),
-            new Color32(81, 184, 177, 255), new Color32(192, 157, 91, 255)
+            new Color32(91, 194, 211, 235), new Color32(122, 198, 145, 235),
+            new Color32(178, 147, 214, 235), new Color32(221, 172, 88, 235),
+            new Color32(100, 154, 211, 235), new Color32(206, 121, 152, 235),
+            new Color32(85, 181, 168, 235), new Color32(191, 160, 100, 235)
         };
         int[] cageColors = new int[killerCages.Length];
         for (int i = 0; i < cageColors.Length; i++) cageColors[i] = -1;
@@ -203,9 +203,9 @@ public class SudokuGrid : MonoBehaviour
             foreach (int cellIndex in cage.Cells)
             {
                 if (cellIndex < 0 || cellIndex >= 81 || cells[cellIndex / 9, cellIndex % 9] == null) continue;
-                Color32 fillColor = cagePalette[cageColors[cageIndex]];
-                fillColor.a = 38;
-                killerCellOverlays[cellIndex] = CreateKillerCellOverlay(cells[cellIndex / 9, cellIndex % 9], fillColor);
+                Color32 borderColor = cagePalette[cageColors[cageIndex]];
+                killerCellOverlays[cellIndex] = CreateKillerCellOverlay(
+                    cells[cellIndex / 9, cellIndex % 9], borderColor);
             }
         }
 
@@ -221,9 +221,9 @@ public class SudokuGrid : MonoBehaviour
             usedColors[cageColors[neighborCage]] = true;
     }
 
-    private static GameObject CreateKillerCellOverlay(SudokuCell cell, Color fillColor)
+    private static GameObject CreateKillerCellOverlay(SudokuCell cell, Color borderColor)
     {
-        var overlay = new GameObject("Killer Cage Tint", typeof(RectTransform), typeof(Image));
+        var overlay = new GameObject("Killer Cage Cell Border", typeof(RectTransform));
         RectTransform root = overlay.GetComponent<RectTransform>();
         root.SetParent(cell.transform, false);
         overlay.layer = cell.gameObject.layer;
@@ -231,11 +231,37 @@ public class SudokuGrid : MonoBehaviour
         root.anchorMax = Vector2.one;
         root.offsetMin = Vector2.zero;
         root.offsetMax = Vector2.zero;
-        root.SetAsFirstSibling();
-        Image tint = overlay.GetComponent<Image>();
-        tint.color = fillColor;
-        tint.raycastTarget = false;
+        root.SetAsLastSibling();
+
+        RectTransform cellRect = cell.GetComponent<RectTransform>();
+        float thickness = Mathf.Clamp(cellRect.rect.width * 0.035f, 1.1f, 1.8f);
+        AddCellBorderEdge(root, "Top", borderColor, new Vector2(0f, 1f), new Vector2(1f, 1f),
+            new Vector2(0f, thickness), new Vector2(0f, -thickness * 0.5f));
+        AddCellBorderEdge(root, "Right", borderColor, new Vector2(1f, 0f), new Vector2(1f, 1f),
+            new Vector2(thickness, 0f), new Vector2(-thickness * 0.5f, 0f));
+        AddCellBorderEdge(root, "Bottom", borderColor, new Vector2(0f, 0f), new Vector2(1f, 0f),
+            new Vector2(0f, thickness), new Vector2(0f, thickness * 0.5f));
+        AddCellBorderEdge(root, "Left", borderColor, new Vector2(0f, 0f), new Vector2(0f, 1f),
+            new Vector2(thickness, 0f), new Vector2(thickness * 0.5f, 0f));
         return overlay;
+    }
+
+    private static void AddCellBorderEdge(
+        RectTransform parent, string edgeName, Color color,
+        Vector2 anchorMin, Vector2 anchorMax, Vector2 sizeDelta, Vector2 anchoredPosition)
+    {
+        var edgeObject = new GameObject(edgeName, typeof(RectTransform), typeof(Image));
+        RectTransform edgeRect = edgeObject.GetComponent<RectTransform>();
+        edgeRect.SetParent(parent, false);
+        edgeRect.anchorMin = anchorMin;
+        edgeRect.anchorMax = anchorMax;
+        edgeRect.pivot = new Vector2(0.5f, 0.5f);
+        edgeRect.sizeDelta = sizeDelta;
+        edgeRect.anchoredPosition = anchoredPosition;
+        edgeObject.layer = parent.gameObject.layer;
+        Image image = edgeObject.GetComponent<Image>();
+        image.color = color;
+        image.raycastTarget = false;
     }
 
     private void OnSelectedCageCellChanged()

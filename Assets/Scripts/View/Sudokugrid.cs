@@ -20,6 +20,10 @@ public class SudokuGrid : MonoBehaviour
     private bool killerVariantActive;
     private KillerCage[] killerCages;
     private GameObject[] killerCellOverlays = new GameObject[81];
+    private int[] killerCageByCell = new int[81];
+    private RectTransform gridPanelRect;
+    private RectTransform cageSumBadgeRect;
+    private TextMeshProUGUI cageSumBadgeText;
 
 
     // ── Unity Lifecycle ───────────────────────────────────────────────────────
@@ -67,6 +71,7 @@ public class SudokuGrid : MonoBehaviour
             OnPencilModeChanged(viewModel.IsPencilMode.Value);
             OnCandidateHighlightChanged(viewModel.HighlightedCandidateNumber.Value);
             OnKillerCagesChanged(viewModel.KillerCages.Value);
+            UpdateCageSumBadge();
         }
     }
 
@@ -82,9 +87,14 @@ public class SudokuGrid : MonoBehaviour
     {
         killerVariantActive = active;
         RefreshKillerCages();
+        UpdateCageSumBadge();
     }
 
-    public void RefreshKillerCageLayout() => RefreshKillerCages();
+    public void RefreshKillerCageLayout()
+    {
+        RefreshKillerCages();
+        PositionCageSumBadge();
+    }
 
 
     private void OnDestroy()
@@ -110,6 +120,7 @@ public class SudokuGrid : MonoBehaviour
         viewModel.HighlightedCandidateNumber.OnChanged -= OnCandidateHighlightChanged;
         viewModel.PencilCandidateMasks.OnChanged -= OnPencilCandidatesChanged;
         viewModel = null;
+        if (cageSumBadgeRect != null) cageSumBadgeRect.gameObject.SetActive(false);
     }
 
     private void OnKillerCagesChanged(KillerCage[] cages)
@@ -117,6 +128,7 @@ public class SudokuGrid : MonoBehaviour
         if (ReferenceEquals(killerCages, cages)) return;
         killerCages = cages;
         RefreshKillerCages();
+        UpdateCageSumBadge();
     }
 
     private void RefreshKillerCages()
@@ -127,6 +139,7 @@ public class SudokuGrid : MonoBehaviour
         {
             for (int i = 0; i < killerCellOverlays.Length; i++)
                 if (killerCellOverlays[i] != null) killerCellOverlays[i].SetActive(false);
+            for (int i = 0; i < killerCageByCell.Length; i++) killerCageByCell[i] = -1;
             return;
         }
 
@@ -138,41 +151,79 @@ public class SudokuGrid : MonoBehaviour
 
         var cageAt = new int[81];
         for (int i = 0; i < cageAt.Length; i++) cageAt[i] = -1;
+        for (int i = 0; i < killerCageByCell.Length; i++) killerCageByCell[i] = -1;
         for (int cageIndex = 0; cageIndex < killerCages.Length; cageIndex++)
         {
             int[] cageCells = killerCages[cageIndex]?.Cells;
             if (cageCells == null) continue;
             foreach (int cellIndex in cageCells)
-                if (cellIndex >= 0 && cellIndex < 81) cageAt[cellIndex] = cageIndex;
+                if (cellIndex >= 0 && cellIndex < 81)
+                {
+                    cageAt[cellIndex] = cageIndex;
+                    killerCageByCell[cellIndex] = cageIndex;
+                }
+        }
+
+        Color32[] cagePalette =
+        {
+            new Color32(59, 159, 199, 255), new Color32(108, 183, 131, 255),
+            new Color32(178, 130, 204, 255), new Color32(226, 171, 76, 255),
+            new Color32(75, 132, 205, 255), new Color32(209, 116, 139, 255),
+            new Color32(81, 184, 177, 255), new Color32(192, 157, 91, 255)
+        };
+        int[] cageColors = new int[killerCages.Length];
+        for (int i = 0; i < cageColors.Length; i++) cageColors[i] = -1;
+        for (int cageIndex = 0; cageIndex < killerCages.Length; cageIndex++)
+        {
+            bool[] usedColors = new bool[cagePalette.Length];
+            int[] cageCells = killerCages[cageIndex]?.Cells;
+            if (cageCells != null)
+            {
+                foreach (int cellIndex in cageCells)
+                {
+                    if (cellIndex < 0 || cellIndex >= 81) continue;
+                    int row = cellIndex / 9;
+                    int col = cellIndex % 9;
+                    MarkNeighborColor(row > 0 ? cellIndex - 9 : -1, cageIndex, cageAt, cageColors, usedColors);
+                    MarkNeighborColor(col < 8 ? cellIndex + 1 : -1, cageIndex, cageAt, cageColors, usedColors);
+                    MarkNeighborColor(row < 8 ? cellIndex + 9 : -1, cageIndex, cageAt, cageColors, usedColors);
+                    MarkNeighborColor(col > 0 ? cellIndex - 1 : -1, cageIndex, cageAt, cageColors, usedColors);
+                }
+            }
+            int colorIndex = 0;
+            while (colorIndex < usedColors.Length && usedColors[colorIndex]) colorIndex++;
+            cageColors[cageIndex] = colorIndex < usedColors.Length ? colorIndex : cageIndex % cagePalette.Length;
         }
 
         for (int cageIndex = 0; cageIndex < killerCages.Length; cageIndex++)
         {
             KillerCage cage = killerCages[cageIndex];
             if (cage == null || cage.Cells == null || cage.Cells.Length == 0) continue;
-            int labelCell = 81;
-            foreach (int cellIndex in cage.Cells)
-                if (cellIndex >= 0 && cellIndex < labelCell) labelCell = cellIndex;
 
             foreach (int cellIndex in cage.Cells)
             {
                 if (cellIndex < 0 || cellIndex >= 81 || cells[cellIndex / 9, cellIndex % 9] == null) continue;
-                bool top = cellIndex < 9 || cageAt[cellIndex - 9] != cageIndex;
-                bool right = cellIndex % 9 == 8 || cageAt[cellIndex + 1] != cageIndex;
-                bool bottom = cellIndex >= 72 || cageAt[cellIndex + 9] != cageIndex;
-                bool left = cellIndex % 9 == 0 || cageAt[cellIndex - 1] != cageIndex;
-                killerCellOverlays[cellIndex] = CreateKillerCellOverlay(
-                    cells[cellIndex / 9, cellIndex % 9], cage.TargetSum,
-                    cellIndex == labelCell, top, right, bottom, left);
+                Color32 fillColor = cagePalette[cageColors[cageIndex]];
+                fillColor.a = 38;
+                killerCellOverlays[cellIndex] = CreateKillerCellOverlay(cells[cellIndex / 9, cellIndex % 9], fillColor);
             }
         }
+
+        UpdateCageSumBadge();
     }
 
-    private static GameObject CreateKillerCellOverlay(
-        SudokuCell cell, int targetSum, bool showTarget,
-        bool top, bool right, bool bottom, bool left)
+    private static void MarkNeighborColor(
+        int neighborCell, int currentCage, int[] cageAt, int[] cageColors, bool[] usedColors)
     {
-        var overlay = new GameObject("Killer Cage Marks", typeof(RectTransform));
+        if (neighborCell < 0) return;
+        int neighborCage = cageAt[neighborCell];
+        if (neighborCage >= 0 && neighborCage < currentCage && cageColors[neighborCage] >= 0)
+            usedColors[cageColors[neighborCage]] = true;
+    }
+
+    private static GameObject CreateKillerCellOverlay(SudokuCell cell, Color fillColor)
+    {
+        var overlay = new GameObject("Killer Cage Tint", typeof(RectTransform), typeof(Image));
         RectTransform root = overlay.GetComponent<RectTransform>();
         root.SetParent(cell.transform, false);
         overlay.layer = cell.gameObject.layer;
@@ -181,84 +232,103 @@ public class SudokuGrid : MonoBehaviour
         root.offsetMin = Vector2.zero;
         root.offsetMax = Vector2.zero;
         root.SetAsFirstSibling();
-
-        RectTransform cellRect = cell.GetComponent<RectTransform>();
-        float edgeThickness = Mathf.Clamp(cellRect.rect.width * 0.035f, 0.8f, 1.4f);
-        Color edgeColor = new Color32(255, 205, 116, 170);
-        if (top) AddDashedCageEdge(root, "Top", edgeColor, true, true, edgeThickness);
-        if (right) AddDashedCageEdge(root, "Right", edgeColor, false, true, edgeThickness);
-        if (bottom) AddDashedCageEdge(root, "Bottom", edgeColor, true, false, edgeThickness);
-        if (left) AddDashedCageEdge(root, "Left", edgeColor, false, false, edgeThickness);
-
-        if (showTarget)
-        {
-            var labelObject = new GameObject("Cage Sum", typeof(RectTransform), typeof(TextMeshProUGUI));
-            RectTransform labelRect = labelObject.GetComponent<RectTransform>();
-            labelRect.SetParent(root, false);
-            labelObject.layer = cell.gameObject.layer;
-            labelRect.anchorMin = Vector2.zero;
-            labelRect.anchorMax = Vector2.one;
-            labelRect.offsetMin = new Vector2(1f, 1f);
-            labelRect.offsetMax = new Vector2(-1f, -1f);
-            TextMeshProUGUI label = labelObject.GetComponent<TextMeshProUGUI>();
-            label.text = targetSum.ToString();
-            label.font = cell.NumberFont != null ? cell.NumberFont : TMP_Settings.defaultFontAsset;
-            // Watermark-sized cage sums sit behind normal Sudoku digits.
-            label.fontSize = Mathf.Clamp(cellRect.rect.width * 0.76f, 14f, 42f);
-            label.fontStyle = FontStyles.Bold;
-            label.color = new Color32(255, 228, 169, 112);
-            label.alignment = TextAlignmentOptions.Center;
-            label.enableAutoSizing = false;
-            label.textWrappingMode = TextWrappingModes.NoWrap;
-            label.overflowMode = TextOverflowModes.Overflow;
-            label.raycastTarget = false;
-            label.enabled = true;
-            label.gameObject.layer = cell.gameObject.layer;
-            label.ForceMeshUpdate(true, true);
-        }
+        Image tint = overlay.GetComponent<Image>();
+        tint.color = fillColor;
+        tint.raycastTarget = false;
         return overlay;
     }
 
-    private static void AddDashedCageEdge(
-        RectTransform parent, string side, Color color, bool horizontal, bool farSide, float thickness)
+    private void OnSelectedCageCellChanged()
     {
-        const int dashCount = 3;
-        const float dashFraction = 0.2f;
-        float gapFraction = (1f - dashCount * dashFraction) / (dashCount - 1);
-        float edgeAnchor = farSide ? 1f : 0f;
-        for (int dash = 0; dash < dashCount; dash++)
-        {
-            float start = dash * (dashFraction + gapFraction);
-            float end = start + dashFraction;
-            Vector2 anchorMin = horizontal
-                ? new Vector2(start, edgeAnchor)
-                : new Vector2(edgeAnchor, start);
-            Vector2 anchorMax = horizontal
-                ? new Vector2(end, edgeAnchor)
-                : new Vector2(edgeAnchor, end);
-            Vector2 size = horizontal ? new Vector2(0f, thickness) : new Vector2(thickness, 0f);
-            float inward = (farSide ? -1f : 1f) * thickness * 0.5f;
-            Vector2 position = horizontal ? new Vector2(0f, inward) : new Vector2(inward, 0f);
+        UpdateCageSumBadge();
+    }
 
-            var edgeObject = new GameObject($"{side} Dash {dash + 1}", typeof(RectTransform), typeof(Image));
-            RectTransform edgeRect = edgeObject.GetComponent<RectTransform>();
-            edgeRect.SetParent(parent, false);
-            edgeRect.anchorMin = anchorMin;
-            edgeRect.anchorMax = anchorMax;
-            edgeRect.pivot = new Vector2(0.5f, 0.5f);
-            edgeRect.sizeDelta = size;
-            edgeRect.anchoredPosition = position;
-            edgeObject.layer = parent.gameObject.layer;
-            Image image = edgeObject.GetComponent<Image>();
-            image.color = color;
-            image.raycastTarget = false;
+    private void UpdateCageSumBadge()
+    {
+        if (!killerVariantActive || viewModel == null || killerCages == null)
+        {
+            if (cageSumBadgeRect != null) cageSumBadgeRect.gameObject.SetActive(false);
+            return;
         }
+
+        int row = viewModel.SelectedRow.Value;
+        int col = viewModel.SelectedCol.Value;
+        if (row < 0 || row >= 9 || col < 0 || col >= 9)
+        {
+            if (cageSumBadgeRect != null) cageSumBadgeRect.gameObject.SetActive(false);
+            return;
+        }
+
+        int cageIndex = killerCageByCell[row * 9 + col];
+        if (cageIndex < 0 || cageIndex >= killerCages.Length || killerCages[cageIndex] == null)
+        {
+            if (cageSumBadgeRect != null) cageSumBadgeRect.gameObject.SetActive(false);
+            return;
+        }
+
+        EnsureCageSumBadge();
+        if (cageSumBadgeRect == null || cageSumBadgeText == null) return;
+        cageSumBadgeText.text = $"CAGE SUM  {killerCages[cageIndex].TargetSum}";
+        PositionCageSumBadge();
+        cageSumBadgeRect.gameObject.SetActive(true);
+    }
+
+    private void EnsureCageSumBadge()
+    {
+        if (cageSumBadgeRect != null || !cellsReady || cells[0, 0] == null) return;
+        gridPanelRect = cells[0, 0].transform.parent.parent as RectTransform;
+        if (gridPanelRect == null || gridPanelRect.parent == null) return;
+
+        var badge = new GameObject("Killer Cage Sum Readout", typeof(RectTransform), typeof(Image));
+        cageSumBadgeRect = badge.GetComponent<RectTransform>();
+        cageSumBadgeRect.SetParent(gridPanelRect.parent, false);
+        badge.layer = gameObject.layer;
+        cageSumBadgeRect.anchorMin = new Vector2(0.5f, 0.5f);
+        cageSumBadgeRect.anchorMax = new Vector2(0.5f, 0.5f);
+        cageSumBadgeRect.pivot = new Vector2(0.5f, 0.5f);
+        cageSumBadgeRect.sizeDelta = new Vector2(190f, 34f);
+        Image background = badge.GetComponent<Image>();
+        background.color = new Color32(6, 17, 34, 225);
+        background.raycastTarget = false;
+
+        var textObject = new GameObject("Cage Sum Text", typeof(RectTransform), typeof(TextMeshProUGUI));
+        RectTransform textRect = textObject.GetComponent<RectTransform>();
+        textRect.SetParent(cageSumBadgeRect, false);
+        textRect.anchorMin = Vector2.zero;
+        textRect.anchorMax = Vector2.one;
+        textRect.offsetMin = new Vector2(8f, 1f);
+        textRect.offsetMax = new Vector2(-8f, -1f);
+        textObject.layer = gameObject.layer;
+        cageSumBadgeText = textObject.GetComponent<TextMeshProUGUI>();
+        cageSumBadgeText.font = cells[0, 0].NumberFont != null
+            ? cells[0, 0].NumberFont
+            : TMP_Settings.defaultFontAsset;
+        cageSumBadgeText.fontSize = 18f;
+        cageSumBadgeText.fontStyle = FontStyles.Bold;
+        cageSumBadgeText.color = new Color32(255, 220, 150, 255);
+        cageSumBadgeText.alignment = TextAlignmentOptions.Center;
+        cageSumBadgeText.raycastTarget = false;
+        badge.SetActive(false);
+    }
+
+    private void PositionCageSumBadge()
+    {
+        if (cageSumBadgeRect == null || gridPanelRect == null) return;
+        float cellSize = gridPanelRect.rect.width / 9f;
+        float badgeHeight = Mathf.Clamp(cellSize * 0.86f, 28f, 42f);
+        cageSumBadgeRect.sizeDelta = new Vector2(
+            Mathf.Clamp(cellSize * 5.2f, 165f, 245f), badgeHeight);
+        if (cageSumBadgeText != null)
+            cageSumBadgeText.fontSize = badgeHeight * 0.5f;
+        cageSumBadgeRect.anchoredPosition = gridPanelRect.anchoredPosition +
+            new Vector2(0f, gridPanelRect.rect.height * 0.5f + cageSumBadgeRect.rect.height * 0.5f + 8f);
     }
 
     // ── Binding Handlers ──────────────────────────────────────────────────────
     private void OnSelectedRowOrColumnChanged(int _)
     {
         RefreshHighlights();
+        OnSelectedCageCellChanged();
     }
 
     private void OnSelectedDigitChanged(int _)

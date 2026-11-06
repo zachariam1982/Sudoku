@@ -128,46 +128,85 @@ internal static class KillerSudokuRules
 
     private static bool HasFeasibleCageCompletion(int[,] board, KillerCage cage, int overrideCell, int overrideValue)
     {
-        int[,] workingBoard = board;
+        int originalValue = 0;
         if (overrideCell >= 0)
         {
-            workingBoard = (int[,])board.Clone();
-            workingBoard[overrideCell / Size, overrideCell % Size] = overrideValue;
+            int row = overrideCell / Size;
+            int col = overrideCell % Size;
+            originalValue = board[row, col];
+            board[row, col] = overrideValue;
         }
+
         int sum = 0;
         int used = 0;
-        var empty = new List<int>();
         foreach (int cell in cage.Cells)
         {
-            int value = workingBoard[cell / Size, cell % Size];
-            if (value == 0) { empty.Add(cell); continue; }
-            if (value < 1 || value > 9 || (used & Bit(value)) != 0) return false;
+            int value = board[cell / Size, cell % Size];
+            if (value == 0) continue;
+            if (value < 1 || value > 9 || (used & Bit(value)) != 0)
+            {
+                if (overrideCell >= 0) board[overrideCell / Size, overrideCell % Size] = originalValue;
+                return false;
+            }
             used |= Bit(value);
             sum += value;
         }
-        return CanCompleteCage(workingBoard, cage.TargetSum, sum, used, empty, 0);
+
+        int remaining = 0;
+        foreach (int cell in cage.Cells)
+            if (board[cell / Size, cell % Size] == 0) remaining++;
+        bool feasible = CanCompleteCage(board, cage, cage.TargetSum, sum, used, remaining);
+        if (overrideCell >= 0) board[overrideCell / Size, overrideCell % Size] = originalValue;
+        return feasible;
     }
 
-    private static bool CanCompleteCage(int[,] board, int target, int sum, int used, List<int> empty, int position)
+    private static bool CanCompleteCage(
+        int[,] board, KillerCage cage, int target, int sum, int used, int remaining)
     {
-        if (position == empty.Count) return sum == target;
-        int remaining = empty.Count - position;
+        if (remaining == 0) return sum == target;
         int minAvailable = MinimumAvailableSum(used, remaining);
         int maxAvailable = MaximumAvailableSum(used, remaining);
         if (sum >= target || minAvailable == int.MaxValue || maxAvailable == int.MinValue ||
             sum + minAvailable > target || sum + maxAvailable < target) return false;
 
-        int cell = empty[position];
-        int row = cell / Size;
-        int col = cell % Size;
-        int candidates = GetClassicCandidateMask(board, row, col) & ~used;
+        int bestCell = -1;
+        int candidates = 0;
+        int bestCount = 10;
+        foreach (int cell in cage.Cells)
+        {
+            int row = cell / Size;
+            int col = cell % Size;
+            if (board[row, col] != 0) continue;
+            int cellCandidates = GetClassicCandidateMask(board, row, col) & ~used;
+            int count = CountBits(cellCandidates);
+            if (count == 0) return false;
+            if (count >= bestCount) continue;
+            bestCell = cell;
+            candidates = cellCandidates;
+            bestCount = count;
+            if (count == 1) break;
+        }
+        if (bestCell < 0) return sum == target;
+
+        int row = bestCell / Size;
+        int col = bestCell % Size;
         for (int value = 1; value <= 9; value++)
         {
             int bit = Bit(value);
-            if ((candidates & bit) == 0 || sum + value >= target && position + 1 < empty.Count) continue;
-            if (CanCompleteCage(board, target, sum + value, used | bit, empty, position + 1)) return true;
+            if ((candidates & bit) == 0) continue;
+            board[row, col] = value;
+            bool completes = CanCompleteCage(board, cage, target, sum + value, used | bit, remaining - 1);
+            board[row, col] = 0;
+            if (completes) return true;
         }
         return false;
+    }
+
+    private static int CountBits(int mask)
+    {
+        int count = 0;
+        while (mask != 0) { mask &= mask - 1; count++; }
+        return count;
     }
 
     private static int MinimumAvailableSum(int used, int count)

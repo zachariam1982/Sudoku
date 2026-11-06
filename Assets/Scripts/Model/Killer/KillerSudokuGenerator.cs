@@ -27,8 +27,6 @@ public sealed class KillerSudokuGenerator : ISudokuGenerator
                 int[,] solution = CreateSolvedGrid(random);
                 KillerCage[] cages = CreateCages(solution, random);
                 int[,] puzzle = (int[,])solution.Clone();
-                SudokuResult candidate = null;
-
                 List<int> removalOrder = new List<int>(81);
                 for (int cell = 0; cell < 81; cell++) removalOrder.Add(cell);
                 Shuffle(removalOrder, random);
@@ -45,22 +43,36 @@ public sealed class KillerSudokuGenerator : ISudokuGenerator
                         continue;
                     }
 
-                    SudokuDifficultyResult rating = _analyzer.Analyze(puzzle, cages);
-                    candidate = new SudokuResult
-                    {
-                        Puzzle = (int[,])puzzle.Clone(),
-                        Solution = (int[,])solution.Clone(),
-                        Difficulty = rating.Difficulty,
-                        KillerCages = CloneCages(cages)
-                    };
+                    SudokuDifficultyResult rating = _analyzer.AnalyzeKnownValidPuzzle(puzzle, cages);
                     if (rating.Difficulty == target)
-                        return candidate;
+                    {
+                        return new SudokuResult
+                        {
+                            Puzzle = (int[,])puzzle.Clone(),
+                            Solution = (int[,])solution.Clone(),
+                            Difficulty = rating.Difficulty,
+                            KillerCages = CloneCages(cages)
+                        };
+                    }
                     if ((int)rating.Difficulty <= (int)requestedDifficulty)
-                        fallback = candidate;
+                    {
+                        // Keep the latest fallback snapshot; avoid cloning the
+                        // solution and cage layout for every accepted clue removal.
+                        fallback = new SudokuResult
+                        {
+                            Puzzle = (int[,])puzzle.Clone(),
+                            Solution = solution,
+                            Difficulty = rating.Difficulty,
+                            KillerCages = cages
+                        };
+                    }
                 }
-
-                if (candidate != null && candidate.Difficulty == target) return candidate;
             }
+
+            // Once this tier has exhausted its attempts, a valid result at or
+            // below the requested difficulty is preferable to repeating the
+            // same removal work for every easier tier.
+            if (fallback != null) return fallback;
         }
 
         if (fallback != null) return fallback;
@@ -73,7 +85,7 @@ public sealed class KillerSudokuGenerator : ISudokuGenerator
         {
             Puzzle = (int[,])finalSolution.Clone(),
             Solution = (int[,])finalSolution.Clone(),
-            Difficulty = _analyzer.Analyze(finalSolution, finalCages).Difficulty,
+            Difficulty = _analyzer.AnalyzeKnownValidPuzzle(finalSolution, finalCages).Difficulty,
             KillerCages = finalCages
         };
     }

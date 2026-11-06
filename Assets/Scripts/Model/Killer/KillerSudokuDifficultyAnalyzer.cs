@@ -10,12 +10,16 @@ public sealed class KillerSudokuDifficultyAnalyzer : ISudokuDifficultyAnalyzer
 
     public SudokuDifficultyResult Analyze(int[,] puzzle, KillerCage[] cages)
     {
-        if (puzzle == null) throw new ArgumentNullException(nameof(puzzle));
-        if (puzzle.GetLength(0) != 9 || puzzle.GetLength(1) != 9)
-            throw new ArgumentException("A Sudoku board must be 9 by 9.", nameof(puzzle));
+        ValidateDimensions(puzzle);
         if (!KillerSudokuRules.ValidateBoard(puzzle, cages))
             throw new ArgumentException("Puzzle is invalid under Killer Sudoku constraints.", nameof(puzzle));
 
+        return AnalyzeKnownValidPuzzle(puzzle, cages);
+    }
+
+    internal SudokuDifficultyResult AnalyzeKnownValidPuzzle(int[,] puzzle, KillerCage[] cages)
+    {
+        ValidateDimensions(puzzle);
         int[,] board = (int[,])puzzle.Clone();
         int steps = 0;
         SudokuTechnique hardest = SudokuTechnique.NakedSingle;
@@ -45,6 +49,13 @@ public sealed class KillerSudokuDifficultyAnalyzer : ISudokuDifficultyAnalyzer
             SolveSteps = steps,
             SolvedLogically = IsComplete(board)
         };
+    }
+
+    private static void ValidateDimensions(int[,] puzzle)
+    {
+        if (puzzle == null) throw new ArgumentNullException(nameof(puzzle));
+        if (puzzle.GetLength(0) != 9 || puzzle.GetLength(1) != 9)
+            throw new ArgumentException("A Sudoku board must be 9 by 9.", nameof(puzzle));
     }
 
     private static bool TryNakedSingle(int[,] board, KillerCage[] cages)

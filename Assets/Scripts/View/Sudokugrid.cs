@@ -300,7 +300,7 @@ public class SudokuGrid : MonoBehaviour
             labelText.font = cells[0, 0].NumberFont != null
                 ? cells[0, 0].NumberFont
                 : TMP_Settings.defaultFontAsset;
-            labelText.fontSize = 10f;
+            labelText.fontSize = 35f;
             labelText.fontStyle = FontStyles.Bold;
             labelText.color = new Color32(255, 220, 150, 230);
             labelText.alignment = TextAlignmentOptions.TopLeft;
@@ -332,7 +332,9 @@ public class SudokuGrid : MonoBehaviour
         if (gridPanelRect == null || killerCages == null) return;
         float cellWidth = gridPanelRect.rect.width / 9f;
         float cellHeight = gridPanelRect.rect.height / 9f;
-        float fontSize = Mathf.Clamp(cellHeight * 0.25f, 8f, 14f);
+        // Keep the requested 35-unit minimum while scaling cage sums with the
+        // rendered cell size on larger boards and devices.
+        float fontSize = Mathf.Max(35f, cellHeight * 0.4f);
 
         int labelIndex = 0;
         for (int cageIndex = 0; cageIndex < killerCages.Length && labelIndex < cageSumLabelRects.Count; cageIndex++)
@@ -353,7 +355,9 @@ public class SudokuGrid : MonoBehaviour
             int row = topLeftCell / 9;
             int col = topLeftCell % 9;
             RectTransform labelRect = cageSumLabelRects[labelIndex];
-            labelRect.sizeDelta = new Vector2(cellWidth * 0.55f, cellHeight * 0.32f);
+            labelRect.sizeDelta = new Vector2(
+                Mathf.Max(cellWidth * 1.2f, fontSize * 1.5f),
+                Mathf.Max(cellHeight * 0.75f, fontSize * 1.2f));
             labelRect.anchoredPosition = new Vector2(col * cellWidth + 2f, -row * cellHeight - 1f);
             if (labelIndex < cageSumLabelTexts.Count)
                 cageSumLabelTexts[labelIndex].fontSize = fontSize;

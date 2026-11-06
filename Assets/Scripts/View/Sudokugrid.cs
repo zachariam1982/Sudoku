@@ -19,7 +19,6 @@ public class SudokuGrid : MonoBehaviour
     private bool diagonalVariantActive;
     private bool killerVariantActive;
     private KillerCage[] killerCages;
-    private GameObject[] killerCellOverlays = new GameObject[81];
     private int[] killerCageByCell = new int[81];
     private RectTransform gridPanelRect;
     private RectTransform cageSumBadgeRect;
@@ -135,23 +134,16 @@ public class SudokuGrid : MonoBehaviour
     {
         if (!cellsReady) return;
         bool hasCages = killerVariantActive && killerCages != null && killerCages.Length > 0;
-        if (!hasCages)
+        for (int i = 0; i < killerCageByCell.Length; i++)
         {
-            for (int i = 0; i < killerCellOverlays.Length; i++)
-                if (killerCellOverlays[i] != null) killerCellOverlays[i].SetActive(false);
-            for (int i = 0; i < killerCageByCell.Length; i++) killerCageByCell[i] = -1;
-            return;
+            killerCageByCell[i] = -1;
+            if (cells[i / 9, i % 9] != null)
+                cells[i / 9, i % 9].SetKillerCageTint(Color.clear, false);
         }
-
-        for (int i = 0; i < killerCellOverlays.Length; i++)
-        {
-            if (killerCellOverlays[i] != null) Destroy(killerCellOverlays[i]);
-            killerCellOverlays[i] = null;
-        }
+        if (!hasCages) return;
 
         var cageAt = new int[81];
         for (int i = 0; i < cageAt.Length; i++) cageAt[i] = -1;
-        for (int i = 0; i < killerCageByCell.Length; i++) killerCageByCell[i] = -1;
         for (int cageIndex = 0; cageIndex < killerCages.Length; cageIndex++)
         {
             int[] cageCells = killerCages[cageIndex]?.Cells;
@@ -203,9 +195,9 @@ public class SudokuGrid : MonoBehaviour
             foreach (int cellIndex in cage.Cells)
             {
                 if (cellIndex < 0 || cellIndex >= 81 || cells[cellIndex / 9, cellIndex % 9] == null) continue;
-                Color32 borderColor = cagePalette[cageColors[cageIndex]];
-                killerCellOverlays[cellIndex] = CreateKillerCellOverlay(
-                    cells[cellIndex / 9, cellIndex % 9], borderColor);
+                Color32 cageTint = cagePalette[cageColors[cageIndex]];
+                cageTint.a = 30;
+                cells[cellIndex / 9, cellIndex % 9].SetKillerCageTint(cageTint, true);
             }
         }
 
@@ -219,49 +211,6 @@ public class SudokuGrid : MonoBehaviour
         int neighborCage = cageAt[neighborCell];
         if (neighborCage >= 0 && neighborCage < currentCage && cageColors[neighborCage] >= 0)
             usedColors[cageColors[neighborCage]] = true;
-    }
-
-    private static GameObject CreateKillerCellOverlay(SudokuCell cell, Color borderColor)
-    {
-        var overlay = new GameObject("Killer Cage Cell Border", typeof(RectTransform));
-        RectTransform root = overlay.GetComponent<RectTransform>();
-        root.SetParent(cell.transform, false);
-        overlay.layer = cell.gameObject.layer;
-        root.anchorMin = Vector2.zero;
-        root.anchorMax = Vector2.one;
-        root.offsetMin = Vector2.zero;
-        root.offsetMax = Vector2.zero;
-        root.SetAsLastSibling();
-
-        RectTransform cellRect = cell.GetComponent<RectTransform>();
-        float thickness = Mathf.Clamp(cellRect.rect.width * 0.035f, 1.1f, 1.8f);
-        AddCellBorderEdge(root, "Top", borderColor, new Vector2(0f, 1f), new Vector2(1f, 1f),
-            new Vector2(0f, thickness), new Vector2(0f, -thickness * 0.5f));
-        AddCellBorderEdge(root, "Right", borderColor, new Vector2(1f, 0f), new Vector2(1f, 1f),
-            new Vector2(thickness, 0f), new Vector2(-thickness * 0.5f, 0f));
-        AddCellBorderEdge(root, "Bottom", borderColor, new Vector2(0f, 0f), new Vector2(1f, 0f),
-            new Vector2(0f, thickness), new Vector2(0f, thickness * 0.5f));
-        AddCellBorderEdge(root, "Left", borderColor, new Vector2(0f, 0f), new Vector2(0f, 1f),
-            new Vector2(thickness, 0f), new Vector2(thickness * 0.5f, 0f));
-        return overlay;
-    }
-
-    private static void AddCellBorderEdge(
-        RectTransform parent, string edgeName, Color color,
-        Vector2 anchorMin, Vector2 anchorMax, Vector2 sizeDelta, Vector2 anchoredPosition)
-    {
-        var edgeObject = new GameObject(edgeName, typeof(RectTransform), typeof(Image));
-        RectTransform edgeRect = edgeObject.GetComponent<RectTransform>();
-        edgeRect.SetParent(parent, false);
-        edgeRect.anchorMin = anchorMin;
-        edgeRect.anchorMax = anchorMax;
-        edgeRect.pivot = new Vector2(0.5f, 0.5f);
-        edgeRect.sizeDelta = sizeDelta;
-        edgeRect.anchoredPosition = anchoredPosition;
-        edgeObject.layer = parent.gameObject.layer;
-        Image image = edgeObject.GetComponent<Image>();
-        image.color = color;
-        image.raycastTarget = false;
     }
 
     private void OnSelectedCageCellChanged()

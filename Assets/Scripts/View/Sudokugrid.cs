@@ -10,8 +10,6 @@ using TMPro;
 /// </summary>
 public class SudokuGrid : MonoBehaviour
 {
-    private const int TotalSudokuDigitSum = 405;
-
     [Header("Background")]
     [SerializeField] private Image gridBackground;
 
@@ -25,6 +23,8 @@ public class SudokuGrid : MonoBehaviour
     private RectTransform gridPanelRect;
     private RectTransform cageSumBadgeRect;
     private TextMeshProUGUI cageSumBadgeText;
+    private readonly List<RectTransform> cageSumLabelRects = new List<RectTransform>();
+    private readonly List<TextMeshProUGUI> cageSumLabelTexts = new List<TextMeshProUGUI>();
 
 
     // ── Unity Lifecycle ───────────────────────────────────────────────────────
@@ -142,7 +142,12 @@ public class SudokuGrid : MonoBehaviour
             if (cells[i / 9, i % 9] != null)
                 cells[i / 9, i % 9].SetKillerCageTint(Color.clear, false);
         }
-        if (!hasCages) return;
+        if (!hasCages)
+        {
+            ClearKillerCageSumLabels();
+            UpdateCageSumBadge();
+            return;
+        }
 
         var cageAt = new int[81];
         for (int i = 0; i < cageAt.Length; i++) cageAt[i] = -1;
@@ -207,6 +212,7 @@ public class SudokuGrid : MonoBehaviour
             }
         }
 
+        RebuildKillerCageSumLabels();
         UpdateCageSumBadge();
     }
 
@@ -236,20 +242,12 @@ public class SudokuGrid : MonoBehaviour
         int col = viewModel.SelectedCol.Value;
         if (row < 0 || row >= 9 || col < 0 || col >= 9)
         {
-            if (viewModel.IsPencilMode.Value)
-            {
-                if (cageSumBadgeRect != null) cageSumBadgeRect.gameObject.SetActive(false);
-                return;
-            }
-
-            EnsureCageSumBadge();
-            if (cageSumBadgeRect == null || cageSumBadgeText == null) return;
-            cageSumBadgeText.text = $"GRID SUM  {TotalSudokuDigitSum}";
-            PositionCageSumBadge();
-            cageSumBadgeRect.gameObject.SetActive(true);
+            SetKillerCageSumLabelsVisible(!viewModel.IsPencilMode.Value);
+            if (cageSumBadgeRect != null) cageSumBadgeRect.gameObject.SetActive(false);
             return;
         }
 
+        SetKillerCageSumLabelsVisible(false);
         int cageIndex = killerCageByCell[row * 9 + col];
         if (cageIndex < 0 || cageIndex >= killerCages.Length || killerCages[cageIndex] == null)
         {
@@ -262,6 +260,105 @@ public class SudokuGrid : MonoBehaviour
         cageSumBadgeText.text = $"CAGE SUM  {killerCages[cageIndex].TargetSum}";
         PositionCageSumBadge();
         cageSumBadgeRect.gameObject.SetActive(true);
+    }
+
+    private void RebuildKillerCageSumLabels()
+    {
+        ClearKillerCageSumLabels();
+        if (!killerVariantActive || killerCages == null || killerCages.Length == 0 || !cellsReady)
+            return;
+
+        EnsureCageSumBadge();
+        if (gridPanelRect == null || cells[0, 0] == null) return;
+
+        for (int cageIndex = 0; cageIndex < killerCages.Length; cageIndex++)
+        {
+            KillerCage cage = killerCages[cageIndex];
+            if (cage == null || cage.Cells == null || cage.Cells.Length == 0) continue;
+
+            int topLeftCell = -1;
+            foreach (int cellIndex in cage.Cells)
+            {
+                if (cellIndex < 0 || cellIndex >= 81) continue;
+                if (topLeftCell < 0 || cellIndex / 9 < topLeftCell / 9 ||
+                    (cellIndex / 9 == topLeftCell / 9 && cellIndex % 9 < topLeftCell % 9))
+                    topLeftCell = cellIndex;
+            }
+            if (topLeftCell < 0) continue;
+
+            var labelObject = new GameObject(
+                $"Killer Cage {cageIndex + 1} Sum", typeof(RectTransform), typeof(TextMeshProUGUI));
+            labelObject.layer = gameObject.layer;
+            RectTransform labelRect = labelObject.GetComponent<RectTransform>();
+            labelRect.SetParent(gridPanelRect, false);
+            labelRect.anchorMin = new Vector2(0f, 1f);
+            labelRect.anchorMax = new Vector2(0f, 1f);
+            labelRect.pivot = new Vector2(0f, 1f);
+
+            TextMeshProUGUI labelText = labelObject.GetComponent<TextMeshProUGUI>();
+            labelText.text = cage.TargetSum.ToString();
+            labelText.font = cells[0, 0].NumberFont != null
+                ? cells[0, 0].NumberFont
+                : TMP_Settings.defaultFontAsset;
+            labelText.fontSize = 10f;
+            labelText.fontStyle = FontStyles.Bold;
+            labelText.color = new Color32(255, 220, 150, 230);
+            labelText.alignment = TextAlignmentOptions.TopLeft;
+            labelText.raycastTarget = false;
+
+            cageSumLabelRects.Add(labelRect);
+            cageSumLabelTexts.Add(labelText);
+        }
+
+        PositionKillerCageSumLabels();
+    }
+
+    private void ClearKillerCageSumLabels()
+    {
+        foreach (RectTransform labelRect in cageSumLabelRects)
+            if (labelRect != null) Destroy(labelRect.gameObject);
+        cageSumLabelRects.Clear();
+        cageSumLabelTexts.Clear();
+    }
+
+    private void SetKillerCageSumLabelsVisible(bool visible)
+    {
+        foreach (RectTransform labelRect in cageSumLabelRects)
+            if (labelRect != null) labelRect.gameObject.SetActive(visible);
+    }
+
+    private void PositionKillerCageSumLabels()
+    {
+        if (gridPanelRect == null || killerCages == null) return;
+        float cellWidth = gridPanelRect.rect.width / 9f;
+        float cellHeight = gridPanelRect.rect.height / 9f;
+        float fontSize = Mathf.Clamp(cellHeight * 0.25f, 8f, 14f);
+
+        int labelIndex = 0;
+        for (int cageIndex = 0; cageIndex < killerCages.Length && labelIndex < cageSumLabelRects.Count; cageIndex++)
+        {
+            KillerCage cage = killerCages[cageIndex];
+            if (cage == null || cage.Cells == null || cage.Cells.Length == 0) continue;
+
+            int topLeftCell = -1;
+            foreach (int cellIndex in cage.Cells)
+            {
+                if (cellIndex < 0 || cellIndex >= 81) continue;
+                if (topLeftCell < 0 || cellIndex / 9 < topLeftCell / 9 ||
+                    (cellIndex / 9 == topLeftCell / 9 && cellIndex % 9 < topLeftCell % 9))
+                    topLeftCell = cellIndex;
+            }
+            if (topLeftCell < 0) continue;
+
+            int row = topLeftCell / 9;
+            int col = topLeftCell % 9;
+            RectTransform labelRect = cageSumLabelRects[labelIndex];
+            labelRect.sizeDelta = new Vector2(cellWidth * 0.55f, cellHeight * 0.32f);
+            labelRect.anchoredPosition = new Vector2(col * cellWidth + 2f, -row * cellHeight - 1f);
+            if (labelIndex < cageSumLabelTexts.Count)
+                cageSumLabelTexts[labelIndex].fontSize = fontSize;
+            labelIndex++;
+        }
     }
 
     private void EnsureCageSumBadge()
@@ -313,6 +410,7 @@ public class SudokuGrid : MonoBehaviour
             cageSumBadgeText.fontSize = badgeHeight * 0.5f;
         cageSumBadgeRect.anchoredPosition = gridPanelRect.anchoredPosition +
             new Vector2(0f, gridPanelRect.rect.height * 0.5f + cageSumBadgeRect.rect.height * 0.5f + 8f);
+        PositionKillerCageSumLabels();
     }
 
     // ── Binding Handlers ──────────────────────────────────────────────────────

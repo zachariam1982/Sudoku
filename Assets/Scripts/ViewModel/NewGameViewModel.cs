@@ -72,6 +72,7 @@ public sealed class NewGameViewModel : BaseViewModel
             IsWon = IsWon.Value,
             statename = CurrentStateName.Value
         };
+        CaptureModelSaveData(data);
 
         int[] originalPuzzle = Model.GetOriginalPuzzleFlat();
         int[] solution = Model.GetSolutionFlat();
@@ -103,7 +104,7 @@ public sealed class NewGameViewModel : BaseViewModel
         Model.SetLevel(data.Level);
         Model.SetPuzzleSeed(data.PuzzleSeed > 0 ? data.PuzzleSeed : data.Level);
         Model.SetDifficulty((SudokuDifficulty)data.Difficulty);
-        if (!Model.TryLoadSavedPuzzle(data.OriginalPuzzleFlat, data.SolutionFlat))
+        if (!TryLoadModelPuzzle(data))
             Model.LoadCurrentLevelPuzzle();
 
         for (int i = 0; i < 81; i++)

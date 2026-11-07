@@ -87,6 +87,8 @@ public class GridBuilder : MonoBehaviour
  
         if (NumberPicker.Instance != null)
             NumberPicker.Instance.UpdateGridBounds(gridSize, gridSize, boxGap, boxPadding, cellGap);
+
+        sudokuGrid.RefreshKillerCageLayout();
     }
     private void InitializeGrid()
     {

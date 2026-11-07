@@ -90,6 +90,7 @@ public sealed class DailyChallengeViewModel : BaseViewModel
             SOSUses = UsageStats.SOSUses,
             AutoFillUses = UsageStats.AutoFillUses
         };
+        CaptureModelSaveData(data);
 
         int[] originalPuzzle = Model.GetOriginalPuzzleFlat();
         int[] solution = Model.GetSolutionFlat();
@@ -123,7 +124,7 @@ public sealed class DailyChallengeViewModel : BaseViewModel
         Model.SetLevel(_dateSeed);
         Model.SetDifficulty((SudokuDifficulty)record.Difficulty);
         Model.SetPuzzleSeed(_dateSeed);
-        if (!Model.TryLoadSavedPuzzle(data.OriginalPuzzleFlat, data.SolutionFlat))
+        if (!TryLoadModelPuzzle(data))
             return false;
 
         for (int i = 0; i < 81; i++)

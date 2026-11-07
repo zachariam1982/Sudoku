@@ -9,6 +9,8 @@ public abstract class JsonGameSaveSystem : IGameSaveSystem
     protected abstract string VariantName { get; }
     protected abstract string GetFileName(SaveSlot slot);
     protected abstract bool IsValidSavedPuzzle(int[] puzzleFlat, int[] solutionFlat);
+    protected virtual bool IsValidSavedPuzzle(SaveGameData data, SaveSlot slot) =>
+        IsValidSavedPuzzle(data.OriginalPuzzleFlat, data.SolutionFlat);
     protected virtual bool AllowsLegacyMissingVariant => false;
     protected virtual bool AllowsLegacyMissingPuzzle(SaveGameData data, SaveSlot slot) => false;
     protected virtual bool AllowsLegacyEmptyPuzzle(SaveGameData data, SaveSlot slot) => false;
@@ -145,7 +147,7 @@ public abstract class JsonGameSaveSystem : IGameSaveSystem
             IsAllZero(data.OriginalPuzzleFlat) && IsAllZero(data.SolutionFlat))
             return true;
 
-        return IsValidSavedPuzzle(data.OriginalPuzzleFlat, data.SolutionFlat);
+        return IsValidSavedPuzzle(data, slot);
     }
 
     private static bool IsAllZero(int[] values)

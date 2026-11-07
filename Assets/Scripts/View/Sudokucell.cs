@@ -43,6 +43,8 @@ public class SudokuCell : MonoBehaviour
     private bool            isSelected = false;
     private bool            isPickerHighlighted = false;
     private bool            isPencilModeActive = false;
+    private bool            killerCageTintActive;
+    private Color           killerCageTint;
     private Color           baseColor;
     private Button[] _pencilButtons;
     private int _pencilCandidateMask;
@@ -82,6 +84,7 @@ public class SudokuCell : MonoBehaviour
     };
     public int  Value   { get; private set; }
     public bool IsGiven { get; private set; }
+    public TMP_FontAsset NumberFont => numberText != null ? numberText.font : null;
     private Vector3 _originalScale;
     private Vector3 _originalPosition;
     private Quaternion _originalRotation;
@@ -147,6 +150,13 @@ public class SudokuCell : MonoBehaviour
         row       = cellRow;
         col       = cellCol;
         viewModel = vm;
+    }
+
+    public void SetKillerCageTint(Color tint, bool active)
+    {
+        killerCageTint = tint;
+        killerCageTintActive = active;
+        ApplyBackgroundColor();
     }
 
     public void SetCandidateHighlight(int number)
@@ -320,8 +330,13 @@ public class SudokuCell : MonoBehaviour
 
         if (background != null)
         {
-            Color displayColor = baseColor;
-            if (isPencilModeActive)
+            bool hasStateHighlight = isPickerHighlighted || isSelected || isConflict ||
+                isDigitMatchHighlighted || isDiagonalHighlighted || isDimmed || isRelatedHighlighted;
+            bool usingKillerCageTint = killerCageTintActive && !hasStateHighlight;
+            Color displayColor = usingKillerCageTint
+                ? killerCageTint
+                : baseColor;
+            if (isPencilModeActive && !usingKillerCageTint)
                 displayColor.a = Mathf.Max(displayColor.a, PencilModeBoundaryOpacity);
 
             background.color = displayColor;

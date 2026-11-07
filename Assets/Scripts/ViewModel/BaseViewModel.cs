@@ -28,6 +28,8 @@ public class BaseViewModel
     public BindableProperty<bool[,]> GivenMask { get; } = new BindableProperty<bool[,]>();
     public BindableProperty<int[,]> PencilCandidateMasks { get; } =
         new BindableProperty<int[,]>();
+    public BindableProperty<KillerCage[]> KillerCages { get; } =
+        new BindableProperty<KillerCage[]>(System.Array.Empty<KillerCage>());
     public BindableProperty<int> SelectedRow { get; } = new BindableProperty<int>(-1);
     public BindableProperty<int> SelectedCol { get; } = new BindableProperty<int>(-1);
     public BindableProperty<int> SelectedDigit { get; } = new BindableProperty<int>(0);
@@ -54,6 +56,22 @@ public class BaseViewModel
         new BindableProperty<List<(int, int, int)>>(new List<(int, int, int)>());
     public BindableProperty<(string title, string message, string status)> ShowMessage { get; } =
         new BindableProperty<(string, string, string)>(("", "", ""));
+
+    protected void CaptureModelSaveData(SaveGameData data)
+    {
+        if (Model is KillerSudokuModel killerModel)
+            data.KillerCages = KillerSudokuModel.SerializeCages(killerModel.Cages);
+    }
+
+    protected bool TryLoadModelPuzzle(SaveGameData data)
+    {
+        if (Model is KillerSudokuModel killerModel)
+            return killerModel.TryLoadSavedPuzzle(
+                data.OriginalPuzzleFlat,
+                data.SolutionFlat,
+                KillerSudokuModel.DeserializeCages(data.KillerCages));
+        return Model.TryLoadSavedPuzzle(data.OriginalPuzzleFlat, data.SolutionFlat);
+    }
 
     public ICommand SelectCellCommand { get; }
     public ICommand EnterValueCommand { get; }
@@ -252,6 +270,9 @@ public class BaseViewModel
     {
         BoardValues.Value = Model.Board;
         GivenMask.Value = Model.GivenMask;
+        KillerCages.Value = Model is KillerSudokuModel killerModel
+            ? killerModel.Cages
+            : System.Array.Empty<KillerCage>();
     }
 
     protected void PublishPencilCandidates()

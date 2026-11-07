@@ -26,6 +26,13 @@ public class SaveGameHistoryEntry
 }
 
 [Serializable]
+public class SaveGameKillerCage
+{
+    public int TargetSum;
+    public int[] Cells = Array.Empty<int>();
+}
+
+[Serializable]
 public class SaveGameData
 {
     // Version 2 stores the original puzzle and solution so saves remain valid
@@ -44,6 +51,7 @@ public class SaveGameData
     public string DailyChallengeDate = "";
     public int[] OriginalPuzzleFlat = new int[81];
     public int[] SolutionFlat = new int[81];
+    public List<SaveGameKillerCage> KillerCages = new List<SaveGameKillerCage>();
 
     // ── Board state ───────────────────────────────────────────────────────────
     /// <summary>Flat row-major array of 81 cell values (0 = empty).</summary>

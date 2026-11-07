@@ -35,14 +35,18 @@ public sealed class ThermoSudokuDifficultyAnalyzer : ISudokuDifficultyAnalyzer
         int[,] board = (int[,])puzzle.Clone();
         int steps = 0;
         SudokuTechnique hardest = SudokuTechnique.NakedSingle;
+        var candidates = new int[9, 9];
         while (!IsComplete(board))
         {
-            if (TryNakedSingle(board, paths))
+            for (int r = 0; r < 9; r++)
+                for (int c = 0; c < 9; c++)
+                    candidates[r, c] = ThermoSudokuRules.GetCandidateMask(board, paths, r, c);
+            if (TryNakedSingle(board, candidates))
             {
                 steps++;
                 hardest = Max(hardest, SudokuTechnique.NakedSingle);
             }
-            else if (TryHiddenSingle(board, paths))
+            else if (TryHiddenSingle(board, candidates))
             {
                 steps++;
                 hardest = Max(hardest, SudokuTechnique.HiddenSingle);
@@ -70,13 +74,13 @@ public sealed class ThermoSudokuDifficultyAnalyzer : ISudokuDifficultyAnalyzer
             throw new ArgumentException("A Sudoku board must be 9 by 9.", nameof(puzzle));
     }
 
-    private static bool TryNakedSingle(int[,] board, Thermometer[] paths)
+    private static bool TryNakedSingle(int[,] board, int[,] candidates)
     {
         for (int row = 0; row < 9; row++)
             for (int col = 0; col < 9; col++)
             {
                 if (board[row, col] != 0) continue;
-                int mask = ThermoSudokuRules.GetCandidateMask(board, paths, row, col);
+                int mask = candidates[row, col];
                 if (CountBits(mask) != 1) continue;
                 board[row, col] = FirstValue(mask);
                 return true;
@@ -84,7 +88,7 @@ public sealed class ThermoSudokuDifficultyAnalyzer : ISudokuDifficultyAnalyzer
         return false;
     }
 
-    private static bool TryHiddenSingle(int[,] board, Thermometer[] paths)
+    private static bool TryHiddenSingle(int[,] board, int[,] candidates)
     {
         foreach (int[] unit in Units)
             for (int value = 1; value <= 9; value++)
@@ -97,7 +101,7 @@ public sealed class ThermoSudokuDifficultyAnalyzer : ISudokuDifficultyAnalyzer
                     int row = cell / 9;
                     int col = cell % 9;
                     if (board[row, col] != 0 ||
-                        (ThermoSudokuRules.GetCandidateMask(board, paths, row, col) & bit) == 0) continue;
+                        (candidates[row, col] & bit) == 0) continue;
                     found = cell;
                     if (++count > 1) break;
                 }

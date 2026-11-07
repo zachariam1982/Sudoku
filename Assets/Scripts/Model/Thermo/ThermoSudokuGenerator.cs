@@ -5,6 +5,8 @@ public sealed class ThermoSudokuGenerator : ISudokuGenerator
     public SudokuResult Generate(int level, SudokuDifficulty requestedDifficulty, int maxAttempts = 100)
     {
         if (!Enum.IsDefined(typeof(SudokuDifficulty), requestedDifficulty) || maxAttempts < 1) throw new ArgumentOutOfRangeException();
+        var elapsed = System.Diagnostics.Stopwatch.StartNew();
+        int uniquenessChecks = 0, analyzerCalls = 0;
         var solver = new ThermoSudokuSolver();
         var analyzer = new ThermoSudokuDifficultyAnalyzer();
         for (int attempt = 0; attempt < maxAttempts; attempt++)
@@ -44,12 +46,17 @@ public sealed class ThermoSudokuGenerator : ISudokuGenerator
             foreach (int cell in starts)
             {
                 int value = puzzle[cell/9,cell%9]; puzzle[cell/9,cell%9] = 0;
-                if (!solver.HasUniqueSolution(puzzle, thermometers)) { puzzle[cell/9,cell%9] = value; continue; }
+                uniquenessChecks++;
+                if (!solver.HasUniqueSolutionWithinBudget(puzzle, thermometers, 20000)) { puzzle[cell/9,cell%9] = value; continue; }
                 givens--;
                 if (givens > maxGivens) continue;
-                var rating = analyzer.Analyze(puzzle, thermometers);
+                analyzerCalls++;
+                var rating = analyzer.AnalyzeKnownValidPuzzle(puzzle, thermometers);
                 if (rating.Difficulty == requestedDifficulty)
+                {
+                    UnityEngine.Debug.Log($"[ThermoSudokuGenerator] difficulty={requestedDifficulty} attempts={attempt + 1} uniquenessChecks={uniquenessChecks} analyzerCalls={analyzerCalls} elapsedMs={elapsed.ElapsedMilliseconds}");
                     return new SudokuResult { Puzzle = puzzle, Solution = solution, Difficulty = rating.Difficulty, Thermometers = thermometers };
+                }
             }
         }
         throw new InvalidOperationException("Unable to generate the requested Thermo difficulty within the attempt budget.");

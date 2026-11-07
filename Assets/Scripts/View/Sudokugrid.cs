@@ -18,6 +18,8 @@ public class SudokuGrid : MonoBehaviour
     private BaseViewModel viewModel;
     private bool diagonalVariantActive;
     private bool killerVariantActive;
+    private bool thermoVariantActive;
+    private readonly ThermometerGraphic[] thermometerGraphics = new ThermometerGraphic[81];
     private KillerCage[] killerCages;
     private int[] killerCageByCell = new int[81];
     private RectTransform gridPanelRect;
@@ -46,6 +48,7 @@ public class SudokuGrid : MonoBehaviour
 
         vm.BoardValues.OnChanged      += OnBoardChanged;
         vm.GivenMask.OnChanged        += OnBoardChanged;
+        vm.Thermometers.OnChanged += OnThermometersChanged;
         vm.KillerCages.OnChanged      += OnKillerCagesChanged;
         vm.SelectedRow.OnChanged      += OnSelectedRowOrColumnChanged;
         vm.SelectedCol.OnChanged      += OnSelectedRowOrColumnChanged;
@@ -72,7 +75,62 @@ public class SudokuGrid : MonoBehaviour
             OnPencilModeChanged(viewModel.IsPencilMode.Value);
             OnCandidateHighlightChanged(viewModel.HighlightedCandidateNumber.Value);
             OnKillerCagesChanged(viewModel.KillerCages.Value);
+            RefreshThermometerLayout();
             UpdateCageSumBadge();
+        }
+    }
+
+    public void SetThermoVariantActive(bool active)
+    {
+        thermoVariantActive = active;
+        RefreshThermometerLayout();
+    }
+
+    private void OnThermometersChanged(Thermometer[] paths) => RefreshThermometerLayout();
+
+    public void RefreshThermometerLayout()
+    {
+        if (!cellsReady) return;
+        bool visible = thermoVariantActive && viewModel != null && viewModel.Thermometers.Value.Length > 0;
+        if (!visible)
+        {
+            foreach (var graphic in thermometerGraphics)
+                if (graphic != null) graphic.gameObject.SetActive(false);
+            return;
+        }
+        var paths = viewModel.Thermometers.Value;
+        var occupied = new bool[81];
+        foreach (var path in paths)
+            if (path?.Cells != null)
+                foreach (int index in path.Cells)
+                    if (index >= 0 && index < 81) occupied[index] = true;
+        for (int index = 0; index < 81; index++)
+        {
+            var graphic = thermometerGraphics[index];
+            if (!occupied[index])
+            {
+                if (graphic != null) graphic.gameObject.SetActive(false);
+                continue;
+            }
+            Transform cell = cells[index / 9, index % 9].transform;
+            if (graphic == null)
+            {
+                var go = new GameObject("Thermometer Underlay", typeof(RectTransform), typeof(CanvasRenderer), typeof(ThermometerGraphic));
+                go.transform.SetParent(cell, false);
+                graphic = go.GetComponent<ThermometerGraphic>();
+                thermometerGraphics[index] = graphic;
+                var rect = graphic.rectTransform;
+                rect.anchorMin = Vector2.zero;
+                rect.anchorMax = Vector2.one;
+                rect.offsetMin = rect.offsetMax = Vector2.zero;
+                graphic.raycastTarget = false;
+            }
+            // Draw after the cell tint but before numbers, pencil marks and glow.
+            Transform overlay = cell.Find("CellStateOverlay");
+            graphic.transform.SetAsFirstSibling();
+            if (overlay != null) graphic.transform.SetSiblingIndex(overlay.GetSiblingIndex() + 1);
+            graphic.gameObject.SetActive(true);
+            graphic.SetPaths(paths, cells, index);
         }
     }
 
@@ -109,6 +167,7 @@ public class SudokuGrid : MonoBehaviour
 
         viewModel.BoardValues.OnChanged      -= OnBoardChanged;
         viewModel.GivenMask.OnChanged        -= OnBoardChanged;
+        viewModel.Thermometers.OnChanged -= OnThermometersChanged;
         viewModel.KillerCages.OnChanged      -= OnKillerCagesChanged;
         viewModel.SelectedRow.OnChanged      -= OnSelectedRowOrColumnChanged;
         viewModel.SelectedCol.OnChanged      -= OnSelectedRowOrColumnChanged;
@@ -121,6 +180,8 @@ public class SudokuGrid : MonoBehaviour
         viewModel.HighlightedCandidateNumber.OnChanged -= OnCandidateHighlightChanged;
         viewModel.PencilCandidateMasks.OnChanged -= OnPencilCandidatesChanged;
         viewModel = null;
+        foreach (var graphic in thermometerGraphics)
+                if (graphic != null) graphic.gameObject.SetActive(false);
         if (cageSumBadgeRect != null) cageSumBadgeRect.gameObject.SetActive(false);
     }
 
@@ -714,6 +775,7 @@ public class SudokuGrid : MonoBehaviour
             }
 
         cellsReady = true;
+        RefreshThermometerLayout();
         RefreshKillerCages();
 
         if (viewModel != null)

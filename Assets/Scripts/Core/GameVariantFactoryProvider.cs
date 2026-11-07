@@ -17,6 +17,8 @@ public static class GameVariantFactoryProvider
                 return new DiagonalGameVariantFactory(database);
             case GameVariant.Killer:
                 return new KillerGameVariantFactory(database);
+            case GameVariant.Thermo:
+                return new ThermoGameVariantFactory(database);
             default:
                 throw new ArgumentOutOfRangeException(nameof(variant), variant, "Unsupported game variant.");
         }

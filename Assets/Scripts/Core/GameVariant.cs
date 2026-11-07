@@ -3,5 +3,6 @@ public enum GameVariant
 {
     Classic,
     Diagonal,
-    Killer
+    Killer,
+    Thermo
 }

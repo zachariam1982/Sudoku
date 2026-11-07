@@ -19,6 +19,7 @@ public class SudokuResult
     public int[,] Puzzle;   // The grid with holes (0 represents empty)
     public int[,] Solution; // The completed grid
     public SudokuDifficulty Difficulty; // The analyzer-rated tier actually generated
+    public Thermometer[] Thermometers;
     public KillerCage[] KillerCages; // Empty for non-Killer variants.
 }
 public class ScoringSystem : IScoringSystem

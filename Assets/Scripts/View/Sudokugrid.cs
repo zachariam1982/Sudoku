@@ -19,7 +19,6 @@ public class SudokuGrid : MonoBehaviour
     private bool diagonalVariantActive;
     private bool killerVariantActive;
     private bool thermoVariantActive;
-    private ThermometerGraphic thermometerGraphic;
     private KillerCage[] killerCages;
     private int[] killerCageByCell = new int[81];
     private RectTransform gridPanelRect;
@@ -91,25 +90,36 @@ public class SudokuGrid : MonoBehaviour
     public void RefreshThermometerLayout()
     {
         if (!cellsReady) return;
-        bool visible = thermoVariantActive && viewModel != null && viewModel.Thermometers.Value.Length > 0;
-        if (!visible)
+        ClearThermoTints();
+        if (!thermoVariantActive || viewModel == null) return;
+        var paths = viewModel.Thermometers.Value;
+        if (paths == null) return;
+        foreach (var path in paths)
         {
-            if (thermometerGraphic != null) thermometerGraphic.gameObject.SetActive(false);
-            return;
+            if (path?.Cells == null || path.Cells.Length < 2) continue;
+            for (int i = 0; i < path.Cells.Length; i++)
+            {
+                int index = path.Cells[i];
+                if (index < 0 || index >= 81) continue;
+                float temperature = (float)i / (path.Cells.Length - 1);
+                // Each path uses the full cold-to-hot range, regardless of length.
+                Color cold = new Color32(70, 150, 255, 64);
+                Color warm = new Color32(255, 215, 90, 64);
+                Color hot = new Color32(255, 75, 30, 64);
+                Color tint = temperature <= 0.5f
+                    ? Color.Lerp(cold, warm, temperature * 2f)
+                    : Color.Lerp(warm, hot, (temperature - 0.5f) * 2f);
+                cells[index / 9, index % 9]?.SetThermoTint(tint, true);
+            }
         }
-        if (thermometerGraphic == null)
-        {
-            var go = new GameObject("Thermometer Paths", typeof(RectTransform), typeof(CanvasRenderer), typeof(ThermometerGraphic));
-            go.transform.SetParent(cells[0, 0].transform.parent.parent, false);
-            thermometerGraphic = go.GetComponent<ThermometerGraphic>();
-            var rect = thermometerGraphic.rectTransform;
-            rect.anchorMin = Vector2.zero;
-            rect.anchorMax = Vector2.one;
-            rect.offsetMin = rect.offsetMax = Vector2.zero;
-            thermometerGraphic.raycastTarget = false;
-        }
-        thermometerGraphic.gameObject.SetActive(true);
-        thermometerGraphic.SetPaths(viewModel.Thermometers.Value, cells);
+    }
+
+    private void ClearThermoTints()
+    {
+        if (!cellsReady) return;
+        for (int row = 0; row < 9; row++)
+            for (int col = 0; col < 9; col++)
+                cells[row, col]?.SetThermoTint(Color.clear, false);
     }
 
     public void SetDiagonalVariantActive(bool active)
@@ -158,7 +168,7 @@ public class SudokuGrid : MonoBehaviour
         viewModel.HighlightedCandidateNumber.OnChanged -= OnCandidateHighlightChanged;
         viewModel.PencilCandidateMasks.OnChanged -= OnPencilCandidatesChanged;
         viewModel = null;
-        if (thermometerGraphic != null) thermometerGraphic.gameObject.SetActive(false);
+        ClearThermoTints();
         if (cageSumBadgeRect != null) cageSumBadgeRect.gameObject.SetActive(false);
     }
 

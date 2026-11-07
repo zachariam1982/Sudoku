@@ -45,6 +45,8 @@ public class SudokuCell : MonoBehaviour
     private bool            isPencilModeActive = false;
     private bool            killerCageTintActive;
     private Color           killerCageTint;
+    private bool thermoTintActive;
+    private Color thermoTint;
     private Color           baseColor;
     private Button[] _pencilButtons;
     private int _pencilCandidateMask;
@@ -150,6 +152,13 @@ public class SudokuCell : MonoBehaviour
         row       = cellRow;
         col       = cellCol;
         viewModel = vm;
+    }
+
+    public void SetThermoTint(Color tint, bool active)
+    {
+        thermoTint = tint;
+        thermoTintActive = active;
+        ApplyBackgroundColor();
     }
 
     public void SetKillerCageTint(Color tint, bool active)
@@ -332,11 +341,11 @@ public class SudokuCell : MonoBehaviour
         {
             bool hasStateHighlight = isPickerHighlighted || isSelected || isConflict ||
                 isDigitMatchHighlighted || isDiagonalHighlighted || isDimmed || isRelatedHighlighted;
-            bool usingKillerCageTint = killerCageTintActive && !hasStateHighlight;
-            Color displayColor = usingKillerCageTint
-                ? killerCageTint
+            bool usingVariantTint = (thermoTintActive || killerCageTintActive) && !hasStateHighlight;
+            Color displayColor = usingVariantTint
+                ? (thermoTintActive ? thermoTint : killerCageTint)
                 : baseColor;
-            if (isPencilModeActive && !usingKillerCageTint)
+            if (isPencilModeActive && !usingVariantTint)
                 displayColor.a = Mathf.Max(displayColor.a, PencilModeBoundaryOpacity);
 
             background.color = displayColor;

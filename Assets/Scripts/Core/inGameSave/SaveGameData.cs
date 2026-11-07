@@ -33,6 +33,12 @@ public class SaveGameKillerCage
 }
 
 [Serializable]
+public class SaveGameThermometer
+{
+    public int[] Cells = Array.Empty<int>();
+}
+
+[Serializable]
 public class SaveGameData
 {
     // Version 2 stores the original puzzle and solution so saves remain valid
@@ -51,6 +57,7 @@ public class SaveGameData
     public string DailyChallengeDate = "";
     public int[] OriginalPuzzleFlat = new int[81];
     public int[] SolutionFlat = new int[81];
+    public List<SaveGameThermometer> Thermometers = new List<SaveGameThermometer>();
     public List<SaveGameKillerCage> KillerCages = new List<SaveGameKillerCage>();
 
     // ── Board state ───────────────────────────────────────────────────────────

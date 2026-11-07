@@ -59,6 +59,8 @@ public class BaseViewModel
 
     protected void CaptureModelSaveData(SaveGameData data)
     {
+        if (Model is ThermoSudokuModel thermoModel)
+            data.Thermometers = ThermoSudokuModel.SerializeThermometers(thermoModel.Thermometers);
         if (Model is KillerSudokuModel killerModel)
             data.KillerCages = KillerSudokuModel.SerializeCages(killerModel.Cages);
     }
@@ -70,6 +72,8 @@ public class BaseViewModel
                 data.OriginalPuzzleFlat,
                 data.SolutionFlat,
                 KillerSudokuModel.DeserializeCages(data.KillerCages));
+        if (Model is ThermoSudokuModel thermoModel)
+            return thermoModel.TryLoadSavedPuzzle(data.OriginalPuzzleFlat, data.SolutionFlat, ThermoSudokuModel.DeserializeThermometers(data.Thermometers));
         return Model.TryLoadSavedPuzzle(data.OriginalPuzzleFlat, data.SolutionFlat);
     }
 

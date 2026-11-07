@@ -28,6 +28,8 @@ public class BaseViewModel
     public BindableProperty<bool[,]> GivenMask { get; } = new BindableProperty<bool[,]>();
     public BindableProperty<int[,]> PencilCandidateMasks { get; } =
         new BindableProperty<int[,]>();
+    public BindableProperty<Thermometer[]> Thermometers { get; } =
+        new BindableProperty<Thermometer[]>(System.Array.Empty<Thermometer>());
     public BindableProperty<KillerCage[]> KillerCages { get; } =
         new BindableProperty<KillerCage[]>(System.Array.Empty<KillerCage>());
     public BindableProperty<int> SelectedRow { get; } = new BindableProperty<int>(-1);
@@ -274,6 +276,8 @@ public class BaseViewModel
     {
         BoardValues.Value = Model.Board;
         GivenMask.Value = Model.GivenMask;
+        Thermometers.Value = Model is ThermoSudokuModel thermoModel
+            ? thermoModel.Thermometers : System.Array.Empty<Thermometer>();
         KillerCages.Value = Model is KillerSudokuModel killerModel
             ? killerModel.Cages
             : System.Array.Empty<KillerCage>();

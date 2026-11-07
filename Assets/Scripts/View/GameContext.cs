@@ -97,6 +97,7 @@ public class GameContext : MonoBehaviour
     {
         _grid?.SetDiagonalVariantActive(factory.Variant == GameVariant.Diagonal);
         _grid?.SetKillerVariantActive(factory.Variant == GameVariant.Killer);
+        _grid?.SetThermoVariantActive(factory.Variant == GameVariant.Thermo);
 
         if (NewGameViewModel != null)
         {

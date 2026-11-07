@@ -18,6 +18,8 @@ public class SudokuGrid : MonoBehaviour
     private BaseViewModel viewModel;
     private bool diagonalVariantActive;
     private bool killerVariantActive;
+    private bool thermoVariantActive;
+    private ThermometerGraphic thermometerGraphic;
     private KillerCage[] killerCages;
     private int[] killerCageByCell = new int[81];
     private RectTransform gridPanelRect;
@@ -46,6 +48,7 @@ public class SudokuGrid : MonoBehaviour
 
         vm.BoardValues.OnChanged      += OnBoardChanged;
         vm.GivenMask.OnChanged        += OnBoardChanged;
+        vm.Thermometers.OnChanged += OnThermometersChanged;
         vm.KillerCages.OnChanged      += OnKillerCagesChanged;
         vm.SelectedRow.OnChanged      += OnSelectedRowOrColumnChanged;
         vm.SelectedCol.OnChanged      += OnSelectedRowOrColumnChanged;
@@ -72,8 +75,41 @@ public class SudokuGrid : MonoBehaviour
             OnPencilModeChanged(viewModel.IsPencilMode.Value);
             OnCandidateHighlightChanged(viewModel.HighlightedCandidateNumber.Value);
             OnKillerCagesChanged(viewModel.KillerCages.Value);
+            RefreshThermometerLayout();
             UpdateCageSumBadge();
         }
+    }
+
+    public void SetThermoVariantActive(bool active)
+    {
+        thermoVariantActive = active;
+        RefreshThermometerLayout();
+    }
+
+    private void OnThermometersChanged(Thermometer[] paths) => RefreshThermometerLayout();
+
+    public void RefreshThermometerLayout()
+    {
+        if (!cellsReady) return;
+        bool visible = thermoVariantActive && viewModel != null && viewModel.Thermometers.Value.Length > 0;
+        if (!visible)
+        {
+            if (thermometerGraphic != null) thermometerGraphic.gameObject.SetActive(false);
+            return;
+        }
+        if (thermometerGraphic == null)
+        {
+            var go = new GameObject("Thermometer Paths", typeof(RectTransform), typeof(CanvasRenderer), typeof(ThermometerGraphic));
+            go.transform.SetParent(cells[0, 0].transform.parent.parent, false);
+            thermometerGraphic = go.GetComponent<ThermometerGraphic>();
+            var rect = thermometerGraphic.rectTransform;
+            rect.anchorMin = Vector2.zero;
+            rect.anchorMax = Vector2.one;
+            rect.offsetMin = rect.offsetMax = Vector2.zero;
+            thermometerGraphic.raycastTarget = false;
+        }
+        thermometerGraphic.gameObject.SetActive(true);
+        thermometerGraphic.SetPaths(viewModel.Thermometers.Value, cells);
     }
 
     public void SetDiagonalVariantActive(bool active)
@@ -109,6 +145,7 @@ public class SudokuGrid : MonoBehaviour
 
         viewModel.BoardValues.OnChanged      -= OnBoardChanged;
         viewModel.GivenMask.OnChanged        -= OnBoardChanged;
+        viewModel.Thermometers.OnChanged -= OnThermometersChanged;
         viewModel.KillerCages.OnChanged      -= OnKillerCagesChanged;
         viewModel.SelectedRow.OnChanged      -= OnSelectedRowOrColumnChanged;
         viewModel.SelectedCol.OnChanged      -= OnSelectedRowOrColumnChanged;
@@ -121,6 +158,7 @@ public class SudokuGrid : MonoBehaviour
         viewModel.HighlightedCandidateNumber.OnChanged -= OnCandidateHighlightChanged;
         viewModel.PencilCandidateMasks.OnChanged -= OnPencilCandidatesChanged;
         viewModel = null;
+        if (thermometerGraphic != null) thermometerGraphic.gameObject.SetActive(false);
         if (cageSumBadgeRect != null) cageSumBadgeRect.gameObject.SetActive(false);
     }
 
@@ -714,6 +752,7 @@ public class SudokuGrid : MonoBehaviour
             }
 
         cellsReady = true;
+        RefreshThermometerLayout();
         RefreshKillerCages();
 
         if (viewModel != null)

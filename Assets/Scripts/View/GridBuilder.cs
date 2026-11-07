@@ -89,6 +89,7 @@ public class GridBuilder : MonoBehaviour
             NumberPicker.Instance.UpdateGridBounds(gridSize, gridSize, boxGap, boxPadding, cellGap);
 
         sudokuGrid.RefreshKillerCageLayout();
+        sudokuGrid.RefreshThermometerLayout();
     }
     private void InitializeGrid()
     {

@@ -1,15 +1,17 @@
 using UnityEngine;
 using UnityEngine.UI;
 
-/// <summary>Responsive, non-interactive thermometer strokes over the board.</summary>
+/// <summary>Responsive, non-interactive thermometer strokes beneath each cell’s digits.</summary>
 public sealed class ThermometerGraphic : MaskableGraphic
 {
     private Thermometer[] paths;
     private SudokuCell[,] cells;
-    public void SetPaths(Thermometer[] value, SudokuCell[,] grid)
+    private int cellIndex;
+    public void SetPaths(Thermometer[] value, SudokuCell[,] grid, int index)
     {
         paths = value;
         cells = grid;
+        cellIndex = index;
         SetVerticesDirty();
     }
     protected override void OnPopulateMesh(VertexHelper vh)
@@ -19,7 +21,8 @@ public sealed class ThermometerGraphic : MaskableGraphic
         foreach (var path in paths)
         {
             if (path == null || path.Cells == null || path.Cells.Length < 2) continue;
-            var cellRect = cells[path.Cells[0]/9, path.Cells[0]%9].transform as RectTransform;
+            if (System.Array.IndexOf(path.Cells, cellIndex) < 0) continue;
+            var cellRect = cells[cellIndex/9, cellIndex%9].transform as RectTransform;
             Vector2 center = Center(path.Cells[0]);
             float size = Vector2.Distance(rectTransform.InverseTransformPoint(cellRect.TransformPoint(cellRect.rect.min)),
                 rectTransform.InverseTransformPoint(cellRect.TransformPoint(new Vector2(cellRect.rect.xMax, cellRect.rect.yMin))));
@@ -27,13 +30,22 @@ public sealed class ThermometerGraphic : MaskableGraphic
             Color32 stroke = new Color(0.70f, 0.88f, 1f, 0.48f);
             for (int i = 1; i < path.Cells.Length; i++)
             {
-                Vector2 a = Center(path.Cells[i-1]), b = Center(path.Cells[i]);
+                int previous = path.Cells[i-1], next = path.Cells[i];
+                if (previous != cellIndex && next != cellIndex) continue;
+                Vector2 a = Center(previous), b = Center(next);
+                Vector2 midpoint = (a + b) * 0.5f;
                 Vector2 direction = (b-a).normalized;
-                if (i == 1) a += direction * radius;
+                if (previous == cellIndex)
+                {
+                    if (i == 1) a += direction * radius;
+                    b = midpoint;
+                }
+                else a = midpoint;
                 Vector2 normal = new Vector2(-direction.y, direction.x) * size * 0.065f;
                 Quad(vh, a-normal, a+normal, b+normal, b-normal, stroke);
             }
-            // Hollow bulb keeps the digit at its center readable.
+            if (path.Cells[0] != cellIndex) continue;
+            // The bulb belongs to the starting cell; digits render above it.
             const int segments = 32;
             for (int i = 0; i < segments; i++)
             {

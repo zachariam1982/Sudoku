@@ -19,7 +19,7 @@ public class SudokuGrid : MonoBehaviour
     private bool diagonalVariantActive;
     private bool killerVariantActive;
     private bool thermoVariantActive;
-    private ThermometerGraphic thermometerGraphic;
+    private readonly ThermometerGraphic[] thermometerGraphics = new ThermometerGraphic[81];
     private KillerCage[] killerCages;
     private int[] killerCageByCell = new int[81];
     private RectTransform gridPanelRect;
@@ -94,22 +94,44 @@ public class SudokuGrid : MonoBehaviour
         bool visible = thermoVariantActive && viewModel != null && viewModel.Thermometers.Value.Length > 0;
         if (!visible)
         {
-            if (thermometerGraphic != null) thermometerGraphic.gameObject.SetActive(false);
+            foreach (var graphic in thermometerGraphics)
+                if (graphic != null) graphic.gameObject.SetActive(false);
             return;
         }
-        if (thermometerGraphic == null)
+        var paths = viewModel.Thermometers.Value;
+        var occupied = new bool[81];
+        foreach (var path in paths)
+            if (path?.Cells != null)
+                foreach (int index in path.Cells)
+                    if (index >= 0 && index < 81) occupied[index] = true;
+        for (int index = 0; index < 81; index++)
         {
-            var go = new GameObject("Thermometer Paths", typeof(RectTransform), typeof(CanvasRenderer), typeof(ThermometerGraphic));
-            go.transform.SetParent(cells[0, 0].transform.parent.parent, false);
-            thermometerGraphic = go.GetComponent<ThermometerGraphic>();
-            var rect = thermometerGraphic.rectTransform;
-            rect.anchorMin = Vector2.zero;
-            rect.anchorMax = Vector2.one;
-            rect.offsetMin = rect.offsetMax = Vector2.zero;
-            thermometerGraphic.raycastTarget = false;
+            var graphic = thermometerGraphics[index];
+            if (!occupied[index])
+            {
+                if (graphic != null) graphic.gameObject.SetActive(false);
+                continue;
+            }
+            Transform cell = cells[index / 9, index % 9].transform;
+            if (graphic == null)
+            {
+                var go = new GameObject("Thermometer Underlay", typeof(RectTransform), typeof(CanvasRenderer), typeof(ThermometerGraphic));
+                go.transform.SetParent(cell, false);
+                graphic = go.GetComponent<ThermometerGraphic>();
+                thermometerGraphics[index] = graphic;
+                var rect = graphic.rectTransform;
+                rect.anchorMin = Vector2.zero;
+                rect.anchorMax = Vector2.one;
+                rect.offsetMin = rect.offsetMax = Vector2.zero;
+                graphic.raycastTarget = false;
+            }
+            // Draw after the cell tint but before numbers, pencil marks and glow.
+            Transform overlay = cell.Find("CellStateOverlay");
+            graphic.transform.SetAsFirstSibling();
+            if (overlay != null) graphic.transform.SetSiblingIndex(overlay.GetSiblingIndex() + 1);
+            graphic.gameObject.SetActive(true);
+            graphic.SetPaths(paths, cells, index);
         }
-        thermometerGraphic.gameObject.SetActive(true);
-        thermometerGraphic.SetPaths(viewModel.Thermometers.Value, cells);
     }
 
     public void SetDiagonalVariantActive(bool active)
@@ -158,7 +180,8 @@ public class SudokuGrid : MonoBehaviour
         viewModel.HighlightedCandidateNumber.OnChanged -= OnCandidateHighlightChanged;
         viewModel.PencilCandidateMasks.OnChanged -= OnPencilCandidatesChanged;
         viewModel = null;
-        if (thermometerGraphic != null) thermometerGraphic.gameObject.SetActive(false);
+        foreach (var graphic in thermometerGraphics)
+                if (graphic != null) graphic.gameObject.SetActive(false);
         if (cageSumBadgeRect != null) cageSumBadgeRect.gameObject.SetActive(false);
     }
 

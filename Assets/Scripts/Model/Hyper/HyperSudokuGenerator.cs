@@ -9,10 +9,10 @@ public sealed class HyperSudokuGenerator : ISudokuGenerator
     private readonly HyperSudokuSolver _solver = new HyperSudokuSolver();
     private readonly HyperSudokuDifficultyAnalyzer _analyzer = new HyperSudokuDifficultyAnalyzer();
 
-    public SudokuResult Generate(int level, SudokuDifficulty requestedDifficulty, int maxAttempts = 100) =>
+    public SudokuResult Generate(int level, SudokuDifficulty requestedDifficulty, int maxAttempts = 100000) =>
         GenerateSudoku(level, requestedDifficulty, maxAttempts);
 
-    public SudokuResult GenerateSudoku(int level, SudokuDifficulty requestedDifficulty, int maxAttempts = 100)
+    public SudokuResult GenerateSudoku(int level, SudokuDifficulty requestedDifficulty, int maxAttempts = 100000)
     {
         if (!Enum.IsDefined(typeof(SudokuDifficulty), requestedDifficulty))
             throw new ArgumentOutOfRangeException(nameof(requestedDifficulty));

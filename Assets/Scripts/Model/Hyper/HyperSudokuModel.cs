@@ -54,7 +54,7 @@ public sealed class HyperSudokuModel : ISudokuModel
 
     public void LoadCurrentLevelPuzzle(int maxAttempts = 100000)
     {
-        _result = _generator.Generate(_puzzleSeed, _currentDifficulty, Math.Min(maxAttempts, 100));
+        _result = _generator.Generate(_puzzleSeed, _currentDifficulty, maxAttempts);
         _currentDifficulty = _result.Difficulty;
         CopyPuzzleToBoard(_result.Puzzle);
     }

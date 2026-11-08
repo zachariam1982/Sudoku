@@ -108,39 +108,121 @@ public sealed class HyperSudokuSolver : ISudokuSolver
     private static int CountSolutionsInPlace(int[,] board, int[] masks, int limit, ref int nodesRemaining)
     {
         if (--nodesRemaining < 0) return limit;
-        int bestRow = -1, bestCol = -1, bestCandidates = 0, bestCount = 10;
-        for (int row = 0; row < 9; row++)
-            for (int col = 0; col < 9; col++)
-            {
-                if (board[row, col] != 0) continue;
-                int box = BoxOffset + row / 3 * 3 + col / 3;
-                int candidates = GetCandidatesMask(masks, row, col, box);
-                int count = CountBits(candidates);
-                if (count == 0) return 0;
-                if (count >= bestCount) continue;
-                bestRow = row;
-                bestCol = col;
-                bestCandidates = candidates;
-                bestCount = count;
-                if (count == 1) break;
-            }
 
-        if (bestRow < 0) return 1;
-
-        int boxIndex = BoxOffset + bestRow / 3 * 3 + bestCol / 3;
-        int solutions = 0;
-        for (int value = 1; value <= 9; value++)
+        // Propagate naked and hidden singles before branching. The trail is
+        // undone on return so sibling searches reuse the same board and masks.
+        int[] forcedCells = new int[81];
+        int[] forcedValues = new int[81];
+        int forcedCount = 0;
+        bool contradiction = false;
+        while (true)
         {
-            int bit = 1 << value;
-            if ((bestCandidates & bit) == 0) continue;
-            board[bestRow, bestCol] = value;
-            AddMasks(masks, bestRow, bestCol, boxIndex, bit);
-            solutions += CountSolutionsInPlace(board, masks, limit - solutions, ref nodesRemaining);
-            RemoveMasks(masks, bestRow, bestCol, boxIndex, bit);
-            board[bestRow, bestCol] = 0;
-            if (solutions >= limit) return solutions;
+            int forcedCell = -1;
+            int forcedValue = 0;
+            for (int row = 0; row < 9 && forcedCell < 0; row++)
+                for (int col = 0; col < 9; col++)
+                {
+                    if (board[row, col] != 0) continue;
+                    int mask = GetCandidatesMask(masks, row, col, BoxOffset + row / 3 * 3 + col / 3);
+                    if (mask == 0) { contradiction = true; break; }
+                    if (CountBits(mask) == 1)
+                    {
+                        forcedCell = row * 9 + col;
+                        forcedValue = FirstValue(mask);
+                        break;
+                    }
+                }
+            if (contradiction) break;
+
+            if (forcedCell < 0)
+            {
+                foreach (int[] unit in HyperSudokuRules.AllUnits)
+                {
+                    int present = 0;
+                    foreach (int index in unit)
+                    {
+                        int value = board[index / 9, index % 9];
+                        if (value > 0) present |= 1 << value;
+                    }
+                    for (int value = 1; value <= 9 && forcedCell < 0; value++)
+                    {
+                        int bit = 1 << value;
+                        if ((present & bit) != 0) continue;
+                        int found = -1;
+                        int count = 0;
+                        foreach (int index in unit)
+                        {
+                            int row = index / 9, col = index % 9;
+                            if (board[row, col] == 0 &&
+                                (GetCandidatesMask(masks, row, col, BoxOffset + row / 3 * 3 + col / 3) & bit) != 0)
+                            { found = index; if (++count > 1) break; }
+                        }
+                        if (count == 0) { contradiction = true; break; }
+                        if (count == 1) { forcedCell = found; forcedValue = value; }
+                    }
+                    if (contradiction || forcedCell >= 0) break;
+                }
+            }
+            if (contradiction || forcedCell < 0) break;
+
+            int r = forcedCell / 9, c = forcedCell % 9;
+            int bitValue = 1 << forcedValue;
+            board[r, c] = forcedValue;
+            AddMasks(masks, r, c, BoxOffset + r / 3 * 3 + c / 3, bitValue);
+            forcedCells[forcedCount] = forcedCell;
+            forcedValues[forcedCount++] = forcedValue;
+        }
+
+        int solutions = 0;
+        if (!contradiction)
+        {
+            int bestRow = -1, bestCol = -1, bestMask = 0, bestCount = 10;
+            for (int row = 0; row < 9; row++)
+                for (int col = 0; col < 9; col++)
+                {
+                    if (board[row, col] != 0) continue;
+                    int candidates = GetCandidatesMask(masks, row, col, BoxOffset + row / 3 * 3 + col / 3);
+                    int count = CountBits(candidates);
+                    if (count == 0) { contradiction = true; break; }
+                    if (count < bestCount)
+                    { bestRow = row; bestCol = col; bestMask = candidates; bestCount = count; }
+                }
+
+            if (!contradiction)
+            {
+                if (bestRow < 0) solutions = 1;
+                else
+                {
+                    int box = BoxOffset + bestRow / 3 * 3 + bestCol / 3;
+                    for (int value = 1; value <= 9; value++)
+                    {
+                        int bit = 1 << value;
+                        if ((bestMask & bit) == 0) continue;
+                        board[bestRow, bestCol] = value;
+                        AddMasks(masks, bestRow, bestCol, box, bit);
+                        solutions += CountSolutionsInPlace(board, masks, limit - solutions, ref nodesRemaining);
+                        RemoveMasks(masks, bestRow, bestCol, box, bit);
+                        board[bestRow, bestCol] = 0;
+                        if (solutions >= limit) break;
+                    }
+                }
+            }
+        }
+
+        for (int i = forcedCount - 1; i >= 0; i--)
+        {
+            int cell = forcedCells[i], row = cell / 9, col = cell % 9;
+            int value = forcedValues[i];
+            RemoveMasks(masks, row, col, BoxOffset + row / 3 * 3 + col / 3, 1 << value);
+            board[row, col] = 0;
         }
         return solutions;
+    }
+
+    private static int FirstValue(int mask)
+    {
+        for (int value = 1; value <= 9; value++) if ((mask & (1 << value)) != 0) return value;
+        return 0;
     }
 
     private static int GetCandidatesMask(int[] masks, int row, int col, int box)

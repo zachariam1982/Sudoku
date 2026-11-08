@@ -35830,7 +35830,19 @@ MonoBehaviour:
   m_TargetGraphic: {fileID: 8000000000000603}
   m_OnClick:
     m_PersistentCalls:
-      m_Calls: []
+      m_Calls:
+      - m_Target: {fileID: 8000000000000004}
+        m_TargetAssemblyTypeName: PuzzleVariantSelectionScreen, Assembly-CSharp
+        m_MethodName: OpenIrregular
+        m_Mode: 1
+        m_Arguments:
+          m_ObjectArgument: {fileID: 0}
+          m_ObjectArgumentAssemblyTypeName: UnityEngine.Object, UnityEngine
+          m_IntArgument: 0
+          m_FloatArgument: 0
+          m_StringArgument:
+          m_BoolArgument: 0
+        m_CallState: 2
 --- !u!1 &8000000000000610
 GameObject:
   m_ObjectHideFlags: 0
@@ -35972,7 +35984,7 @@ MonoBehaviour:
     m_PersistentCalls:
       m_Calls: []
   m_text: "<color=#75D85A><size=54><b>IRREGULAR</b></size></color>\n<size=34><color=#AAACCD>Shaped
-    regions contain 1\u20139</color>\n<color=#AAACCD>COMING SOON</color></size>"
+    regions contain 1\u20139</color></size>"
   m_isRightToLeft: 0
   m_fontAsset: {fileID: 11400000, guid: 8f586378b4e144a9851e7b34d9b748ee, type: 2}
   m_sharedMaterial: {fileID: 2180264, guid: 8f586378b4e144a9851e7b34d9b748ee, type: 2}

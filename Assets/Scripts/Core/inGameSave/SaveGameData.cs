@@ -41,6 +41,7 @@ public class SaveGameThermometer
 [Serializable]
 public class SaveGameData
 {
+    public int[] IrregularRegions;
     // Version 2 stores the original puzzle and solution so saves remain valid
     // even if puzzle generation changes in a later app release.
     public int SaveVersion;

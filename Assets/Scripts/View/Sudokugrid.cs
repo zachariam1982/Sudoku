@@ -135,6 +135,48 @@ public class SudokuGrid : MonoBehaviour
         }
     }
 
+    private bool irregularVariantActive;
+    public void SetIrregularVariantActive(bool active)
+    {
+        irregularVariantActive = active;
+        RefreshHighlights();
+    }
+
+    private void RefreshIrregularCell(SudokuCell cell, int row, int col)
+    {
+        var frame = cell.transform.parent.GetComponent<UnityEngine.UI.Graphic>();
+        if (frame != null) frame.enabled = !irregularVariantActive;
+        int region = IrregularSudokuRules.GetRegion(row, col);
+        bool[] edges = {
+            col == 0 || region != IrregularSudokuRules.GetRegion(row, col - 1),
+            col == 8 || region != IrregularSudokuRules.GetRegion(row, col + 1),
+            row == 0 || region != IrregularSudokuRules.GetRegion(row - 1, col),
+            row == 8 || region != IrregularSudokuRules.GetRegion(row + 1, col)
+        };
+        for (int edge = 0; edge < 4; edge++)
+        {
+            string name = "Irregular Region Edge " + edge;
+            var existing = cell.transform.Find(name);
+            if (existing == null && !irregularVariantActive) continue;
+            if (existing == null)
+            {
+                var go = new GameObject(name, typeof(RectTransform), typeof(UnityEngine.UI.Image));
+                go.transform.SetParent(cell.transform, false);
+                var image = go.GetComponent<UnityEngine.UI.Image>();
+                image.color = new Color(1f, 0.75f, 0.2f, 0.9f);
+                image.raycastTarget = false;
+                var rect = go.GetComponent<RectTransform>();
+                rect.anchorMin = edge < 2 ? new Vector2(edge, 0) : new Vector2(0, edge == 2 ? 1 : 0);
+                rect.anchorMax = edge < 2 ? new Vector2(edge, 1) : new Vector2(1, edge == 2 ? 1 : 0);
+                rect.pivot = edge < 2 ? new Vector2(edge, 0.5f) : new Vector2(0.5f, edge == 2 ? 1 : 0);
+                rect.sizeDelta = edge < 2 ? new Vector2(2, 0) : new Vector2(0, 2);
+                rect.anchoredPosition = Vector2.zero;
+                existing = go.transform;
+            }
+            existing.gameObject.SetActive(irregularVariantActive && edges[edge]);
+        }
+    }
+
     public void SetHyperVariantActive(bool active)
     {
         hyperVariantActive = active;
@@ -689,6 +731,7 @@ public class SudokuGrid : MonoBehaviour
                 bool isDiagonal = diagonalVariantActive && (row == col || row + col == 8);
 
                 SudokuCell cell = cells[row, col];
+                RefreshIrregularCell(cell, row, col);
                 cell.SetHighlight(false);
                 cell.SetRelatedHighlight(false);
                 cell.SetDigitMatchHighlight(false);

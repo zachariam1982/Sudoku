@@ -61,6 +61,11 @@ public class BaseViewModel
 
     protected void CaptureModelSaveData(SaveGameData data)
     {
+        if (Model is IrregularSudokuModel)
+        {
+            data.IrregularRegions = new int[81];
+            for (int i = 0; i < 81; i++) data.IrregularRegions[i] = IrregularSudokuRules.GetRegion(i / 9, i % 9);
+        }
         if (Model is ThermoSudokuModel thermoModel)
             data.Thermometers = ThermoSudokuModel.SerializeThermometers(thermoModel.Thermometers);
         if (Model is KillerSudokuModel killerModel)

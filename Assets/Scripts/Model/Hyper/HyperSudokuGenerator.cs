@@ -64,19 +64,9 @@ public sealed class HyperSudokuGenerator : ISudokuGenerator
                     int col = cell % 9;
                     int oldValue = puzzle[row, col];
                     puzzle[row, col] = 0;
-                    // A completed deterministic logical solve proves uniqueness too.
-                    SudokuDifficultyResult analysis = null;
-                    if (clueCount - 1 <= maxClues)
-                    {
-                        analyzerCalls++;
-                        stageStartedAt = System.Diagnostics.Stopwatch.GetTimestamp();
-                        analysis = _analyzer.Analyze(puzzle);
-                        analyzerMs += ElapsedMilliseconds(stageStartedAt);
-                    }
-                    bool solvedLogically = analysis != null && analysis.SolvedLogically;
-                    if (!solvedLogically) uniquenessChecks++;
+                    uniquenessChecks++;
                     stageStartedAt = System.Diagnostics.Stopwatch.GetTimestamp();
-                    bool hasUniqueSolution = solvedLogically || _solver.HasUniqueSolutionWithinBudget(puzzle, 20000);
+                    bool hasUniqueSolution = _solver.HasUniqueSolutionWithinBudget(puzzle, 20000);
                     uniquenessMs += ElapsedMilliseconds(stageStartedAt);
                     if (!hasUniqueSolution)
                     {
@@ -88,6 +78,10 @@ public sealed class HyperSudokuGenerator : ISudokuGenerator
                     acceptedRemovals++;
                     if (clueCount > maxClues) continue;
 
+                    analyzerCalls++;
+                    stageStartedAt = System.Diagnostics.Stopwatch.GetTimestamp();
+                    SudokuDifficultyResult analysis = _analyzer.Analyze(puzzle);
+                    analyzerMs += ElapsedMilliseconds(stageStartedAt);
                     SudokuDifficulty analyzedDifficulty = analysis.Difficulty;
                     if (analyzedDifficulty != target) continue;
 

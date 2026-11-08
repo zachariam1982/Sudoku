@@ -10,6 +10,7 @@ public sealed class HyperSudokuDifficultyAnalyzer : ISudokuDifficultyAnalyzer
 {
     private const int CellCount = 81;
     private static readonly int[][] Units = HyperSudokuRules.AllUnits;
+    private static readonly int[][] Memberships = BuildMemberships();
     private static readonly int[][] CellPeers = BuildCellPeers();
     private static readonly Overlap[] Overlaps = BuildOverlaps();
 
@@ -97,14 +98,23 @@ public sealed class HyperSudokuDifficultyAnalyzer : ISudokuDifficultyAnalyzer
 
         public SolverState(int[,] puzzle)
         {
-            for (int row = 0; row < 9; row++)
-                for (int col = 0; col < 9; col++)
-                {
-                    int index = row * 9 + col;
-                    _board[index] = puzzle[row, col];
-                    if (_board[index] == 0)
-                        _candidates[index] = HyperSudokuRules.GetCandidateMask(puzzle, row, col);
-                }
+            var usedByUnit = new int[Units.Length];
+            for (int index = 0; index < CellCount; index++)
+            {
+                int value = puzzle[index / 9, index % 9];
+                _board[index] = value;
+                if (value == 0) continue;
+                int bit = Bit(value);
+                foreach (int unitIndex in Memberships[index]) usedByUnit[unitIndex] |= bit;
+            }
+
+            for (int index = 0; index < CellCount; index++)
+            {
+                if (_board[index] != 0) continue;
+                int used = 0;
+                foreach (int unitIndex in Memberships[index]) used |= usedByUnit[unitIndex];
+                _candidates[index] = HyperSudokuRules.FullMask & ~used;
+            }
         }
 
         public int ValueAt(int index) => _board[index];
@@ -387,8 +397,17 @@ public sealed class HyperSudokuDifficultyAnalyzer : ISudokuDifficultyAnalyzer
         }
     }
 
-    // Precompute unique peers so placing a value updates each candidate mask
-    // once, even when cells share a row, box, and hyper-region simultaneously.
+    private static int[][] BuildMemberships()
+    {
+        var memberships = new List<int>[CellCount];
+        for (int cell = 0; cell < CellCount; cell++) memberships[cell] = new List<int>(5);
+        for (int unit = 0; unit < Units.Length; unit++)
+            foreach (int cell in Units[unit]) memberships[cell].Add(unit);
+        var result = new int[CellCount][];
+        for (int cell = 0; cell < CellCount; cell++) result[cell] = memberships[cell].ToArray();
+        return result;
+    }
+
     private static int[][] BuildCellPeers()
     {
         var result = new int[CellCount][];
@@ -396,7 +415,7 @@ public sealed class HyperSudokuDifficultyAnalyzer : ISudokuDifficultyAnalyzer
         {
             var seen = new bool[CellCount];
             var peers = new List<int>(32);
-            foreach (int unitIndex in BuildMembership(cell))
+            foreach (int unitIndex in Memberships[cell])
                 foreach (int peer in Units[unitIndex])
                     if (peer != cell && !seen[peer])
                     {
@@ -406,13 +425,6 @@ public sealed class HyperSudokuDifficultyAnalyzer : ISudokuDifficultyAnalyzer
             result[cell] = peers.ToArray();
         }
         return result;
-    }
-
-    private static IEnumerable<int> BuildMembership(int cell)
-    {
-        for (int unitIndex = 0; unitIndex < Units.Length; unitIndex++)
-            foreach (int member in Units[unitIndex])
-                if (member == cell) { yield return unitIndex; break; }
     }
 
     private static Overlap[] BuildOverlaps()

@@ -100,6 +100,7 @@ public class GameContext : MonoBehaviour
         _grid?.SetThermoVariantActive(factory.Variant == GameVariant.Thermo);
         _grid?.SetHyperVariantActive(factory.Variant == GameVariant.Hyper);
         _grid?.SetIrregularVariantActive(factory.Variant == GameVariant.Irregular);
+        _gridBuilder?.RefreshVariantLayout();
 
         if (NewGameViewModel != null)
         {

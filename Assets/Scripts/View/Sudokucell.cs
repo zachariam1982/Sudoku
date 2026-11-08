@@ -43,6 +43,8 @@ public class SudokuCell : MonoBehaviour
     private bool            isSelected = false;
     private bool            isPickerHighlighted = false;
     private bool            isPencilModeActive = false;
+    private bool isHyperHighlighted;
+    private static readonly Color HyperHighlightColor = new Color32(90, 165, 255, 45);
     private bool            killerCageTintActive;
     private Color           killerCageTint;
     private Color           baseColor;
@@ -150,6 +152,12 @@ public class SudokuCell : MonoBehaviour
         row       = cellRow;
         col       = cellCol;
         viewModel = vm;
+    }
+
+    public void SetHyperHighlight(bool active)
+    {
+        isHyperHighlighted = active;
+        ApplyBackgroundColor();
     }
 
     public void SetKillerCageTint(Color tint, bool active)
@@ -325,6 +333,8 @@ public class SudokuCell : MonoBehaviour
             baseColor = dimmedColor;
         else if (isRelatedHighlighted)
             baseColor = relatedHighlightColor;
+        else if (isHyperHighlighted)
+            baseColor = HyperHighlightColor;
         else
             baseColor = IsGiven ? givenColor : normalColor;
 

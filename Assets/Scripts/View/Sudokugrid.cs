@@ -17,6 +17,7 @@ public class SudokuGrid : MonoBehaviour
     private bool           cellsReady = false;
     private BaseViewModel viewModel;
     private bool diagonalVariantActive;
+    private bool hyperVariantActive;
     private bool killerVariantActive;
     private bool thermoVariantActive;
     private readonly ThermometerGraphic[] thermometerGraphics = new ThermometerGraphic[81];
@@ -132,6 +133,12 @@ public class SudokuGrid : MonoBehaviour
             graphic.gameObject.SetActive(true);
             graphic.SetPaths(paths, cells, index);
         }
+    }
+
+    public void SetHyperVariantActive(bool active)
+    {
+        hyperVariantActive = active;
+        RefreshHighlights();
     }
 
     public void SetDiagonalVariantActive(bool active)
@@ -686,6 +693,7 @@ public class SudokuGrid : MonoBehaviour
                 cell.SetRelatedHighlight(false);
                 cell.SetDigitMatchHighlight(false);
                 cell.SetDiagonalHighlight(isDiagonal);
+                cell.SetHyperHighlight(hyperVariantActive && HyperSudokuRules.GetHyperRegion(row, col) >= 0);
                 cell.SetDimmed(isRelated);
                 cell.SetPickerHighlight(isSelected);
             }

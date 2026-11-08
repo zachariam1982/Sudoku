@@ -4,5 +4,6 @@ public enum GameVariant
     Classic,
     Diagonal,
     Killer,
-    Thermo
+    Thermo,
+    Hyper
 }

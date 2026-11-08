@@ -34,6 +34,47 @@ public sealed class HyperSudokuSolver : ISudokuSolver
         return remaining >= 0 && count == 1;
     }
 
+    internal bool TryFillSolution(int[,] board, Random random, int nodeBudget)
+    {
+        ValidateDimensions(board);
+        var masks = new int[31];
+        return InitializeMasks(board, masks) && Fill(board, masks, random, ref nodeBudget);
+    }
+
+    private static bool Fill(int[,] board, int[] masks, Random random, ref int remaining)
+    {
+        if (--remaining < 0) return false;
+        int bestRow = -1, bestCol = -1, bestMask = 0, bestCount = 10;
+        for (int row = 0; row < 9; row++)
+            for (int col = 0; col < 9; col++)
+            {
+                if (board[row, col] != 0) continue;
+                int mask = GetCandidatesMask(masks, row, col, BoxOffset + row / 3 * 3 + col / 3);
+                int count = CountBits(mask);
+                if (count == 0) return false;
+                if (count >= bestCount) continue;
+                bestRow = row; bestCol = col; bestMask = mask; bestCount = count;
+            }
+        if (bestRow < 0) return true;
+        int box = BoxOffset + bestRow / 3 * 3 + bestCol / 3;
+        while (bestMask != 0)
+        {
+            int choice = random.Next(CountBits(bestMask));
+            int value = 1;
+            for (; value <= 9; value++)
+                if ((bestMask & (1 << value)) != 0 && choice-- == 0) break;
+            int bit = 1 << value;
+            bestMask &= ~bit;
+            board[bestRow, bestCol] = value;
+            AddMasks(masks, bestRow, bestCol, box, bit);
+            if (Fill(board, masks, random, ref remaining)) return true;
+            RemoveMasks(masks, bestRow, bestCol, box, bit);
+            board[bestRow, bestCol] = 0;
+            if (remaining < 0) return false;
+        }
+        return false;
+    }
+
     public List<int> GetCandidates(int[,] board, int row, int col)
     {
         ValidateDimensions(board);

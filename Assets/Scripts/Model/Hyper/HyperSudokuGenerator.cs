@@ -42,7 +42,7 @@ public sealed class HyperSudokuGenerator : ISudokuGenerator
                 int[,] solution = new int[9, 9];
 
                 long stageStartedAt = System.Diagnostics.Stopwatch.GetTimestamp();
-                bool filledSolution = FillSolution(solution, random);
+                bool filledSolution = _solver.TryFillSolution(solution, random, 100000);
                 fillSolutionMs += ElapsedMilliseconds(stageStartedAt);
                 if (!filledSolution)
                 {
@@ -64,9 +64,19 @@ public sealed class HyperSudokuGenerator : ISudokuGenerator
                     int col = cell % 9;
                     int oldValue = puzzle[row, col];
                     puzzle[row, col] = 0;
-                    uniquenessChecks++;
+                    // A completed deterministic logical solve proves uniqueness too.
+                    SudokuDifficultyResult analysis = null;
+                    if (clueCount - 1 <= maxClues)
+                    {
+                        analyzerCalls++;
+                        stageStartedAt = System.Diagnostics.Stopwatch.GetTimestamp();
+                        analysis = _analyzer.Analyze(puzzle);
+                        analyzerMs += ElapsedMilliseconds(stageStartedAt);
+                    }
+                    bool solvedLogically = analysis != null && analysis.SolvedLogically;
+                    if (!solvedLogically) uniquenessChecks++;
                     stageStartedAt = System.Diagnostics.Stopwatch.GetTimestamp();
-                    bool hasUniqueSolution = _solver.HasUniqueSolutionWithinBudget(puzzle, 20000);
+                    bool hasUniqueSolution = solvedLogically || _solver.HasUniqueSolutionWithinBudget(puzzle, 20000);
                     uniquenessMs += ElapsedMilliseconds(stageStartedAt);
                     if (!hasUniqueSolution)
                     {
@@ -78,10 +88,7 @@ public sealed class HyperSudokuGenerator : ISudokuGenerator
                     acceptedRemovals++;
                     if (clueCount > maxClues) continue;
 
-                    analyzerCalls++;
-                    stageStartedAt = System.Diagnostics.Stopwatch.GetTimestamp();
-                    SudokuDifficulty analyzedDifficulty = _analyzer.Analyze(puzzle).Difficulty;
-                    analyzerMs += ElapsedMilliseconds(stageStartedAt);
+                    SudokuDifficulty analyzedDifficulty = analysis.Difficulty;
                     if (analyzedDifficulty != target) continue;
 
                     RecordSlowestAttempt(attempt, seed, attemptStartedAt,
@@ -166,35 +173,6 @@ public sealed class HyperSudokuGenerator : ISudokuGenerator
             $"slowestAttempt={slowestAttempt} slowestSeed={slowestSeed} slowestMs={slowestAttemptMs:F2}");
     }
 
-    private bool FillSolution(int[,] board, System.Random random)
-    {
-        int bestRow = -1, bestCol = -1, bestMask = 0, bestCount = 10;
-        for (int row = 0; row < 9; row++)
-            for (int col = 0; col < 9; col++)
-            {
-                if (board[row, col] != 0) continue;
-                int mask = HyperSudokuRules.GetCandidateMask(board, row, col);
-                int count = CountBits(mask);
-                if (count == 0) return false;
-                if (count >= bestCount) continue;
-                bestRow = row;
-                bestCol = col;
-                bestMask = mask;
-                bestCount = count;
-            }
-
-        if (bestRow < 0) return true;
-
-        int[] candidates = Values(bestMask).OrderBy(_ => random.Next()).ToArray();
-        foreach (int value in candidates)
-        {
-            board[bestRow, bestCol] = value;
-            if (FillSolution(board, random)) return true;
-            board[bestRow, bestCol] = 0;
-        }
-        return false;
-    }
-
     private static (int min, int max) GetClueRange(SudokuDifficulty difficulty) => difficulty switch
     {
         SudokuDifficulty.Simple => (66, 71),
@@ -203,9 +181,9 @@ public sealed class HyperSudokuGenerator : ISudokuGenerator
         SudokuDifficulty.Novice => (36, 52),
         SudokuDifficulty.Moderate => (30, 48),
         SudokuDifficulty.Advanced => (27, 44),
-        SudokuDifficulty.Hard => (24, 40),
-        SudokuDifficulty.Expert => (21, 36),
-        SudokuDifficulty.Hardest => (17, 32),
+        SudokuDifficulty.Hard => (17, 32),
+        SudokuDifficulty.Expert => (15, 30),
+        SudokuDifficulty.Hardest => (14, 28),
         _ => throw new ArgumentOutOfRangeException(nameof(difficulty))
     };
 

@@ -10,7 +10,7 @@ public sealed class HyperSudokuDifficultyAnalyzer : ISudokuDifficultyAnalyzer
 {
     private const int CellCount = 81;
     private static readonly int[][] Units = HyperSudokuRules.AllUnits;
-    private static readonly int[][] CellUnits = BuildCellUnits();
+    private static readonly int[][] CellPeers = BuildCellPeers();
     private static readonly Overlap[] Overlaps = BuildOverlaps();
 
     private readonly struct Overlap
@@ -116,10 +116,9 @@ public sealed class HyperSudokuDifficultyAnalyzer : ISudokuDifficultyAnalyzer
 
             _board[index] = value;
             _candidates[index] = 0;
-            foreach (int unitIndex in CellUnits[index])
-                foreach (int peer in Units[unitIndex])
-                    if (_board[peer] == 0)
-                        Remove(peer, value);
+            foreach (int peer in CellPeers[index])
+                if (_board[peer] == 0)
+                    Remove(peer, value);
             return true;
         }
 
@@ -388,16 +387,32 @@ public sealed class HyperSudokuDifficultyAnalyzer : ISudokuDifficultyAnalyzer
         }
     }
 
-    private static int[][] BuildCellUnits()
+    // Precompute unique peers so placing a value updates each candidate mask
+    // once, even when cells share a row, box, and hyper-region simultaneously.
+    private static int[][] BuildCellPeers()
     {
-        var memberships = new List<int>[CellCount];
-        for (int cell = 0; cell < CellCount; cell++) memberships[cell] = new List<int>(5);
-        for (int unitIndex = 0; unitIndex < Units.Length; unitIndex++)
-            foreach (int cell in Units[unitIndex]) memberships[cell].Add(unitIndex);
-
         var result = new int[CellCount][];
-        for (int cell = 0; cell < CellCount; cell++) result[cell] = memberships[cell].ToArray();
+        for (int cell = 0; cell < CellCount; cell++)
+        {
+            var seen = new bool[CellCount];
+            var peers = new List<int>(32);
+            foreach (int unitIndex in BuildMembership(cell))
+                foreach (int peer in Units[unitIndex])
+                    if (peer != cell && !seen[peer])
+                    {
+                        seen[peer] = true;
+                        peers.Add(peer);
+                    }
+            result[cell] = peers.ToArray();
+        }
         return result;
+    }
+
+    private static IEnumerable<int> BuildMembership(int cell)
+    {
+        for (int unitIndex = 0; unitIndex < Units.Length; unitIndex++)
+            foreach (int member in Units[unitIndex])
+                if (member == cell) { yield return unitIndex; break; }
     }
 
     private static Overlap[] BuildOverlaps()

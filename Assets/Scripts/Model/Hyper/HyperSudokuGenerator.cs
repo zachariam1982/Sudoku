@@ -55,6 +55,7 @@ public sealed class HyperSudokuGenerator : ISudokuGenerator
                 int[,] puzzle = (int[,])solution.Clone();
                 int[] cells = Enumerable.Range(0, 81).OrderBy(_ => random.Next()).ToArray();
                 int clueCount = 81;
+                int removalsSinceRating = 0;
                 (int minClues, int maxClues) = GetClueRange(target);
 
                 foreach (int cell in cells)
@@ -67,7 +68,9 @@ public sealed class HyperSudokuGenerator : ISudokuGenerator
                     // Analyze only when this removal enters the requested clue band.
                     // A completed logical solve proves uniqueness and avoids a second search.
                     SudokuDifficultyResult analysis = null;
-                    if (clueCount - 1 <= maxClues)
+                    bool shouldRate = clueCount - 1 <= maxClues &&
+                        (removalsSinceRating >= 2 || clueCount - 1 == minClues);
+                    if (shouldRate)
                     {
                         analyzerCalls++;
                         stageStartedAt = System.Diagnostics.Stopwatch.GetTimestamp();
@@ -93,6 +96,9 @@ public sealed class HyperSudokuGenerator : ISudokuGenerator
                     clueCount--;
                     acceptedRemovals++;
                     if (clueCount > maxClues) continue;
+                    removalsSinceRating++;
+                    if (!shouldRate) continue;
+                    removalsSinceRating = 0;
 
                     SudokuDifficulty analyzedDifficulty = analysis.Difficulty;
                     if (analyzedDifficulty != target) continue;

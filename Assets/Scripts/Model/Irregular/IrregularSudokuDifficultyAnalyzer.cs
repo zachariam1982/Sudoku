@@ -8,10 +8,21 @@ using System.Collections.Generic;
 public sealed class IrregularSudokuDifficultyAnalyzer : ISudokuDifficultyAnalyzer
 {
     private const int CellCount = 81;
-    private static readonly int[][] Units = IrregularSudokuRules.AllUnits;
-    private static readonly int[][] Memberships = BuildMemberships();
-    private static readonly int[][] CellPeers = BuildCellPeers();
-    private static readonly Overlap[] Overlaps = BuildOverlaps();
+    private readonly IrregularSudokuRules rules;
+    private readonly int[][] Units;
+    private readonly int[][] Memberships;
+    private readonly int[][] CellPeers;
+    private readonly Overlap[] Overlaps;
+
+    public IrregularSudokuDifficultyAnalyzer(int seed = 1) : this(new IrregularSudokuRules(seed)) { }
+    internal IrregularSudokuDifficultyAnalyzer(IrregularSudokuRules rules)
+    {
+        this.rules = rules;
+        Units = rules.AllUnits;
+        Memberships = BuildMemberships();
+        CellPeers = BuildCellPeers();
+        Overlaps = BuildOverlaps();
+    }
 
     private readonly struct Overlap
     {
@@ -32,12 +43,12 @@ public sealed class IrregularSudokuDifficultyAnalyzer : ISudokuDifficultyAnalyze
         if (puzzle == null) throw new ArgumentNullException(nameof(puzzle));
         if (puzzle.GetLength(0) != 9 || puzzle.GetLength(1) != 9)
             throw new ArgumentException("A Sudoku board must be 9 by 9.", nameof(puzzle));
-        if (!IrregularSudokuRules.ValidateBoard(puzzle))
+        if (!rules.ValidateBoard(puzzle))
             throw new ArgumentException(
                 "Puzzle contains a duplicate or invalid value under Irregular Sudoku rules.",
                 nameof(puzzle));
 
-        var state = new SolverState(puzzle);
+        var state = new SolverState(puzzle, this);
         int steps = 0;
         SudokuTechnique hardest = SudokuTechnique.NakedSingle;
 
@@ -82,6 +93,7 @@ public sealed class IrregularSudokuDifficultyAnalyzer : ISudokuDifficultyAnalyze
 
     private sealed class SolverState
     {
+        private readonly IrregularSudokuDifficultyAnalyzer owner;
         private readonly int[] _board = new int[CellCount];
         private readonly int[] _candidates = new int[CellCount];
 
@@ -95,23 +107,24 @@ public sealed class IrregularSudokuDifficultyAnalyzer : ISudokuDifficultyAnalyze
             }
         }
 
-        public SolverState(int[,] puzzle)
+        public SolverState(int[,] puzzle, IrregularSudokuDifficultyAnalyzer owner)
         {
-            var usedByUnit = new int[Units.Length];
+            this.owner = owner;
+            var usedByUnit = new int[owner.Units.Length];
             for (int index = 0; index < CellCount; index++)
             {
                 int value = puzzle[index / 9, index % 9];
                 _board[index] = value;
                 if (value == 0) continue;
                 int bit = Bit(value);
-                foreach (int unitIndex in Memberships[index]) usedByUnit[unitIndex] |= bit;
+                foreach (int unitIndex in owner.Memberships[index]) usedByUnit[unitIndex] |= bit;
             }
 
             for (int index = 0; index < CellCount; index++)
             {
                 if (_board[index] != 0) continue;
                 int used = 0;
-                foreach (int unitIndex in Memberships[index]) used |= usedByUnit[unitIndex];
+                foreach (int unitIndex in owner.Memberships[index]) used |= usedByUnit[unitIndex];
                 _candidates[index] = IrregularSudokuRules.FullMask & ~used;
             }
         }
@@ -125,7 +138,7 @@ public sealed class IrregularSudokuDifficultyAnalyzer : ISudokuDifficultyAnalyze
 
             _board[index] = value;
             _candidates[index] = 0;
-            foreach (int peer in CellPeers[index])
+            foreach (int peer in owner.CellPeers[index])
                 if (_board[peer] == 0)
                     Remove(peer, value);
             return true;
@@ -159,7 +172,7 @@ public sealed class IrregularSudokuDifficultyAnalyzer : ISudokuDifficultyAnalyze
         return false;
     }
 
-    private static bool TryHiddenSingle(SolverState state)
+    private bool TryHiddenSingle(SolverState state)
     {
         foreach (int[] unit in Units)
             for (int value = 1; value <= 9; value++)
@@ -183,9 +196,9 @@ public sealed class IrregularSudokuDifficultyAnalyzer : ISudokuDifficultyAnalyze
     /// <summary>
     /// Generalized locked candidates: if all candidates in one unit lie in
     /// its overlap with another unit, remove that digit from the other unit.
-    /// This includes the center box/irregular interaction.
+    /// This includes row/region and column/region intersections.
     /// </summary>
-    private static bool TryLockedCandidate(SolverState state)
+    private bool TryLockedCandidate(SolverState state)
     {
         foreach (Overlap overlap in Overlaps)
             for (int value = 1; value <= 9; value++)
@@ -210,7 +223,7 @@ public sealed class IrregularSudokuDifficultyAnalyzer : ISudokuDifficultyAnalyze
         return false;
     }
 
-    private static bool TryNakedPair(SolverState state)
+    private bool TryNakedPair(SolverState state)
     {
         foreach (int[] unit in Units)
             for (int i = 0; i < 8; i++)
@@ -233,7 +246,7 @@ public sealed class IrregularSudokuDifficultyAnalyzer : ISudokuDifficultyAnalyze
         return false;
     }
 
-    private static bool TryHiddenPair(SolverState state)
+    private bool TryHiddenPair(SolverState state)
     {
         foreach (int[] unit in Units)
             for (int firstValue = 1; firstValue <= 8; firstValue++)
@@ -268,7 +281,7 @@ public sealed class IrregularSudokuDifficultyAnalyzer : ISudokuDifficultyAnalyze
         return false;
     }
 
-    private static bool TryNakedTriple(SolverState state)
+    private bool TryNakedTriple(SolverState state)
     {
         foreach (int[] unit in Units)
             for (int i = 0; i < 7; i++)
@@ -396,7 +409,7 @@ public sealed class IrregularSudokuDifficultyAnalyzer : ISudokuDifficultyAnalyze
         }
     }
 
-    private static int[][] BuildMemberships()
+    private int[][] BuildMemberships()
     {
         var memberships = new List<int>[CellCount];
         for (int cell = 0; cell < CellCount; cell++) memberships[cell] = new List<int>(5);
@@ -407,7 +420,7 @@ public sealed class IrregularSudokuDifficultyAnalyzer : ISudokuDifficultyAnalyze
         return result;
     }
 
-    private static int[][] BuildCellPeers()
+    private int[][] BuildCellPeers()
     {
         var result = new int[CellCount][];
         for (int cell = 0; cell < CellCount; cell++)
@@ -426,7 +439,7 @@ public sealed class IrregularSudokuDifficultyAnalyzer : ISudokuDifficultyAnalyze
         return result;
     }
 
-    private static Overlap[] BuildOverlaps()
+    private Overlap[] BuildOverlaps()
     {
         var overlaps = new List<Overlap>();
         for (int source = 0; source < Units.Length; source++)

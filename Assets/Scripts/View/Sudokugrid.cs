@@ -142,16 +142,19 @@ public class SudokuGrid : MonoBehaviour
         RefreshHighlights();
     }
 
+    private int GetIrregularRegion(int row, int col) =>
+        viewModel != null ? viewModel.GetIrregularRegion(row, col) : row / 3 * 3 + col / 3;
+
     private void RefreshIrregularCell(SudokuCell cell, int row, int col)
     {
         var frame = cell.transform.parent.GetComponent<UnityEngine.UI.Graphic>();
         if (frame != null) frame.enabled = !irregularVariantActive;
-        int region = IrregularSudokuRules.GetRegion(row, col);
+        int region = GetIrregularRegion(row, col);
         bool[] edges = {
-            col == 0 || region != IrregularSudokuRules.GetRegion(row, col - 1),
-            col == 8 || region != IrregularSudokuRules.GetRegion(row, col + 1),
-            row == 0 || region != IrregularSudokuRules.GetRegion(row - 1, col),
-            row == 8 || region != IrregularSudokuRules.GetRegion(row + 1, col)
+            col == 0 || region != GetIrregularRegion(row, col - 1),
+            col == 8 || region != GetIrregularRegion(row, col + 1),
+            row == 0 || region != GetIrregularRegion(row - 1, col),
+            row == 8 || region != GetIrregularRegion(row + 1, col)
         };
         for (int edge = 0; edge < 4; edge++)
         {

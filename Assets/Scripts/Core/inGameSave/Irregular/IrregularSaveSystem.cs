@@ -14,9 +14,7 @@ public sealed class IrregularSaveSystem : JsonGameSaveSystem
         IrregularSudokuModel.IsValidSavedPuzzle(puzzleFlat, solutionFlat);
     protected override bool IsValidSavedPuzzle(SaveGameData data, SaveSlot slot)
     {
-        if (data.IrregularRegions == null || data.IrregularRegions.Length != 81) return false;
-        for (int i = 0; i < 81; i++)
-            if (data.IrregularRegions[i] != IrregularSudokuRules.GetRegion(i / 9, i % 9)) return false;
-        return IsValidSavedPuzzle(data.OriginalPuzzleFlat, data.SolutionFlat);
+        return IrregularSudokuModel.IsValidSavedPuzzle(data.OriginalPuzzleFlat, data.SolutionFlat,
+            data.PuzzleSeed != 0 ? data.PuzzleSeed : data.Level, data.IrregularLayoutVersion);
     }
 }

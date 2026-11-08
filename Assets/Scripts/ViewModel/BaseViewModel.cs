@@ -61,19 +61,21 @@ public class BaseViewModel
 
     protected void CaptureModelSaveData(SaveGameData data)
     {
-        if (Model is IrregularSudokuModel)
-        {
-            data.IrregularRegions = new int[81];
-            for (int i = 0; i < 81; i++) data.IrregularRegions[i] = IrregularSudokuRules.GetRegion(i / 9, i % 9);
-        }
+        if (Model is IrregularSudokuModel irregularModel)
+            data.IrregularLayoutVersion = irregularModel.LayoutVersion;
         if (Model is ThermoSudokuModel thermoModel)
             data.Thermometers = ThermoSudokuModel.SerializeThermometers(thermoModel.Thermometers);
         if (Model is KillerSudokuModel killerModel)
             data.KillerCages = KillerSudokuModel.SerializeCages(killerModel.Cages);
     }
 
+    public int GetIrregularRegion(int row, int col) =>
+        Model is IrregularSudokuModel irregular ? irregular.GetRegion(row, col) : row / 3 * 3 + col / 3;
+
     protected bool TryLoadModelPuzzle(SaveGameData data)
     {
+        if (Model is IrregularSudokuModel irregular)
+            return irregular.TryLoadSavedPuzzle(data.OriginalPuzzleFlat, data.SolutionFlat, data.IrregularLayoutVersion);
         if (Model is KillerSudokuModel killerModel)
             return killerModel.TryLoadSavedPuzzle(
                 data.OriginalPuzzleFlat,

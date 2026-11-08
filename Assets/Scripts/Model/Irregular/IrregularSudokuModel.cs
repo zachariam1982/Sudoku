@@ -11,6 +11,9 @@ public sealed class IrregularSudokuModel : ISudokuModel
     private int _puzzleSeed = 1;
     private SudokuDifficulty _currentDifficulty = SudokuDifficulty.Easy;
     private SudokuResult _result;
+    private IrregularSudokuRules rules = new IrregularSudokuRules(1);
+    public int LayoutVersion { get; private set; } = IrregularSudokuRules.CurrentLayoutVersion;
+    public int GetRegion(int row, int col) => rules.GetRegion(row, col);
 
     public IrregularSudokuModel() : this(new IrregularSudokuGenerator(), new SqliteIrregularGameHistoryRepository()) { }
 
@@ -36,10 +39,15 @@ public sealed class IrregularSudokuModel : ISudokuModel
     public void SetLevel(int level)
     {
         _currentLevel = level;
-        _puzzleSeed = level;
+        SetPuzzleSeed(level);
     }
 
-    public void SetPuzzleSeed(int puzzleSeed) => _puzzleSeed = puzzleSeed;
+    public void SetPuzzleSeed(int puzzleSeed)
+    {
+        _puzzleSeed = puzzleSeed;
+        LayoutVersion = IrregularSudokuRules.CurrentLayoutVersion;
+        rules = new IrregularSudokuRules(puzzleSeed);
+    }
     public void SetDifficulty(SudokuDifficulty difficulty) => _currentDifficulty = difficulty;
 
     public void increaseDifficulty() => UpdateDifficultyFromHistory();
@@ -54,6 +62,7 @@ public sealed class IrregularSudokuModel : ISudokuModel
 
     public void LoadCurrentLevelPuzzle(int maxAttempts = 100000)
     {
+        SetPuzzleSeed(_puzzleSeed);
         _result = _generator.Generate(_puzzleSeed, _currentDifficulty, maxAttempts);
         _currentDifficulty = _result.Difficulty;
         CopyPuzzleToBoard(_result.Puzzle);
@@ -62,9 +71,14 @@ public sealed class IrregularSudokuModel : ISudokuModel
     public int[] GetOriginalPuzzleFlat() => Flatten(_result?.Puzzle);
     public int[] GetSolutionFlat() => Flatten(_result?.Solution);
 
-    public bool TryLoadSavedPuzzle(int[] puzzleFlat, int[] solutionFlat)
+    public bool TryLoadSavedPuzzle(int[] puzzleFlat, int[] solutionFlat) =>
+        TryLoadSavedPuzzle(puzzleFlat, solutionFlat, IrregularSudokuRules.CurrentLayoutVersion);
+
+    public bool TryLoadSavedPuzzle(int[] puzzleFlat, int[] solutionFlat, int version)
     {
-        if (!IsValidSavedPuzzle(puzzleFlat, solutionFlat)) return false;
+        if (!IsValidSavedPuzzle(puzzleFlat, solutionFlat, _puzzleSeed, version)) return false;
+        LayoutVersion = version;
+        rules = new IrregularSudokuRules(_puzzleSeed, version);
         int[,] puzzle = Expand(puzzleFlat);
         _result = new SudokuResult
         {
@@ -76,8 +90,10 @@ public sealed class IrregularSudokuModel : ISudokuModel
         return true;
     }
 
-    public static bool IsValidSavedPuzzle(int[] puzzleFlat, int[] solutionFlat)
+    public static bool IsValidSavedPuzzle(int[] puzzleFlat, int[] solutionFlat, int seed = 1, int version = 0)
     {
+        if (version < 0 || version > IrregularSudokuRules.CurrentLayoutVersion) return false;
+        var rules = new IrregularSudokuRules(seed, version);
         if (puzzleFlat == null || solutionFlat == null ||
             puzzleFlat.Length != 81 || solutionFlat.Length != 81)
             return false;
@@ -95,8 +111,8 @@ public sealed class IrregularSudokuModel : ISudokuModel
             solution[index / 9, index % 9] = answer;
         }
 
-        return IrregularSudokuRules.ValidateBoard(puzzle) &&
-               IrregularSudokuRules.ValidateCompleteSolution(solution);
+        return rules.ValidateBoard(puzzle) &&
+               rules.ValidateCompleteSolution(solution);
     }
 
     public bool SetValue(int row, int col, int value)
@@ -118,7 +134,7 @@ public sealed class IrregularSudokuModel : ISudokuModel
         for (int row = 0; row < 9; row++)
             for (int col = 0; col < 9; col++)
                 PencilCandidateMasks[row, col] = Board[row, col] == 0
-                    ? IrregularSudokuRules.GetCandidateMask(Board, row, col)
+                    ? rules.GetCandidateMask(Board, row, col)
                     : 0;
     }
 
@@ -131,7 +147,7 @@ public sealed class IrregularSudokuModel : ISudokuModel
             if (index != enteredCol) PencilCandidateMasks[enteredRow, index] &= bit;
             if (index != enteredRow) PencilCandidateMasks[index, enteredCol] &= bit;
         }
-        foreach (int cell in IrregularSudokuRules.AllUnits[18 + IrregularSudokuRules.GetRegion(enteredRow, enteredCol)])
+        foreach (int cell in rules.AllUnits[18 + rules.GetRegion(enteredRow, enteredCol)])
             if (cell != enteredRow * 9 + enteredCol) PencilCandidateMasks[cell / 9, cell % 9] &= bit;
     }
 
@@ -164,10 +180,10 @@ public sealed class IrregularSudokuModel : ISudokuModel
     public bool HasConflict(int row, int col)
     {
         if (!IsInBounds(row, col) || Board[row, col] == 0) return false;
-        return !IrregularSudokuRules.IsValidPlacement(Board, row, col, Board[row, col]);
+        return !rules.IsValidPlacement(Board, row, col, Board[row, col]);
     }
 
-    public bool Validate() => IrregularSudokuRules.ValidateBoard(Board);
+    public bool Validate() => rules.ValidateBoard(Board);
 
     public bool IsComplete()
     {

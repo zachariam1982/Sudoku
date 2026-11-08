@@ -6,8 +6,6 @@ using UnityEngine;
 /// <summary>Deterministic, bounded generator for uniquely solvable Irregular Sudoku.</summary>
 public sealed class IrregularSudokuGenerator : ISudokuGenerator
 {
-    private readonly IrregularSudokuSolver _solver = new IrregularSudokuSolver();
-    private readonly IrregularSudokuDifficultyAnalyzer _analyzer = new IrregularSudokuDifficultyAnalyzer();
 
     public SudokuResult Generate(int level, SudokuDifficulty requestedDifficulty, int maxAttempts = 100000) =>
         GenerateSudoku(level, requestedDifficulty, maxAttempts);
@@ -17,6 +15,10 @@ public sealed class IrregularSudokuGenerator : ISudokuGenerator
         if (!Enum.IsDefined(typeof(SudokuDifficulty), requestedDifficulty))
             throw new ArgumentOutOfRangeException(nameof(requestedDifficulty));
         if (maxAttempts <= 0) throw new ArgumentOutOfRangeException(nameof(maxAttempts));
+
+        var rules = new IrregularSudokuRules(level);
+        var _solver = new IrregularSudokuSolver(rules);
+        var _analyzer = new IrregularSudokuDifficultyAnalyzer(rules);
 
         long generationStartedAt = System.Diagnostics.Stopwatch.GetTimestamp();
         for (int tier = (int)requestedDifficulty; tier >= (int)SudokuDifficulty.Simple; tier--)
@@ -39,19 +41,11 @@ public sealed class IrregularSudokuGenerator : ISudokuGenerator
                 long attemptStartedAt = System.Diagnostics.Stopwatch.GetTimestamp();
                 int seed = unchecked(level * 397 ^ ((tier + 1) * 7919) ^ attempt * 104731 ^ 0xD1A60A1);
                 var random = new System.Random(seed);
-                int[,] solution = new int[9, 9];
+                int[,] solution;
 
                 long stageStartedAt = System.Diagnostics.Stopwatch.GetTimestamp();
-                bool filledSolution = _solver.TryFillSolution(solution, random, 100000);
+                solution = rules.CreateSolution(random);
                 fillSolutionMs += ElapsedMilliseconds(stageStartedAt);
-                if (!filledSolution)
-                {
-                    fillFailures++;
-                    RecordSlowestAttempt(attempt, seed, attemptStartedAt,
-                        ref slowestAttempt, ref slowestSeed, ref slowestAttemptMs);
-                    continue;
-                }
-
                 int[,] puzzle = (int[,])solution.Clone();
                 int[] cells = Enumerable.Range(0, 81).OrderBy(_ => random.Next()).ToArray();
                 int clueCount = 81;

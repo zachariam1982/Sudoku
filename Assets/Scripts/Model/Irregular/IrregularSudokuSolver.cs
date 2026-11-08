@@ -4,6 +4,10 @@ using System.Collections.Generic;
 /// <summary>Solver and candidate service using all 27 Irregular Sudoku units.</summary>
 public sealed class IrregularSudokuSolver : ISudokuSolver
 {
+    private readonly IrregularSudokuRules rules;
+    public IrregularSudokuSolver(int seed = 1) : this(new IrregularSudokuRules(seed)) { }
+    internal IrregularSudokuSolver(IrregularSudokuRules rules) { this.rules = rules; }
+
     private const int RowOffset = 0;
     private const int ColumnOffset = 9;
     private const int BoxOffset = 18;
@@ -41,7 +45,7 @@ public sealed class IrregularSudokuSolver : ISudokuSolver
         return InitializeMasks(board, masks) && Fill(board, masks, random, ref nodeBudget);
     }
 
-    private static bool Fill(int[,] board, int[] masks, Random random, ref int remaining)
+    private bool Fill(int[,] board, int[] masks, Random random, ref int remaining)
     {
         if (--remaining < 0) return false;
         int bestRow = -1, bestCol = -1, bestMask = 0, bestCount = 10;
@@ -49,14 +53,14 @@ public sealed class IrregularSudokuSolver : ISudokuSolver
             for (int col = 0; col < 9; col++)
             {
                 if (board[row, col] != 0) continue;
-                int mask = GetCandidatesMask(masks, row, col, BoxOffset + IrregularSudokuRules.GetRegion(row, col));
+                int mask = GetCandidatesMask(masks, row, col, BoxOffset + rules.GetRegion(row, col));
                 int count = CountBits(mask);
                 if (count == 0) return false;
                 if (count >= bestCount) continue;
                 bestRow = row; bestCol = col; bestMask = mask; bestCount = count;
             }
         if (bestRow < 0) return true;
-        int box = BoxOffset + IrregularSudokuRules.GetRegion(bestRow, bestCol);
+        int box = BoxOffset + rules.GetRegion(bestRow, bestCol);
         while (bestMask != 0)
         {
             int choice = random.Next(CountBits(bestMask));
@@ -79,16 +83,16 @@ public sealed class IrregularSudokuSolver : ISudokuSolver
     {
         ValidateDimensions(board);
         var candidates = new List<int>();
-        int mask = IrregularSudokuRules.GetCandidateMask(board, row, col);
+        int mask = rules.GetCandidateMask(board, row, col);
         for (int value = 1; value <= 9; value++)
             if ((mask & (1 << value)) != 0) candidates.Add(value);
         return candidates;
     }
 
     public bool IsValid(int[,] board, int row, int col, int value) =>
-        IrregularSudokuRules.IsValidPlacement(board, row, col, value);
+        rules.IsValidPlacement(board, row, col, value);
 
-    private static bool InitializeMasks(int[,] board, int[] masks)
+    private bool InitializeMasks(int[,] board, int[] masks)
     {
         for (int row = 0; row < 9; row++)
             for (int col = 0; col < 9; col++)
@@ -98,14 +102,14 @@ public sealed class IrregularSudokuSolver : ISudokuSolver
                 if (value < 1 || value > 9) return false;
 
                 int bit = 1 << value;
-                int box = BoxOffset + IrregularSudokuRules.GetRegion(row, col);
+                int box = BoxOffset + rules.GetRegion(row, col);
                 if (HasMask(masks, row, col, box, bit)) return false;
                 AddMasks(masks, row, col, box, bit);
             }
         return true;
     }
 
-    private static int CountSolutionsInPlace(int[,] board, int[] masks, int limit, ref int nodesRemaining)
+    private int CountSolutionsInPlace(int[,] board, int[] masks, int limit, ref int nodesRemaining)
     {
         if (--nodesRemaining < 0) return limit;
 
@@ -123,7 +127,7 @@ public sealed class IrregularSudokuSolver : ISudokuSolver
                 for (int col = 0; col < 9; col++)
                 {
                     if (board[row, col] != 0) continue;
-                    int mask = GetCandidatesMask(masks, row, col, BoxOffset + IrregularSudokuRules.GetRegion(row, col));
+                    int mask = GetCandidatesMask(masks, row, col, BoxOffset + rules.GetRegion(row, col));
                     if (mask == 0) { contradiction = true; break; }
                     if (CountBits(mask) == 1)
                     {
@@ -136,7 +140,7 @@ public sealed class IrregularSudokuSolver : ISudokuSolver
 
             if (forcedCell < 0)
             {
-                foreach (int[] unit in IrregularSudokuRules.AllUnits)
+                foreach (int[] unit in rules.AllUnits)
                 {
                     int present = 0;
                     foreach (int index in unit)
@@ -154,7 +158,7 @@ public sealed class IrregularSudokuSolver : ISudokuSolver
                         {
                             int row = index / 9, col = index % 9;
                             if (board[row, col] == 0 &&
-                                (GetCandidatesMask(masks, row, col, BoxOffset + IrregularSudokuRules.GetRegion(row, col)) & bit) != 0)
+                                (GetCandidatesMask(masks, row, col, BoxOffset + rules.GetRegion(row, col)) & bit) != 0)
                             { found = index; if (++count > 1) break; }
                         }
                         if (count == 0) { contradiction = true; break; }
@@ -168,7 +172,7 @@ public sealed class IrregularSudokuSolver : ISudokuSolver
             int r = forcedCell / 9, c = forcedCell % 9;
             int bitValue = 1 << forcedValue;
             board[r, c] = forcedValue;
-            AddMasks(masks, r, c, BoxOffset + IrregularSudokuRules.GetRegion(r, c), bitValue);
+            AddMasks(masks, r, c, BoxOffset + rules.GetRegion(r, c), bitValue);
             forcedCells[forcedCount] = forcedCell;
             forcedValues[forcedCount++] = forcedValue;
         }
@@ -181,7 +185,7 @@ public sealed class IrregularSudokuSolver : ISudokuSolver
                 for (int col = 0; col < 9; col++)
                 {
                     if (board[row, col] != 0) continue;
-                    int candidates = GetCandidatesMask(masks, row, col, BoxOffset + IrregularSudokuRules.GetRegion(row, col));
+                    int candidates = GetCandidatesMask(masks, row, col, BoxOffset + rules.GetRegion(row, col));
                     int count = CountBits(candidates);
                     if (count == 0) { contradiction = true; break; }
                     if (count < bestCount)
@@ -193,7 +197,7 @@ public sealed class IrregularSudokuSolver : ISudokuSolver
                 if (bestRow < 0) solutions = 1;
                 else
                 {
-                    int box = BoxOffset + IrregularSudokuRules.GetRegion(bestRow, bestCol);
+                    int box = BoxOffset + rules.GetRegion(bestRow, bestCol);
                     for (int value = 1; value <= 9; value++)
                     {
                         int bit = 1 << value;
@@ -213,49 +217,49 @@ public sealed class IrregularSudokuSolver : ISudokuSolver
         {
             int cell = forcedCells[i], row = cell / 9, col = cell % 9;
             int value = forcedValues[i];
-            RemoveMasks(masks, row, col, BoxOffset + IrregularSudokuRules.GetRegion(row, col), 1 << value);
+            RemoveMasks(masks, row, col, BoxOffset + rules.GetRegion(row, col), 1 << value);
             board[row, col] = 0;
         }
         return solutions;
     }
 
-    private static int FirstValue(int mask)
+    private int FirstValue(int mask)
     {
         for (int value = 1; value <= 9; value++) if ((mask & (1 << value)) != 0) return value;
         return 0;
     }
 
-    private static int GetCandidatesMask(int[] masks, int row, int col, int box)
+    private int GetCandidatesMask(int[] masks, int row, int col, int box)
     {
         int used = masks[RowOffset + row] | masks[ColumnOffset + col] | masks[box];
         return IrregularSudokuRules.FullMask & ~used;
     }
 
-    private static bool HasMask(int[] masks, int row, int col, int box, int bit) =>
+    private bool HasMask(int[] masks, int row, int col, int box, int bit) =>
         (GetCandidatesMask(masks, row, col, box) & bit) == 0;
 
-    private static void AddMasks(int[] masks, int row, int col, int box, int bit)
+    private void AddMasks(int[] masks, int row, int col, int box, int bit)
     {
         masks[RowOffset + row] |= bit;
         masks[ColumnOffset + col] |= bit;
         masks[box] |= bit;
     }
 
-    private static void RemoveMasks(int[] masks, int row, int col, int box, int bit)
+    private void RemoveMasks(int[] masks, int row, int col, int box, int bit)
     {
         masks[RowOffset + row] &= ~bit;
         masks[ColumnOffset + col] &= ~bit;
         masks[box] &= ~bit;
     }
 
-    private static int CountBits(int mask)
+    private int CountBits(int mask)
     {
         int count = 0;
         while (mask != 0) { mask &= mask - 1; count++; }
         return count;
     }
 
-    private static void ValidateDimensions(int[,] board)
+    private void ValidateDimensions(int[,] board)
     {
         if (board == null) throw new ArgumentNullException(nameof(board));
         if (board.GetLength(0) != 9 || board.GetLength(1) != 9)

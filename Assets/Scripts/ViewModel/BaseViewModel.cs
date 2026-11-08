@@ -61,8 +61,6 @@ public class BaseViewModel
 
     protected void CaptureModelSaveData(SaveGameData data)
     {
-        if (Model is IrregularSudokuModel irregularModel)
-            data.IrregularLayoutVersion = irregularModel.LayoutVersion;
         if (Model is ThermoSudokuModel thermoModel)
             data.Thermometers = ThermoSudokuModel.SerializeThermometers(thermoModel.Thermometers);
         if (Model is KillerSudokuModel killerModel)
@@ -74,8 +72,6 @@ public class BaseViewModel
 
     protected bool TryLoadModelPuzzle(SaveGameData data)
     {
-        if (Model is IrregularSudokuModel irregular)
-            return irregular.TryLoadSavedPuzzle(data.OriginalPuzzleFlat, data.SolutionFlat, data.IrregularLayoutVersion);
         if (Model is KillerSudokuModel killerModel)
             return killerModel.TryLoadSavedPuzzle(
                 data.OriginalPuzzleFlat,

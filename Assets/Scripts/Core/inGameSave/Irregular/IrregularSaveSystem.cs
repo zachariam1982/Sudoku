@@ -10,11 +10,11 @@ public sealed class IrregularSaveSystem : JsonGameSaveSystem
         return "irregular_save.json";
     }
 
-    protected override bool IsValidSavedPuzzle(int[] puzzleFlat, int[] solutionFlat) =>
-        IrregularSudokuModel.IsValidSavedPuzzle(puzzleFlat, solutionFlat);
+    // Region validation requires the seed carried by SaveGameData.
+    protected override bool IsValidSavedPuzzle(int[] puzzleFlat, int[] solutionFlat) => false;
     protected override bool IsValidSavedPuzzle(SaveGameData data, SaveSlot slot)
     {
         return IrregularSudokuModel.IsValidSavedPuzzle(data.OriginalPuzzleFlat, data.SolutionFlat,
-            data.PuzzleSeed != 0 ? data.PuzzleSeed : data.Level, data.IrregularLayoutVersion);
+            data.PuzzleSeed != 0 ? data.PuzzleSeed : data.Level);
     }
 }

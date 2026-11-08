@@ -8,69 +8,63 @@ internal sealed class IrregularSudokuRules
     internal const int FullMask = 0x3FE;
     private static readonly int[] Left = {11, 14, 38, 41, 65, 68};
     private static readonly int[] Right = {21, 24, 48, 51, 75, 78};
-    internal const int CurrentLayoutVersion = 1;
     private readonly int[] regions;
     private readonly int[][] Units;
     private readonly int[,] witness;
-    private static readonly int[] LegacyWitness = {
+    private static readonly int[] BaselineSolution = {
         1,2,3,4,5,6,7,8,9, 8,9,1,3,7,2,4,5,6, 4,6,7,5,2,8,9,1,3,
         2,1,4,9,6,7,5,3,8, 6,3,5,2,8,9,1,4,7, 5,7,9,8,1,4,3,6,2,
         3,4,2,6,9,1,8,7,5, 9,5,8,7,4,3,6,2,1, 7,8,6,1,3,5,2,9,4 };
 
-    internal IrregularSudokuRules(int seed, int version = CurrentLayoutVersion)
+    internal IrregularSudokuRules(int seed)
     {
-        if (version < 0 || version > CurrentLayoutVersion)
-            throw new ArgumentOutOfRangeException(nameof(version));
         regions = new int[81];
         witness = new int[9, 9];
-        for (int i = 0; i < 81; i++) witness[i / 9, i % 9] = LegacyWitness[i];
+        for (int i = 0; i < 81; i++) witness[i / 9, i % 9] = BaselineSolution[i];
         for (int i = 0; i < 81; i++) regions[i] = i / 27 * 3 + i % 9 / 3;
         for (int i = 0; i < Left.Length; i++) Swap(Left[i], Right[i]);
-        if (version == 1)
+        // Explicit PRNG: independent of System.Random/runtime and of puzzle retries/difficulty.
+        uint state = unchecked((uint)seed) ^ 0x9E3779B9u;
+        if (state == 0) state = 0xA341316Cu;
+        var visited = new int[81];
+        var queue = new int[81];
+        int stamp = 0;
+        var baseline = (int[])regions.Clone();
+        // Bound topology work. Reject unsatisfiable or expensive layouts before clue generation.
+        for (int candidate = 0; candidate < 8; candidate++)
         {
-            // Explicit PRNG: independent of System.Random/runtime and of puzzle retries/difficulty.
-            uint state = unchecked((uint)seed) ^ 0x9E3779B9u;
-            if (state == 0) state = 0xA341316Cu;
-            var visited = new int[81];
-            var queue = new int[81];
-            int stamp = 0;
-            var baseline = (int[])regions.Clone();
-            // Bound topology work. Reject unsatisfiable or expensive layouts before clue generation.
-            for (int candidate = 0; candidate < 8; candidate++)
+            Array.Copy(baseline, regions, 81);
+            int accepted = 0;
+            for (int attempt = 0; attempt < 2048 && accepted < 8 - candidate; attempt++)
             {
-                Array.Copy(baseline, regions, 81);
-                int accepted = 0;
-                for (int attempt = 0; attempt < 2048 && accepted < 8 - candidate; attempt++)
-                {
-                    int a = (int)(Next(ref state) % 81);
-                    int b = (int)(Next(ref state) % 81);
-                    if (regions[a] == regions[b]) continue;
-                    int first = regions[a], second = regions[b];
-                    Swap(a, b);
-                    if (!Connected(first, visited, queue, ++stamp) ||
-                        !Connected(second, visited, queue, ++stamp)) Swap(a, b);
-                    else accepted++;
-                }
-                Units = BuildUnits();
-                var solver = new IrregularSudokuSolver(this);
-                var solution = new int[9, 9];
-                if (solver.TryFillSolution(solution, new LayoutRandom(Next(ref state)), 5000))
-                { witness = solution; break; }
-                // The original connected layout is known to be solvable and is a bounded fallback.
-                Array.Copy(baseline, regions, 81);
+                int a = (int)(Next(ref state) % 81);
+                int b = (int)(Next(ref state) % 81);
+                if (regions[a] == regions[b]) continue;
+                int first = regions[a], second = regions[b];
+                Swap(a, b);
+                if (!Connected(first, visited, queue, ++stamp) ||
+                    !Connected(second, visited, queue, ++stamp)) Swap(a, b);
+                else accepted++;
             }
-            int transform = (int)(Next(ref state) % 8);
-            var copy = (int[])regions.Clone();
-            var solutionCopy = (int[,])witness.Clone();
-            for (int i = 0; i < 81; i++)
-            {
-                int row = i / 9, col = i % 9;
-                if ((transform & 4) != 0) col = 8 - col;
-                for (int turn = 0; turn < (transform & 3); turn++)
-                { int oldRow = row; row = col; col = 8 - oldRow; }
-                regions[row * 9 + col] = copy[i];
-                witness[row, col] = solutionCopy[i / 9, i % 9];
-            }
+            Units = BuildUnits();
+            var solver = new IrregularSudokuSolver(this);
+            var solution = new int[9, 9];
+            if (solver.TryFillSolution(solution, new LayoutRandom(Next(ref state)), 5000))
+            { witness = solution; break; }
+            // The original connected layout is known to be solvable and is a bounded fallback.
+            Array.Copy(baseline, regions, 81);
+        }
+        int transform = (int)(Next(ref state) % 8);
+        var copy = (int[])regions.Clone();
+        var solutionCopy = (int[,])witness.Clone();
+        for (int i = 0; i < 81; i++)
+        {
+            int row = i / 9, col = i % 9;
+            if ((transform & 4) != 0) col = 8 - col;
+            for (int turn = 0; turn < (transform & 3); turn++)
+            { int oldRow = row; row = col; col = 8 - oldRow; }
+            regions[row * 9 + col] = copy[i];
+            witness[row, col] = solutionCopy[i / 9, i % 9];
         }
         Units = BuildUnits();
     }

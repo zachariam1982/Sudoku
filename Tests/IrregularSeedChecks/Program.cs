@@ -38,31 +38,22 @@ class Program
             var puzzle=(int[,])solution.Clone(); puzzle[0,0]=0;
             Check(solver.HasUniqueSolution(puzzle),"Uniqueness");
             Check(new IrregularSudokuDifficultyAnalyzer(rules).Analyze(puzzle).SolvedLogically,"Native analyzer");
-            Check(IrregularSudokuModel.IsValidSavedPuzzle(Flat(puzzle),Flat(solution),seed,1),"Seed-aware save validation");
-            Check(!IrregularSudokuModel.IsValidSavedPuzzle(Flat(puzzle),Flat(solution),seed,99),"Reject unknown version");
+            Check(IrregularSudokuModel.IsValidSavedPuzzle(Flat(puzzle),Flat(solution),seed),"Seed-aware save validation");
             var model=new IrregularSudokuModel(); model.SetPuzzleSeed(seed);
-            Check(model.TryLoadSavedPuzzle(Flat(puzzle),Flat(solution),1),"Resume");
+            Check(model.TryLoadSavedPuzzle(Flat(puzzle),Flat(solution)),"Resume");
             model.AutoFillPencilCandidates();
             Check(model.PencilCandidateMasks[0,0]==(1<<solution[0,0]),"Restored candidates");
             Check(Map(rules)==before,"Other instances must not mutate layout");
         }
         Console.WriteLine($"Distinct layouts: {shapes.Count}");
         Check(shapes.Count>190,"Layout diversity");
-        var legacy=new IrregularSudokuRules(123,0);
-        Check(Map(legacy)==Map(new IrregularSudokuRules(999,0)),"Legacy layout");
-        var oldSolution=new int[9,9];
-        Check(new IrregularSudokuSolver(legacy).TryFillSolution(oldSolution,new Random(1),100000),"Legacy solution");
-        var oldModel=new IrregularSudokuModel();oldModel.SetPuzzleSeed(123);
-        Check(oldModel.TryLoadSavedPuzzle(Flat(oldSolution),Flat(oldSolution),0),"Legacy resume");
-        Check(oldModel.LayoutVersion==0,"Preserve legacy version");
-        Check(!IrregularSudokuModel.IsValidSavedPuzzle(Flat(oldSolution),Flat(oldSolution),123,1),"Reject wrong layout");
         var generator=new IrregularSudokuGenerator();
         var first=generator.Generate(42,SudokuDifficulty.Simple,100);
         var second=generator.Generate(42,SudokuDifficulty.Simple,100);
         Check(Flat(first.Puzzle).SequenceEqual(Flat(second.Puzzle)),"Puzzle reproducibility");
         Check(new IrregularSudokuSolver(42).HasUniqueSolution(first.Puzzle),"Generated puzzle uniqueness");
         Check(new IrregularSudokuRules(42).ValidateCompleteSolution(first.Solution),"Generator uses seeded layout");
-        Console.WriteLine($"PASS: 203 seeds, {shapes.Count} distinct maps; connectivity, solvability, isolation, analyzer, saves, legacy resume, deterministic generation ({watch.ElapsedMilliseconds} ms).");
+        Console.WriteLine($"PASS: 203 seeds, {shapes.Count} distinct maps; connectivity, solvability, isolation, analyzer, saves, deterministic generation ({watch.ElapsedMilliseconds} ms).");
     }
 }
 // External services are deliberately excluded: these checks exercise production Irregular code.

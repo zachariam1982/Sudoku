@@ -12,7 +12,6 @@ public sealed class IrregularSudokuModel : ISudokuModel
     private SudokuDifficulty _currentDifficulty = SudokuDifficulty.Easy;
     private SudokuResult _result;
     private IrregularSudokuRules rules = new IrregularSudokuRules(1);
-    public int LayoutVersion { get; private set; } = IrregularSudokuRules.CurrentLayoutVersion;
     public int GetRegion(int row, int col) => rules.GetRegion(row, col);
 
     public IrregularSudokuModel() : this(new IrregularSudokuGenerator(), new SqliteIrregularGameHistoryRepository()) { }
@@ -45,7 +44,6 @@ public sealed class IrregularSudokuModel : ISudokuModel
     public void SetPuzzleSeed(int puzzleSeed)
     {
         _puzzleSeed = puzzleSeed;
-        LayoutVersion = IrregularSudokuRules.CurrentLayoutVersion;
         rules = new IrregularSudokuRules(puzzleSeed);
     }
     public void SetDifficulty(SudokuDifficulty difficulty) => _currentDifficulty = difficulty;
@@ -71,14 +69,10 @@ public sealed class IrregularSudokuModel : ISudokuModel
     public int[] GetOriginalPuzzleFlat() => Flatten(_result?.Puzzle);
     public int[] GetSolutionFlat() => Flatten(_result?.Solution);
 
-    public bool TryLoadSavedPuzzle(int[] puzzleFlat, int[] solutionFlat) =>
-        TryLoadSavedPuzzle(puzzleFlat, solutionFlat, IrregularSudokuRules.CurrentLayoutVersion);
-
-    public bool TryLoadSavedPuzzle(int[] puzzleFlat, int[] solutionFlat, int version)
+    public bool TryLoadSavedPuzzle(int[] puzzleFlat, int[] solutionFlat)
     {
-        if (!IsValidSavedPuzzle(puzzleFlat, solutionFlat, _puzzleSeed, version)) return false;
-        LayoutVersion = version;
-        rules = new IrregularSudokuRules(_puzzleSeed, version);
+        if (!IsValidSavedPuzzle(puzzleFlat, solutionFlat, _puzzleSeed)) return false;
+        rules = new IrregularSudokuRules(_puzzleSeed);
         int[,] puzzle = Expand(puzzleFlat);
         _result = new SudokuResult
         {
@@ -90,10 +84,9 @@ public sealed class IrregularSudokuModel : ISudokuModel
         return true;
     }
 
-    public static bool IsValidSavedPuzzle(int[] puzzleFlat, int[] solutionFlat, int seed = 1, int version = 0)
+    public static bool IsValidSavedPuzzle(int[] puzzleFlat, int[] solutionFlat, int seed)
     {
-        if (version < 0 || version > IrregularSudokuRules.CurrentLayoutVersion) return false;
-        var rules = new IrregularSudokuRules(seed, version);
+        var rules = new IrregularSudokuRules(seed);
         if (puzzleFlat == null || solutionFlat == null ||
             puzzleFlat.Length != 81 || solutionFlat.Length != 81)
             return false;

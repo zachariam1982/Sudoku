@@ -1,0 +1,323 @@
+fileFormatVersion: 2
+guid: 63a7c70fd753d4f4ab52d08cd40cacfc
+TextureImporter:
+  internalIDToNameTable:
+  - first:
+      213: -9091004517528444627
+    second: Puzzle Failed and Shattered Sudoku_0
+  - first:
+      213: -6644902782549889896
+    second: Puzzle Failed and Shattered Sudoku_1
+  - first:
+      213: -179018664951592145
+    second: Puzzle Failed and Shattered Sudoku_2
+  - first:
+      213: 5560902751354702716
+    second: Puzzle Failed and Shattered Sudoku_3
+  - first:
+      213: 4264004193008663205
+    second: Puzzle Failed and Shattered Sudoku_4
+  - first:
+      213: 5375493183526195737
+    second: Puzzle Failed and Shattered Sudoku_5
+  - first:
+      213: 1556112501745549743
+    second: Puzzle Failed and Shattered Sudoku_6
+  - first:
+      213: -1241667006455242155
+    second: Puzzle Failed and Shattered Sudoku_7
+  - first:
+      213: -6631917459548954828
+    second: Puzzle Failed and Shattered Sudoku_8
+  - first:
+      213: 8007646656849993025
+    second: Puzzle Failed and Shattered Sudoku_9
+  - first:
+      213: -5391177030286461195
+    second: Puzzle Failed and Shattered Sudoku_10
+  - first:
+      213: 427289035369382687
+    second: Puzzle Failed and Shattered Sudoku_11
+  - first:
+      213: -5648535992186978026
+    second: Puzzle Failed and Shattered Sudoku_12
+  - first:
+      213: -372213290550905582
+    second: Puzzle Failed and Shattered Sudoku_13
+  - first:
+      213: 7099563026753553864
+    second: Puzzle Failed and Shattered Sudoku_14
+  - first:
+      213: -6027908077170295996
+    second: Puzzle Failed and Shattered Sudoku_15
+  - first:
+      213: -7474022470279619128
+    second: Puzzle Failed and Shattered Sudoku_16
+  - first:
+      213: 8897289991186377791
+    second: Puzzle Failed and Shattered Sudoku_17
+  - first:
+      213: 5778797113346006006
+    second: Puzzle Failed and Shattered Sudoku_18
+  - first:
+      213: 8420121398476228968
+    second: Puzzle Failed and Shattered Sudoku_19
+  - first:
+      213: 7743836454180946242
+    second: Puzzle Failed and Shattered Sudoku_20
+  - first:
+      213: 5026320130627059946
+    second: Puzzle Failed and Shattered Sudoku_21
+  - first:
+      213: 1244268825355173758
+    second: Puzzle Failed and Shattered Sudoku_22
+  - first:
+      213: 8530021493054028841
+    second: Puzzle Failed and Shattered Sudoku_23
+  - first:
+      213: -6043305904580189426
+    second: Puzzle Failed and Shattered Sudoku_24
+  - first:
+      213: 1201064387424792903
+    second: Puzzle Failed and Shattered Sudoku_25
+  - first:
+      213: -4505091443240707670
+    second: Puzzle Failed and Shattered Sudoku_26
+  - first:
+      213: 7547587207072436001
+    second: Puzzle Failed and Shattered Sudoku_27
+  - first:
+      213: 7062391630394769638
+    second: Puzzle Failed and Shattered Sudoku_28
+  - first:
+      213: 770398763270409696
+    second: Puzzle Failed and Shattered Sudoku_29
+  - first:
+      213: -8502722569454185395
+    second: Puzzle Failed and Shattered Sudoku_30
+  - first:
+      213: 7040283680157399790
+    second: Puzzle Failed and Shattered Sudoku_31
+  - first:
+      213: -6412758875674932685
+    second: Puzzle Failed and Shattered Sudoku_32
+  - first:
+      213: -361413889208599037
+    second: Puzzle Failed and Shattered Sudoku_33
+  externalObjects: {}
+  serializedVersion: 13
+  mipmaps:
+    mipMapMode: 0
+    enableMipMap: 0
+    sRGBTexture: 1
+    linearTexture: 0
+    fadeOut: 0
+    borderMipMap: 0
+    mipMapsPreserveCoverage: 0
+    alphaTestReferenceValue: 0.5
+    mipMapFadeDistanceStart: 1
+    mipMapFadeDistanceEnd: 3
+  bumpmap:
+    convertToNormalMap: 0
+    externalNormalMap: 0
+    heightScale: 0.25
+    normalMapFilter: 0
+    flipGreenChannel: 0
+  isReadable: 0
+  streamingMipmaps: 0
+  streamingMipmapsPriority: 0
+  vTOnly: 0
+  ignoreMipmapLimit: 0
+  grayScaleToAlpha: 0
+  generateCubemap: 6
+  cubemapConvolution: 0
+  seamlessCubemap: 0
+  textureFormat: 1
+  maxTextureSize: 2048
+  textureSettings:
+    serializedVersion: 2
+    filterMode: 1
+    aniso: 1
+    mipBias: 0
+    wrapU: 1
+    wrapV: 1
+    wrapW: 1
+  nPOTScale: 0
+  lightmap: 0
+  compressionQuality: 50
+  spriteMode: 2
+  spriteExtrude: 1
+  spriteMeshType: 1
+  alignment: 0
+  spritePivot: {x: 0.5, y: 0.5}
+  spritePixelsToUnits: 100
+  spriteBorder: {x: 0, y: 0, z: 0, w: 0}
+  spriteGenerateFallbackPhysicsShape: 1
+  alphaUsage: 1
+  alphaIsTransparency: 1
+  spriteTessellationDetail: -1
+  textureType: 8
+  textureShape: 1
+  singleChannelComponent: 0
+  flipbookRows: 1
+  flipbookColumns: 1
+  maxTextureSizeSet: 0
+  compressionQualitySet: 0
+  textureFormatSet: 0
+  ignorePngGamma: 0
+  applyGammaDecoding: 0
+  swizzle: 50462976
+  cookieLightType: 0
+  platformSettings:
+  - serializedVersion: 4
+    buildTarget: DefaultTexturePlatform
+    maxTextureSize: 2048
+    resizeAlgorithm: 0
+    textureFormat: -1
+    textureCompression: 1
+    compressionQuality: 50
+    crunchedCompression: 0
+    allowsAlphaSplitting: 0
+    overridden: 0
+    ignorePlatformSupport: 0
+    androidETC2FallbackOverride: 0
+    forceMaximumCompressionQuality_BC6H_BC7: 0
+  - serializedVersion: 4
+    buildTarget: Standalone
+    maxTextureSize: 2048
+    resizeAlgorithm: 0
+    textureFormat: -1
+    textureCompression: 1
+    compressionQuality: 50
+    crunchedCompression: 0
+    allowsAlphaSplitting: 0
+    overridden: 0
+    ignorePlatformSupport: 0
+    androidETC2FallbackOverride: 0
+    forceMaximumCompressionQuality_BC6H_BC7: 0
+  - serializedVersion: 4
+    buildTarget: Android
+    maxTextureSize: 2048
+    resizeAlgorithm: 0
+    textureFormat: -1
+    textureCompression: 1
+    compressionQuality: 50
+    crunchedCompression: 0
+    allowsAlphaSplitting: 0
+    overridden: 0
+    ignorePlatformSupport: 0
+    androidETC2FallbackOverride: 0
+    forceMaximumCompressionQuality_BC6H_BC7: 0
+  - serializedVersion: 4
+    buildTarget: WebGL
+    maxTextureSize: 2048
+    resizeAlgorithm: 0
+    textureFormat: -1
+    textureCompression: 1
+    compressionQuality: 50
+    crunchedCompression: 0
+    allowsAlphaSplitting: 0
+    overridden: 0
+    ignorePlatformSupport: 0
+    androidETC2FallbackOverride: 0
+    forceMaximumCompressionQuality_BC6H_BC7: 0
+  spriteSheet:
+    serializedVersion: 2
+    sprites:
+    - serializedVersion: 2
+      name: Puzzle Failed and Shattered Sudoku_0
+      rect:
+        serializedVersion: 2
+        x: 80
+        y: 219
+        width: 810
+        height: 388
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: d21ee39be8346d180800000000000000
+      internalID: -9091004517528444627
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Puzzle Failed and Shattered Sudoku_1
+      rect:
+        serializedVersion: 2
+        x: 1032
+        y: 32
+        width: 844
+        height: 771
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 89ceb1f102098c3a0800000000000000
+      internalID: -6644902782549889896
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    outline: []
+    customData: 
+    physicsShape: []
+    bones: []
+    spriteID: 86da5967f5fae4d4587b3b38c872e608
+    internalID: 0
+    vertices: []
+    indices: 
+    edges: []
+    weights: []
+    secondaryTextures: []
+    spriteCustomMetadata:
+      entries: []
+    nameFileIdTable:
+      Puzzle Failed and Shattered Sudoku_0: -9091004517528444627
+      Puzzle Failed and Shattered Sudoku_1: -6644902782549889896
+      Puzzle Failed and Shattered Sudoku_10: -5391177030286461195
+      Puzzle Failed and Shattered Sudoku_11: 427289035369382687
+      Puzzle Failed and Shattered Sudoku_12: -5648535992186978026
+      Puzzle Failed and Shattered Sudoku_13: -372213290550905582
+      Puzzle Failed and Shattered Sudoku_14: 7099563026753553864
+      Puzzle Failed and Shattered Sudoku_15: -6027908077170295996
+      Puzzle Failed and Shattered Sudoku_16: -7474022470279619128
+      Puzzle Failed and Shattered Sudoku_17: 8897289991186377791
+      Puzzle Failed and Shattered Sudoku_18: 5778797113346006006
+      Puzzle Failed and Shattered Sudoku_19: 8420121398476228968
+      Puzzle Failed and Shattered Sudoku_2: -179018664951592145
+      Puzzle Failed and Shattered Sudoku_20: 7743836454180946242
+      Puzzle Failed and Shattered Sudoku_21: 5026320130627059946
+      Puzzle Failed and Shattered Sudoku_22: 1244268825355173758
+      Puzzle Failed and Shattered Sudoku_23: 8530021493054028841
+      Puzzle Failed and Shattered Sudoku_24: -6043305904580189426
+      Puzzle Failed and Shattered Sudoku_25: 1201064387424792903
+      Puzzle Failed and Shattered Sudoku_26: -4505091443240707670
+      Puzzle Failed and Shattered Sudoku_27: 7547587207072436001
+      Puzzle Failed and Shattered Sudoku_28: 7062391630394769638
+      Puzzle Failed and Shattered Sudoku_29: 770398763270409696
+      Puzzle Failed and Shattered Sudoku_3: 5560902751354702716
+      Puzzle Failed and Shattered Sudoku_30: -8502722569454185395
+      Puzzle Failed and Shattered Sudoku_31: 7040283680157399790
+      Puzzle Failed and Shattered Sudoku_32: -6412758875674932685
+      Puzzle Failed and Shattered Sudoku_33: -361413889208599037
+      Puzzle Failed and Shattered Sudoku_4: 4264004193008663205
+      Puzzle Failed and Shattered Sudoku_5: 5375493183526195737
+      Puzzle Failed and Shattered Sudoku_6: 1556112501745549743
+      Puzzle Failed and Shattered Sudoku_7: -1241667006455242155
+      Puzzle Failed and Shattered Sudoku_8: -6631917459548954828
+      Puzzle Failed and Shattered Sudoku_9: 8007646656849993025
+  mipmapLimitGroupName: 
+  pSDRemoveMatte: 0
+  userData: 
+  assetBundleName: 
+  assetBundleVariant: 

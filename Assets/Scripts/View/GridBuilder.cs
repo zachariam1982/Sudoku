@@ -38,6 +38,8 @@ public class GridBuilder : MonoBehaviour
         boxPadding = 1.5f;
         InitializeGrid();
     }
+    public RectTransform GridPanel => gridPanel;
+
     public void SetVisible(bool visible)
     {
         if (gridPanel != null)

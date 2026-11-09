@@ -5,6 +5,7 @@ using UnityEngine;
 /// <summary>Creates and connects the independent gameplay modes.</summary>
 public class GameContext : MonoBehaviour
 {
+    public RectTransform GridPanel => _gridBuilder != null ? _gridBuilder.GridPanel : null;
     public JourneyViewModel ViewModel => JourneyViewModel;
     public JourneyViewModel JourneyViewModel { get; private set; }
     public NewGameViewModel NewGameViewModel { get; private set; }

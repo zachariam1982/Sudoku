@@ -14,37 +14,25 @@ public class GameContext : MonoBehaviour
 
     [SerializeField] private HomeScreenController _homeScreen;
     [SerializeField] private NewGameScreenController _newGameScreen;
+    [SerializeField] private SudokuGrid _grid;
+    [SerializeField] private GridBuilder _gridBuilder;
+    [SerializeField] private ErrorMessage _error;
+    [SerializeField] private NumberPicker _picker;
     [SerializeField] private JourneyStateMachine _journeyStateMachine;
     [SerializeField] private NewGameStateMachine _newGameStateMachine;
     [SerializeField] private DailyChallengeStateMachine _dailyChallengeStateMachine;
     [SerializeField] private DailyChallengeScreenController _dailyChallengeScreen;
-
-    private SudokuGrid _grid;
-    private GridBuilder _gridBuilder;
-    private ErrorMessage _error;
-    private NumberPicker _picker;
-    private JourneyGameStateView _journeyStateView;
-    private NewGameGameStateView _newGameStateView;
-    private StatsPanel _statsPanel;
-    private NewGameStatsPanel _newGameStatsPanel;
-    private DailyChallengeStatsPanel _dailyChallengeStatsPanel;
-    private DailyChallengeGameStateView _dailyChallengeStateView;
+    [SerializeField] private JourneyGameStateView _journeyStateView;
+    [SerializeField] private NewGameGameStateView _newGameStateView;
+    [SerializeField] private DailyChallengeGameStateView _dailyChallengeStateView;
+    [SerializeField] private StatsPanel _statsPanel;
+    [SerializeField] private NewGameStatsPanel _newGameStatsPanel;
+    [SerializeField] private DailyChallengeStatsPanel _dailyChallengeStatsPanel;
     private bool _dailyChallengeActive;
     private bool _newGameActive;
 
     private void Awake()
     {
-        _grid = GetComponent<SudokuGrid>();
-        _gridBuilder = GetComponent<GridBuilder>();
-        _error = GetComponent<ErrorMessage>();
-        _picker = GetComponentInChildren<NumberPicker>();
-        _journeyStateView = GetComponentInChildren<JourneyGameStateView>(true);
-        _newGameStateView = GetComponentInChildren<NewGameGameStateView>(true);
-        _dailyChallengeStateView = GetComponentInChildren<DailyChallengeGameStateView>(true);
-
-        _statsPanel = GetComponentInChildren<StatsPanel>(true);
-        _newGameStatsPanel = GetComponentInChildren<NewGameStatsPanel>(true);
-        _dailyChallengeStatsPanel = GetComponentInChildren<DailyChallengeStatsPanel>(true);
         ConfigureVariant(User.Instance.VariantFactory);
         _dailyChallengeStateView?.SetGameplayVisible(false);
         StartDailyChallengeBackgroundJobs();

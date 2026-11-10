@@ -19753,10 +19753,20 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::GameContext
   _homeScreen: {fileID: 2147000004}
   _newGameScreen: {fileID: 2147100004}
+  _grid: {fileID: 2027544914}
+  _gridBuilder: {fileID: 2027544915}
+  _error: {fileID: 2027544922}
+  _picker: {fileID: 1755355815}
   _journeyStateMachine: {fileID: 2027544920}
   _newGameStateMachine: {fileID: 2147200000}
   _dailyChallengeStateMachine: {fileID: 2147200001}
   _dailyChallengeScreen: {fileID: 9000000000000000673}
+  _journeyStateView: {fileID: 648528822}
+  _newGameStateView: {fileID: 8120000000000000002}
+  _dailyChallengeStateView: {fileID: 7000000000000001000}
+  _statsPanel: {fileID: 247028913}
+  _newGameStatsPanel: {fileID: 9100000000180}
+  _dailyChallengeStatsPanel: {fileID: 8700000000000000002}
 --- !u!114 &2027544918
 MonoBehaviour:
   m_ObjectHideFlags: 0

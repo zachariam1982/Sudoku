@@ -192,9 +192,12 @@ public class StatsPanel : MonoBehaviour
 
         Camera uiCamera = rootCanvas != null && rootCanvas.renderMode != RenderMode.ScreenSpaceOverlay ? rootCanvas.worldCamera : null;
 
-        bool clickedInsidePanel = RectTransformUtility.RectangleContainsScreenPoint( panelRT, screenPosition, uiCamera);
+        bool clickedInsidePanel = RectTransformUtility.RectangleContainsScreenPoint(panelRT, screenPosition, uiCamera);
+        bool clickedInsideScrollViewport = scrollRect != null && scrollRect.viewport != null &&
+            RectTransformUtility.RectangleContainsScreenPoint(scrollRect.viewport, screenPosition, uiCamera);
 
-        if (!clickedInsidePanel) ClosePanel();
+        if (!clickedInsidePanel && !clickedInsideScrollViewport)
+            ClosePanel();
     }
     private bool TryGetPointerDownPosition(out Vector2 screenPosition)
     {

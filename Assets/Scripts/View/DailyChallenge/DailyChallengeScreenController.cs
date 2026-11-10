@@ -7,27 +7,40 @@ using UnityEngine;
 /// </summary>
 public sealed class DailyChallengeScreenController : MonoBehaviour
 {
+    [Header("Scene Dependencies")]
+    [SerializeField] private GameContext gameContext;
+    [SerializeField] private Canvas canvas;
+
     [SerializeField] private GameObject readyPage;
     [SerializeField] private GameObject portraitLayout;
     [SerializeField] private GameObject landscapeLayout;
 
-    private RectTransform _landscapeRoot;
-    private RectTransform _challengeCard;
-    private RectTransform _statsCard;
-    private TextMeshProUGUI _bestTimeLabel;
-    private TextMeshProUGUI _bestTimeValue;
-    private TextMeshProUGUI _streakLabel;
-    private TextMeshProUGUI _streakValue;
-    private TextMeshProUGUI _portraitChallengeNumber;
-    private TextMeshProUGUI _portraitDate;
-    private TextMeshProUGUI _portraitDifficulty;
-    private TextMeshProUGUI _landscapeChallengeNumber;
-    private TextMeshProUGUI _landscapeDate;
-    private TextMeshProUGUI _landscapeDifficulty;
-    private TextMeshProUGUI _portraitBestTimeValue;
-    private TextMeshProUGUI _portraitStreakValue;
-    private TextMeshProUGUI _portraitStartChallengeLabel;
-    private TextMeshProUGUI _landscapeStartChallengeLabel;
+    [Header("Landscape Cards")]
+    [SerializeField] private RectTransform landscapeRoot;
+    [SerializeField] private RectTransform challengeCard;
+    [SerializeField] private RectTransform statsCard;
+    [SerializeField] private TextMeshProUGUI _bestTimeLabel;
+    [SerializeField] private TextMeshProUGUI _bestTimeValue;
+    [SerializeField] private TextMeshProUGUI _streakLabel;
+    [SerializeField] private TextMeshProUGUI _streakValue;
+
+    [Header("Ready Page Labels")]
+    [SerializeField] private TextMeshProUGUI _portraitChallengeNumber;
+    [SerializeField] private TextMeshProUGUI _portraitDate;
+    [SerializeField] private TextMeshProUGUI _portraitDifficulty;
+    [SerializeField] private TextMeshProUGUI _landscapeChallengeNumber;
+    [SerializeField] private TextMeshProUGUI _landscapeDate;
+    [SerializeField] private TextMeshProUGUI _landscapeDifficulty;
+    [SerializeField] private TextMeshProUGUI _portraitBestTimeValue;
+    [SerializeField] private TextMeshProUGUI _portraitStreakValue;
+    [SerializeField] private TextMeshProUGUI _portraitStartChallengeLabel;
+    [SerializeField] private TextMeshProUGUI _landscapeStartChallengeLabel;
+
+    [Header("Responsive Buttons")]
+    [SerializeField] private RectTransform settingsButton;
+    [SerializeField] private RectTransform portraitHomeButton;
+    [SerializeField] private RectTransform landscapeHomeButton;
+
     private float _baseLandscapeCardWidth;
     private bool _isLandscape;
     private bool _orientationInitialized;
@@ -41,8 +54,9 @@ public sealed class DailyChallengeScreenController : MonoBehaviour
 
     private void Awake()
     {
-        CacheReadyPageLabels();
-        CacheLandscapeCards();
+        _baseLandscapeCardWidth = challengeCard != null && statsCard != null
+            ? Mathf.Min(challengeCard.sizeDelta.x, statsCard.sizeDelta.x)
+            : 0f;
     }
 
     private void OnEnable()
@@ -79,9 +93,7 @@ public sealed class DailyChallengeScreenController : MonoBehaviour
         gameObject.SetActive(true);
         if (readyPage != null) readyPage.SetActive(true);
 
-        GameContext context = GetComponentInParent<GameContext>();
-        if (context == null) context = FindFirstObjectByType<GameContext>();
-        context?.RefreshDailyChallengeScreen(this);
+        gameContext?.RefreshDailyChallengeScreen(this);
     }
 
     public void SetChallengeData(
@@ -143,40 +155,11 @@ public sealed class DailyChallengeScreenController : MonoBehaviour
             remainingSeconds);
     }
 
-    private void CacheReadyPageLabels()
-    {
-        _portraitChallengeNumber = FindText(portraitLayout, "ChallengeNumber_PortraitLayout");
-        _portraitDate = FindText(portraitLayout, "Date_PortraitLayout");
-        _portraitDifficulty = FindText(portraitLayout, "Difficulty_PortraitLayout");
-        _landscapeChallengeNumber = FindText(landscapeLayout, "ChallengeNumber_LandscapeLayout");
-        _landscapeDate = FindText(landscapeLayout, "Date_LandscapeLayout");
-        _landscapeDifficulty = FindText(landscapeLayout, "DifficultyBadge_LandscapeLayout");
-        _portraitBestTimeValue = FindText(portraitLayout, "BestTimeValue_PortraitLayout");
-        _portraitStreakValue = FindText(portraitLayout, "StreakValue_PortraitLayout");
-        _portraitStartChallengeLabel = FindText(portraitLayout, "StartChallengeLabel_PortraitLayout");
-        _landscapeStartChallengeLabel = FindText(landscapeLayout, "StartChallengeLabel_LandscapeLayout");
-    }
-
-    private static TextMeshProUGUI FindText(GameObject root, string objectName)
-    {
-        if (root == null)
-            return null;
-
-        TextMeshProUGUI[] labels = root.GetComponentsInChildren<TextMeshProUGUI>(true);
-        foreach (TextMeshProUGUI label in labels)
-            if (label.gameObject.name == objectName)
-                return label;
-
-        return null;
-    }
-
     public void Hide() => gameObject.SetActive(false);
 
     public void StartChallenge()
     {
-        GameContext context = GetComponentInParent<GameContext>();
-        if (context == null) context = FindFirstObjectByType<GameContext>();
-        context?.StartDailyChallenge(this);
+        gameContext?.StartDailyChallenge(this);
     }
 
     public void SetLandscape(bool landscape)
@@ -194,17 +177,10 @@ public sealed class DailyChallengeScreenController : MonoBehaviour
 
     private void AlignSettingsButtonWithHome(bool landscape)
     {
-        RectTransform settingsButton = transform.Find("SettingsButton_DailyChallengeScreen") as RectTransform;
         if (settingsButton == null)
             return;
 
-        GameObject layout = landscape ? landscapeLayout : portraitLayout;
-        string homeButtonName = landscape
-            ? "HomeButton_LandscapeLayout"
-            : "HomeButton_PortraitLayout";
-        RectTransform homeButton = layout != null
-            ? layout.transform.Find(homeButtonName) as RectTransform
-            : null;
+        RectTransform homeButton = landscape ? landscapeHomeButton : portraitHomeButton;
         if (homeButton == null)
             return;
 
@@ -215,50 +191,16 @@ public sealed class DailyChallengeScreenController : MonoBehaviour
             homeButton.anchoredPosition.y);
     }
 
-    private void CacheLandscapeCards()
-    {
-        if (landscapeLayout == null)
-            return;
-
-        _landscapeRoot = landscapeLayout.transform as RectTransform;
-        RectTransform[] descendants = landscapeLayout.GetComponentsInChildren<RectTransform>(true);
-        foreach (RectTransform candidate in descendants)
-        {
-            if (candidate.name == "ChallengeCard_LandscapeLayout")
-                _challengeCard = candidate;
-            else if (candidate.name == "StatsCard_LandscapeLayout")
-                _statsCard = candidate;
-            else if (candidate.name == "BestTimeLabel_LandscapeLayout")
-                _bestTimeLabel = candidate.GetComponent<TextMeshProUGUI>();
-            else if (candidate.name == "BestTimeValue_LandscapeLayout")
-                _bestTimeValue = candidate.GetComponent<TextMeshProUGUI>();
-            else if (candidate.name == "StreakLabel_LandscapeLayout")
-                _streakLabel = candidate.GetComponent<TextMeshProUGUI>();
-            else if (candidate.name == "StreakValue_LandscapeLayout")
-                _streakValue = candidate.GetComponent<TextMeshProUGUI>();
-        }
-
-        if (_challengeCard != null && _statsCard != null)
-        {
-            _baseLandscapeCardWidth = Mathf.Min(
-                _challengeCard.sizeDelta.x,
-                _statsCard.sizeDelta.x);
-        }
-    }
-
     private void ApplyLandscapeCardLayout()
     {
         if (landscapeLayout == null)
             return;
 
-        if (_landscapeRoot == null || _challengeCard == null || _statsCard == null)
-            CacheLandscapeCards();
-
-        if (_landscapeRoot == null || _challengeCard == null || _statsCard == null ||
+        if (landscapeRoot == null || challengeCard == null || statsCard == null ||
             _baseLandscapeCardWidth <= 0f)
             return;
 
-        float availableWidth = _landscapeRoot.rect.width;
+        float availableWidth = landscapeRoot.rect.width;
         if (availableWidth <= 0f)
             return;
 
@@ -276,14 +218,13 @@ public sealed class DailyChallengeScreenController : MonoBehaviour
 
         // Use equal widths and symmetric centers so the cards cannot overlap
         // on narrower landscape screens or tablets.
-        SetCenteredHorizontally(_challengeCard, -((cardWidth + gap) * 0.5f), cardWidth);
-        SetCenteredHorizontally(_statsCard, (cardWidth + gap) * 0.5f, cardWidth);
+        SetCenteredHorizontally(challengeCard, -((cardWidth + gap) * 0.5f), cardWidth);
+        SetCenteredHorizontally(statsCard, (cardWidth + gap) * 0.5f, cardWidth);
         ApplyLandscapeStatsTypography();
     }
 
     private void ApplyLandscapeStatsTypography()
     {
-        Canvas canvas = GetComponentInParent<Canvas>();
         float canvasScale = canvas != null ? canvas.scaleFactor : 1f;
         if (canvasScale <= 0f)
             canvasScale = 1f;

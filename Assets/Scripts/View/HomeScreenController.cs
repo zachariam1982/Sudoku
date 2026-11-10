@@ -34,6 +34,7 @@ public sealed class HomeScreenController : MonoBehaviour
     [SerializeField] private GameContext _gameContext;
     [SerializeField] private DailyChallengeScreenController dailyChallengeScreen;
     [SerializeField] private PuzzleVariantSelectionScreen variantSelectionScreen;
+    [SerializeField] private VerseTicker verseTicker;
 
     private JourneyViewModel _viewModel;
     private bool _layoutApplied;
@@ -176,9 +177,7 @@ public sealed class HomeScreenController : MonoBehaviour
 
     private void SetVerseTickerVisible(bool visible)
     {
-        Canvas canvas = GetComponentInParent<Canvas>();
-        VerseTicker ticker = canvas != null ? canvas.GetComponent<VerseTicker>() : null;
-        if (ticker != null) ticker.SetGameActive(visible);
+        if (verseTicker != null) verseTicker.SetGameActive(visible);
     }
 
     private void ApplyResponsiveLayout()

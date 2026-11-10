@@ -7,6 +7,12 @@ using UnityEngine.UI;
 /// <summary>State-driven panels and top bar for Journey mode only.</summary>
 public sealed class JourneyGameStateView : MonoBehaviour
 {
+    [Header("Scene Dependencies")]
+    [SerializeField] private GameContext gameContext;
+    [SerializeField] private HUD _hud;
+    [SerializeField] private VerseTicker _verseTicker;
+    [SerializeField] private Button _pauseResumeButton;
+
     [Header("Journey top bar")]
     [SerializeField] private GameObject Lives;
     [SerializeField] private GameObject Timer;
@@ -39,9 +45,6 @@ public sealed class JourneyGameStateView : MonoBehaviour
     [SerializeField] private GameObject pausePanel;
 
     private JourneyViewModel _viewModel;
-    private HUD _hud;
-    private VerseTicker _verseTicker;
-    private Button _pauseResumeButton;
     private bool _gameplayVisible;
     private Coroutine _resultTransition;
     private bool _isResultTransitionRunning;
@@ -106,16 +109,12 @@ public sealed class JourneyGameStateView : MonoBehaviour
         CacheWinPanelElements();
         CacheLosePanelElements();
 
-        _pauseResumeButton = pausePanel != null
-            ? pausePanel.GetComponentInChildren<Button>(true)
-            : null;
         if (_pauseResumeButton != null)
             _pauseResumeButton.onClick.AddListener(OnPlayPressed);
 
         _viewModel.CurrentStateName.OnChanged += OnStateChanged;
         _viewModel.ElapsedSeconds.OnChanged += OnTimerChanged;
         _viewModel.LivesRemaining.OnChanged += OnLivesChanged;
-        _hud = journeyHudPanel != null ? journeyHudPanel.GetComponent<HUD>() : null;
         _hud?.Bind(_viewModel);
 
         SetAllPanelsHidden();
@@ -204,11 +203,6 @@ public sealed class JourneyGameStateView : MonoBehaviour
 
     private void UpdateVerseTicker(bool gameActive)
     {
-        if (_verseTicker == null)
-        {
-            Canvas canvas = GetComponentInParent<Canvas>();
-            if (canvas != null) _verseTicker = canvas.GetComponent<VerseTicker>();
-        }
         _verseTicker?.SetGameActive(gameActive);
     }
 
@@ -296,13 +290,11 @@ public sealed class JourneyGameStateView : MonoBehaviour
 
     private void CacheTransitionElements()
     {
-        GameContext context = GetComponentInParent<GameContext>();
-        if (context == null) context = FindFirstObjectByType<GameContext>();
-        if (_gameBoard == null) _gameBoard = context != null ? context.GridPanel : null;
+        if (_gameBoard == null) _gameBoard = gameContext != null ? gameContext.GridPanel : null;
         if (_topBarRect == null && journeyTopBar != null)
-            _topBarRect = journeyTopBar.GetComponent<RectTransform>();
+            _topBarRect = journeyTopBar.transform as RectTransform;
         if (_hudRect == null && journeyHudPanel != null)
-            _hudRect = journeyHudPanel.GetComponent<RectTransform>();
+            _hudRect = journeyHudPanel.transform as RectTransform;
 
         if (!_homePositionsCaptured && _topBarRect != null && _hudRect != null)
         {
@@ -311,20 +303,13 @@ public sealed class JourneyGameStateView : MonoBehaviour
             _homePositionsCaptured = true;
         }
 
-        if (_gameBoard != null)
+        if (_gameBoard != null && !_boardHomeScaleCaptured)
         {
-            if (!_boardHomeScaleCaptured)
-            {
-                _boardHomeScale = _gameBoard.localScale;
-                _boardHomeScaleCaptured = true;
-            }
-            if (_boardCanvasGroup == null)
-            {
-                _boardCanvasGroup = _gameBoard.GetComponent<CanvasGroup>();
-                if (_boardCanvasGroup == null)
-                    _boardCanvasGroup = _gameBoard.gameObject.AddComponent<CanvasGroup>();
-            }
+            _boardHomeScale = _gameBoard.localScale;
+            _boardHomeScaleCaptured = true;
         }
+        if (_boardCanvasGroup == null && gameContext != null)
+            _boardCanvasGroup = gameContext.GridCanvasGroup;
     }
 
     private void BeginResultTransition(bool won)

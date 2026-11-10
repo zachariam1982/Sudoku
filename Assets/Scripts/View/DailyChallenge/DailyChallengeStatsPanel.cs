@@ -9,6 +9,9 @@ using UnityEngine.UI;
 public sealed class DailyChallengeStatsPanel : MonoBehaviour
 {
     private DailyChallengeViewModel _viewModel;
+    [Header("Scene Dependencies")]
+    [SerializeField] private Canvas rootCanvas;
+    [SerializeField] private VerseTicker verseTicker;
     [SerializeField] private Sprite portraitBackground;
     [SerializeField] private Sprite landscapeBackground;
     [SerializeField] private GameObject gameplayTools;
@@ -48,7 +51,6 @@ public sealed class DailyChallengeStatsPanel : MonoBehaviour
         new Color(.94f, .86f, .52f)
     };
 
-    private VerseTicker _verseTicker;
     private bool _open;
     private bool _toolsWereActive;
     private bool _topBarWasActive;
@@ -110,7 +112,7 @@ public sealed class DailyChallengeStatsPanel : MonoBehaviour
         if (backButton != null) backButton.gameObject.SetActive(false);
         if (gameplayTools != null) gameplayTools.SetActive(_toolsWereActive);
         if (dailyChallengeTopBar != null) dailyChallengeTopBar.SetActive(_topBarWasActive);
-        if (_verseTicker != null) _verseTicker.SetGameActive(_tickerWasActive);
+        if (verseTicker != null) verseTicker.SetGameActive(_tickerWasActive);
     }
 
     private void OpenPanel()
@@ -121,11 +123,8 @@ public sealed class DailyChallengeStatsPanel : MonoBehaviour
         if (gameplayTools != null) gameplayTools.SetActive(false);
         if (dailyChallengeTopBar != null) dailyChallengeTopBar.SetActive(false);
 
-        Canvas canvas = GetComponentInParent<Canvas>();
-        if (_verseTicker == null && canvas != null)
-            _verseTicker = canvas.GetComponent<VerseTicker>();
-        _tickerWasActive = _verseTicker != null && _verseTicker.IsGameActive;
-        if (_verseTicker != null) _verseTicker.SetGameActive(false);
+        _tickerWasActive = verseTicker != null && verseTicker.IsGameActive;
+        if (verseTicker != null) verseTicker.SetGameActive(false);
 
         Refresh();
         if (overlay != null)
@@ -289,8 +288,7 @@ public sealed class DailyChallengeStatsPanel : MonoBehaviour
 
     private float GetCanvasScale()
     {
-        Canvas canvas = GetComponentInParent<Canvas>();
-        float scale = canvas != null ? canvas.scaleFactor : 1f;
+        float scale = rootCanvas != null ? rootCanvas.scaleFactor : 1f;
         return scale > 0f ? scale : 1f;
     }
 

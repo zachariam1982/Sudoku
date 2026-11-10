@@ -12,6 +12,8 @@ public sealed class VerseTicker : MonoBehaviour
     [SerializeField] private RectTransform textRect;
     [SerializeField] private TextMeshProUGUI label;
     [SerializeField] private GameObject hudRoot;
+    [SerializeField] private HomeScreenController homeScreen;
+    [SerializeField] private NewGameScreenController newGameScreen;
 
     [Header("Ticker")]
     [SerializeField] private float scrollSpeed = 28f;
@@ -32,17 +34,8 @@ public sealed class VerseTicker : MonoBehaviour
     private bool _gameActive;
     private float _start;
     private float _end;
-    private HomeScreenController _homeScreen;
-    private NewGameScreenController _newGameScreen;
-
     private void Awake()
     {
-        Canvas canvas = GetComponentInParent<Canvas>();
-        if (canvas != null)
-        {
-            _homeScreen = canvas.GetComponentInChildren<HomeScreenController>(true);
-            _newGameScreen = canvas.GetComponentInChildren<NewGameScreenController>(true);
-        }
         RefreshVisibility(true);
     }
 
@@ -94,8 +87,8 @@ public sealed class VerseTicker : MonoBehaviour
     private bool ShouldBeVisible()
     {
         bool hudVisible = hudRoot != null && hudRoot.activeInHierarchy;
-        bool homeScreenVisible = _homeScreen != null && _homeScreen.gameObject.activeInHierarchy;
-        bool newGameScreenVisible = _newGameScreen != null && _newGameScreen.gameObject.activeInHierarchy;
+        bool homeScreenVisible = homeScreen != null && homeScreen.gameObject.activeInHierarchy;
+        bool newGameScreenVisible = newGameScreen != null && newGameScreen.gameObject.activeInHierarchy;
         return _gameActive && hudVisible && !homeScreenVisible && !newGameScreenVisible;
     }
 }

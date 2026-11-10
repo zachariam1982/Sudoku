@@ -2103,6 +2103,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::StatsPanel
   canvas: {fileID: 2027544913}
+  rootCanvas: {fileID: 2027544912}
   closeButton: {fileID: 1957348925}
   backdropButton: {fileID: 0}
   panelRT: {fileID: 1374874819}
@@ -2170,6 +2171,9 @@ MonoBehaviour:
   gameplayTools: {fileID: 1023807773}
   gameplayGrid: {fileID: 1905441633}
   journeyTopBar: {fileID: 1515388379}
+  verseTicker: {fileID: 0}
+  homeScreen: {fileID: 2147000004}
+  newGameScreen: {fileID: 2147100004}
 --- !u!1 &247833110
 GameObject:
   m_ObjectHideFlags: 0
@@ -5596,6 +5600,10 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 7073925472320514c9bb3293f047bd93, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::JourneyGameStateView
+  gameContext: {fileID: 2027544917}
+  _hud: {fileID: 1023807775}
+  _verseTicker: {fileID: 0}
+  _pauseResumeButton: {fileID: 5418293}
   Lives: {fileID: 898213587}
   Timer: {fileID: 1480642198}
   Settings: {fileID: 1326735268}
@@ -18207,6 +18215,7 @@ GameObject:
   - component: {fileID: 1905441636}
   - component: {fileID: 1905441635}
   - component: {fileID: 1905441634}
+  - component: {fileID: 9110000000000000000}
   m_Layer: 5
   m_Name: GridPanel
   m_TagString: Untagged
@@ -18271,6 +18280,19 @@ RectTransform:
   m_AnchoredPosition: {x: 0, y: 0}
   m_SizeDelta: {x: 100, y: 100}
   m_Pivot: {x: 0.5, y: 0.5}
+--- !u!225 &9110000000000000000
+CanvasGroup:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1905441633}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Alpha: 1
+  m_Interactable: 1
+  m_BlocksRaycasts: 1
+  m_IgnoreParentGroups: 0
 --- !u!1 &1908638172
 GameObject:
   m_ObjectHideFlags: 0
@@ -19755,6 +19777,7 @@ MonoBehaviour:
   _newGameScreen: {fileID: 2147100004}
   _grid: {fileID: 2027544914}
   _gridBuilder: {fileID: 2027544915}
+  _gridCanvasGroup: {fileID: 9110000000000000000}
   _error: {fileID: 2027544922}
   _picker: {fileID: 1755355815}
   _journeyStateMachine: {fileID: 2027544920}
@@ -20993,6 +21016,7 @@ MonoBehaviour:
   _gameContext: {fileID: 2027544917}
   dailyChallengeScreen: {fileID: 9000000000000000673}
   variantSelectionScreen: {fileID: 8000000000000004}
+  verseTicker: {fileID: 0}
 --- !u!1 &2147000010
 GameObject:
   m_ObjectHideFlags: 0
@@ -40250,6 +40274,10 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: abe620a304084495a0a220f4e1b5fd52, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::DailyChallengeGameStateView
+  gameContext: {fileID: 2027544917}
+  _hud: {fileID: 8600000000000000085}
+  _verseTicker: {fileID: 0}
+  _pauseResumeButton: {fileID: 5418293}
   Lives: {fileID: 7000000000000000002}
   Timer: {fileID: 7000000000000000004}
   Settings: {fileID: 7000000000000000006}
@@ -40907,6 +40935,10 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: a2beee8b6c95488ebd7b197f03c1a02d, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::NewGameGameStateView
+  gameContext: {fileID: 2027544917}
+  _hud: {fileID: 8600000000000000027}
+  _verseTicker: {fileID: 0}
+  _pauseResumeButton: {fileID: 5418293}
   levelLabel: {fileID: 9000000000020}
   hudPanel: {fileID: 8600000000000000000}
   overlay: {fileID: 1121516640}
@@ -44693,6 +44725,8 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 96c67a879a48468c9d40a8d9c2a1634d, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::DailyChallengeStatsPanel
+  rootCanvas: {fileID: 2027544912}
+  verseTicker: {fileID: 0}
   portraitBackground: {fileID: 6029344928093442117, guid: a514b6c60acf4f27869ea0cb68e048d4, type: 3}
   landscapeBackground: {fileID: 5019244791283412045, guid: b92eb9ae184e4a66b032005c6b8b4381, type: 3}
   gameplayTools: {fileID: 1023807773}
@@ -59697,9 +59731,31 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 855f9b55b00b451abbc9e08e489bd844, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::DailyChallengeScreenController
+  gameContext: {fileID: 2027544917}
+  canvas: {fileID: 2027544912}
   readyPage: {fileID: 9000000000000000671}
   portraitLayout: {fileID: 9000000000000000335}
   landscapeLayout: {fileID: 9000000000000000503}
+  landscapeRoot: {fileID: 9000000000000000504}
+  challengeCard: {fileID: 9000000000000000527}
+  statsCard: {fileID: 9000000000000000559}
+  _bestTimeLabel: {fileID: 9000000000000000633}
+  _bestTimeValue: {fileID: 9000000000000000637}
+  _streakLabel: {fileID: 9000000000000000649}
+  _streakValue: {fileID: 9000000000000000653}
+  _portraitChallengeNumber: {fileID: 9000000000000000371}
+  _portraitDate: {fileID: 9000000000000000357}
+  _portraitDifficulty: {fileID: 9000000000000000389}
+  _landscapeChallengeNumber: {fileID: 9000000000000000539}
+  _landscapeDate: {fileID: 9000000000000000525}
+  _landscapeDifficulty: {fileID: 9000000000000000546}
+  _portraitBestTimeValue: {fileID: 9000000000000000469}
+  _portraitStreakValue: {fileID: 9000000000000000485}
+  _portraitStartChallengeLabel: {fileID: 9000000000000000502}
+  _landscapeStartChallengeLabel: {fileID: 9000000000000000670}
+  settingsButton: {fileID: 7600000000000000001}
+  portraitHomeButton: {fileID: 9000000000000000338}
+  landscapeHomeButton: {fileID: 9000000000000000506}
 --- !u!1660057539 &9223372036854775807
 SceneRoots:
   m_ObjectHideFlags: 0

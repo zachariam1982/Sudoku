@@ -31,6 +31,12 @@ using System.Collections;
 /// </summary>
 public class DailyChallengeGameStateView : MonoBehaviour
 {
+    [Header("Scene Dependencies")]
+    [SerializeField] private GameContext gameContext;
+    [SerializeField] private HUD _hud;
+    [SerializeField] private VerseTicker _verseTicker;
+    [SerializeField] private Button _pauseResumeButton;
+
     [Header("TopBar Items")]
     [SerializeField] private GameObject Lives;
     [SerializeField] private GameObject Timer;
@@ -71,9 +77,6 @@ public class DailyChallengeGameStateView : MonoBehaviour
     [SerializeField] private DailyChallengeTopBar      DailyChallengeTopBar;
 
     private BaseViewModel _vm;
-    private HUD _hud;
-    private VerseTicker _verseTicker;
-    private Button _pauseResumeButton;
     private bool _lastResultLandscape;
     private int _lastResultScreenWidth = -1;
     private int _lastResultScreenHeight = -1;
@@ -141,9 +144,6 @@ public class DailyChallengeGameStateView : MonoBehaviour
         _vm = vm;
         CacheTransitionElements();
 
-        _pauseResumeButton = pausePanel != null
-            ? pausePanel.GetComponentInChildren<Button>(true)
-            : null;
         if (_pauseResumeButton != null)
             _pauseResumeButton.onClick.AddListener(OnPlayPressed);
 
@@ -155,10 +155,6 @@ public class DailyChallengeGameStateView : MonoBehaviour
             dailyChallenge.LivesRemaining.OnChanged += OnLivesChanged;
             OnTimerChanged(dailyChallenge.ElapsedSeconds.Value);
         }
-        _hud = hudPanel != null
-            ? hudPanel.GetComponent<HUD>()
-            : null;
-
         _hud?.Bind(vm);
 
         SetAllPanelsHidden();
@@ -247,13 +243,6 @@ public class DailyChallengeGameStateView : MonoBehaviour
 
     private void UpdateVerseTicker(string stateName)
     {
-        if (_verseTicker == null)
-        {
-            Canvas canvas = GetComponentInParent<Canvas>();
-            if (canvas != null)
-                _verseTicker = canvas.GetComponent<VerseTicker>();
-        }
-
         bool gameActive = stateName == "DailyChallengePlayingState" ||
                           stateName == "DailyChallengePausedState";
 
@@ -391,15 +380,13 @@ public class DailyChallengeGameStateView : MonoBehaviour
 
     private void CacheTransitionElements()
     {
-        GameContext context = GetComponentInParent<GameContext>();
-        if (context == null) context = FindFirstObjectByType<GameContext>();
         if (_gameBoard != null) return;
 
-        _gameBoard = context != null ? context.GridPanel : null;
+        _gameBoard = gameContext != null ? gameContext.GridPanel : null;
         _topBarRect = DailyChallengeTopBar != null
-            ? DailyChallengeTopBar.GetComponent<RectTransform>()
+            ? DailyChallengeTopBar.transform as RectTransform
             : null;
-        _hudRect = hudPanel != null ? hudPanel.GetComponent<RectTransform>() : null;
+        _hudRect = hudPanel != null ? hudPanel.transform as RectTransform : null;
 
         if (!_homePositionsCaptured)
         {
@@ -409,12 +396,8 @@ public class DailyChallengeGameStateView : MonoBehaviour
         }
 
         if (_gameBoard != null)
-        {
             _boardHomeScale = _gameBoard.localScale;
-            _boardCanvasGroup = _gameBoard.GetComponent<CanvasGroup>();
-            if (_boardCanvasGroup == null)
-                _boardCanvasGroup = _gameBoard.gameObject.AddComponent<CanvasGroup>();
-        }
+        _boardCanvasGroup = gameContext != null ? gameContext.GridCanvasGroup : null;
     }
 
     private void CancelResultTransition()

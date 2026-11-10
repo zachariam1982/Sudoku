@@ -7,6 +7,12 @@ using UnityEngine.UI;
 /// <summary>State-driven panels and top bar for New Game mode only.</summary>
 public sealed class NewGameGameStateView : MonoBehaviour
 {
+    [Header("Scene Dependencies")]
+    [SerializeField] private GameContext gameContext;
+    [SerializeField] private HUD _hud;
+    [SerializeField] private VerseTicker _verseTicker;
+    [SerializeField] private Button _pauseResumeButton;
+
     [SerializeField] private TextMeshProUGUI levelLabel;
     [SerializeField] private GameObject hudPanel;
     [SerializeField] private GameObject overlay;
@@ -22,9 +28,6 @@ public sealed class NewGameGameStateView : MonoBehaviour
     [SerializeField] private NewGameTopBar topBar;
 
     private NewGameViewModel _viewModel;
-    private HUD _hud;
-    private VerseTicker _verseTicker;
-    private Button _pauseResumeButton;
     private bool _gameplayVisible;
     private bool _hasWinLayout;
     private bool _lastWinLandscape;
@@ -75,14 +78,10 @@ public sealed class NewGameGameStateView : MonoBehaviour
         if (_viewModel == null) return;
         CacheTransitionElements();
 
-        _pauseResumeButton = pausePanel != null
-            ? pausePanel.GetComponentInChildren<Button>(true)
-            : null;
         if (_pauseResumeButton != null)
             _pauseResumeButton.onClick.AddListener(OnPlayPressed);
 
         _viewModel.CurrentStateName.OnChanged += OnStateChanged;
-        _hud = hudPanel != null ? hudPanel.GetComponent<HUD>() : null;
         _hud?.Bind(_viewModel);
 
         SetAllPanelsHidden();
@@ -150,11 +149,9 @@ public sealed class NewGameGameStateView : MonoBehaviour
     private void CacheTransitionElements()
     {
         if (_gameBoard != null) return;
-        GameContext context = GetComponentInParent<GameContext>();
-        if (context == null) context = FindFirstObjectByType<GameContext>();
-        _gameBoard = context != null ? context.GridPanel : null;
-        _topBarRect = topBar != null ? topBar.GetComponent<RectTransform>() : null;
-        _hudRect = hudPanel != null ? hudPanel.GetComponent<RectTransform>() : null;
+        _gameBoard = gameContext != null ? gameContext.GridPanel : null;
+        _topBarRect = topBar != null ? topBar.transform as RectTransform : null;
+        _hudRect = hudPanel != null ? hudPanel.transform as RectTransform : null;
         if (!_homePositionsCaptured)
         {
             if (_topBarRect != null) _topBarHomePosition = _topBarRect.anchoredPosition;
@@ -162,11 +159,8 @@ public sealed class NewGameGameStateView : MonoBehaviour
             _homePositionsCaptured = true;
         }
         if (_gameBoard != null)
-        {
             _boardHomeScale = _gameBoard.localScale;
-            _boardCanvasGroup = _gameBoard.GetComponent<CanvasGroup>();
-            if (_boardCanvasGroup == null) _boardCanvasGroup = _gameBoard.gameObject.AddComponent<CanvasGroup>();
-        }
+        _boardCanvasGroup = gameContext != null ? gameContext.GridCanvasGroup : null;
     }
 
     private IEnumerator PlayWinTransition()
@@ -314,11 +308,6 @@ public sealed class NewGameGameStateView : MonoBehaviour
 
     private void UpdateVerseTicker(bool gameActive)
     {
-        if (_verseTicker == null)
-        {
-            Canvas canvas = GetComponentInParent<Canvas>();
-            if (canvas != null) _verseTicker = canvas.GetComponent<VerseTicker>();
-        }
         _verseTicker?.SetGameActive(gameActive);
     }
 

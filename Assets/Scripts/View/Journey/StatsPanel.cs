@@ -11,6 +11,7 @@ public class StatsPanel : MonoBehaviour
 
     [Header("Canvas")]
     [SerializeField] private RectTransform canvas;
+    [SerializeField] private Canvas rootCanvas;
     [Header("Controls")]
     [SerializeField] private Button          closeButton;
     [SerializeField] private Button          backdropButton;
@@ -82,14 +83,14 @@ public class StatsPanel : MonoBehaviour
     [SerializeField] private GameObject gameplayTools;
     [SerializeField] private GameObject gameplayGrid;
     [SerializeField] private GameObject journeyTopBar;
+    [SerializeField] private VerseTicker verseTicker;
+    [SerializeField] private HomeScreenController homeScreen;
+    [SerializeField] private NewGameScreenController newGameScreen;
 
     private bool _gameplayToolsWasActive;
     private bool _gameplayGridWasActive;
     private bool _journeyTopBarWasActive;
     private bool _tickerWasActive;
-    private VerseTicker _verseTicker;
-
-
     private JourneyViewModel _vm;
     private bool            _open;
     private Coroutine       _slideAnim;
@@ -189,9 +190,7 @@ public class StatsPanel : MonoBehaviour
 
         if (!TryGetPointerDownPosition(out Vector2 screenPosition)) return;
 
-        Canvas parentCanvas = panelRT.GetComponentInParent<Canvas>();
-
-        Camera uiCamera = parentCanvas != null && parentCanvas.renderMode != RenderMode.ScreenSpaceOverlay ? parentCanvas.worldCamera : null;
+        Camera uiCamera = rootCanvas != null && rootCanvas.renderMode != RenderMode.ScreenSpaceOverlay ? rootCanvas.worldCamera : null;
 
         bool clickedInsidePanel = RectTransformUtility.RectangleContainsScreenPoint( panelRT, screenPosition, uiCamera);
 
@@ -507,10 +506,8 @@ public class StatsPanel : MonoBehaviour
         Canvas.ForceUpdateCanvases();
         ApplyAllTimeSummaryResponsiveLayout();
 
-        if (_verseTicker == null && canvas != null)
-            _verseTicker = canvas.GetComponent<VerseTicker>();
-        _tickerWasActive = _verseTicker != null && _verseTicker.IsGameActive;
-        if (_verseTicker != null) _verseTicker.SetGameActive(false);
+        _tickerWasActive = verseTicker != null && verseTicker.IsGameActive;
+        if (verseTicker != null) verseTicker.SetGameActive(false);
 
         if (gameplayTools != null)
         {
@@ -833,18 +830,12 @@ public class StatsPanel : MonoBehaviour
         
         lstOfRecords.Clear();
 
-        HomeScreenController home = canvas != null
-            ? canvas.GetComponentInChildren<HomeScreenController>(true)
-            : null;
-        NewGameScreenController newGame = canvas != null
-            ? canvas.GetComponentInChildren<NewGameScreenController>(true)
-            : null;
         bool anotherScreenIsOpen =
-            (home != null && home.gameObject.activeInHierarchy) ||
-            (newGame != null && newGame.gameObject.activeInHierarchy);
+            (homeScreen != null && homeScreen.gameObject.activeInHierarchy) ||
+            (newGameScreen != null && newGameScreen.gameObject.activeInHierarchy);
 
-        if (_verseTicker != null)
-            _verseTicker.SetGameActive(_tickerWasActive && !anotherScreenIsOpen);
+        if (verseTicker != null)
+            verseTicker.SetGameActive(_tickerWasActive && !anotherScreenIsOpen);
     }
 
     // ── Helpers ───────────────────────────────────────────────────────────

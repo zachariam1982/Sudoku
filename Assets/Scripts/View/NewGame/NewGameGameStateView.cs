@@ -151,7 +151,7 @@ public sealed class NewGameGameStateView : MonoBehaviour
     {
         if (_gameBoard != null) return;
         GameContext context = GetComponentInParent<GameContext>();
-        if (context == null) context = FindObjectOfType<GameContext>();
+        if (context == null) context = FindFirstObjectByType<GameContext>();
         _gameBoard = context != null ? context.GridPanel : null;
         _topBarRect = topBar != null ? topBar.GetComponent<RectTransform>() : null;
         _hudRect = hudPanel != null ? hudPanel.GetComponent<RectTransform>() : null;

@@ -41,17 +41,10 @@ public class GameContext : MonoBehaviour
         _journeyStateView = GetComponentInChildren<JourneyGameStateView>(true);
         _newGameStateView = GetComponentInChildren<NewGameGameStateView>(true);
         _dailyChallengeStateView = GetComponentInChildren<DailyChallengeGameStateView>(true);
-        if (_dailyChallengeScreen == null)
-            _dailyChallengeScreen = GetComponentInChildren<DailyChallengeScreenController>(true);
 
         _statsPanel = GetComponentInChildren<StatsPanel>(true);
         _newGameStatsPanel = GetComponentInChildren<NewGameStatsPanel>(true);
         _dailyChallengeStatsPanel = GetComponentInChildren<DailyChallengeStatsPanel>(true);
-        if (_dailyChallengeStateMachine == null)
-            _dailyChallengeStateMachine = GetComponent<DailyChallengeStateMachine>();
-        if (_dailyChallengeStateMachine == null)
-            _dailyChallengeStateMachine = gameObject.AddComponent<DailyChallengeStateMachine>();
-
         ConfigureVariant(User.Instance.VariantFactory);
         _dailyChallengeStateView?.SetGameplayVisible(false);
         StartDailyChallengeBackgroundJobs();

@@ -67,6 +67,9 @@ public class BaseViewModel
             data.KillerCages = KillerSudokuModel.SerializeCages(killerModel.Cages);
     }
 
+    public int GetIrregularRegion(int row, int col) =>
+        Model is IrregularSudokuModel irregular ? irregular.GetRegion(row, col) : row / 3 * 3 + col / 3;
+
     protected bool TryLoadModelPuzzle(SaveGameData data)
     {
         if (Model is KillerSudokuModel killerModel)

@@ -5,5 +5,6 @@ public enum GameVariant
     Diagonal,
     Killer,
     Thermo,
-    Hyper
+    Hyper,
+    Irregular
 }

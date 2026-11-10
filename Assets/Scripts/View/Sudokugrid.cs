@@ -135,6 +135,74 @@ public class SudokuGrid : MonoBehaviour
         }
     }
 
+    private bool irregularVariantActive;
+    public bool IsIrregularVariantActive => irregularVariantActive;
+
+    public void RefreshIrregularLayout()
+    {
+        if (!cellsReady) return;
+        for (int row = 0; row < 9; row++)
+            for (int col = 0; col < 9; col++)
+                RefreshIrregularCell(cells[row, col], row, col);
+    }
+
+    public void SetIrregularVariantActive(bool active)
+    {
+        irregularVariantActive = active;
+        RefreshHighlights();
+    }
+
+    private int GetIrregularRegion(int row, int col) =>
+        viewModel != null ? viewModel.GetIrregularRegion(row, col) : row / 3 * 3 + col / 3;
+
+    private void RefreshIrregularCell(SudokuCell cell, int row, int col)
+    {
+        var frame = cell.transform.parent.GetComponent<UnityEngine.UI.Graphic>();
+        if (frame != null) frame.enabled = !irregularVariantActive;
+        int region = GetIrregularRegion(row, col);
+        bool[] edges = {
+            col == 0 || region != GetIrregularRegion(row, col - 1),
+            col == 8 || region != GetIrregularRegion(row, col + 1),
+            row == 0 || region != GetIrregularRegion(row - 1, col),
+            row == 8 || region != GetIrregularRegion(row + 1, col)
+        };
+        var canvas = irregularVariantActive ? cell.GetComponentInParent<Canvas>() : null;
+        float scale = canvas != null ? Mathf.Max(0.01f, canvas.scaleFactor) : 1f;
+        float cellSize = ((RectTransform)cell.transform).rect.width;
+        float stroke = Mathf.Max(cellSize * 0.065f, 2.5f / scale);
+        for (int edge = 0; edge < 4; edge++)
+        {
+            string name = "Irregular Region Edge " + edge;
+            var existing = cell.transform.Find(name);
+            if (existing == null && !irregularVariantActive) continue;
+            if (existing == null)
+            {
+                var go = new GameObject(name, typeof(RectTransform), typeof(UnityEngine.UI.Image));
+                go.transform.SetParent(cell.transform, false);
+                var image = go.GetComponent<UnityEngine.UI.Image>();
+                image.color = new Color(1f, 0.82f, 0.3f, 1f);
+                image.raycastTarget = false;
+                var rect = go.GetComponent<RectTransform>();
+                rect.anchorMin = edge < 2 ? new Vector2(edge, 0) : new Vector2(0, edge == 2 ? 1 : 0);
+                rect.anchorMax = edge < 2 ? new Vector2(edge, 1) : new Vector2(1, edge == 2 ? 1 : 0);
+                rect.pivot = edge < 2 ? new Vector2(edge, 0.5f) : new Vector2(0.5f, edge == 2 ? 1 : 0);
+                rect.anchoredPosition = Vector2.zero;
+                existing = go.transform;
+            }
+            if (irregularVariantActive)
+            {
+                // Two inward half-strokes meet at shared edges; outer edges use a full stroke.
+                // Maintain a visible screen-pixel minimum even on compact landscape boards.
+                bool outer = edge == 0 ? col == 0 : edge == 1 ? col == 8 :
+                    edge == 2 ? row == 0 : row == 8;
+                float width = outer ? stroke : stroke * 0.5f;
+                ((RectTransform)existing).sizeDelta = edge < 2 ? new Vector2(width, 0) : new Vector2(0, width);
+                existing.SetAsLastSibling();
+            }
+            existing.gameObject.SetActive(irregularVariantActive && edges[edge]);
+        }
+    }
+
     public void SetHyperVariantActive(bool active)
     {
         hyperVariantActive = active;
@@ -689,6 +757,7 @@ public class SudokuGrid : MonoBehaviour
                 bool isDiagonal = diagonalVariantActive && (row == col || row + col == 8);
 
                 SudokuCell cell = cells[row, col];
+                RefreshIrregularCell(cell, row, col);
                 cell.SetHighlight(false);
                 cell.SetRelatedHighlight(false);
                 cell.SetDigitMatchHighlight(false);

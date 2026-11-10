@@ -1,4 +1,5 @@
 using System;
+using System.Collections;
 using TMPro;
 using UnityEngine;
 using UnityEngine.UI;
@@ -28,10 +29,22 @@ public sealed class NewGameGameStateView : MonoBehaviour
     private bool _hasWinLayout;
     private bool _lastWinLandscape;
     private Vector2 _lastWinPanelSize;
+    private Coroutine _winTransition;
+    private RectTransform _gameBoard;
+    private RectTransform _topBarRect;
+    private RectTransform _hudRect;
+    private Vector2 _topBarHomePosition;
+    private Vector2 _hudHomePosition;
+    private bool _homePositionsCaptured;
+    private CanvasGroup _boardCanvasGroup;
+    private Vector3 _boardHomeScale = Vector3.one;
+    private const float ChromeSlideDuration = 0.55f;
+    private const float BoardFadeDuration = 0.4f;
+    private const float WinElementDuration = 0.55f;
 
     private void Update()
     {
-        if (!_gameplayVisible || _viewModel == null || winPanel == null ||
+        if (_winTransition != null || !_gameplayVisible || _viewModel == null || winPanel == null ||
             !winPanel.activeSelf || _viewModel.CurrentStateName.Value != "NewGameWinState")
         {
             return;
@@ -60,6 +73,7 @@ public sealed class NewGameGameStateView : MonoBehaviour
         Unbind();
         _viewModel = viewModel;
         if (_viewModel == null) return;
+        CacheTransitionElements();
 
         _pauseResumeButton = pausePanel != null
             ? pausePanel.GetComponentInChildren<Button>(true)
@@ -109,6 +123,7 @@ public sealed class NewGameGameStateView : MonoBehaviour
         switch (stateName)
         {
             case "NewGamePlayingState":
+                RestoreGameplayLayout();
                 if (hudPanel != null) hudPanel.SetActive(true);
                 if (_viewModel != null && levelLabel != null)
                     levelLabel.text = ((SudokuDifficulty)_viewModel.GetDifficulty).ToString();
@@ -120,14 +135,181 @@ public sealed class NewGameGameStateView : MonoBehaviour
                 if (hudPanel != null) hudPanel.SetActive(false);
                 break;
             case "NewGameWinState":
-                if (overlay != null) overlay.SetActive(true);
+                if (overlay != null) overlay.SetActive(false);
+                if (winPanel != null) winPanel.SetActive(false);
                 ApplyWinPanelLayout(Screen.width > Screen.height);
-                if (winPanel != null) winPanel.SetActive(true);
+                if (_winTransition != null) StopCoroutine(_winTransition);
+                _winTransition = StartCoroutine(PlayWinTransition());
                 break;
         }
 
         if (topBar != null) topBar.SetNewGameMode(true);
         UpdateVerseTicker(stateName == "NewGamePlayingState" || stateName == "NewGamePausedState");
+    }
+
+    private void CacheTransitionElements()
+    {
+        if (_gameBoard != null) return;
+        GameContext context = GetComponentInParent<GameContext>();
+        if (context == null) context = FindFirstObjectByType<GameContext>();
+        _gameBoard = context != null ? context.GridPanel : null;
+        _topBarRect = topBar != null ? topBar.GetComponent<RectTransform>() : null;
+        _hudRect = hudPanel != null ? hudPanel.GetComponent<RectTransform>() : null;
+        if (!_homePositionsCaptured)
+        {
+            if (_topBarRect != null) _topBarHomePosition = _topBarRect.anchoredPosition;
+            if (_hudRect != null) _hudHomePosition = _hudRect.anchoredPosition;
+            _homePositionsCaptured = true;
+        }
+        if (_gameBoard != null)
+        {
+            _boardHomeScale = _gameBoard.localScale;
+            _boardCanvasGroup = _gameBoard.GetComponent<CanvasGroup>();
+            if (_boardCanvasGroup == null) _boardCanvasGroup = _gameBoard.gameObject.AddComponent<CanvasGroup>();
+        }
+    }
+
+    private IEnumerator PlayWinTransition()
+    {
+        CacheTransitionElements();
+        RectTransform chromeParent = _topBarRect != null ? _topBarRect.parent as RectTransform : null;
+        float chromeWidth = chromeParent != null ? chromeParent.rect.width : Screen.width;
+
+        // The validating state hides the HUD. Restore both pieces at their original
+        // positions, then move them out together so the exit begins on the win frame.
+        Vector2 topBarEnd = _topBarHomePosition;
+        Vector2 hudEnd = _hudHomePosition;
+        if (topBar != null) topBar.gameObject.SetActive(true);
+        if (hudPanel != null) hudPanel.SetActive(true);
+        if (_topBarRect != null) _topBarRect.anchoredPosition = _topBarHomePosition;
+        if (_hudRect != null) _hudRect.anchoredPosition = _hudHomePosition;
+
+        float chromeElapsed = 0f;
+        while (chromeElapsed < ChromeSlideDuration &&
+               (_topBarRect != null || _hudRect != null))
+        {
+            chromeElapsed += Time.unscaledDeltaTime;
+            float t = Mathf.SmoothStep(0f, 1f, Mathf.Clamp01(chromeElapsed / ChromeSlideDuration));
+            if (_topBarRect != null)
+                _topBarRect.anchoredPosition = Vector2.LerpUnclamped(topBarEnd,
+                    new Vector2(chromeWidth + _topBarRect.rect.width, topBarEnd.y), t);
+            if (_hudRect != null)
+                _hudRect.anchoredPosition = Vector2.LerpUnclamped(hudEnd,
+                    new Vector2(-chromeWidth - _hudRect.rect.width, hudEnd.y), t);
+            yield return null;
+        }
+        if (topBar != null) topBar.gameObject.SetActive(false);
+        if (hudPanel != null) hudPanel.SetActive(false);
+
+        if (_gameBoard != null && _boardCanvasGroup != null)
+        {
+            _gameBoard.gameObject.SetActive(true);
+            _boardCanvasGroup.alpha = 1f;
+            Vector3 startScale = _gameBoard.localScale;
+            yield return FadeBoard(startScale);
+            _gameBoard.gameObject.SetActive(false);
+        }
+
+        RectTransform[] elements = {
+            winNewGameBanner, winVictoryTrophyEmblem,
+            winPuzzleCompleteWordmark, winBackToHomeButton
+        };
+        Vector2[] targets = new Vector2[elements.Length];
+        Vector2[] starts = new Vector2[elements.Length];
+        for (int i = 0; i < elements.Length; i++)
+        {
+            RectTransform element = elements[i];
+            if (element == null) continue;
+            targets[i] = element.anchoredPosition;
+            RectTransform parent = element.parent as RectTransform;
+            float width = parent != null ? parent.rect.width : Screen.width;
+            float direction = i < 2 ? -1f : 1f;
+            starts[i] = targets[i] + new Vector2(direction * (width + element.rect.width), 0f);
+            element.anchoredPosition = starts[i];
+        }
+
+        // Reveal only after the board has disappeared. The panel's background and
+        // sprites are enabled with the sprites already offscreen, avoiding a flash
+        // of the completed layout before their entrance starts.
+        if (overlay != null) overlay.SetActive(true);
+        if (winPanel != null) winPanel.SetActive(true);
+
+        float elapsed = 0f;
+        while (elapsed < WinElementDuration)
+        {
+            elapsed += Time.unscaledDeltaTime;
+            float t = Mathf.SmoothStep(0f, 1f, Mathf.Clamp01(elapsed / WinElementDuration));
+            for (int i = 0; i < elements.Length; i++)
+                if (elements[i] != null)
+                    elements[i].anchoredPosition = Vector2.LerpUnclamped(starts[i], targets[i], t);
+            yield return null;
+        }
+        for (int i = 0; i < elements.Length; i++)
+            if (elements[i] != null) elements[i].anchoredPosition = targets[i];
+
+        _winTransition = null;
+    }
+
+    private static IEnumerator Slide(RectTransform rect, Vector2 start, Vector2 end, float duration)
+    {
+        float elapsed = 0f;
+        while (elapsed < duration)
+        {
+            elapsed += Time.unscaledDeltaTime;
+            float t = Mathf.SmoothStep(0f, 1f, Mathf.Clamp01(elapsed / duration));
+            rect.anchoredPosition = Vector2.LerpUnclamped(start, end, t);
+            yield return null;
+        }
+        rect.anchoredPosition = end;
+    }
+
+    private IEnumerator FadeBoard(Vector3 startScale)
+    {
+        float elapsed = 0f;
+        while (elapsed < BoardFadeDuration)
+        {
+            elapsed += Time.unscaledDeltaTime;
+            float t = Mathf.SmoothStep(0f, 1f, Mathf.Clamp01(elapsed / BoardFadeDuration));
+            _boardCanvasGroup.alpha = 1f - t;
+            _gameBoard.localScale = Vector3.LerpUnclamped(startScale, startScale * 0.88f, t);
+            yield return null;
+        }
+        _boardCanvasGroup.alpha = 0f;
+        _gameBoard.localScale = startScale * 0.88f;
+    }
+
+    private void CancelWinTransition()
+    {
+        CacheTransitionElements();
+        if (_topBarRect != null) _topBarRect.anchoredPosition = _topBarHomePosition;
+        if (_hudRect != null) _hudRect.anchoredPosition = _hudHomePosition;
+        if (topBar != null) topBar.gameObject.SetActive(false);
+        if (hudPanel != null) hudPanel.SetActive(false);
+        if (_gameBoard != null)
+        {
+            _gameBoard.localScale = _boardHomeScale;
+            if (_boardCanvasGroup != null) _boardCanvasGroup.alpha = 1f;
+        }
+    }
+
+    private void RestoreGameplayLayout()
+    {
+        CacheTransitionElements();
+        if (_winTransition != null)
+        {
+            StopCoroutine(_winTransition);
+            _winTransition = null;
+        }
+        if (_topBarRect != null) _topBarRect.anchoredPosition = _topBarHomePosition;
+        if (_hudRect != null) _hudRect.anchoredPosition = _hudHomePosition;
+        if (topBar != null) topBar.gameObject.SetActive(true);
+        if (hudPanel != null) hudPanel.SetActive(true);
+        if (_gameBoard != null)
+        {
+            _gameBoard.gameObject.SetActive(true);
+            _gameBoard.localScale = _boardHomeScale;
+            if (_boardCanvasGroup != null) _boardCanvasGroup.alpha = 1f;
+        }
     }
 
     private void UpdateVerseTicker(bool gameActive)
@@ -232,6 +414,12 @@ public sealed class NewGameGameStateView : MonoBehaviour
     public void SetGameplayVisible(bool visible)
     {
         _gameplayVisible = visible;
+        if (!visible && _winTransition != null)
+        {
+            StopCoroutine(_winTransition);
+            _winTransition = null;
+            CancelWinTransition();
+        }
         if (visible && _viewModel != null)
         {
             OnStateChanged(_viewModel.CurrentStateName.Value);

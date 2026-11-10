@@ -38,10 +38,18 @@ public class GridBuilder : MonoBehaviour
         boxPadding = 1.5f;
         InitializeGrid();
     }
+    public RectTransform GridPanel => gridPanel;
+
     public void SetVisible(bool visible)
     {
         if (gridPanel != null)
             gridPanel.gameObject.SetActive(visible);
+    }
+
+    public void RefreshVariantLayout()
+    {
+        if (_cellRects[0] != null && gridPanel != null && gridPanel.rect.width > 0f)
+            Rebuild(gridPanel.rect.width);
     }
 
     public void Rebuild(float gridSize)
@@ -52,8 +60,13 @@ public class GridBuilder : MonoBehaviour
         gridPanel.sizeDelta        = new Vector2(gridSize, gridSize);
         gridPanel.anchoredPosition = new Vector2(0f, (bottomBarHeight - topBarHeight) / 2f);
  
-        float boxSize  = (gridSize - 2f * boxGap) / 3f;
-        float cellSize = (boxSize  - 2f * boxPadding - 2f * cellGap) / 3f;
+        // Irregular boundaries cross the old 3x3 containers; their cells must meet seamlessly.
+        bool irregular = sudokuGrid.IsIrregularVariantActive;
+        float effectiveBoxGap = irregular ? 0f : boxGap;
+        float effectiveBoxPadding = irregular ? 0f : boxPadding;
+        float effectiveCellGap = irregular ? 0f : cellGap;
+        float boxSize = (gridSize - 2f * effectiveBoxGap) / 3f;
+        float cellSize = (boxSize - 2f * effectiveBoxPadding - 2f * effectiveCellGap) / 3f;
  
         // Update existing objects — no Instantiate, no Destroy, no GC pressure
         for (int b = 0; b < 9; b++)
@@ -64,8 +77,8 @@ public class GridBuilder : MonoBehaviour
             RectTransform boxRT = _boxRects[b];
             boxRT.sizeDelta        = new Vector2(boxSize, boxSize);
             boxRT.anchoredPosition = new Vector2(
-                (boxCol - 1) * (boxSize + boxGap),
-                (1 - boxRow) * (boxSize + boxGap)
+                (boxCol - 1) * (boxSize + effectiveBoxGap),
+                (1 - boxRow) * (boxSize + effectiveBoxGap)
             );
  
             for (int c = 0; c < 9; c++)
@@ -78,18 +91,19 @@ public class GridBuilder : MonoBehaviour
                 RectTransform cellRT = _cellRects[globalIndex];
                 cellRT.sizeDelta        = new Vector2(cellSize, cellSize);
                 cellRT.anchoredPosition = new Vector2(
-                    (cellCol - 1) * (cellSize + cellGap),
-                    (1 - cellRow) * (cellSize + cellGap)
+                    (cellCol - 1) * (cellSize + effectiveCellGap),
+                    (1 - cellRow) * (cellSize + effectiveCellGap)
                 );
                 _allCells[globalIndex].ResizeCellContent(cellSize);
             }
         }
  
         if (NumberPicker.Instance != null)
-            NumberPicker.Instance.UpdateGridBounds(gridSize, gridSize, boxGap, boxPadding, cellGap);
+            NumberPicker.Instance.UpdateGridBounds(gridSize, gridSize, effectiveBoxGap, effectiveBoxPadding, effectiveCellGap);
 
         sudokuGrid.RefreshKillerCageLayout();
         sudokuGrid.RefreshThermometerLayout();
+        sudokuGrid.RefreshIrregularLayout();
     }
     private void InitializeGrid()
     {

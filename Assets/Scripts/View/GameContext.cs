@@ -5,6 +5,7 @@ using UnityEngine;
 /// <summary>Creates and connects the independent gameplay modes.</summary>
 public class GameContext : MonoBehaviour
 {
+    public RectTransform GridPanel => _gridBuilder != null ? _gridBuilder.GridPanel : null;
     public JourneyViewModel ViewModel => JourneyViewModel;
     public JourneyViewModel JourneyViewModel { get; private set; }
     public NewGameViewModel NewGameViewModel { get; private set; }
@@ -99,6 +100,8 @@ public class GameContext : MonoBehaviour
         _grid?.SetKillerVariantActive(factory.Variant == GameVariant.Killer);
         _grid?.SetThermoVariantActive(factory.Variant == GameVariant.Thermo);
         _grid?.SetHyperVariantActive(factory.Variant == GameVariant.Hyper);
+        _grid?.SetIrregularVariantActive(factory.Variant == GameVariant.Irregular);
+        _gridBuilder?.RefreshVariantLayout();
 
         if (NewGameViewModel != null)
         {

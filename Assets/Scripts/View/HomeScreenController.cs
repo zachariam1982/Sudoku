@@ -9,12 +9,12 @@ public sealed class HomeScreenController : MonoBehaviour
 {
     private const string PortraitHeader =
         "<color=#FFBE4C><size=24><b>YOUR NEXT PUZZLE</b></size></color>\n" +
-        "<size=82><b>SUDOKU</b></size>\n" +
+        "<size=82><b>{0} SUDOKU</b></size>\n" +
         "<size=28><color=#AAACCD>Choose how you want to play</color></size>";
 
     private const string LandscapeHeader =
         "<color=#FFBE4C><size=36><b>     YOUR NEXT PUZZLE</b></size></color>\n   " +
-        "<size=150><b>S U D O K U</b></size>   \n" +
+        "<size=150><b>{0} SUDOKU</b></size>   \n" +
         "<size=38><color=#AAACCD>        Choose how you want to play</color></size>";
 
     [Header("Responsive Layout")]
@@ -33,6 +33,7 @@ public sealed class HomeScreenController : MonoBehaviour
     [SerializeField] private GameObject newGameScreen;
     [SerializeField] private GameContext _gameContext;
     [SerializeField] private DailyChallengeScreenController dailyChallengeScreen;
+    [SerializeField] private PuzzleVariantSelectionScreen variantSelectionScreen;
 
     private JourneyViewModel _viewModel;
     private bool _layoutApplied;
@@ -79,13 +80,13 @@ public sealed class HomeScreenController : MonoBehaviour
     {
         if (_viewModel == null) return;
 
-        bool hasProgress = SaveSystem.HasSave(SaveSlot.Journey) || GameDatabase.GetLastRecord() != null;
+        bool hasProgress = User.Instance.GameSaveSystem.HasSave(SaveSlot.Journey) || _viewModel.GetLastRecord() != null;
         int difficultyIndex = Mathf.Clamp(_viewModel.GetDifficulty, 0, 8);
-        int totalPoints = GameDatabase.GetTotalPoints();
+        int totalPoints = _viewModel.GetTotalPoints();
 
         journeyLabel.text = $"<color=#9771FF><b>{(hasProgress ? "CONTINUE JOURNEY" : "SUDOKU JOURNEY")}</b></color>\n<size=24><color=#AAACCD>Level {_viewModel.GetLevel}  •  {(SudokuDifficulty)difficultyIndex}  •  {totalPoints:N0} Points</color></size>";
 
-        bool hasSavedNewGame = SaveSystem.HasSave(SaveSlot.NewGame) &&
+        bool hasSavedNewGame = User.Instance.GameSaveSystem.HasSave(SaveSlot.NewGame) &&
                                _gameContext != null && _gameContext.HasSavedNewGame;
         newGameLabel.text = hasSavedNewGame
             ? "<color=#4FD3FF><b>RESUME YOUR GAME</b></color>\n<size=24><color=#AAACCD>Resume your saved puzzle</color></size>"
@@ -146,6 +147,26 @@ public sealed class HomeScreenController : MonoBehaviour
         gameObject.SetActive(true);
     }
 
+    public void OpenVariantSelection()
+    {
+        if (_gameContext != null)
+        {
+            _gameContext.CloseDailyChallengeScreen();
+            _gameContext.SuspendActiveGame();
+        }
+        else if (dailyChallengeScreen != null)
+        {
+            dailyChallengeScreen.Hide();
+        }
+
+        SetVerseTickerVisible(false);
+        RefreshJourneyStatus();
+        gameObject.SetActive(false);
+
+        if (variantSelectionScreen != null)
+            variantSelectionScreen.gameObject.SetActive(true);
+    }
+
     public void CloseDailyChallenge()
     {
         if (_gameContext != null) _gameContext.CloseDailyChallengeScreen();
@@ -167,6 +188,11 @@ public sealed class HomeScreenController : MonoBehaviour
         if (dailyChallengeScreen != null)
             dailyChallengeScreen.SetLandscape(landscape);
 
+        GameVariant variant = User.Instance != null && User.Instance.VariantFactory != null
+            ? User.Instance.VariantFactory.Variant : GameVariant.Classic;
+        headerText.text = string.Format(landscape ? LandscapeHeader : PortraitHeader,
+            variant.ToString().ToUpperInvariant());
+
         if (_layoutApplied && _lastLandscape == landscape) return;
 
         _layoutApplied = true;
@@ -180,7 +206,6 @@ public sealed class HomeScreenController : MonoBehaviour
             SetStretched(sudokuJourneyButton, 0.68f, 0.08f, 0.98f, 0.64f);
             SetStretched(footer, 0.35f, 0.01f, 0.65f, 0.07f);
 
-            headerText.text = LandscapeHeader;
             headerText.fontSizeMax = 150f;
             dailyChallengeLabel.fontSizeMax = 72f;
             newGameLabel.fontSizeMax = 72f;
@@ -194,7 +219,6 @@ public sealed class HomeScreenController : MonoBehaviour
         SetCentered(sudokuJourneyButton, 0f, -390f, 900f, 240f);
         SetCentered(footer, 0f, -630f, 900f, 80f);
 
-        headerText.text = PortraitHeader;
         headerText.fontSizeMax = 82f;
         dailyChallengeLabel.fontSizeMax = 38f;
         newGameLabel.fontSizeMax = 38f;

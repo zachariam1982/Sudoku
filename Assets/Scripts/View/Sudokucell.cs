@@ -23,6 +23,7 @@ public class SudokuCell : MonoBehaviour
     public Color dimmedColor;
     public Color pickerHighlight;
     public Color highlightColor;
+    public Color diagonalHighlightColor = new Color32(255, 166, 48, 15);
     public Color relatedHighlightColor;
     public Color digitMatchHighlightColor;
     public Color errorColor;
@@ -37,10 +38,15 @@ public class SudokuCell : MonoBehaviour
     private bool            isDimmed   = false;
     private bool            isConflict = false;
     private bool            isDigitMatchHighlighted = false;
+    private bool            isDiagonalHighlighted = false;
     private bool            isRelatedHighlighted = false;
     private bool            isSelected = false;
     private bool            isPickerHighlighted = false;
     private bool            isPencilModeActive = false;
+    private bool isHyperHighlighted;
+    private static readonly Color HyperHighlightColor = new Color32(90, 165, 255, 45);
+    private bool            killerCageTintActive;
+    private Color           killerCageTint;
     private Color           baseColor;
     private Button[] _pencilButtons;
     private int _pencilCandidateMask;
@@ -80,6 +86,7 @@ public class SudokuCell : MonoBehaviour
     };
     public int  Value   { get; private set; }
     public bool IsGiven { get; private set; }
+    public TMP_FontAsset NumberFont => numberText != null ? numberText.font : null;
     private Vector3 _originalScale;
     private Vector3 _originalPosition;
     private Quaternion _originalRotation;
@@ -145,6 +152,19 @@ public class SudokuCell : MonoBehaviour
         row       = cellRow;
         col       = cellCol;
         viewModel = vm;
+    }
+
+    public void SetHyperHighlight(bool active)
+    {
+        isHyperHighlighted = active;
+        ApplyBackgroundColor();
+    }
+
+    public void SetKillerCageTint(Color tint, bool active)
+    {
+        killerCageTint = tint;
+        killerCageTintActive = active;
+        ApplyBackgroundColor();
     }
 
     public void SetCandidateHighlight(int number)
@@ -277,6 +297,12 @@ public class SudokuCell : MonoBehaviour
         ApplyBackgroundColor();
     }
 
+    public void SetDiagonalHighlight(bool highlighted)
+    {
+        isDiagonalHighlighted = highlighted;
+        ApplyBackgroundColor();
+    }
+
     public void SetRelatedHighlight(bool highlighted)
     {
         isRelatedHighlighted = highlighted;
@@ -295,23 +321,32 @@ public class SudokuCell : MonoBehaviour
     {
         if (isPickerHighlighted)
             baseColor = pickerHighlight;
-        else if (isDimmed)
-            baseColor = dimmedColor;
         else if (isSelected)
             baseColor = highlightColor;
         else if (isConflict)
             baseColor = errorColor;
         else if (isDigitMatchHighlighted)
             baseColor = digitMatchHighlightColor;
+        else if (isDiagonalHighlighted)
+            baseColor = diagonalHighlightColor;
+        else if (isDimmed)
+            baseColor = dimmedColor;
         else if (isRelatedHighlighted)
             baseColor = relatedHighlightColor;
+        else if (isHyperHighlighted)
+            baseColor = HyperHighlightColor;
         else
             baseColor = IsGiven ? givenColor : normalColor;
 
         if (background != null)
         {
-            Color displayColor = baseColor;
-            if (isPencilModeActive)
+            bool hasStateHighlight = isPickerHighlighted || isSelected || isConflict ||
+                isDigitMatchHighlighted || isDiagonalHighlighted || isDimmed || isRelatedHighlighted;
+            bool usingKillerCageTint = killerCageTintActive && !hasStateHighlight;
+            Color displayColor = usingKillerCageTint
+                ? killerCageTint
+                : baseColor;
+            if (isPencilModeActive && !usingKillerCageTint)
                 displayColor.a = Mathf.Max(displayColor.a, PencilModeBoundaryOpacity);
 
             background.color = displayColor;

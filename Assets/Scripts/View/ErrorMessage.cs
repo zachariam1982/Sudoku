@@ -27,7 +27,23 @@ public class ErrorMessage : MonoBehaviour
         Message.text = "";
         Status.text = "";
 
-        closeButton.onClick.AddListener(() => errorDialog.SetActive(false)); 
+        // Keep the scene's persistent OnClick connection and add a direct
+        // listener as a fallback for scenes where that event was lost.
+        if (closeButton != null)
+            closeButton.onClick.AddListener(CloseDialog);
+
+    }
+
+    public void CloseDialog()
+    {
+        if (errorDialog == null)
+        {
+            Debug.LogError("[ErrorDialog] Close pressed, but the dialog reference is missing.");
+            return;
+        }
+
+        errorDialog.SetActive(false);
+        Debug.Log("[ErrorDialog] Close button callback ran.");
     }
 
     public void Bind(BaseViewModel arg)
@@ -52,6 +68,8 @@ public class ErrorMessage : MonoBehaviour
 
     private void OnDestroy()
     {
+        if (closeButton != null)
+            closeButton.onClick.RemoveListener(CloseDialog);
         if (viewModel != null && _showMessageHandler != null)
             viewModel.ShowMessage.OnChanged -= _showMessageHandler;
     }

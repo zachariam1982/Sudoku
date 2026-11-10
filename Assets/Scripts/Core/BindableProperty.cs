@@ -31,9 +31,4 @@ public class BindableProperty<T>
         }
     }
 
-    /// <summary>
-    /// Forces OnChanged to fire even if the value hasn't changed.
-    /// Useful when a mutable object (like an array) is modified in place.
-    /// </summary>
-    public void ForceNotify() => OnChanged?.Invoke(_value);
 }

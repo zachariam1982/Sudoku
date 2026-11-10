@@ -58,23 +58,16 @@ public class JourneyValidatingState : IGameState
                     val.Difficulty = _vm.RetryGameData.difficulty;
                     val.Level      = _vm.RetryGameData.level;
                     
-                    GameDatabase.Update(val);
-                    GameDatabase.RebuildGameStats();
+                    _vm.SaveGameResult(val, updateExisting: true);
                 }
                 else
                 {
-                    GameDatabase.Insert(val);
+                    _vm.SaveGameResult(val, updateExisting: false);
                 }
                 
-                #if UNITY_WEBGL && !UNITY_EDITOR
-                YouTubePlatformManager.Instance?.SendScore(val.Points);
-                #endif
-
                 _machine.TransitionTo(_machine.Win);
 
-                #if UNITY_WEBGL && !UNITY_EDITOR
                 User.Instance?.SaveNow();
-                #endif
             }
             else
             {

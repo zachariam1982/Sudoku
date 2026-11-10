@@ -1,10 +1,19 @@
 <Project Sdk="Microsoft.NET.Sdk">
   <PropertyGroup><OutputType>Exe</OutputType><TargetFramework>net8.0</TargetFramework><ImplicitUsings>enable</ImplicitUsings></PropertyGroup>
   <ItemGroup>
-    <Compile Include="../../Assets/Scripts/Model/SudokuModel.cs" Link="SudokuModel.cs" />
-    <Compile Include="../../Assets/Scripts/Model/SudokuSolver.cs" Link="SudokuSolver.cs" />
-    <Compile Include="../../Assets/Scripts/Model/SudokuDifficultyAnalyzer.cs" Link="SudokuDifficultyAnalyzer.cs" />
-    <Compile Include="../../Assets/Scripts/Core/GameRecord.cs" Link="GameRecord.cs" />
+    <Compile Include="../../Assets/Scripts/Model/Classic/ClassicSudokuModel.cs" Link="ClassicSudokuModel.cs" />
+    <Compile Include="../../Assets/Scripts/Model/Classic/ClassicSudokuGenerator.cs" Link="ClassicSudokuGenerator.cs" />
+    <Compile Include="../../Assets/Scripts/Model/Classic/ClassicSudokuSolver.cs" Link="ClassicSudokuSolver.cs" />
+    <Compile Include="../../Assets/Scripts/Model/Classic/ClassicSudokuDifficultyAnalyzer.cs" Link="ClassicSudokuDifficultyAnalyzer.cs" />
+    <Compile Include="../../Assets/Scripts/Model/Diagonal/DiagonalSudokuRules.cs" Link="DiagonalSudokuRules.cs" />
+    <Compile Include="../../Assets/Scripts/Model/Diagonal/DiagonalSudokuSolver.cs" Link="DiagonalSudokuSolver.cs" />
+    <Compile Include="../../Assets/Scripts/Model/Diagonal/DiagonalSudokuDifficultyAnalyzer.cs" Link="DiagonalSudokuDifficultyAnalyzer.cs" />
+    <Compile Include="../../Assets/Scripts/Model/Diagonal/DiagonalSudokuGenerator.cs" Link="DiagonalSudokuGenerator.cs" />
+    <Compile Include="../../Assets/Scripts/Model/Diagonal/DiagonalSudokuModel.cs" Link="DiagonalSudokuModel.cs" />
+    <Compile Include="../../Assets/Scripts/Model/ISudokuServices.cs" Link="ISudokuServices.cs" />
+    <Compile Include="../../Assets/Scripts/Core/DB/IGameHistoryRepository.cs" Link="IGameHistoryRepository.cs" />
+    <Compile Include="../../Assets/Scripts/Core/IScorePenalties.cs" Link="IScorePenalties.cs" />
+    <Compile Include="../../Assets/Scripts/Core/DB/classic/GameRecord.cs" Link="GameRecord.cs" />
     <Compile Include="../../Assets/Scripts/StateMachine/IGameState.cs" Link="IGameState.cs" />
   </ItemGroup>
 </Project>

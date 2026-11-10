@@ -8,7 +8,7 @@ using UnityEngine;
 /// </summary>
 public class BaseViewModel
 {
-    protected readonly SudokuModel Model = new SudokuModel();
+    protected readonly ISudokuModel Model;
     protected readonly Stack<SaveGameHistoryEntry> UndoHistory =
         new Stack<SaveGameHistoryEntry>();
     protected readonly Stack<SaveGameHistoryEntry> RedoHistory =
@@ -28,6 +28,10 @@ public class BaseViewModel
     public BindableProperty<bool[,]> GivenMask { get; } = new BindableProperty<bool[,]>();
     public BindableProperty<int[,]> PencilCandidateMasks { get; } =
         new BindableProperty<int[,]>();
+    public BindableProperty<Thermometer[]> Thermometers { get; } =
+        new BindableProperty<Thermometer[]>(System.Array.Empty<Thermometer>());
+    public BindableProperty<KillerCage[]> KillerCages { get; } =
+        new BindableProperty<KillerCage[]>(System.Array.Empty<KillerCage>());
     public BindableProperty<int> SelectedRow { get; } = new BindableProperty<int>(-1);
     public BindableProperty<int> SelectedCol { get; } = new BindableProperty<int>(-1);
     public BindableProperty<int> SelectedDigit { get; } = new BindableProperty<int>(0);
@@ -55,6 +59,29 @@ public class BaseViewModel
     public BindableProperty<(string title, string message, string status)> ShowMessage { get; } =
         new BindableProperty<(string, string, string)>(("", "", ""));
 
+    protected void CaptureModelSaveData(SaveGameData data)
+    {
+        if (Model is ThermoSudokuModel thermoModel)
+            data.Thermometers = ThermoSudokuModel.SerializeThermometers(thermoModel.Thermometers);
+        if (Model is KillerSudokuModel killerModel)
+            data.KillerCages = KillerSudokuModel.SerializeCages(killerModel.Cages);
+    }
+
+    public int GetIrregularRegion(int row, int col) =>
+        Model is IrregularSudokuModel irregular ? irregular.GetRegion(row, col) : row / 3 * 3 + col / 3;
+
+    protected bool TryLoadModelPuzzle(SaveGameData data)
+    {
+        if (Model is KillerSudokuModel killerModel)
+            return killerModel.TryLoadSavedPuzzle(
+                data.OriginalPuzzleFlat,
+                data.SolutionFlat,
+                KillerSudokuModel.DeserializeCages(data.KillerCages));
+        if (Model is ThermoSudokuModel thermoModel)
+            return thermoModel.TryLoadSavedPuzzle(data.OriginalPuzzleFlat, data.SolutionFlat, ThermoSudokuModel.DeserializeThermometers(data.Thermometers));
+        return Model.TryLoadSavedPuzzle(data.OriginalPuzzleFlat, data.SolutionFlat);
+    }
+
     public ICommand SelectCellCommand { get; }
     public ICommand EnterValueCommand { get; }
     public ICommand CancelPickerCommand { get; }
@@ -73,9 +100,18 @@ public class BaseViewModel
     public event Action SaveRequested;
 
     public BaseViewModel(IGameUsageStats usageStats, IScorePenalties penalties)
+        : this(usageStats, penalties, new ClassicSudokuModel(new SqliteGameHistoryRepository()))
+    {
+    }
+
+    protected BaseViewModel(
+        IGameUsageStats usageStats,
+        IScorePenalties penalties,
+        ISudokuModel model)
     {
         UsageStats = usageStats ?? throw new ArgumentNullException(nameof(usageStats));
         Penalties = penalties ?? throw new ArgumentNullException(nameof(penalties));
+        Model = model ?? throw new ArgumentNullException(nameof(model));
 
         SelectCellCommand = new RelayCommand(param =>
         {
@@ -217,14 +253,7 @@ public class BaseViewModel
         ConflictingCells.Value.Clear();
         UsageStats.Reset();
         Penalties.Reset();
-        if(Model.CurrentDifficulty == SudokuDifficulty.Hard || Model.CurrentDifficulty == SudokuDifficulty.Expert)
-        {
-            Model.LoadCurrentLevelPuzzle(100000);    
-        }
-        else
-        {
-            Model.LoadCurrentLevelPuzzle();
-        }
+        Model.LoadCurrentLevelPuzzle();
         PublishBoard();
         PublishPencilCandidates();
         ClosePicker();
@@ -250,6 +279,11 @@ public class BaseViewModel
     {
         BoardValues.Value = Model.Board;
         GivenMask.Value = Model.GivenMask;
+        Thermometers.Value = Model is ThermoSudokuModel thermoModel
+            ? thermoModel.Thermometers : System.Array.Empty<Thermometer>();
+        KillerCages.Value = Model is KillerSudokuModel killerModel
+            ? killerModel.Cages
+            : System.Array.Empty<KillerCage>();
     }
 
     protected void PublishPencilCandidates()

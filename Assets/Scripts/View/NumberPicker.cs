@@ -1,6 +1,7 @@
 using UnityEngine;
 using UnityEngine.UI;
 using TMPro;
+using System.Collections;
 using System.Collections.Generic;
 using UnityEngine.EventSystems;
 using UnityEngine.InputSystem;
@@ -63,6 +64,18 @@ public class NumberPicker : MonoBehaviour
     private Vector2 lastPickerPos;
     private Coroutine activeAnimation;
     private int sosButtonHandledFrame = -1;
+    private Button highlightedTutorialButton;
+    private Graphic highlightedTutorialGraphic;
+    private Outline tutorialOutline;
+    private bool createdTutorialOutline;
+    private bool originalTutorialOutlineEnabled;
+    private Color originalTutorialOutlineColor;
+    private Vector2 originalTutorialOutlineDistance;
+    private Color originalTutorialGraphicColor;
+    private Vector3 originalTutorialButtonScale;
+    private Selectable.Transition originalTutorialTransition;
+    private Coroutine tutorialHighlightAnimation;
+    private bool closeOnOutsideClick = true;
 
     private readonly Vector3[] gridCorners = new Vector3[4];
     private readonly List<RaycastResult> pointerHits = new List<RaycastResult>();
@@ -159,7 +172,7 @@ public class NumberPicker : MonoBehaviour
 
     private void Update()
     {
-        if (!IsOpen || viewModel == null) return;
+        if (!closeOnOutsideClick || !IsOpen || viewModel == null) return;
         if (!TryGetPointerDownPosition(out Vector2 screenPosition)) return;
 
         Canvas canvas = pickerPanel.GetComponentInParent<Canvas>();
@@ -255,6 +268,7 @@ public class NumberPicker : MonoBehaviour
 
     private void OnDestroy()
     {
+        ClearTutorialNumberHighlight();
         if (sosButton != null)
             sosButton.onClick.RemoveListener(OnSOSButtonPressed);
 
@@ -311,6 +325,143 @@ public class NumberPicker : MonoBehaviour
     public void SetSelectedCellTransform( RectTransform cellRT)
     {
         selectedCellRT = cellRT;
+    }
+
+    public void SetCloseOnOutsideClick(bool enabled)
+    {
+        closeOnOutsideClick = enabled;
+    }
+
+    public RectTransform GetTutorialNumberButtonRect(int number)
+    {
+        if (numberButtons == null || number < 1 || number > numberButtons.Length ||
+            numberButtons[number - 1] == null)
+        {
+            return null;
+        }
+
+        return numberButtons[number - 1].GetComponent<RectTransform>();
+    }
+
+    public RectTransform TutorialEraseButtonRect => eraseButton != null
+        ? eraseButton.GetComponent<RectTransform>()
+        : null;
+
+    public bool PressTutorialNumberButton(int number)
+    {
+        if (numberButtons == null || number < 1 || number > numberButtons.Length ||
+            numberButtons[number - 1] == null)
+        {
+            return false;
+        }
+
+        numberButtons[number - 1].onClick.Invoke();
+        return true;
+    }
+
+    /// <summary>Draws the player's attention to a keypad digit during the tutorial.</summary>
+    public void HighlightTutorialNumber(int number)
+    {
+        if (numberButtons == null || number < 1 || number > numberButtons.Length) return;
+        HighlightTutorialButton(numberButtons[number - 1]);
+    }
+
+    public void HighlightTutorialEraseButton()
+    {
+        HighlightTutorialButton(eraseButton);
+    }
+
+    private void HighlightTutorialButton(Button button)
+    {
+        ClearTutorialNumberHighlight();
+        highlightedTutorialButton = button;
+        if (highlightedTutorialButton == null) return;
+
+        highlightedTutorialGraphic = highlightedTutorialButton.targetGraphic;
+        if (highlightedTutorialGraphic == null)
+            highlightedTutorialGraphic = highlightedTutorialButton.GetComponent<Image>();
+        if (highlightedTutorialGraphic == null)
+        {
+            highlightedTutorialButton = null;
+            return;
+        }
+
+        originalTutorialGraphicColor = highlightedTutorialGraphic.color;
+        originalTutorialButtonScale = highlightedTutorialButton.transform.localScale;
+        originalTutorialTransition = highlightedTutorialButton.transition;
+        highlightedTutorialButton.transition = Selectable.Transition.None;
+
+        tutorialOutline = highlightedTutorialGraphic.GetComponent<Outline>();
+        createdTutorialOutline = tutorialOutline == null;
+        if (createdTutorialOutline)
+            tutorialOutline = highlightedTutorialGraphic.gameObject.AddComponent<Outline>();
+        else
+        {
+            originalTutorialOutlineEnabled = tutorialOutline.enabled;
+            originalTutorialOutlineColor = tutorialOutline.effectColor;
+            originalTutorialOutlineDistance = tutorialOutline.effectDistance;
+        }
+        tutorialOutline.effectColor = new Color(1f, 0.72f, 0.16f, 1f);
+        tutorialOutline.effectDistance = new Vector2(5f, 5f);
+        tutorialOutline.enabled = true;
+
+        tutorialHighlightAnimation = StartCoroutine(PulseTutorialHighlight());
+    }
+
+    public void ClearTutorialNumberHighlight()
+    {
+        if (tutorialHighlightAnimation != null)
+        {
+            StopCoroutine(tutorialHighlightAnimation);
+            tutorialHighlightAnimation = null;
+        }
+
+        if (highlightedTutorialButton != null)
+        {
+            highlightedTutorialButton.transform.localScale = originalTutorialButtonScale;
+            highlightedTutorialButton.transition = originalTutorialTransition;
+        }
+        if (highlightedTutorialGraphic != null)
+            highlightedTutorialGraphic.color = originalTutorialGraphicColor;
+        if (tutorialOutline != null)
+        {
+            if (createdTutorialOutline)
+                Destroy(tutorialOutline);
+            else
+            {
+                tutorialOutline.enabled = originalTutorialOutlineEnabled;
+                tutorialOutline.effectColor = originalTutorialOutlineColor;
+                tutorialOutline.effectDistance = originalTutorialOutlineDistance;
+            }
+        }
+
+        highlightedTutorialButton = null;
+        highlightedTutorialGraphic = null;
+        tutorialOutline = null;
+        createdTutorialOutline = false;
+        originalTutorialOutlineEnabled = false;
+    }
+
+    private IEnumerator PulseTutorialHighlight()
+    {
+        const float pulseSpeed = 4.5f;
+        while (highlightedTutorialButton != null && highlightedTutorialGraphic != null)
+        {
+            float pulse = (Mathf.Sin(Time.unscaledTime * pulseSpeed) + 1f) * 0.5f;
+            float scale = Mathf.Lerp(1.06f, 1.2f, pulse);
+            highlightedTutorialButton.transform.localScale = originalTutorialButtonScale * scale;
+            highlightedTutorialGraphic.color = Color.Lerp(
+                originalTutorialGraphicColor,
+                Color.white,
+                0.25f + pulse * 0.45f);
+            if (tutorialOutline != null)
+            {
+                Color glow = new Color(1f, 0.58f + pulse * 0.34f, 0.08f, 0.75f + pulse * 0.25f);
+                tutorialOutline.effectColor = glow;
+                tutorialOutline.effectDistance = Vector2.one * (4f + pulse * 3f);
+            }
+            yield return null;
+        }
     }
 
     private void OnPickerOpenChanged(bool isOpen)

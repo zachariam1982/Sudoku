@@ -42,6 +42,13 @@ public sealed class NewGameGameStateView : MonoBehaviour
     private const float BoardFadeDuration = 0.4f;
     private const float WinElementDuration = 0.55f;
 
+    public RectTransform TutorialHudRect => hudPanel != null
+        ? hudPanel.transform as RectTransform
+        : null;
+    public HUD TutorialHud => _hud != null
+        ? _hud
+        : (hudPanel != null ? hudPanel.GetComponent<HUD>() : null);
+
     private void Update()
     {
         if (_winTransition != null || !_gameplayVisible || _viewModel == null || winPanel == null ||
@@ -409,6 +416,23 @@ public sealed class NewGameGameStateView : MonoBehaviour
         if (!_gameplayVisible) return;
         if (pausePanel != null) pausePanel.SetActive(false);
         _viewModel?.ResumeCommand.Execute();
+    }
+
+    public void SetTutorialChrome(BaseViewModel tutorialViewModel, bool showHud, bool showTopBar)
+    {
+        if (hudPanel != null)
+        {
+            _hud = hudPanel.GetComponent<HUD>();
+            _hud?.Bind(showHud ? tutorialViewModel : _viewModel);
+            hudPanel.SetActive(showHud);
+        }
+
+        if (topBar != null)
+        {
+            topBar.SetNewGameMode(showTopBar);
+            if (showTopBar && levelLabel != null)
+                levelLabel.text = "TUTORIAL";
+        }
     }
 
     public void SetGameplayVisible(bool visible)

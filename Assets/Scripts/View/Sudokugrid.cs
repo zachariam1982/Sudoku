@@ -22,6 +22,7 @@ public class SudokuGrid : MonoBehaviour
     private bool thermoVariantActive;
     private readonly ThermometerGraphic[] thermometerGraphics = new ThermometerGraphic[81];
     private KillerCage[] killerCages;
+    private int[] tutorialIrregularRegions;
     private int[] killerCageByCell = new int[81];
     private RectTransform gridPanelRect;
     private RectTransform cageSumBadgeRect;
@@ -153,7 +154,17 @@ public class SudokuGrid : MonoBehaviour
     }
 
     private int GetIrregularRegion(int row, int col) =>
-        viewModel != null ? viewModel.GetIrregularRegion(row, col) : row / 3 * 3 + col / 3;
+        tutorialIrregularRegions != null
+            ? tutorialIrregularRegions[row * 9 + col]
+            : (viewModel != null ? viewModel.GetIrregularRegion(row, col) : row / 3 * 3 + col / 3);
+
+    public void SetTutorialIrregularRegions(int[] regions)
+    {
+        tutorialIrregularRegions = regions != null && regions.Length == 81
+            ? (int[])regions.Clone()
+            : null;
+        RefreshIrregularLayout();
+    }
 
     private void RefreshIrregularCell(SudokuCell cell, int row, int col)
     {
@@ -865,5 +876,15 @@ public class SudokuGrid : MonoBehaviour
             OnPencilModeChanged(viewModel.IsPencilMode.Value);
             OnCandidateHighlightChanged(viewModel.HighlightedCandidateNumber.Value);
         }
+    }
+
+    public RectTransform GetCellRectTransform(int row, int column)
+    {
+        if (!cellsReady || row < 0 || row >= 9 || column < 0 || column >= 9)
+            return null;
+
+        return cells[row, column] != null
+            ? cells[row, column].transform as RectTransform
+            : null;
     }
 }

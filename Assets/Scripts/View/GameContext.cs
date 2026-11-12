@@ -6,6 +6,12 @@ using UnityEngine;
 public class GameContext : MonoBehaviour
 {
     public RectTransform GridPanel => _gridBuilder != null ? _gridBuilder.GridPanel : null;
+    public RectTransform TutorialHudRect => _newGameStateView != null
+        ? _newGameStateView.TutorialHudRect
+        : null;
+    public HUD TutorialHud => _newGameStateView != null
+        ? _newGameStateView.TutorialHud
+        : null;
     public JourneyViewModel ViewModel => JourneyViewModel;
     public JourneyViewModel JourneyViewModel { get; private set; }
     public NewGameViewModel NewGameViewModel { get; private set; }
@@ -31,6 +37,8 @@ public class GameContext : MonoBehaviour
     private DailyChallengeGameStateView _dailyChallengeStateView;
     private bool _dailyChallengeActive;
     private bool _newGameActive;
+    private GameVariant _tutorialPreviousVariant;
+    private TutorialViewModel _tutorialViewModel;
 
     private void Awake()
     {
@@ -96,11 +104,7 @@ public class GameContext : MonoBehaviour
 
     private void ConfigureVariant(IGameVariantFactory factory)
     {
-        _grid?.SetDiagonalVariantActive(factory.Variant == GameVariant.Diagonal);
-        _grid?.SetKillerVariantActive(factory.Variant == GameVariant.Killer);
-        _grid?.SetThermoVariantActive(factory.Variant == GameVariant.Thermo);
-        _grid?.SetHyperVariantActive(factory.Variant == GameVariant.Hyper);
-        _grid?.SetIrregularVariantActive(factory.Variant == GameVariant.Irregular);
+        ConfigureGridVariant(factory.Variant);
         _gridBuilder?.RefreshVariantLayout();
 
         if (NewGameViewModel != null)
@@ -151,6 +155,145 @@ public class GameContext : MonoBehaviour
         User.Instance.TryLoadSave();
         User.Instance.TryLoadNewGameSave();
         _homeScreen?.Initialize(JourneyViewModel, this);
+    }
+
+    public void BeginTutorial(TutorialViewModel tutorialViewModel)
+    {
+        if (tutorialViewModel == null || _grid == null || _gridBuilder == null)
+        {
+            Debug.LogError("The beginner tutorial could not start because its gameplay references are missing.", this);
+            return;
+        }
+
+        _tutorialViewModel = tutorialViewModel;
+        _tutorialPreviousVariant = User.Instance?.VariantFactory != null
+            ? User.Instance.VariantFactory.Variant
+            : GameVariant.Classic;
+
+        _journeyStateMachine.SetSuspended(true);
+        _newGameStateMachine.SetSuspended(true);
+        _dailyChallengeStateMachine.SetSuspended(true);
+        _journeyStateView?.SetGameplayVisible(false);
+        _newGameStateView?.SetGameplayVisible(false);
+        _dailyChallengeStateView?.SetGameplayVisible(false);
+
+        ConfigureGridVariant(GameVariant.Classic);
+        _gridBuilder.RefreshVariantLayout();
+        _picker?.SetCloseOnOutsideClick(false);
+        BindGameplay(tutorialViewModel);
+        _gridBuilder.SetVisible(true);
+    }
+
+    public void SetTutorialChrome(bool showHud, bool showTopBar)
+    {
+        if (_tutorialViewModel == null) return;
+        _newGameStateView?.SetTutorialChrome(_tutorialViewModel, showHud, showTopBar);
+    }
+
+    public bool SelectTutorialCell(int row, int column)
+    {
+        if (_tutorialViewModel == null || _grid == null) return false;
+
+        RectTransform cell = _grid.GetCellRectTransform(row, column);
+        if (cell == null) return false;
+
+        _tutorialViewModel.SelectCellCommand.Execute(
+            new ValueTuple<int, int, object>(row, column, cell));
+        return true;
+    }
+
+    public RectTransform GetTutorialCellRect(int row, int column)
+    {
+        return _tutorialViewModel != null && _grid != null
+            ? _grid.GetCellRectTransform(row, column)
+            : null;
+    }
+
+    public RectTransform TutorialGridRect => _gridBuilder != null ? _gridBuilder.GridPanel : null;
+
+    public bool SetTutorialCellHighlight(int row, int column, bool highlighted)
+    {
+        RectTransform cellRect = GetTutorialCellRect(row, column);
+        SudokuCell cell = cellRect != null ? cellRect.GetComponent<SudokuCell>() : null;
+        if (cell == null) return false;
+
+        cell.SetHighlight(highlighted);
+        return true;
+    }
+
+    public int GetTutorialCellValue(int row, int column)
+    {
+        return _tutorialViewModel != null
+            ? _tutorialViewModel.GetCellValue(row, column)
+            : 0;
+    }
+
+    public RectTransform GetTutorialNumberButtonRect(int number)
+    {
+        return _tutorialViewModel != null ? _picker?.GetTutorialNumberButtonRect(number) : null;
+    }
+
+    public RectTransform TutorialEraseButtonRect => _tutorialViewModel != null
+        ? _picker?.TutorialEraseButtonRect
+        : null;
+
+    public bool PressTutorialNumberButton(int number)
+    {
+        return _tutorialViewModel != null && _picker != null &&
+               _picker.PressTutorialNumberButton(number);
+    }
+
+    public void HighlightTutorialNumber(int number)
+    {
+        _picker?.HighlightTutorialNumber(number);
+    }
+
+    public void HighlightTutorialEraseButton()
+    {
+        _picker?.HighlightTutorialEraseButton();
+    }
+
+    public void ClearTutorialNumberHighlight()
+    {
+        _picker?.ClearTutorialNumberHighlight();
+    }
+
+    public void EndTutorial(TutorialViewModel tutorialViewModel)
+    {
+        if (_tutorialViewModel == null || !ReferenceEquals(_tutorialViewModel, tutorialViewModel)) return;
+
+        ClearTutorialNumberHighlight();
+        _tutorialViewModel.CancelPickerCommand.Execute();
+        _picker?.SetCloseOnOutsideClick(true);
+        _newGameStateView?.SetTutorialChrome(_tutorialViewModel, false, false);
+        _gridBuilder?.SetVisible(false);
+
+        _grid?.SetTutorialIrregularRegions(null);
+        ConfigureGridVariant(_tutorialPreviousVariant);
+        if (JourneyViewModel != null) BindGameplay(JourneyViewModel);
+        _gridBuilder?.RefreshVariantLayout();
+        _tutorialViewModel = null;
+    }
+
+    public void SetTutorialVariantPreview(GameVariant variant)
+    {
+        if (_tutorialViewModel == null) return;
+
+        _tutorialViewModel.SetVariantPreviewData(variant);
+        _grid?.SetTutorialIrregularRegions(variant == GameVariant.Irregular
+            ? _tutorialViewModel.GetTutorialIrregularRegions()
+            : null);
+        ConfigureGridVariant(variant);
+        _gridBuilder?.RefreshVariantLayout();
+    }
+
+    private void ConfigureGridVariant(GameVariant variant)
+    {
+        _grid?.SetDiagonalVariantActive(variant == GameVariant.Diagonal);
+        _grid?.SetKillerVariantActive(variant == GameVariant.Killer);
+        _grid?.SetThermoVariantActive(variant == GameVariant.Thermo);
+        _grid?.SetHyperVariantActive(variant == GameVariant.Hyper);
+        _grid?.SetIrregularVariantActive(variant == GameVariant.Irregular);
     }
 
     public void ActivateJourney()

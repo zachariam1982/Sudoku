@@ -39,6 +39,10 @@ public sealed class HomeScreenController : MonoBehaviour
     private bool _layoutApplied;
     private bool _lastLandscape;
 
+    public RectTransform DailyChallengeTutorialTarget => dailyChallengeButton;
+    public RectTransform NewGameTutorialTarget => newGameButton;
+    public RectTransform JourneyTutorialTarget => sudokuJourneyButton;
+
     private void OnEnable()
     {
         _layoutApplied = false;

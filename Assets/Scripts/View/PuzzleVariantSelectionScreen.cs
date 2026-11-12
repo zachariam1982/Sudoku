@@ -21,6 +21,7 @@ public sealed class PuzzleVariantSelectionScreen : MonoBehaviour
     {
         _layoutApplied = false;
         ApplyLayout();
+        BeginnerTutorialOverlay.ShowOnce(transform, gameContext);
     }
 
     private void OnRectTransformDimensionsChange()
@@ -31,8 +32,7 @@ public sealed class PuzzleVariantSelectionScreen : MonoBehaviour
     public void OpenClassic()
     {
         if (gameContext != null) gameContext.SelectVariant(GameVariant.Classic);
-        if (classicHomeScreen != null) classicHomeScreen.SetActive(true);
-        gameObject.SetActive(false);
+        ShowHomeAndModeTutorial();
     }
 
     public void OpenDiagonal()
@@ -44,8 +44,7 @@ public sealed class PuzzleVariantSelectionScreen : MonoBehaviour
         }
 
         if (!gameContext.SelectVariant(GameVariant.Diagonal)) return;
-        if (classicHomeScreen != null) classicHomeScreen.SetActive(true);
-        gameObject.SetActive(false);
+        ShowHomeAndModeTutorial();
     }
 
     public void OpenKiller()
@@ -57,8 +56,7 @@ public sealed class PuzzleVariantSelectionScreen : MonoBehaviour
         }
 
         if (!gameContext.SelectVariant(GameVariant.Killer)) return;
-        if (classicHomeScreen != null) classicHomeScreen.SetActive(true);
-        gameObject.SetActive(false);
+        ShowHomeAndModeTutorial();
     }
 
     public void OpenThermo()
@@ -70,8 +68,7 @@ public sealed class PuzzleVariantSelectionScreen : MonoBehaviour
         }
 
         if (!gameContext.SelectVariant(GameVariant.Thermo)) return;
-        if (classicHomeScreen != null) classicHomeScreen.SetActive(true);
-        gameObject.SetActive(false);
+        ShowHomeAndModeTutorial();
     }
 
     public void OpenHyper()
@@ -83,8 +80,7 @@ public sealed class PuzzleVariantSelectionScreen : MonoBehaviour
         }
 
         if (!gameContext.SelectVariant(GameVariant.Hyper)) return;
-        if (classicHomeScreen != null) classicHomeScreen.SetActive(true);
-        gameObject.SetActive(false);
+        ShowHomeAndModeTutorial();
     }
 
     public void OpenIrregular()
@@ -96,8 +92,16 @@ public sealed class PuzzleVariantSelectionScreen : MonoBehaviour
         }
 
         if (!gameContext.SelectVariant(GameVariant.Irregular)) return;
-        if (classicHomeScreen != null) classicHomeScreen.SetActive(true);
+        ShowHomeAndModeTutorial();
+    }
+
+    private void ShowHomeAndModeTutorial()
+    {
         gameObject.SetActive(false);
+        if (classicHomeScreen == null) return;
+
+        classicHomeScreen.SetActive(true);
+        GameModeTutorialOverlay.ShowOnce(classicHomeScreen.GetComponent<HomeScreenController>());
     }
 
     private void ApplyLayout()

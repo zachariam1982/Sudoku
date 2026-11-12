@@ -8,6 +8,8 @@ public interface IDailyChallengeRepository
     int GetTotalChallengeCount();
     DailyChallengeStatsSnapshot GetStatsSnapshot();
     List<DailyChallengeRecord> GetAllRecords();
+    List<DailyChallengeCalendarEntry> GetCalendarEntries();
+    DateTime? GetFirstChallengeDate();
     DailyChallengeRecord GetBestOverallRecord(int? preferredGameId);
     List<DailyChallengeRecord> GetBestTimeRecordsByDifficulty(DailyChallengeStatsSnapshot stats);
     List<DateTime> GetWinningChallengeDates();

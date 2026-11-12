@@ -250,6 +250,8 @@ public sealed class DailyChallengeViewModel : BaseViewModel
     public List<DailyChallengeRecord> GetBestChallengeTimes(DailyChallengeStatsSnapshot stats) =>
         _dailyChallengeRepository.GetBestTimeRecordsByDifficulty(stats);
     public List<DateTime> GetWinningChallengeDates() => _dailyChallengeRepository.GetWinningChallengeDates();
+    public List<DailyChallengeCalendarEntry> GetCalendarEntries() => _dailyChallengeRepository.GetCalendarEntries();
+    public DateTime? GetFirstChallengeDate() => _dailyChallengeRepository.GetFirstChallengeDate();
     public void MarkChallengeAttempted(DailyChallengeRecord record) => _dailyChallengeRepository.MarkAttempted(record);
     public void FinalizeExpiredChallenges(DateTime today) => _dailyChallengeRepository.FinalizeUncompletedPreviousChallenges(today);
     public void DeleteOldUnattemptedChallenges(DateTime today) => _dailyChallengeRepository.DeleteUnattemptedBefore(today);

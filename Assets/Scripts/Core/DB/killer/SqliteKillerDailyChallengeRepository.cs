@@ -59,6 +59,12 @@ public sealed class SqliteKillerDailyChallengeRepository : IDailyChallengeReposi
             "SELECT * FROM killer_daily_game_challenge ORDER BY CurrentDate DESC, Id DESC");
     }
 
+    public List<DailyChallengeCalendarEntry> GetCalendarEntries() =>
+        DailyChallengeCalendarQueries.GetEntries(Db);
+
+    public DateTime? GetFirstChallengeDate() =>
+        DailyChallengeCalendarQueries.GetFirstChallengeDate(Db);
+
     public DailyChallengeRecord GetBestOverallRecord(int? preferredGameId)
     {
         List<DailyChallengeRecord> rows = Db.Query<DailyChallengeRecord>(

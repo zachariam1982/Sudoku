@@ -26,6 +26,7 @@ public sealed class DailyChallengeScreenController : MonoBehaviour
     private TextMeshProUGUI _landscapeDifficulty;
     private TextMeshProUGUI _portraitBestTimeValue;
     private TextMeshProUGUI _portraitStreakValue;
+    private TextMeshProUGUI _portraitStreakLabel;
     private TextMeshProUGUI _portraitStartChallengeLabel;
     private TextMeshProUGUI _landscapeStartChallengeLabel;
     private float _baseLandscapeCardWidth;
@@ -153,8 +154,10 @@ public sealed class DailyChallengeScreenController : MonoBehaviour
         _landscapeDifficulty = FindText(landscapeLayout, "DifficultyBadge_LandscapeLayout");
         _portraitBestTimeValue = FindText(portraitLayout, "BestTimeValue_PortraitLayout");
         _portraitStreakValue = FindText(portraitLayout, "StreakValue_PortraitLayout");
+        _portraitStreakLabel = FindText(portraitLayout, "StreakLabel_PortraitLayout");
         _portraitStartChallengeLabel = FindText(portraitLayout, "StartChallengeLabel_PortraitLayout");
         _landscapeStartChallengeLabel = FindText(landscapeLayout, "StartChallengeLabel_LandscapeLayout");
+        SetText(_portraitStreakLabel, "WIN STREAK");
     }
 
     private static TextMeshProUGUI FindText(GameObject root, string objectName)
@@ -237,6 +240,8 @@ public sealed class DailyChallengeScreenController : MonoBehaviour
             else if (candidate.name == "StreakValue_LandscapeLayout")
                 _streakValue = candidate.GetComponent<TextMeshProUGUI>();
         }
+
+        SetText(_streakLabel, "WIN STREAK");
 
         if (_challengeCard != null && _statsCard != null)
         {

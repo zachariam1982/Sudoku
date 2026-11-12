@@ -51,6 +51,12 @@ public sealed class SqliteDailyChallengeRepository : IDailyChallengeRepository
             "SELECT * FROM DailyGame_challenge ORDER BY CurrentDate DESC, Id DESC");
     }
 
+    public List<DailyChallengeCalendarEntry> GetCalendarEntries() =>
+        DailyChallengeCalendarQueries.GetEntries(Db);
+
+    public DateTime? GetFirstChallengeDate() =>
+        DailyChallengeCalendarQueries.GetFirstChallengeDate(Db);
+
     public DailyChallengeRecord GetBestOverallRecord(int? preferredGameId)
     {
         List<DailyChallengeRecord> rows = Db.Query<DailyChallengeRecord>(
@@ -133,5 +139,80 @@ public sealed class SqliteDailyChallengeRepository : IDailyChallengeRepository
     private static DailyChallengeRecord NewRecord(DateTime date,int difficulty)
     {
         return new DailyChallengeRecord { CurrentDate=date, Difficulty=difficulty, IsAttempted=false, Started=false, LivesRemaining=3 };
+    }
+}
+
+/// <summary>Minimal cross-variant daily completion record used by the streak calendar.</summary>
+public sealed class DailyChallengeCalendarEntry
+{
+    [Column("CurrentDate")] public string CurrentDateText { get; set; }
+    public bool IsWon { get; set; }
+    public string CompletedAt { get; set; }
+}
+
+/// <summary>Reads daily completion dates from whichever variant tables exist in the shared database.</summary>
+public static class DailyChallengeCalendarQueries
+{
+    private static readonly string[] ChallengeTables =
+    {
+        "DailyGame_challenge",
+        "diagonal_daily_game_challenge",
+        "hyper_daily_game_challenge",
+        "killer_daily_game_challenge",
+        "thermo_daily_game_challenge",
+        "irregular_daily_game_challenge"
+    };
+
+    private static readonly string[] StatsTables =
+    {
+        "DailyGameChallengeStats",
+        "diagonal_daily_game_challenge_stats",
+        "hyper_daily_game_challenge_stats",
+        "killer_daily_game_challenge_stats",
+        "thermo_daily_game_challenge_stats",
+        "irregular_daily_game_challenge_stats"
+    };
+
+    public static List<DailyChallengeCalendarEntry> GetEntries(SQLiteConnection database)
+    {
+        var entries = new List<DailyChallengeCalendarEntry>();
+        if (database == null) return entries;
+
+        foreach (string table in ChallengeTables)
+        {
+            int tableExists = database.ExecuteScalar<int>(
+                "SELECT COUNT(*) FROM sqlite_master WHERE type = 'table' AND name = ?", table);
+            if (tableExists == 0) continue;
+
+            entries.AddRange(database.Query<DailyChallengeCalendarEntry>(
+                "SELECT CurrentDate, IsWon, CompletedAt FROM " + table + " ORDER BY CurrentDate"));
+        }
+
+        return entries;
+    }
+
+    public static DateTime? GetFirstChallengeDate(SQLiteConnection database)
+    {
+        if (database == null) return null;
+
+        DateTime? firstDate = null;
+        foreach (string table in StatsTables)
+        {
+            int tableExists = database.ExecuteScalar<int>(
+                "SELECT COUNT(*) FROM sqlite_master WHERE type = 'table' AND name = ?", table);
+            if (tableExists == 0) continue;
+
+            string storedDate = database.ExecuteScalar<string>(
+                "SELECT FirstStartedAt FROM " + table + " WHERE Id = 1 LIMIT 1");
+            if (!DateTime.TryParse(storedDate, CultureInfo.InvariantCulture,
+                    DateTimeStyles.AssumeLocal, out DateTime parsedDate))
+                continue;
+
+            DateTime date = parsedDate.Date;
+            if (!firstDate.HasValue || date < firstDate.Value)
+                firstDate = date;
+        }
+
+        return firstDate;
     }
 }

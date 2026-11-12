@@ -111,9 +111,26 @@ public sealed class DailyChallengeDatabase
                 SET
                     GamesPlayed = GamesPlayed + 1,
                     LastPlayedAt = NEW.CompletedAt,
-                    CurrentStreak = CurrentStreak + 1,
+                    CurrentStreak = CASE
+                        WHEN EXISTS (
+                            SELECT 1
+                            FROM DailyGame_challenge previous
+                            WHERE date(previous.CurrentDate) = date(NEW.CurrentDate, '-1 day')
+                              AND previous.IsWon = 1
+                              AND COALESCE(TRIM(previous.CompletedAt), '') <> ''
+                        )
+                        THEN CurrentStreak + 1
+                        ELSE 1
+                    END,
                     CurrentStreakStartedAt = CASE
-                        WHEN CurrentStreak = 0 THEN NEW.CompletedAt
+                        WHEN NOT EXISTS (
+                            SELECT 1
+                            FROM DailyGame_challenge previous
+                            WHERE date(previous.CurrentDate) = date(NEW.CurrentDate, '-1 day')
+                              AND previous.IsWon = 1
+                              AND COALESCE(TRIM(previous.CompletedAt), '') <> ''
+                        ) THEN NEW.CompletedAt
+                        WHEN CurrentStreakStartedAt IS NULL THEN NEW.CompletedAt
                         ELSE CurrentStreakStartedAt
                     END,
                     GamesWon = GamesWon + 1,

@@ -32,6 +32,7 @@ public sealed class DailyChallengeStatsPanel : MonoBehaviour
     [SerializeField] private TextMeshProUGUI[] difficultyNames;
     [SerializeField] private TextMeshProUGUI[] difficultyDates;
     [SerializeField] private TextMeshProUGUI[] difficultyTimes;
+    [SerializeField] private Sprite calendarCardImage;
 
     private ScrollRect _statsScrollRect;
     private RectTransform _statsViewport;
@@ -212,7 +213,9 @@ public sealed class DailyChallengeStatsPanel : MonoBehaviour
     {
         _calendarCard = CreateRect("DailyStreakCalendarCard", _statsContent);
         Image cardImage = _calendarCard.gameObject.AddComponent<Image>();
-        cardImage.color = new Color(.018f, .055f, .105f, .96f);
+        cardImage.sprite = calendarCardImage;
+        cardImage.type = Image.Type.Sliced;
+        cardImage.color = new Color(1f, 1f, 1f, 184f / 255f);
         cardImage.raycastTarget = false;
         Outline cardOutline = _calendarCard.gameObject.AddComponent<Outline>();
         cardOutline.effectColor = new Color(1f, .76f, .30f, .9f);
@@ -275,7 +278,7 @@ public sealed class DailyChallengeStatsPanel : MonoBehaviour
         }
 
         TextMeshProUGUI legend = CreateCalendarText("CalendarLegend", _calendarCard,
-            "<color=#FFD45C>✓ WON</color>     <color=#F28C57>× COMPLETED</color>     <color=#AAB3C3>/ MISSED</color>     <color=#FFD45C>○ TODAY</color>",
+            "<color=#45C878>✓ WON</color>     <color=#F25555>× FAILED</color>     <color=#AAB3C3>/ MISSED</color>     <color=#FFD45C>○ TODAY</color>",
             23f, Color.white, TextAlignmentOptions.Center);
         Place(legend.rectTransform, new Vector2(.035f, .085f), new Vector2(.965f, .155f));
 
@@ -503,13 +506,13 @@ public sealed class DailyChallengeStatsPanel : MonoBehaviour
 
             if (won)
             {
-                _calendarDayImages[index].color = new Color(1f, .75f, .2f, 1f);
+                _calendarDayImages[index].color = new Color(.27f, .78f, .47f, 1f);
                 _calendarDayNumbers[index].color = new Color(.06f, .09f, .14f, 1f);
                 _calendarDayMarks[index].color = new Color(.06f, .09f, .14f, 1f);
             }
             else if (lost)
             {
-                _calendarDayImages[index].color = new Color(.95f, .43f, .25f, 1f);
+                _calendarDayImages[index].color = new Color(.91f, .29f, .29f, 1f);
                 _calendarDayNumbers[index].color = new Color(.08f, .09f, .13f, 1f);
                 _calendarDayMarks[index].color = new Color(.08f, .09f, .13f, 1f);
             }

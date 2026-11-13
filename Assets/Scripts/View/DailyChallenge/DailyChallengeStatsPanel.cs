@@ -229,11 +229,11 @@ public sealed class DailyChallengeStatsPanel : MonoBehaviour
             string.Empty, 34f, Color.white, TextAlignmentOptions.Center);
         Place(_calendarMonth.rectTransform, new Vector2(.14f, .76f), new Vector2(.86f, .87f));
 
-        _previousMonthButton = CreateCalendarButton("PreviousCalendarMonth", _calendarCard, "‹");
+        _previousMonthButton = CreateCalendarButton("PreviousCalendarMonth", _calendarCard, "<");
         Place(_previousMonthButton.GetComponent<RectTransform>(), new Vector2(.025f, .755f), new Vector2(.14f, .87f));
         _previousMonthButton.onClick.AddListener(() => ChangeCalendarMonth(-1));
 
-        _nextMonthButton = CreateCalendarButton("NextCalendarMonth", _calendarCard, "›");
+        _nextMonthButton = CreateCalendarButton("NextCalendarMonth", _calendarCard, ">");
         Place(_nextMonthButton.GetComponent<RectTransform>(), new Vector2(.86f, .755f), new Vector2(.975f, .87f));
         _nextMonthButton.onClick.AddListener(() => ChangeCalendarMonth(1));
 
@@ -278,7 +278,7 @@ public sealed class DailyChallengeStatsPanel : MonoBehaviour
         }
 
         TextMeshProUGUI legend = CreateCalendarText("CalendarLegend", _calendarCard,
-            "<color=#45C878>✓ WON</color>     <color=#F25555>× FAILED</color>     <color=#AAB3C3>/ MISSED</color>     <color=#FFD45C>○ TODAY</color>",
+            "<color=#45C878>W WON</color>     <color=#F25555>X FAILED</color>     <color=#AAB3C3>/ MISSED</color>     <color=#FFD45C>TODAY</color>",
             23f, Color.white, TextAlignmentOptions.Center);
         Place(legend.rectTransform, new Vector2(.035f, .085f), new Vector2(.965f, .155f));
 
@@ -376,7 +376,7 @@ public sealed class DailyChallengeStatsPanel : MonoBehaviour
         }
 
         played.text = "CHALLENGES PLAYED     <b>" + stats.GamesPlayed.ToString(CultureInfo.InvariantCulture) +
-            "</b>     <color=#FFBE4C>↓ CALENDAR</color>";
+            "</b>     <color=#FFBE4C>v CALENDAR</color>";
         for (int difficulty = 0; difficulty < difficultyNames.Length; difficulty++)
         {
             DailyChallengeRecord best = bestByDifficulty[difficulty];
@@ -501,7 +501,7 @@ public sealed class DailyChallengeStatsPanel : MonoBehaviour
             bool missed = !won && !lost && !isBeforeFirstChallenge && !isFuture && date < today;
 
             _calendarDayNumbers[index].text = dayNumber.ToString(CultureInfo.InvariantCulture);
-            _calendarDayMarks[index].text = won ? "✓" : lost ? "×" : missed ? "/" : isToday ? "TODAY" : string.Empty;
+            _calendarDayMarks[index].text = won ? "W" : lost ? "X" : missed ? "/" : isToday ? "TODAY" : string.Empty;
             _calendarTodayOutlines[index].enabled = isToday;
 
             if (won)
